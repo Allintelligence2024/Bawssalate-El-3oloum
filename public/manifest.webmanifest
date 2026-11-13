@@ -1,0 +1,22 @@
+{
+  "name": "بوصلة العلوم Lite — مراجعة البكالوريا",
+  "short_name": "بوصلة العلوم",
+  "description": "مراجعة علوم الطبيعة والحياة وفق بروتوكول 6 مراحل + التكرار المتباعد",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0f0c",
+  "theme_color": "#1f5c45",
+  "categories": ["education", "books", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

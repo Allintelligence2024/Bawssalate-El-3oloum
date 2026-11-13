@@ -1,0 +1,322 @@
+// عناصر مشتركة — صندوق المُرشد، خيارات الاختيار، الحقول، المؤقّت اللطيف، درج التدوين
+
+import { useEffect, useState, type ReactNode } from 'react';
+import type { QcmLecon } from '../data/qcmLecons';
+import { noterReponse, type SourceReponse } from '../utils/stats';
+import { sonFaux, sonJuste } from '../utils/son';
+import { IcoAide } from './Icones';
+
+// ───────────── كلام المُرشد (لحظات محددة فقط) ─────────────
+export function Morceau({ children, ton = 'sage' }: { children: ReactNode; ton?: 'sage' | 'gold' }) {
+  const styles =
+    ton === 'gold'
+      ? 'border-gold-soft bg-gold-soft/60 text-forest-deep'
+      : 'border-sage bg-sage-soft text-forest-deep';
+  return (
+    <div className={`flex gap-3 rounded-2xl border p-3.5 ${styles}`}>
+      <span className="mt-0.5 text-base">🌿</span>
+      <p className="text-sm font-semibold leading-relaxed">{children}</p>
+    </div>
+  );
+}
+
+// ───────────── خيارات الاختيار (radio group) ─────────────
+// cleFaux / cleJuste: تُلوّنان خيارًا بعينه بعد التحقّق (أحمر للخاطئ، أخضر للصحيح).
+export function OptionsMcq({
+  options,
+  value,
+  onChange,
+  nom,
+  disabled,
+  cleFaux,
+  cleJuste,
+}: {
+  options: { key: string; label: string }[];
+  value: string | null;
+  onChange: (key: string) => void;
+  nom: string;
+  disabled?: boolean;
+  cleFaux?: string | null;
+  cleJuste?: string | null;
+}) {
+  return (
+    <div className="mt-3 grid gap-2" role="radiogroup" aria-label={nom}>
+      {options.map((o) => {
+        const choisi = value === o.key;
+        const faux = cleFaux === o.key;
+        const juste = cleJuste === o.key;
+        let style = 'border-line bg-paper text-ink-soft hover:border-sage';
+        if (faux) style = 'border-clay bg-clay-soft text-clay';
+        else if (juste || choisi) style = 'border-forest bg-sage text-forest-deep';
+        return (
+          <button
+            key={o.key}
+            type="button"
+            role="radio"
+            aria-checked={choisi}
+            disabled={disabled}
+            onClick={() => onChange(o.key)}
+            className={`rounded-2xl border px-4 py-3 text-right text-sm font-semibold transition-colors disabled:opacity-50 ${style}`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ───────────── اختيار من متعدد: اختيار → تحقّق → إعادة المحاولة حتى الإصابة ─────────────
+// لا كتابة، لا نسبة مئوية. الجواب الصحيح أول عنصر في `options`.
+// المحاولات يقيسها المُرشد جانبيًا (utils/stats) بلا ضغط وبلا كشف للجواب.
+function melanger(n: number): number[] {
+  const t = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [t[i], t[j]] = [t[j], t[i]];
+  }
+  return t;
+}
+
+export function ChoixUnique({
+  qcm,
+  fait,
+  onValide,
+  source,
+}: {
+  qcm: QcmLecon;
+  fait?: boolean;
+  onValide: () => void;
+  source: SourceReponse;
+}) {
+  const [ordre, setOrdre] = useState<number[]>(() => melanger(qcm.options.length));
+  const [choix, setChoix] = useState<number | null>(null);
+  const [erreur, setErreur] = useState(false);
+  const [juste, setJuste] = useState(Boolean(fait));
+  // معرّف الخيار الخاطئ الأخير (لا موقعه — الموقع يتبدّل بعد المزج) ليبقى أحمر حتى المحاولة التالية
+  const [dernierFaux, setDernierFaux] = useState<number | null>(null);
+  // « plan B » (audit F6) : après 3 échecs consécutifs, on offre un indice fort + explication
+  // au lieu de re-mélanger à l'infini. On ne donne JAMAIS la réponse, on débloque le raisonnement.
+  const [echecs, setEchecs] = useState(0);
+  const [planB, setPlanB] = useState(false);
+
+  if (juste) {
+    return (
+      <div className="rounded-2xl border border-forest bg-sage p-4">
+        <p className="flex items-center gap-2 text-sm font-bold text-forest-deep">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-forest text-paper">
+            ✓
+          </span>
+          إجابة صحيحة
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-forest-deep">{qcm.explication}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm font-bold leading-relaxed text-ink">{qcm.question}</p>
+      <div className="grid gap-2" role="radiogroup" aria-label="اختر الجواب الصحيح">
+        {ordre.map((idx, pos) => {
+          const choisi = choix === pos;
+          const faux = dernierFaux === idx;
+          let style = 'border-line bg-paper text-ink-soft hover:border-sage';
+          if (faux) style = 'border-clay bg-clay-soft text-clay';
+          else if (choisi) style = 'border-forest bg-sage text-forest-deep';
+          return (
+            <button
+              key={idx}
+              type="button"
+              role="radio"
+              aria-checked={choisi}
+              onClick={() => {
+                setChoix(pos);
+                setErreur(false);
+                setDernierFaux(null);
+              }}
+              className={`rounded-2xl border px-4 py-3.5 text-right text-sm font-semibold transition-colors ${style}`}
+            >
+              {qcm.options[idx]}
+            </button>
+          );
+        })}
+      </div>
+      {erreur && !planB && (
+        <p className="text-sm font-bold text-clay">ليس الجواب الصحيح — أعد المحاولة. خذ وقتك، لا عجلة.</p>
+      )}
+      {planB && (
+        <div className="rounded-2xl border border-clay-soft bg-clay-soft/40 p-3.5">
+          <p className="text-[11px] font-black text-clay">🆘 خُطّة بديلة — لنُخرِجك من المأزق</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink">
+            ثلاث محاولات بلا تحصيل — لا بأس، هذا يعني أن الفهم يحتاج مرساة. إليك الخيط الذي يفكّ
+            السؤال:
+          </p>
+          <p className="mt-2 rounded-xl bg-paper/70 p-2.5 text-sm font-semibold leading-relaxed text-forest-deep">
+            {qcm.explication}
+          </p>
+          <p className="mt-2 text-[11px] leading-relaxed text-mute">
+            أعد الآن بمعرفة هذا الخيط — ولن أُظهر لك الجواب مباشرة. محاولتك الآن تُثبّت الفهم.
+          </p>
+        </div>
+      )}
+      <button
+        onClick={() => {
+          if (choix === null) return;
+          if (choix === ordre.indexOf(0)) {
+            sonJuste();
+            noterReponse(source, true);
+            setJuste(true);
+            setErreur(false);
+            setDernierFaux(null);
+            onValide();
+          } else {
+            sonFaux();
+            noterReponse(source, false);
+            setErreur(true);
+            setDernierFaux(ordre[choix]);
+            setOrdre(melanger(qcm.options.length));
+            setChoix(null);
+            const e = echecs + 1;
+            setEchecs(e);
+            // بعد 3 محاولات: خُطّة بديلة (تلميح قوي + تفسير) بدل إعادة المزج اللانهائية (audit F6).
+            if (e >= 3) setPlanB(true);
+          }
+        }}
+        disabled={choix === null}
+        className="btn btn-primary w-full"
+      >
+        تحقّق
+      </button>
+    </div>
+  );
+}
+
+// ───────────── مؤقّت لطيف: لا عدّ تنازلي حادّ، لا لون أحمر ─────────────
+export function Minuteur({
+  secondes,
+  enMarche,
+  onToggle,
+  finMessage,
+}: {
+  secondes: number;
+  enMarche: boolean;
+  onToggle: () => void;
+  finMessage: string;
+}) {
+  const t = `${String(Math.floor(secondes / 60)).padStart(2, '0')}:${String(secondes % 60).padStart(2, '0')}`;
+  return (
+    <div className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-paper/70 p-3">
+      <span className="font-science text-3xl font-black tabular-nums text-forest">{t}</span>
+      <div className="flex-1">
+        <p className="text-[11px] text-mute">
+          {secondes === 0 ? finMessage : 'الوقت المخصص لهذه المرحلة — يمكنك إيقافه'}
+        </p>
+      </div>
+      <button
+        onClick={onToggle}
+        disabled={secondes === 0}
+        className={`btn text-sm ${enMarche ? 'btn-ghost' : 'btn-primary'}`}
+      >
+        {enMarche ? 'إيقاف' : 'بدء'}
+      </button>
+    </div>
+  );
+}
+
+// ───────────── زرّ صمّام «أنا عالق» ─────────────
+export function ValveAide({
+  restant,
+  indice,
+  onUtiliser,
+}: {
+  restant: number;
+  indice: string;
+  onUtiliser: () => void;
+}) {
+  const [revele, setRevele] = useState(false);
+  if (restant <= 0) {
+    return (
+      <p className="mt-3 text-xs text-mute">
+        استعملت تلميحي هذه المرحلة. حاول بنفسك الآن — ثم اكشف.
+      </p>
+    );
+  }
+  if (!revele) {
+    return (
+      <button
+        onClick={() => {
+          setRevele(true);
+          onUtiliser();
+        }}
+        className="mt-3 flex items-center gap-2 text-sm font-bold text-clay"
+      >
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-clay-soft">
+          <span className="block h-3.5 w-3.5">
+            <IcoAide />
+          </span>
+        </span>
+        أنا عالق ({restant} متبقّي)
+      </button>
+    );
+  }
+  return <Morceau ton="gold">{indice}</Morceau>;
+}
+
+// ───────────── سلسلة الأفخاخ التشخيصية (§11 · §23 · §37) ─────────────
+// déroule les pièges un par un via ChoixUnique (retry + plan B intégrés).
+// On n'affiche jamais la bonne réponse : l'élève progresse jusqu'à avoir franchi chaque piège.
+export function DiagnosticPieges({
+  pieges,
+  source = 'phase',
+  onTermine,
+}: {
+  pieges: QcmLecon[];
+  source?: SourceReponse;
+  onTermine?: () => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const piege = pieges[index];
+
+  // Notification de fin via effet (jamais de setState parent pendant le render).
+  useEffect(() => {
+    if (!piege) onTermine?.();
+    // onTermine est stable dans l'usage (setState du parent) ; on l'exclut pour éviter la boucle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [piege]);
+
+  if (!piege) {
+    // Tous les pièges franchis.
+    return (
+      <div className="rounded-2xl border border-forest bg-sage p-4 text-sm font-bold leading-relaxed text-forest-deep">
+        تجاوزت كل الأفخاخ — فهمك سليم. هذه أخطاء Bac الشائعة، وآنك لا تقع فيها نقطة مضمونة.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between text-[11px] font-bold text-mute">
+        <span>🧨 فخّ {index + 1} من {pieges.length}</span>
+        <span className="flex gap-1">
+          {pieges.map((_, k) => (
+            <span
+              key={k}
+              className={`h-1.5 w-4 rounded-full ${k < index ? 'bg-forest' : k === index ? 'bg-gold' : 'bg-line'}`}
+            />
+          ))}
+        </span>
+      </div>
+      <div className="rounded-2xl border border-clay-soft bg-clay-soft/30 p-3.5">
+        <p className="text-[11px] font-black text-clay">تمثّل خاطئ شائع — اكتشفه</p>
+        <p className="mt-1.5 text-sm font-bold leading-relaxed text-ink">{piege.question}</p>
+      </div>
+      <ChoixUnique
+        key={`piege-${index}`}
+        qcm={piege}
+        onValide={() => setIndex((i) => i + 1)}
+        source={source}
+      />
+    </div>
+  );
+}

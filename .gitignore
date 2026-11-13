@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+.DS_Store
+*.log
+
+# مفاتيح Supabase الحقيقية — لا تُرفع أبدًا
+.env
+.env.local
+.env.production
