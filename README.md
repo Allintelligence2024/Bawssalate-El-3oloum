@@ -719,6 +719,22 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.9.3** — **polish UI + audit de contraste WCAG** : (1) **bouton de retour RTL** — `IcoRetour`
+  corrigé (chevron pointant à **droite** `M9 5l7 7-7 7`, vérifié au pixel x=744/800 sur émulateur),
+  présent sur chaque page plein écran (Methodologie, LecteurLecon, ExamBlanc, ateliers, mindmap) ;
+  toutes les zones tactiles passées à **≥ 40 px** (nav, bouton thème, mindmap, badges) et l'audit
+  navigateur des 5 onglets ne relève **aucune cible < 40 px ni overflowX**. (2) **bouton de thème** :
+  le mode clair affiche désormais un **soleil** (l'ancien path « lune pleine » tracé en stroke
+  donnait un glyphe déformé type « ٦ »), la lune stroke en mode sombre — les deux états vérifiés.
+  (3) **audit de contraste automatisé** (ratio WCAG sur texte réel, dégradés ignorés) × 5 onglets ×
+  2 thèmes : **zéro échec** après correction du badge « المفتاح » — combinaison systémique
+  `bg-sage text-forest-deep` (~40 usages : états sélectionné/validé) qui en sombre donnait 2.4:1
+  (fond sage `#5e8f6f` + texte clair `#b0d9c2`) ; règles scopées `[data-theme='dark'] .bg-sage…`
+  hors-layer imposant un texte foncé `#0a1a12` (4.82 sombre / 6.26 clair). (4) **BaguetteXp**
+  remontée dans l'en-tête (popup z-50), `GamifiedOverlay` réduit à une barre fine `top-16` +
+  confetti, XP en `text-[#9a7a2c]` + `.tnum`, `text-wrap: balance` sur les titres. (5) tests
+  **Artemis PASS** : منهجية (retour RTL ✓), الخريطة الذهنية (3 domaines/11 unités, leçons
+  verrouillées), compte, lecteur. APK `app-debug.apk` reconstruit et réinstallé sur émulateur.
 - **v0.9.2** — **APK Capacitor + خريطة ذهنية + boutons de retour** : (1) la cause racine de la
   **transparence** est trouvée et corrigée : le @theme Tailwind 4 ne définissait que `--color-line`,
   les 8 couleurs personnalisées (`cream`, `paper`, `sage`, `sage-soft`, `clay`, `clay-soft`,

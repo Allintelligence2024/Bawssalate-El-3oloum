@@ -92,6 +92,16 @@
    mais le TEXTE forest-deep doit rester lisible sur les panneaux sombres. */
 [data-theme='dark'] .text-forest-deep { color: #b0d9c2; }
 
+/* États « sélectionné / validé » (bg-sage) : en sombre le fond reste vert moyen
+   (#5e8f6f) — un texte clair n'y atteint que 2.4:1. On force un texte foncé,
+   comme en mode clair (règles hors-layer : elles priment sur les utilitaires). */
+[data-theme='dark'] .bg-sage,
+[data-theme='dark'] .bg-sage.text-forest-deep,
+[data-theme='dark'] .bg-sage.text-forest,
+[data-theme='dark'] .bg-sage .text-forest-deep,
+[data-theme='dark'] .bg-sage .text-forest,
+[data-theme='dark'] .hover\:bg-sage:hover { color: #0a1a12; }
+
 html, body, #root { height: 100%; margin: 0; }
 html { scroll-behavior: smooth; }
 body {

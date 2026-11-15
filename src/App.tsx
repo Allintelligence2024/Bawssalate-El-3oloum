@@ -570,11 +570,13 @@ export default function App() {
                   aria-label={theme === 'light' ? 'الوضع الليلي' : 'الوضع النهاري'}
                 >
                   {theme === 'light' ? (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 3c4.971 0 9 4.029 9 9s-4.029 9-9 9c-2.462 0-4.62-.964-6.354-2.654z" />
+                    /* soleil (mode clair) — le path « lune pleine » en stroke donnait un glyphe déformé */
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="12" cy="12" r="4.5" />
+                      <path d="M12 1.5v2.5m0 16v2.5M4.57 4.57l1.77 1.77m11.32 11.32l1.77 1.77M1.5 12h2.5m16 0h2.5M4.57 19.43l1.77-1.77M17.66 6.34l1.77-1.77" />
                     </svg>
                   ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 12.79A9 9 0 0111.21 3 7 7 0 003 11.79a9 9 0 019 9c2.22 0 4.31-.69 6.02-1.79z" />
                     </svg>
                   )}
