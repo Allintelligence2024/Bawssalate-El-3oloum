@@ -19,6 +19,8 @@ import { IcoRetour } from './Icones';
 interface Props {
   etat: Etat;
   onFermer: () => void;
+  /** يُستدعى مرّة عند بلوغ شاشة الحصيلة — لمتابعة «موضوع واحد في الأسبوع» */
+  onTermine?: () => void;
   onItemReussi: (id: string) => void;
   onResultatKafaa: (
     key: string,
@@ -149,6 +151,7 @@ function choisirItems(items: ItemDrill[], reussis: Set<string>, n: number): Item
 export default function ExamBlanc({
   etat,
   onFermer,
+  onTermine,
   onItemReussi,
   onResultatKafaa,
   onCarnetFaute,
@@ -303,6 +306,7 @@ export default function ExamBlanc({
       }
       setEcran('bilan');
       setChronoEnMarche(false);
+      onTermine?.();
       return;
     }
     setEtape(etape + 1);

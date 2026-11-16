@@ -48,6 +48,23 @@ export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite, plafondInt
   };
 }
 
+/** عدد النجاحات المتتالية التي تُخرج الدرس من الاسترجاع في المراجعة المكثّفة. */
+export const SORTIE_INTENSIF_REUSSITES = 2;
+
+/**
+ * المراجعة المكثّفة (P2.3): J+1 عند الخطأ، J+3 عند أول نجاح، وبعد نجاحين متتاليين يخرج الدرس من قائمة
+ * الاسترجاع حتى الامتحان (لا موعد قادم) — الوقت المتبقّي يُصرف على ما لم يثبت بعد. الخطأ يعيد العدّاد إلى الصفر.
+ */
+export function mettreAJourSrsIntensif(p: ProgressionLecon, qualite: Qualite): ProgressionLecon {
+  const base = mettreAJourSrs(p, qualite, PLAFOND_INTENSIF_JOURS);
+  if (qualite < 3) return { ...base, reussitesIntensif: 0, acquisIntensifLe: undefined };
+  const reussites = (p.reussitesIntensif ?? 0) + 1;
+  if (reussites >= SORTIE_INTENSIF_REUSSITES) {
+    return { ...base, reussitesIntensif: reussites, prochaineRevision: undefined, fragile: false, acquisIntensifLe: aujourdhui() };
+  }
+  return { ...base, reussitesIntensif: reussites };
+}
+
 // أول دورة بعد إنهاء البروتوكول
 export function premiereRevision(p: ProgressionLecon, fragile: boolean): ProgressionLecon {
   return {

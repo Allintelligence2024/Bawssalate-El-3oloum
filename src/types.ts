@@ -54,6 +54,10 @@ export interface ProgressionLecon {
   reponses?: Record<number, string>; // إجابات التلميذ المكتوبة (إعادة القراءة)
   diagnostic?: string; // تشخيص الثغرة في المرحلة 6
   note?: number; // آخر تقييم ذاتي 0..10
+  /** المراجعة المكثّفة (P2.3): نجاحات متتالية؛ عند 2 يخرج الدرس من قائمة الاسترجاع حتى الامتحان */
+  reussitesIntensif?: number;
+  /** خرج من الاسترجاع المكثّف بعد نجاحين (تاريخ ISO) */
+  acquisIntensifLe?: string;
 }
 
 // بطاقة كفاءة المنهجية — مراجعة قصيرة programmée par la même SM-2 des leçons.
@@ -147,6 +151,8 @@ export interface Etat {
   diagnosticDecideLe?: string;
   /** المفضّلة (P3.3): معرّفات الدروس المحفوظة — تُعاد مراجعتها في SessionRevision. */
   favoris?: string[];
+  /** الامتحانات التجريبية المُنهاة (تواريخ ISO) — لمتابعة «موضوع واحد في الأسبوع» (P2.3). */
+  examensBlancs?: string[];
 }
 
 export type Objectif = 10 | 14 | 18;

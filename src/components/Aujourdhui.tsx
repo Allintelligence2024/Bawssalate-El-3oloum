@@ -115,8 +115,8 @@ export default function Aujourdhui({
             {plan.phase === 'J7'
               ? 'الأسبوع الأخير: استرجاع ومواضيع'
               : plan.phase === 'J30'
-                ? 'المرحلة الثانية: وحدات الثقل الكبير والمتوسّط'
-                : 'المرحلة الأولى: وحدات الثقل الأكبر'}
+                ? 'المرحلة الثانية: الدروس المتكرّرة والمنتظمة في البكالوريا'
+                : 'المرحلة الأولى: الدروس التي تتكرّر في البكالوريا'}
           </h2>
           <ul className="mt-3 space-y-1.5 text-sm text-ink-soft">
             {plan.joursRestants !== null && (
@@ -132,9 +132,15 @@ export default function Aujourdhui({
                 : `${nb(plan.restants)} بندًا ذا أولوية متبقّيًا · نحو ${nb(plan.parSemaine)} في الأسبوع`}
             </li>
             <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              موضوع واحد في الأسبوع في شروط الامتحان
+              <span className={`h-1.5 w-1.5 rounded-full ${plan.sujetFait ? 'bg-forest' : 'bg-gold'}`} />
+              {plan.sujetFait ? 'موضوع هذا الأسبوع: أُنجز ✓' : 'موضوع واحد في الأسبوع في شروط الامتحان — لم يُنجز بعد'}
             </li>
+            {plan.acquises > 0 && (
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-forest" />
+                {nb(plan.acquises)} درسًا ثبت بعد نجاحين — خرج من الاسترجاع حتى الامتحان
+              </li>
+            )}
           </ul>
           <p className="mt-3 text-xs leading-relaxed text-mute">
             وحدات الأولوية مفتوحة في «مساري» دون انتظار ما قبلها. الحصّة اليوم: حتى {nb(quota.seances)} حصص —

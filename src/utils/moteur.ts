@@ -21,6 +21,7 @@ import {
   uniteDeItem,
   type ItemChemin,
 } from '../data/programme';
+import { prioriteLecon, type Priorite } from '../data/priorites';
 import type { CarteKafaa, Etat, Objectif } from '../types';
 import { ajouterJours, aujourdhui, differenceJours } from './dates';
 import { aReviserAujourdhui } from './srs';
@@ -42,11 +43,11 @@ export function itemFait(etat: Etat, item: ItemChemin): boolean {
 export function itemVerrouille(etat: Etat, item: ItemChemin): boolean {
   const idx = CHEMIN.findIndex((c) => cleItem(c) === cleItem(item));
   const avant = CHEMIN.slice(0, idx);
-  // المراجعة المكثّفة: بنود الوحدات ذات الأولوية تُقفل داخل وحدتها فقط (ترتيب الدروس محفوظ)،
-  // لا خلف كل الوحدات السابقة — وإلا بقي الدرس المهم بعيد المنال في ماي.
+  // المراجعة المكثّفة: البند ذو الأولوية يُقفل خلف بنود وحدته ذات الأولوية فقط (ترتيبها محفوظ)،
+  // لا خلف كل الوحدات السابقة ولا خلف دروس وحدته غير المدرجة في الخطة — وإلا بقي الدرس المهم بعيد المنال في ماي.
   if (modeIntensifActif(etat) && itemPrioritaire(etat, item)) {
     const uId = uniteDeItem(item)?.id;
-    return avant.some((c) => uniteDeItem(c)?.id === uId && !itemFait(etat, c));
+    return avant.some((c) => uniteDeItem(c)?.id === uId && itemPrioritaire(etat, c) && !itemFait(etat, c));
   }
   return avant.some((c) => !itemFait(etat, c));
 }
@@ -259,26 +260,53 @@ export function phaseIntensive(etat: Etat): PhaseIntensive | null {
   return 'J60';
 }
 
-/** عتبة الثقل حسب المرحلة. مصدر الأولوية اليوم = poidsBac للوحدة (P1.7 سيستبدله بأولوية لكل درس مُسندة إلى المواضيع). */
-export function seuilPoidsBac(phase: PhaseIntensive): number {
-  return phase === 'J60' ? 4 : 3;
+/** عتبة الأولوية حسب المرحلة (P1.7: أولوية لكل درس مُسندة إلى تحليل المواضيع، `src/data/priorites.ts`).
+ *  J60 → الدروس ذات الأولوية 1 فقط ؛ J30 و J7 → 1 و 2. الأولوية 3 (إثرائي / متطلّب سابق / غائب عن المواضيع) لا تدخل الخطة المكثّفة. */
+export function seuilPriorite(phase: PhaseIntensive): Priorite {
+  return phase === 'J60' ? 1 : 2;
 }
 
+/** هل الدرس ضمن الخطة المكثّفة الحالية؟ (false خارج الوضع المكثّف) */
+export function leconPrioritaire(etat: Etat, lessonId: string): boolean {
+  const phase = phaseIntensive(etat);
+  return phase !== null && prioriteLecon(lessonId) <= seuilPriorite(phase);
+}
+
+/** الوحدات التي تضمّ درسًا واحدًا على الأقل ضمن الخطة — للعرض والجسور. */
 export function unitesPrioritaires(etat: Etat): string[] {
   const phase = phaseIntensive(etat);
   if (!phase) return [];
-  const seuil = seuilPoidsBac(phase);
-  return UNITES.filter((u) => u.poidsBac >= seuil).map((u) => u.id);
+  const seuil = seuilPriorite(phase);
+  return UNITES.filter((u) => u.lessonIds.some((id) => prioriteLecon(id) <= seuil)).map((u) => u.id);
 }
 
+/** درس: حسب أولويته ؛ جسر: إن كانت وحدته تضمّ درسًا ذا أولوية (الجسر يثبّت الوحدة). */
 export function itemPrioritaire(etat: Etat, item: ItemChemin): boolean {
-  const uId = uniteDeItem(item)?.id;
-  return Boolean(uId) && unitesPrioritaires(etat).includes(uId as string);
+  if (item.type === 'lecon') return leconPrioritaire(etat, item.id);
+  return unitesPrioritaires(etat).includes(item.uniteId);
+}
+
+/** هل أُنجز امتحان تجريبي خلال الأيام السبعة الأخيرة (اليوم مشمول)؟ */
+export function sujetCetteSemaine(etat: Etat): boolean {
+  const auj = aujourdhui();
+  return (etat.examensBlancs ?? []).some((iso) => {
+    const d = differenceJours(iso.slice(0, 10), auj);
+    return d >= 0 && d < 7;
+  });
+}
+
+/** الدروس التي خرجت من الاسترجاع المكثّف بعد نجاحين. */
+export function leconsAcquisesIntensif(etat: Etat): string[] {
+  return Object.keys(etat.progression).filter((id) => Boolean(etat.progression[id]?.acquisIntensifLe));
 }
 
 export interface PlanIntensif {
   phase: PhaseIntensive;
   joursRestants: number | null;
+  /** موضوع هذا الأسبوع أُنجز؟ */
+  sujetFait: boolean;
+  /** عدد الدروس التي ثبتت (نجاحان) */
+  acquises: number;
   /** بنود الأولوية (دروس + جسور) غير المنجزة */
   restants: number;
   /** الإيقاع المقترح في الأسبوع لإنهاء البنود قبل الامتحان (مسقوف بـ 7 × الحصّة) */
@@ -295,7 +323,15 @@ export function planIntensif(etat: Etat): PlanIntensif | null {
   const semaines = jours === null ? 4 : Math.max(1, Math.ceil(jours / 7));
   const plafond = 7 * QUOTA_INTENSIF.seances;
   const parSemaine = Math.min(plafond, Math.ceil(restants / semaines));
-  return { phase, joursRestants: jours, restants, parSemaine, unites };
+  return {
+    phase,
+    joursRestants: jours,
+    restants,
+    parSemaine,
+    unites,
+    sujetFait: sujetCetteSemaine(etat),
+    acquises: leconsAcquisesIntensif(etat).length,
+  };
 }
 
 // ───────────── المهمّة الواحدة ─────────────

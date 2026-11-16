@@ -197,3 +197,17 @@ Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004),
 Total : **68 tests verts**, chunk principal 360 kB (gzip 109) ; `Diagnostic` 5,5 kB et `Recherche` 3,8 kB en chunks séparés ; le banc QCM (92 kB) reste hors du chunk d'entrée.
 
 Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), flashcards, notifications, et dans P2.3 : priorité par leçon (P1.7), sortie SRS après 2 réussites, suivi réel « 1 sujet/semaine ».
+
+### 6 septies — Septième passe (P1.7 priorités sourcées, fin de P2.3)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P1.7 | Analyse de fréquence reproductible sur les sujets SE archivés : extraction pypdf, coupe du corrigé, découpage en تمارين, lexique par unité (bornes de mot pour les jetons latins), citation des leçons via leur `vocabulary` ; priorité 1/2/3 par leçon **générée** | `scripts/frequence-bac.py`, `plans/analyse-frequence-bac.md`, `src/data/priorites.ts` | 9 épreuves texte 2016–2023 ; u3 8/9, u1/u4/u5 7/9, u7/u11 5/9, u2 4/9, u6 3/9, u10 1/9, u8/u9 0/9 ; 16 P1 / 30 P2 / 12 P3 ; section 3 (attribution exercice par exercice) à relire par un enseignant |
+| P1.7 | Badge qualitatif discret « يتكرّر في البكالوريا » sur les leçons P1 non faites — jamais un chiffre | `Masari.tsx` | build OK |
+| P2.3 | Phases du mode intensif sur la priorité par leçon (J60 = P1 ; J30/J7 = P1–P2 ; P3 jamais) ; verrou relâché entre items prioritaires, ordre des prioritaires conservé dans l'unité | `moteur.ts` (`seuilPriorite`, `leconPrioritaire`, `itemPrioritaire`, `itemVerrouille`) | `parcours.test.ts` réécrit : phases, scénario J-45, couverture 58/58 des priorités |
+| P2.3 | Sortie SRS après 2 réussites consécutives (`reussitesIntensif`, `acquisIntensifLe`) ; erreur → compteur 0, J+1 | `srs.ts` (`mettreAJourSrsIntensif`), `App.tsx`, `types.ts` | test dédié (3 transitions) |
+| P2.3 | Suivi réel « 1 sujet/semaine » : `etat.examensBlancs` alimenté à l'écran de bilan de l'examen blanc, `sujetCetteSemaine`, ligne cochée dans la carte du plan + compte des leçons « ثبتت » | `ExamBlanc.tsx` (`onTermine`), `moteur.ts`, `Aujourdhui.tsx` | test (fenêtre 7 jours) ; champ **non** envoyé par la sync (liste blanche `construireSnapshot`, ajouté à `DONNEES_JAMAIS_ENVOYEES`) |
+
+Total : **71 tests verts**, chunk principal 363 kB (gzip 110).
+
+Toujours ouverts : lecture humaine des 8 scans (2013–2015, 2024–2026) et validation enseignante du lexique/attribution ; hors-ligne niveau 2 ; appareils.md ; droits des sujets (A-004) ; validations enseignant (A-001 → A-003) ; flashcards ; notifications.

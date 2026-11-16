@@ -19,7 +19,7 @@
 
 | Constat | État | Preuve |
 |---|---|---|
-| Aucune étiquette de priorité par leçon, aucun « tombe chaque année » | ❌ 🔒 | Dépend de P1.7, qui dépend des sujets ; l'analyse de fréquence est désormais **possible** sur 14 années SE (`plans/sources/REGISTRE.md`) |
+| Aucune étiquette de priorité par leçon, aucun « tombe chaque année » | 🟡 | P1.7 : `scripts/frequence-bac.py` → `plans/analyse-frequence-bac.md` + `src/data/priorites.ts` (9 épreuves texte 2016–2023 ; 8 scans à lire par un humain) ; badge « يتكرّر في البكالوريا » dans مساري ; validation enseignante de l'attribution exercice/unité encore due — 16/11 |
 | Leçon = bloc de « 42 min » | ❌ (commentaire corrigé) | `protocole.ts` l.1 dit désormais 46 min (somme réelle) ; aucun mode « 10 minutes » |
 | 25 HTML, 58 résumés, mindmap, 4 ateliers | ❌ inchangé (acquis) | — |
 
@@ -29,7 +29,7 @@
 |---|---|---|
 | Aucun test de positionnement | ✅ | 22 questions (2/unité), rejetable, bilan en mots, ne déverrouille rien (test vert) — 16/11 |
 | Aucun objectif de note | ✅ | P2.2 : `etat.objectif` 10/14/18 → `QUOTA_PAR_OBJECTIF` (1 · 1+bonus · 2+bonus, kafaa 2/2/3 par semaine), réglable dans « أنا » ; tests `parcours.test.ts` (transitions de quota, bonus, plafond kafaa) |
-| Aucun mode J-60 / J-30 / J-7 | 🟡 | P2.3 : bascule auto à ≤ 60 j de la date de Bac **de l'élève** (ou manuelle on/off) ; phases J60 (poidsBac ≥ 4) → J30 (≥ 3) → J7 ; unités prioritaires déverrouillées **entre elles** (ordre conservé dans l'unité) ; quota 3 ; SRS plafonnée J+3 ; plan hebdo affiché dans « اليوم » + bouton examen blanc. Test « élève qui installe à J-45 ». **Manque :** priorité par leçon (dépend de P1.7), « sortie après 2 réussites », compteur « 1 sujet/semaine » réel |
+| Aucun mode J-60 / J-30 / J-7 | ✅ | P2.3 : bascule auto à ≤ 60 j de la date de Bac **de l'élève** (ou manuelle on/off) ; phases J60 (leçons P1) → J30 (P1–P2) → J7 ; items prioritaires déverrouillés entre unités (ordre des prioritaires conservé) ; quota 3 ; SRS J+1/J+3 avec **sortie après 2 réussites** ; **suivi « 1 sujet/semaine »** réel ; plan hebdo dans « اليوم ». Tests J-45, SRS intensive, sujet/semaine verts — 16/11 |
 | `DEBUT_ANNEE` et `dateBac` codés en dur | ✅ | `src/config/annee.ts` : seul fichier à éditer chaque été ; au-delà du dernier calendrier confirmé, dérivation estimée (2e lundi de septembre, 10 juin) marquée `estime` ; `etatVierge().dateBac` et `semaineActuelle()` lisent ce calendrier ; tests `annee.test.ts` |
 | Production écrite jamais vérifiée par l'app | 🟡 | `SyntheseLibre` : rédaction + auto-évaluation par grille + modèle après coup, branchée SM-2 (kafaa) — **unité 1 seulement** |
 | SM-2 bloquant, moteur de prochaine action, carnet de failles | ❌ inchangé (acquis) | 44 → 45 tests couvrent `moteur`, `srs`, `dates`, `storage`, `sync` |

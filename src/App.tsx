@@ -10,7 +10,7 @@ import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './u
 import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
-import { mettreAJourSrs, premiereRevision, PLAFOND_INTENSIF_JOURS } from './utils/srs';
+import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -332,8 +332,8 @@ export default function App() {
         ...prev,
         progression: {
           ...prev.progression,
-          // المراجعة المكثّفة: لا فواصل أطول من J+3 قبل الامتحان
-          [lessonId]: mettreAJourSrs(p, qualite, modeIntensifActif(prev) ? PLAFOND_INTENSIF_JOURS : undefined),
+          // المراجعة المكثّفة: J+1/J+3 فقط، وخروج من الاسترجاع بعد نجاحين متتاليين
+          [lessonId]: modeIntensifActif(prev) ? mettreAJourSrsIntensif(p, qualite) : mettreAJourSrs(p, qualite),
         },
         revisions: prev.revisions + 1,
       };
@@ -518,6 +518,7 @@ export default function App() {
         <ExamBlanc
           etat={etat}
           onFermer={() => setMode(null)}
+          onTermine={() => setEtat((prev) => ({ ...prev, examensBlancs: [...(prev.examensBlancs ?? []), new Date().toISOString()] }))}
           onItemReussi={onItemReussi}
           onResultatKafaa={onResultatKafaa}
           onCarnetFaute={onCarnetFaute}

@@ -14,6 +14,7 @@ import { nb, compteLecons } from '../utils/dates';
 import type { Etat } from '../types';
 import { ACCENTS } from '../utils/accents';
 import { IcoVerifie, IcoVerrou } from './Icones';
+import { prioriteLecon } from '../data/priorites';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -191,6 +192,14 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
                                     {enCours && (
                                       <span className="rounded-full bg-gold-soft px-2 py-0.5 text-[10px] font-bold text-forest-deep">
                                         متابعة
+                                      </span>
+                                    )}
+                                    {item.type === 'lecon' && prioriteLecon(item.id) === 1 && !fait && (
+                                      <span
+                                        className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-mute"
+                                        title="ظهر هذا الموضوع في معظم مواضيع البكالوريا السابقة"
+                                      >
+                                        يتكرّر في البكالوريا
                                       </span>
                                     )}
                                   </button>
