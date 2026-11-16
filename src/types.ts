@@ -125,6 +125,9 @@ export interface Etat {
   kafaa?: Record<string, CarteKafaa>; // بطاقات كفاءة المنهجية (مفتاح: methodo{index})
   kafaaHebdo?: { debut: string; n: number }; // مراجعات الكفاءة هذا الأسبوع (الأحد → samedi): ≤ 2
   consentementSync?: boolean; // موافقة التلميذ على إرسال ملخّص تقدّمه للمطوّر (انظر utils/sync.ts)
+  /** تاريخ اختيار التلميذ الصريح (نعم أو لا) على شاشة الموافقة. غيابه = لم يُسأل بعد
+   *  (تثبيت قديم كان فيه الإرسال مفعّلًا افتراضيًّا) → لا إرسال حتى يجيب (P0.2/P0.8). */
+  consentementSyncDecideLe?: string;
 }
 
 export function progressionVierge(): ProgressionLecon {

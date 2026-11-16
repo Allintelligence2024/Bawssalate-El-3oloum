@@ -7,7 +7,7 @@ import type { Etat, CarteKafaa, FauteCarnet } from './types';
 import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance } from './utils/moteur';
-import { envoyerSnapshot, syncActive } from './utils/sync';
+import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, premiereRevision } from './utils/srs';
@@ -32,7 +32,6 @@ import Mindmap from './components/Mindmap';
 import Inscription from './components/Inscription';
 import BaguetteXp from './components/BaguetteXp';
 import GamifiedOverlay from './components/GamifiedOverlay';
-import SujetsExamen from './components/SujetsExamen';
 import { fermerSession, ouvrirSession, sessionOuverte } from './utils/compte';
 import type { Compte } from './types';
 import {
@@ -57,7 +56,6 @@ type Mode =
   | { type: 'jalon'; uniteId: string }
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
-  | { type: 'sujetsExamen' }
   | { type: 'mindmap' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -151,8 +149,11 @@ export default function App() {
     return (localStorage.getItem('kunz_theme') as 'light' | 'dark') ?? 'light';
   });
 
-  // Écran de consentement sync après inscription (P0.2)
-  const [afficheConsentement, setAfficheConsentement] = useState(false);
+  // Écran de consentement sync (P0.2/P0.8) : après inscription, et aussi pour les comptes
+  // existants qui n'ont jamais répondu (anciennes installations où l'envoi était actif par défaut).
+  const [afficheConsentement, setAfficheConsentement] = useState<boolean>(
+    () => sessionOuverte(etat.compte?.email) && doitDemanderConsentement(etat)
+  );
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -171,11 +172,11 @@ export default function App() {
   // ───────────── الحساب ─────────────
 
   function onCompteValide(compte: Compte) {
-    setEtat((prev) => ({ ...prev, compte, consentementSync: false }));
+    setEtat((prev) => ({ ...prev, compte }));
     ouvrirSession(compte.email);
     setSession(true);
-    // Afficher l'écran de consentement après inscription
-    if (syncActive()) setAfficheConsentement(true);
+    // Afficher l'écran de consentement si l'élève n'a encore jamais répondu
+    if (doitDemanderConsentement({ ...etat, compte })) setAfficheConsentement(true);
   }
 
   function onDeconnexion() {
@@ -397,8 +398,9 @@ export default function App() {
   // ───────────── موافقة المزامنة ─────────────
 
   function onConsentementSync(ok: boolean): void {
-    setEtat((prev) => ({ ...prev, consentementSync: ok }));
-    if (ok) void envoyerSnapshot(etatRef.current);
+    const decide = { consentementSync: ok, consentementSyncDecideLe: new Date().toISOString() };
+    setEtat((prev) => ({ ...prev, ...decide }));
+    if (ok) void envoyerSnapshot({ ...etatRef.current, ...decide });
   }
 
   // ───────────── الملاحظات والهوية ─────────────
@@ -466,9 +468,6 @@ export default function App() {
           onCarnetFaute={onCarnetFaute}
         />
       );
-    }
-    if (mode.type === 'sujetsExamen') {
-      return <SujetsExamen onFermer={() => setMode(null)} />;
     }
     if (mode.type === 'mindmap') {
       return (
@@ -604,8 +603,10 @@ export default function App() {
           sujet={mode.sujet}
           question={mode.question}
           modele={mode.modele}
-          pièges={mode.pieges}
+          pieges={mode.pieges}
           diagnostic={mode.diagnostic}
+          onResultatKafaa={onResultatKafaa}
+          onCarnetFaute={onCarnetFaute}
           onFermer={() => setMode(mode.retour ?? null)}
         />
       );
@@ -687,7 +688,7 @@ export default function App() {
       {afficheConsentement && (
         <EcranConsentementSync
           onChoix={(ok) => {
-            setEtat((prev) => ({ ...prev, consentementSync: ok }));
+            onConsentementSync(ok);
             setAfficheConsentement(false);
           }}
         />
@@ -723,7 +724,6 @@ export default function App() {
           onOuvrirStructureTerre={() => setMode({ type: 'structureTerre' })}
           onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
           onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
-          onOuvrirSujetsExamen={() => setMode({ type: 'sujetsExamen' })}
         />
       )}
       {pret && onglet === 'methodo' && (

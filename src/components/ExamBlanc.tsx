@@ -11,7 +11,7 @@ import { useState, useEffect } from 'react';
 import type { Etat } from '../types';
 import type { ItemDrill } from '../data/drills/types';
 import { chargerDomaine, composerJoueur } from '../utils/drills';
-import { nb, formatChrono, formatJourAr } from '../utils/dates';
+import { nb, formatChrono } from '../utils/dates';
 import { sonFaux, sonJuste } from '../utils/son';
 import type { Qualite } from '../utils/srs';
 import { IcoRetour } from './Icones';
@@ -72,7 +72,7 @@ const ENQUETE: {
   doc2: {
     titre: 'الوثيقة 2 · تجربة Ruben و Kamen (1941)',
     contenu:
-      'وسط نمو يحتوي ماءً بنظير استقرار (¹⁸O): الأكسجين المنطلق أثناء التركيب الضوئي هو نفسه (¹⁸O) في الماء، وليس في ثاني أكسيد الكربون. وسط نمو يحتوي ثاني أكسيد الكربون بنظير استقرار (C¹⁸O₂): الأكسجين المنطلق غير مشع.',
+      'تُزوَّد طحالب خضراء بماء مُوسَّم بالنظير الثقيل المستقر للأكسجين (H₂¹⁸O) وبثاني أكسيد كربون عادي: يكشف مطياف الكتلة أن الأكسجين المنطلق غني بـ ¹⁸O. في تجربة مقابلة، يُوسَّم ثاني أكسيد الكربون (C¹⁸O₂) ويُستعمل ماء عادي: الأكسجين المنطلق لا يحتوي ¹⁸O.',
   },
   etapes: [
     {
@@ -91,45 +91,45 @@ const ENQUETE: {
     {
       question: 'ما المعلومة التي تستخرجها من الوثيقة 2؟',
       options: [
-        'أستخرج أن الأكسجين المنطلق يكون مشعاً (¹⁸O) فقط حين يكون الماء هو الحامل للنظير المستقر، لا حين يكون ثاني أكسيد الكربون.',
-        'أستخرج أن ثاني أكسيد الكربون المشع يتحول كله إلى أكسجين مشع.',
-        'أستنتج أن النظير المشع مادة تبطئ التركيب الضوئي.',
+        'أستخرج أن الأكسجين المنطلق يحمل الوسم ¹⁸O فقط حين يكون الماء هو المُوسَّم، لا حين يكون ثاني أكسيد الكربون هو المُوسَّم.',
+        'أستخرج أن ثاني أكسيد الكربون المُوسَّم يتحول كله إلى أكسجين مُوسَّم.',
+        'أستنتج أن النظير ¹⁸O مادة تبطئ التركيب الضوئي.',
       ],
       cible: {
-        1: 'قارن النتيجتين في الوثيقة 2: مع الماء الذي يحمل النظير المستقر انطلق أكسجين مشع، ومع ثاني أكسيد الكربون المشع لم ينطلق. انقل الفرق بدقة.',
-        2: 'الوثيقة 2 تقيس الإشعاع في الغاز المنطلق فحسب؛ أين ذُكر أي تباطؤ؟ انقل المعطى ولا تضف إليه.',
+        1: 'قارن النتيجتين في الوثيقة 2: مع الماء المُوسَّم خرج الوسم في الأكسجين، ومع ثاني أكسيد الكربون المُوسَّم لم يخرج. انقل الفرق بدقة.',
+        2: 'الوثيقة 2 تكشف وجود ¹⁸O في الغاز المنطلق فحسب؛ أين ذُكر أي تباطؤ؟ انقل المعطى ولا تضف إليه.',
       },
-      succes: 'ممتاز: قراءة دقيقة للنتيجتين المتقابلتين — النظير المستقر يتبع الماء لا ثاني أكسيد الكربون.',
+      succes: 'ممتاز: قراءة دقيقة للنتيجتين المتقابلتين — الوسم ¹⁸O يتبع الماء لا ثاني أكسيد الكربون.',
     },
     {
       question: 'ما العلاقة بين الوثيقتين؟',
       options: [
         'الوثيقتان متكاملتان: الأولى تُثبت أن انطلاق الغاز يحتاج الضوء والماء، والثانية تحدِّد مصدر ذرات ذلك الغاز (الماء).',
-        'الوثيقتان متناقضتان: الأولى تتحدث عن غاز والثانية عن إشعاع.',
+        'الوثيقتان متناقضتان: الأولى تتحدث عن غاز والثانية عن نظائر.',
         'لا علاقة بين الوثيقتين؛ كل واحدة تجربة مستقلة بلا رابط.',
       ],
       cible: {
         1: 'ليس تناقضًا. ماذا تقيس كل وثيقة؟ الأولى شروط الانطلاق والثانية مصدر ذرات الأكسجين — أين يلتقيان؟',
-        2: 'اربط بين احتياج الانطلاق للماء (الوثيقة 1) وتتبُّع ذرات الماء المستقر في الأكسجين (الوثيقة 2) — أين الرابط؟',
+        2: 'اربط بين احتياج الانطلاق للماء (الوثيقة 1) وتتبُّع ذرات أكسجين الماء المُوسَّمة في الغاز المنطلق (الوثيقة 2) — أين الرابط؟',
       },
       succes: 'أحسنت: منجَز الأولى (شرط الانطلاق) ومنجَز الثانية (مصدر الذرات) يتكاملان.',
     },
     {
       question: 'ما الاستنتاج المبرَّر؟',
       options: [
-        'أستنتج أن الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء، لأنه ينطلق في الضوء مع وجود الماء وتتبّع النظير المستقر (¹⁸O) حين يكون في الماء فقط.',
+        'أستنتج أن الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء، لأنه ينطلق في الضوء مع وجود الماء، ولأن الوسم ¹⁸O لا يظهر في الغاز إلا حين يكون الماء هو المُوسَّم.',
         'أستنتج أن الأكسجين مصدره ثاني أكسيد الكربون لأنه يدخل في التفاعل.',
         'أستنتج أن الأكسجين مصدره الكلوروفيل لأنه يمتص الضوء.',
       ],
       cible: {
-        1: 'الوثيقة 2 تفصل في هذا: مع ثاني أكسيد الكربون المشع لم ينطلق أكسجين مشع — فكيف يكون هو المصدر؟',
+        1: 'الوثيقة 2 تفصل في هذا: مع ثاني أكسيد الكربون المُوسَّم لم يظهر ¹⁸O في الأكسجين المنطلق — فكيف يكون هو المصدر؟',
         2: 'الكلوروفيل يمتص الضوء لكنه لا يطلق ذراته كغاز. أين تظهر ذرات الكلوروفيل في الوثيقتين؟',
       },
       succes: 'خلاصة مبرَّرة: شروط الانطلاق (الوثيقة 1) + مصدر الذرات (الوثيقة 2) = الماء.',
     },
   ],
   conclusion:
-    'إذن، الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء: ينطلق في الضوء مع وجود الماء (تجربة Hill)، وتتبّع نظير مستقر (¹⁸O) في الغاز المنطلق (تجربة Ruben و Kamen)، بينما لا تظهر ذرات ثاني أكسيد الكربون في هذا الغاز.',
+    'إذن، الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء: ينطلق في الضوء مع وجود الماء (تجربة Hill)، ويُتتبَّع نظير الأكسجين المستقر ¹⁸O من الماء إلى الغاز المنطلق (تجربة Ruben و Kamen)، بينما لا تظهر ذرات أكسجين ثاني أكسيد الكربون في هذا الغاز.',
   erreur:
     'الخلط بين مصدر الأكسجين المنطلق ومصدر الكتلة العضوية، أو القفز إلى الاستنتاج قبل استخراج معطى الوثيقتين.',
 };
@@ -166,48 +166,30 @@ export default function ExamBlanc({
   const [rep, setRep] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [etapeFaite, setEtapeFaite] = useState(false);
-  const [heureDebut, setHeureDebut] = useState<string | null>(null);
-  const [heureFin, setHeureFin] = useState<string | null>(null);
-  const [seconde, setSeconde] = useState(0);
-  const [timerRun, setTimerRun] = useState(false);
+  // المؤقّت الاختياري (P1.2، اختيار التلميذ وحده) : يُقاس الوقت المنقضي فقط — لا عدّ تنازلي،
+  // لا إنذار، لا نسبة. يبدأ مع « ابدأ الامتحان » ويتوقّف عند الحصيلة. يُنظَّف عند مغادرة الشاشة.
   const [chronoActif, setChronoActif] = useState(false);
-  
+  const [chronoEnMarche, setChronoEnMarche] = useState(false);
+  const [seconde, setSeconde] = useState(0);
+
+  useEffect(() => {
+    if (!chronoEnMarche) return;
+    const id = setInterval(() => setSeconde((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [chronoEnMarche]);
+
   // État pour l'enquête
   const [enqFaux, setEnqFaux] = useState(0);
   const [kafaaEnvoyee, setKafaaEnvoyee] = useState(false);
 
   const reussis = new Set(Object.keys(etat.drills ?? {}));
 
-  // Timer functions
-  function startTimer(
-    initSec: number,
-    setSec: React.Dispatch<React.SetStateAction<number>>,
-    setRun: React.Dispatch<React.SetStateAction<boolean>>,
-    setDebut: React.Dispatch<React.SetStateAction<string | null>>,
-    setFin: React.Dispatch<React.SetStateAction<string | null>>,
-    nowFn: () => Date
-  ): void {
-    if (timerRun) return;
-    if (initSec === 0) setDebut(new Date().toISOString().slice(0, 19).replace('T', ' '));
-    setRun(true);
-    const interval = setInterval(() => {
-      setSec((s: number) => s + 1);
-    }, 1000);
-    (window as any).__examTimer = interval;
-  }
-
-  function stopTimer(
-    setRun: React.Dispatch<React.SetStateAction<boolean>>,
-    setFin?: React.Dispatch<React.SetStateAction<string | null>>
-  ): void {
-    const interval = (window as any).__examTimer;
-    if (interval) {
-      clearInterval(interval);
-      (window as any).__examTimer = null;
-    }
-    setRun(false);
-    if (setFin) setFin(new Date().toISOString().slice(0, 19).replace('T', ' '));
-  }
+  /** شارة الوقت المنقضي — تظهر في كل شاشات الامتحان حين يكون المؤقّت مفعَّلًا. */
+  const badgeChrono = chronoActif ? (
+    <p className="mt-1 text-xs text-mute" aria-live="off">
+      ⏱️ الوقت المنقضي: {formatChrono(seconde)}
+    </p>
+  ) : null;
 
   async function demarrerExamen(): Promise<void> {
     setEcran('chargement');
@@ -235,9 +217,8 @@ export default function ExamBlanc({
     setEnqFaux(0);
     setKafaaEnvoyee(false);
     setEcran('partie1');
-    if (chronoActif) {
-      startTimer(seconde, setSeconde, setTimerRun, setHeureDebut, setHeureFin, () => new Date());
-    }
+    setSeconde(0);
+    setChronoEnMarche(chronoActif);
   }
 
   function allerQcmSuivant(): void {
@@ -321,7 +302,7 @@ export default function ExamBlanc({
         });
       }
       setEcran('bilan');
-      stopTimer(setTimerRun);
+      setChronoEnMarche(false);
       return;
     }
     setEtape(etape + 1);
@@ -346,29 +327,25 @@ export default function ExamBlanc({
             <p className="eyebrow">وضيــفة شاملــة</p>
             <h2 className="font-naskh mt-2 text-2xl font-bold">الامتحان التجريبي</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              امتحان على نمط بكالوريا علوم تجريبية يغطي البرنامج كله. ليس هناك مؤقّت ولا نسبة مئوية:
+              امتحان على نمط بكالوريا علوم تجريبية يغطي البرنامج كله. لا نسبة مئوية ولا عدّ تنازلي:
               خذ وقتك. الخطأ رسالة لطيفة ثم إعادة محاولة، ولن يُكشف الجواب الصحيح قبل أن تصيبه
               بنفسك.
             </p>
-            {!chronoActif && (
-              <label className="flex items-center gap-3 mt-4 rounded-2xl border border-line bg-paper p-4 text-sm">
-                <input
-                  type="checkbox"
-                  checked={chronoActif}
-                  onChange={(e) => setChronoActif(e.target.checked)}
-                  className="h-4 w-4 rounded border-line"
-                />
-                <span>
-                  <span className="block font-bold">المؤقت الاختياري (P1.2) — فعال فقط إذا قمت بالفعل بـ « ابدأ الامتحان »:</span>
-                  <span className="block text-mute">أنت تقيس وقتك بنفسك. لا توجد نسبة مئوية، لا مقياس للآخرين.</span>
+            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-line bg-paper p-4 text-sm">
+              <input
+                type="checkbox"
+                checked={chronoActif}
+                onChange={(e) => setChronoActif(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-line"
+              />
+              <span>
+                <span className="block font-bold">أريد قياس وقتي (اختياري)</span>
+                <span className="block text-mute">
+                  يظهر الوقت المنقضي بهدوء أثناء الامتحان ويُذكر في الحصيلة. لا عدّ تنازلي، لا إنذار،
+                  ولا مقارنة بأحد — يمكنك إلغاؤه هنا في أي وقت قبل البدء.
                 </span>
-              </label>
-            )}
-            {chronoActif && heureDebut && (
-              <p className="mt-2 text-sm font-bold text-primary">
-                ⏱️ وُسّع : {formatChrono(seconde)} — بدأ {formatJourAr(heureDebut)}
-              </p>
-            )}
+              </span>
+            </label>
             <div className="mt-6 space-y-4">
               <div className="rounded-2xl border border-line bg-paper p-4">
                 <p className="font-bold">التمرين الأول · استرجاع المعارف</p>
@@ -416,6 +393,7 @@ export default function ExamBlanc({
             مغادرة الامتحان
           </button>
           <p className="eyebrow">التمرين الأول · استرجاع المعارف</p>
+          {badgeChrono}
           <p className="mt-1 text-sm text-mute">
             السؤال {nb(qIndex + 1)} من {nb(fileQcm.length)}
           </p>
@@ -493,6 +471,7 @@ export default function ExamBlanc({
             مغادرة الامتحان
           </button>
           <p className="eyebrow">التمرين الثاني · استغلال وثيقتين</p>
+          {badgeChrono}
           <h2 className="font-naskh mt-2 text-2xl font-bold">{ENQUETE.titre}</h2>
           <p className="mt-2 text-sm text-mute">{ENQUETE.situation}</p>
 
@@ -619,8 +598,8 @@ export default function ExamBlanc({
             </div>
           </div>
           <div className="mt-6 grid gap-2">
-            {chronoActif && heureDebut && (
-              <p className="text-xs text-mute">⏱️ وُسّع : {formatChrono(seconde)} — بدأ {formatJourAr(heureDebut)}</p>
+            {chronoActif && (
+              <p className="text-xs text-mute">⏱️ الوقت الذي استغرقته: {formatChrono(seconde)}</p>
             )}
             <button onClick={demarrerExamen} className="btn btn-ghost w-full">
               إعادة الامتحان

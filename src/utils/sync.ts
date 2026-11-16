@@ -1,5 +1,5 @@
 // المزامنة الاختيارية — تُرسل ملخّص تقدّم التلميذ إلى قاعدة بيانات المطوّر (Supabase)
-/// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
+// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
 // التطبيق يعمل offline دائمًا، والمزامنة مجرّد إضافة صامتة في الخلفية.
 
 import type { Etat } from '../types';
@@ -108,7 +108,7 @@ async function clientSupabase(jeton: string) {
 // إرسال صامت: أي خطأ يُبتلع — التطبيق لا يعتمد على نجاحها أبدًا.
 export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (!syncActive()) return;
-  if (!etat.compte || etat.consentementSync === false) return;
+  if (!etat.compte || !consentementExplicite(etat)) return;
   if (typeof navigator !== 'undefined' && !navigator.onLine) return;
   const snap = construireSnapshot(etat);
   if (!snap) return;
@@ -161,7 +161,18 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
   }
 }
 
-// حالة المزامنة: مفعّلة افتراضيًّا — التلميذ يستطيع إيقافها من «أنا»
+/** موافقة صريحة فقط: «نعم» مُسجَّل بتاريخ. التثبيتات القديمة (consentementSync: true بلا تاريخ
+ *  لأن القيمة الافتراضية كانت true قبل v0.9.4) لا تُرسل شيئًا حتى يُجيب التلميذ على شاشة الموافقة. */
+export function consentementExplicite(etat: Etat): boolean {
+  return etat.consentementSync === true && Boolean(etat.consentementSyncDecideLe);
+}
+
+/** هل يجب عرض شاشة الموافقة؟ حساب موجود + مزامنة مهيّأة + لم يُجب بعد. */
+export function doitDemanderConsentement(etat: Etat): boolean {
+  return Boolean(etat.compte) && syncActive() && !etat.consentementSyncDecideLe;
+}
+
+// حالة المزامنة كما تُعرض في «أنا»: «نعم» فقط عند موافقة صريحة
 export function consentementEtat(etat: Etat): 'oui' | 'non' {
-  return etat.consentementSync === false ? 'non' : 'oui';
+  return consentementExplicite(etat) ? 'oui' : 'non';
 }

@@ -141,6 +141,18 @@ Conséquences :
 | P0.7 (partiel) | Plugin Vite `kunz-precache-manifest` → `dist/precache-manifest.json` (liste des `assets/*.js|css` réellement produits) ; SW v4 : précache des chunks à l'installation depuis ce manifeste, complément à chaque navigation en ligne, purge des hash obsolètes à l'activation, **plus aucun `index.html` servi à la place d'un JS/CSS** (503 explicite) | `vite.config.ts`, `public/sw.js` | `npm run build` → manifeste de 9 entrées (dont `Methodologie-*`, `domaine1/2/3-*`, `dist-*`) ; `vite preview` : 9/9 chunks à HTTP 200. **Le protocole mode avion (PWA + Android) reste à rejouer → `hors-ligne.md`** |
 | §7 | Plan GLM remplacé par le plan final ; `plans/preuves/README.md` ; ce document | `plans/PLAN-AMELIORATION-90.md`, `plans/preuves/`, `plans/relecture/` | — |
 
-Non traités ici (volontairement, car ils exigent une décision produit ou un enseignant) : R2 (`SyntheseLibre`),
-R3 (`examSubjects.ts` et les 81 Mo de PDF), ¹⁸O (A-003), Hill (A-002), chrono `ExamBlanc`, « niveau 3 »,
-`ouverture.mp4`, envois des comptes existants (P0.8).
+### 6 bis — Seconde passe (même jour, « continue le reste »)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| R2 | `SyntheseLibre` réécrit : situation → rédaction (textarea, brouillon conservé) → **auto-évaluation par grille cochable** (points attendus + « piège évité ? ») → modèle de réponse (affiché **après** l'auto-évaluation seulement) → résultat. Enregistre la kafaa (`onResultatKafaa`, qualité 5 si grille complète, 3 sinon) et alimente le carnet de fautes. Pilote U1 ; la généralisation aux autres unités dépend de P1.3 | `src/components/SyntheseLibre.tsx`, `src/App.tsx`, `src/components/Methodologie.tsx` | `tsc --noEmit` propre ; parcours testé en preview |
+| R3 | Écran « بنك المواضيع », `examSubjects.ts`, `public/examens/` (81 Mo) et `bac-svt-sujet-2026.pdf` **retirés** ; 32 PDF archivés dans `plans/sources/sujets/{SE,M}/` ; registre honnête | `plans/sources/REGISTRE.md`, `src/components/Exercices.tsx`, `src/App.tsx` | `dist/` : **8,2 Mo** (était ≈ 90 Mo) ; `grep -rn examens src public` → 0 |
+| P0.2 / P0.8 | Consentement **explicite et daté** (`consentementSyncDecideLe`) ; `envoyerSnapshot` coupe tant qu'il n'existe pas, y compris pour les comptes créés avant v0.9.4 avec `consentementSync: true` par défaut ; l'écran de consentement s'affiche à ces comptes à l'ouverture | `src/types.ts`, `src/utils/sync.ts`, `src/App.tsx`, `src/utils/__tests__/sync.test.ts` | 44 tests verts (+3 : ancien `true` sans date → pas d'envoi ; `consentementEtat` « oui » seulement si daté ; `doitDemanderConsentement`) |
+| P0.3 | `ouverture.mp4` 13,4 Mo → **1,65 Mo** (720×1280, 6,6 s, CRF 30, AAC 64 kb/s mono) | `public/ouverture.mp4` | `curl -w %{size_download}` → 1 650 764 octets ; frame t=3 s vérifiée. Source 1080p d'origine uniquement dans l'historique git (`bf849b3`) |
+| P1.2 | Chrono de l'examen blanc **réellement implémenté** (opt-in à la consigne, `setInterval` nettoyé, badge discret en partie 1 et 2, temps écoulé rappelé au bilan, jamais bloquant) ; mentions « (P1.2) », « ليس هناك مؤقّت » retirées | `src/components/ExamBlanc.tsx` | preview : case décochée par défaut, badge n'apparaît que si cochée |
+| ¹⁸O | Exercice réécrit en traçage isotopique stable (A-003) | `src/components/ExamBlanc.tsx` | `grep -c مشع` → 0 |
+| Hill | `lessonGoldSummaries.ts` remis à 1937 (= baseline) ; décision finale A-002 | `src/data/lessonGoldSummaries.ts` | — |
+| « niveau 3 » | Bouton « تحدي المستوى 3 » et option « 1–3 » **retirés** (0 item `n:3` en banque) ; reviennent avec les 80 items relus de P1.5 | `src/components/Exercices.tsx` | — |
+| P1.6 (textes) | Galerie de schémas : « تفاعلية » / « انقر » retirés ; décrite comme galerie statique | `src/components/Methodologie.tsx` | — |
+
+Toujours ouverts : P3.6 (chunk principal 709 kB, cible 500 kB), hors-ligne.md (protocole mode avion à rejouer), GRILLE-BASELINE.md, appareils.md, et toutes les validations enseignant (A-001 → A-003).
