@@ -2,7 +2,7 @@
 // تصميم حديث، ترفيهي، أصوات تفاعل، تأثيرات تصفيق.
 // كل الحالة في localStorage. لا خادم، لا تحليلات، لا تبعات ثقيلة.
 
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
 import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
@@ -16,19 +16,21 @@ import Masari from './components/Masari';
 import Exercices from './components/Exercices';
 // Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
-import ExamBlanc from './components/ExamBlanc';
-import SyntheseLibre from './components/SyntheseLibre';
-import Ana from './components/Ana';
-import ProtocoleRunner from './components/ProtocoleRunner';
-import SessionRevision from './components/SessionRevision';
-import JalonUnite from './components/JalonUnite';
-import LecteurLecon from './components/LecteurLecon';
-import AtelierDomaine1 from './components/AtelierDomaine1';
-import AtelierImmunite from './components/AtelierImmunite';
-import AtelierOrogenese from './components/AtelierOrogenese';
-import AtelierStructureTerre from './components/AtelierStructureTerre';
 import EcranDemarrage from './components/EcranDemarrage';
-import Mindmap from './components/Mindmap';
+// P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
+// (lessonGoldSummaries, qcmLecons) qui n'ont rien à faire dans le chunk de démarrage.
+const ExamBlanc = lazy(() => import('./components/ExamBlanc'));
+const SyntheseLibre = lazy(() => import('./components/SyntheseLibre'));
+const Ana = lazy(() => import('./components/Ana'));
+const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
+const SessionRevision = lazy(() => import('./components/SessionRevision'));
+const JalonUnite = lazy(() => import('./components/JalonUnite'));
+const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
+const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
+const AtelierImmunite = lazy(() => import('./components/AtelierImmunite'));
+const AtelierOrogenese = lazy(() => import('./components/AtelierOrogenese'));
+const AtelierStructureTerre = lazy(() => import('./components/AtelierStructureTerre'));
+const Mindmap = lazy(() => import('./components/Mindmap'));
 import Inscription from './components/Inscription';
 import BaguetteXp from './components/BaguetteXp';
 import GamifiedOverlay from './components/GamifiedOverlay';
@@ -71,7 +73,7 @@ const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
 function ChargementEcran() {
   return (
     <div className="grid min-h-dvh place-items-center bg-cream">
-      <p className="font-naskh text-lg font-bold text-mute">لحظة، أفتح المنهجية…</p>
+      <p className="font-naskh text-lg font-bold text-mute">لحظة…</p>
     </div>
   );
 }
@@ -437,6 +439,11 @@ export default function App() {
   // ───────────── الأوضاع كاملة الشاشة ─────────────
 
   if (mode) {
+    // كل الشاشات أدناه كسولة التحميل (P3.6): Suspense واحد يغلّفها جميعًا
+    return <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>;
+  }
+
+  function ecranMode(mode: Mode): ReactElement | null {
     // القارئ يُفتح فوق الورشة فلا يُفقد التقدّم المكتسب فيها
     const lecteurAtelier = ouverteLecon ? (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-cream">
@@ -737,6 +744,7 @@ export default function App() {
         </Suspense>
       )}
       {pret && onglet === 'ana' && (
+        <Suspense fallback={<ChargementEcran />}>
         <Ana
           etat={etat}
           carnet={etat.carnet ?? []}
@@ -749,6 +757,7 @@ export default function App() {
           onDeconnexion={onDeconnexion}
           onConsentementSync={onConsentementSync}
         />
+        </Suspense>
       )}
       </div>
 

@@ -58,7 +58,7 @@ Chaque tâche se termine par un artefact déposé dans `plans/preuves/` :
 ## 2. Phase P0 — Fondations et preuves (Sprint 0, sem. 1–2) — *avant tout le reste*
 
 ### P0.1 🔴 Acquisition légale des sujets officiels (3 j + délai externe)
-Récupérer les sujets officiels Sciences Expérimentales **2018–2025 + rattrapages** auprès de la source officielle (ONEC / sujets publiés), vérifier les droits de reproduction, archiver les originaux dans `plans/sources/sujets/` avec provenance datée. Vérifier au passage la **durée officielle de l'épreuve** (le « 3 h 30 » du plan GLM est une affirmation non sourcée : il ne sera codé qu'après confirmation).
+Récupérer les sujets officiels Sciences Expérimentales **2018–2025 + rattrapages** auprès de la source officielle (ONEC / sujets publiés), vérifier les droits de reproduction, archiver les originaux dans `plans/sources/sujets/` avec provenance datée. Vérifier au passage la **durée officielle de l'épreuve** (le « 3 h 30 » du plan GLM est une affirmation non sourcée). *Mise à jour 16/11 : les en-têtes de 18 épreuves 2013→2026 archivées dans `plans/sources/sujets/` impriment tous **4 h 30** pour la série Sciences Expérimentales (2 h 30 en Mathématiques) — voir `plans/sources/REGISTRE.md`.*
 **Preuve :** registre `plans/sources/REGISTRE.md` (année, session, source, date, intégrité du fichier). *Sans ce registre, tout l'Axe 5 reste à 2,5/10.*
 
 ### P0.2 🔴 Consentement sync en opt-in explicite (2 j)
@@ -112,7 +112,7 @@ Pour chaque sujet acquis (cible : **6 sujets** dont ≥ 2 rattrapages) : transcr
 **Vigilance d'estimation (correctif contre-audit GLM) :** 25 j suppose les gabarits existants réutilisés et le correcteur disponible en parallèle ; à défaut, appliquer le repli chiffré dès la fin de S1 — **3 sujets officiels + 2 sujets blancs rédigés par le correcteur (≈ 15 j dev + 8 j éditorial)** — et reporter les 3 sujets restants après P2 sans bloquer P1.7 ni P2.3.
 
 ### P1.2 🔴 Mode examen chronométré opt-in (7 j)
-Sur chaque sujet : minuteur optionnel (durée confirmée en P0.1), interface sobre type copie (pas de mascotte ni de célébration), corrigé **non affiché dans l'interface** jusqu'à remise, bilan final avec grille سند·تحليل·ربط·استنتاج et temps passé — sans note en % (compte de points du barème autorisé, c'est la langue du Bac).
+Sur chaque sujet : minuteur optionnel (4 h 30 pour un sujet complet, durée lue sur les épreuves — `plans/sources/REGISTRE.md`), interface sobre type copie (pas de mascotte ni de célébration), corrigé **non affiché dans l'interface** jusqu'à remise, bilan final avec grille سند·تحليل·ربط·استنتاج et temps passé — sans note en % (compte de points du barème autorisé, c'est la langue du Bac).
 **Preuve :** session complète enregistrée sur appareil ; corrigé **non affiché dans l'interface** avant remise (test d'interface — des réponses embarquées hors ligne ne sont pas un secret cryptographique).
 
 ### P1.3 🔴 Rédaction libre par unité (12 j)

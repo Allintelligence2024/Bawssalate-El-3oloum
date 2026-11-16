@@ -155,4 +155,13 @@ Conséquences :
 | « niveau 3 » | Bouton « تحدي المستوى 3 » et option « 1–3 » **retirés** (0 item `n:3` en banque) ; reviennent avec les 80 items relus de P1.5 | `src/components/Exercices.tsx` | — |
 | P1.6 (textes) | Galerie de schémas : « تفاعلية » / « انقر » retirés ; décrite comme galerie statique | `src/components/Methodologie.tsx` | — |
 
-Toujours ouverts : P3.6 (chunk principal 709 kB, cible 500 kB), hors-ligne.md (protocole mode avion à rejouer), GRILLE-BASELINE.md, appareils.md, et toutes les validations enseignant (A-001 → A-003).
+### 6 ter — Troisième passe (même jour)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P0.1 (registre) | Lecture **à l'œil** des 13 scans + 5 fichiers ambigus (en-tête page 1 rendu à 100 dpi) : les 32 PDF sont identifiés. 17 SE (2013→2026, 14 années distinctes) + 15 M. **Durée imprimée : 4 h 30 en SE, 2 h 30 en M** (le « 3 h 30 » du plan GLM était faux) | `plans/sources/REGISTRE.md`, `plans/PLAN-AMELIORATION-90.md` (P0.1, P1.1) | tableau avec colonne « Vérif. » ; droits toujours non clarifiés → rien n'est publié |
+| A-002 Hill | Alignement **1937** dans les 3 fichiers (année de l'expérience et de la note *Nature* 139:881) | `src/components/ExamBlanc.tsx`, `src/data/lessonGoldSummaries.ts`, `src/data/programme.ts` | `grep -rn 1939 src` → 0 |
+| P3.6 | 12 écrans plein écran passés en `React.lazy` sous un seul `Suspense` ; `lessonGoldSummaries` et `qcmLecons` sortent du chunk de démarrage | `src/App.tsx` | chunk principal **709 → 345 kB** (gzip 194 → 105 kB) ; `tsc` propre ; 44 tests verts |
+| P0.7 (niveau 1) | Vérification automatisée du précache : 32 statiques + 27 chunks, **59/59 HTTP 200**, 6,6 Mo | `plans/preuves/hors-ligne.md` | script dans le document ; niveau 2 (appareil) toujours à faire |
+
+Toujours ouverts : hors-ligne niveau 2 (mode avion sur appareil), GRILLE-BASELINE.md (grille critère par critère de la baseline — non reconstituable sans l'auditeur d'origine), appareils.md, droits des sujets (A-004), et les validations enseignant (A-001 → A-003).
