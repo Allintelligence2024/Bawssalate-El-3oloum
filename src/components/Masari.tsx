@@ -21,6 +21,7 @@ interface Props {
   onOuvrirItem: (item: ItemChemin) => void;
   onVoirUnite: (uniteId: string) => void;
   onOuvrirMindmap: () => void;
+  onOuvrirRecherche?: () => void;
 }
 
 function itemsUnite(uniteId: string): ItemChemin[] {
@@ -32,7 +33,8 @@ function itemsUnite(uniteId: string): ItemChemin[] {
   return items;
 }
 
-export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindmap }: Props) {
+export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindmap,
+  onOuvrirRecherche }: Props) {
   return (
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
       <header className="mb-6">
@@ -41,14 +43,26 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
             <p className="eyebrow">الطريق</p>
             <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">مساري</h1>
           </div>
-          <button
-            onClick={onOuvrirMindmap}
-            className="flex shrink-0 items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 py-3 text-xs font-bold text-forest transition-colors hover:border-sage hover:bg-sage-soft"
-            aria-label="فتح الخريطة الذهنية"
-          >
-            <span aria-hidden>🗺️</span>
-            الخريطة الذهنية
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            {onOuvrirRecherche && (
+              <button
+                onClick={onOuvrirRecherche}
+                className="flex items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 py-3 text-xs font-bold text-forest transition-colors hover:border-sage hover:bg-sage-soft"
+                aria-label="بحث في الدروس"
+              >
+                <span aria-hidden>🔎</span>
+                بحث
+              </button>
+            )}
+            <button
+              onClick={onOuvrirMindmap}
+              className="flex items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 py-3 text-xs font-bold text-forest transition-colors hover:border-sage hover:bg-sage-soft"
+              aria-label="فتح الخريطة الذهنية"
+            >
+              <span aria-hidden>🗺️</span>
+              الخريطة الذهنية
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-mute">
           3 مجالات، 11 وحدة، 58 درسًا. كل بند مقفل حتى تنهي ما قبله — هذه الضمانة الوحيدة لعدم

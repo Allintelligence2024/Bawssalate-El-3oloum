@@ -32,6 +32,8 @@ const AtelierImmunite = lazy(() => import('./components/AtelierImmunite'));
 const AtelierOrogenese = lazy(() => import('./components/AtelierOrogenese'));
 const AtelierStructureTerre = lazy(() => import('./components/AtelierStructureTerre'));
 const Mindmap = lazy(() => import('./components/Mindmap'));
+const Diagnostic = lazy(() => import('./components/Diagnostic'));
+const Recherche = lazy(() => import('./components/Recherche'));
 import Inscription from './components/Inscription';
 import BaguetteXp from './components/BaguetteXp';
 import GamifiedOverlay from './components/GamifiedOverlay';
@@ -60,6 +62,7 @@ type Mode =
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
   | { type: 'mindmap' }
+  | { type: 'recherche' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
@@ -160,6 +163,19 @@ export default function App() {
     () => sessionOuverte(etat.compte?.email) && doitDemanderConsentement(etat)
   );
 
+  // اختبار التموضع (P2.1): يُعرض تلقائيًّا مرّة واحدة بعد شاشة الموافقة، قابل للرفض؛ ويُعاد من «أنا»
+  const [afficheDiagnostic, setAfficheDiagnostic] = useState(false);
+  function doitProposerDiagnostic(e: Etat): boolean {
+    return Boolean(e.compte) && !e.diagnostic && !e.diagnosticDecideLe;
+  }
+  function onDiagnosticTermine(d: NonNullable<Etat['diagnostic']>): void {
+    setEtat((prev) => ({ ...prev, diagnostic: d, diagnosticDecideLe: d.date }));
+  }
+  function onDiagnosticRefuse(): void {
+    setEtat((prev) => ({ ...prev, diagnosticDecideLe: new Date().toISOString() }));
+    setAfficheDiagnostic(false);
+  }
+
   // حجم الخط (P3.3): سمة على <html> تُحرّك rem كلّه، وتُنسخ إلى iframes الدروس عند تحميلها
   useEffect(() => {
     document.documentElement.dataset.taille = etat.tailleTexte ?? 'm';
@@ -187,6 +203,7 @@ export default function App() {
     setSession(true);
     // Afficher l'écran de consentement si l'élève n'a encore jamais répondu
     if (doitDemanderConsentement({ ...etat, compte })) setAfficheConsentement(true);
+    else if (doitProposerDiagnostic({ ...etat, compte })) setAfficheDiagnostic(true);
   }
 
   function onDeconnexion() {
@@ -413,6 +430,14 @@ export default function App() {
 
   // ───────────── موافقة المزامنة ─────────────
 
+  // المفضّلة (P3.3)
+  function basculerFavori(lessonId: string): void {
+    setEtat((prev) => {
+      const f = prev.favoris ?? [];
+      return { ...prev, favoris: f.includes(lessonId) ? f.filter((x) => x !== lessonId) : [...f, lessonId] };
+    });
+  }
+
   function onConsentementSync(ok: boolean): void {
     const decide = { consentementSync: ok, consentementSyncDecideLe: new Date().toISOString() };
     setEtat((prev) => ({ ...prev, ...decide }));
@@ -477,6 +502,15 @@ export default function App() {
             onCarnetFaute={onCarnetFaute}
           />
         </Suspense>
+      );
+    }
+    if (mode.type === 'recherche') {
+      return (
+        <Recherche
+          etat={etat}
+          onFermer={() => setMode(null)}
+          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId, retour: { type: 'recherche' } })}
+        />
       );
     }
     if (mode.type === 'examenBlanc') {
@@ -636,6 +670,8 @@ export default function App() {
       <LecteurLecon
         lessonId={mode.lessonId}
         onFermer={() => setMode(mode.retour ?? null)}
+        favori={(etat.favoris ?? []).includes(mode.lessonId)}
+        onBasculerFavori={() => basculerFavori(mode.lessonId)}
       />
     );
   }
@@ -711,8 +747,21 @@ export default function App() {
           onChoix={(ok) => {
             onConsentementSync(ok);
             setAfficheConsentement(false);
+            if (doitProposerDiagnostic(etatRef.current)) setAfficheDiagnostic(true);
           }}
         />
+      )}
+
+      {/* اختبار التموضع (P2.1) — فوق كل شيء، قابل للرفض */}
+      {afficheDiagnostic && !afficheConsentement && (
+        <Suspense fallback={<ChargementEcran />}>
+          <Diagnostic
+            precedent={etat.diagnostic}
+            onTerminer={onDiagnosticTermine}
+            onRefuser={onDiagnosticRefuse}
+            onFermer={() => setAfficheDiagnostic(false)}
+          />
+        </Suspense>
       )}
 
       {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
@@ -734,6 +783,7 @@ export default function App() {
           onOuvrirItem={ouvrirItem}
           onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
           onOuvrirMindmap={() => setMode({ type: 'mindmap' })}
+          onOuvrirRecherche={() => setMode({ type: 'recherche' })}
         />
       )}
       {pret && onglet === 'exercices' && (
@@ -774,6 +824,10 @@ export default function App() {
           onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
           onModeIntensif={(modeIntensif) => setEtat((prev) => ({ ...prev, modeIntensif }))}
           onTailleTexte={(tailleTexte) => setEtat((prev) => ({ ...prev, tailleTexte }))}
+          onOuvrirDiagnostic={() => setAfficheDiagnostic(true)}
+          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
+          onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
+          onBasculerFavori={basculerFavori}
         />
         </Suspense>
       )}

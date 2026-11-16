@@ -11,9 +11,12 @@ import { useState } from 'react';
 interface Props {
   lessonId: string;
   onFermer: () => void;
+  /** المفضّلة (P3.3) — اختياريّان كي يبقى القارئ صالحًا داخل الورشة */
+  favori?: boolean;
+  onBasculerFavori?: () => void;
 }
 
-export default function LecteurLecon({ lessonId, onFermer }: Props) {
+export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFavori }: Props) {
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const aContenu = aContenuLecon(lessonId);
@@ -38,6 +41,19 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
             </p>
             <h1 className="truncate text-base font-bold">{titreLecon(lessonId)}</h1>
           </div>
+          {onBasculerFavori && (
+            <button
+              type="button"
+              onClick={onBasculerFavori}
+              aria-pressed={favori}
+              aria-label={favori ? 'إزالة من المفضّلة' : 'إضافة إلى المفضّلة'}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-colors ${
+                favori ? 'bg-gold-soft text-forest-deep' : 'bg-cream text-mute hover:bg-sage-soft'
+              }`}
+            >
+              {favori ? '★' : '☆'}
+            </button>
+          )}
           <span className="shrink-0 rounded-full bg-sage px-2.5 py-1 text-[11px] font-bold text-forest-deep">
             قراءة
           </span>

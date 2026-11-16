@@ -141,6 +141,12 @@ export interface Etat {
   modeIntensif?: 'auto' | 'on' | 'off';
   /** حجم الخط (P3.3): s / m / l. غيابه = m. */
   tailleTexte?: TailleTexte;
+  /** اختبار التموضع (P2.1): النتيجة لكل وحدة. لا يفتح الطريق ولا يُقارن. */
+  diagnostic?: { date: string; parUnite: Record<string, { justes: number; total: number }> };
+  /** تاريخ آخر عرض/قرار لاختبار التموضع (قبول أو «لاحقًا») — يُعرض مرّة واحدة تلقائيًّا. */
+  diagnosticDecideLe?: string;
+  /** المفضّلة (P3.3): معرّفات الدروس المحفوظة — تُعاد مراجعتها في SessionRevision. */
+  favoris?: string[];
 }
 
 export type Objectif = 10 | 14 | 18;

@@ -4,6 +4,7 @@ import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFai
 import { CHEMIN, UNITE_PAR_ID, titreItem, uniteDeItem } from '../data/programme';
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
 import { DUREE_TOTALE_MIN } from '../data/protocole';
+import { messageAccueil } from '../utils/diagnostic';
 import CarteStats from './CarteStats';
 import type { Etat } from '../types';
 import type { ItemChemin } from '../data/programme';
@@ -100,6 +101,9 @@ export default function Aujourdhui({
               ? 'كل شيء يبدأ بخطوة واحدة. مهمّة اليوم وحدها تكفي.'
               : `أنجزت ${nbMin(faits)} من ${nbMin(CHEMIN.length)} بنية في طريقك. مهمّة واحدة في كل مرة.`}
           </p>
+          {faits < 3 && messageAccueil(etat) && (
+            <p className="mt-1.5 text-xs leading-relaxed text-forest-deep">{messageAccueil(etat)}</p>
+          )}
         </div>
       </header>
 

@@ -15,6 +15,7 @@ import { Morceau } from './Communs';
 import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
 import ReglagesParcours from './ReglagesParcours';
+import CarteDiagnosticFavoris from './CarteDiagnosticFavoris';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -31,6 +32,10 @@ interface Props {
   onObjectif: (o: Objectif) => void;
   onModeIntensif: (m: 'auto' | 'on' | 'off') => void;
   onTailleTexte: (t: TailleTexte) => void;
+  onOuvrirDiagnostic: () => void;
+  onOuvrirLecon: (lessonId: string) => void;
+  onDemarrerRevision: (lessonIds: string[]) => void;
+  onBasculerFavori: (lessonId: string) => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -107,6 +112,10 @@ export default function Ana({
   onObjectif,
   onModeIntensif,
   onTailleTexte,
+  onOuvrirDiagnostic,
+  onOuvrirLecon,
+  onDemarrerRevision,
+  onBasculerFavori,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const [confirmeCarnet, setConfirmeCarnet] = useState(false);
@@ -232,6 +241,15 @@ export default function Ana({
           )}
         </section>
       )}
+
+      {/* التموضع · المفضّلة */}
+      <CarteDiagnosticFavoris
+        etat={etat}
+        onOuvrirDiagnostic={onOuvrirDiagnostic}
+        onOuvrirLecon={onOuvrirLecon}
+        onDemarrerRevision={onDemarrerRevision}
+        onBasculerFavori={onBasculerFavori}
+      />
 
       {/* الهدف · المراجعة المكثّفة · حجم الخط */}
       <ReglagesParcours

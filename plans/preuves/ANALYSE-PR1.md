@@ -185,3 +185,15 @@ Conséquences :
 Total : **60 tests verts**, chunk principal 352 kB.
 
 Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), P2.1 positionnement, recherche/favoris, flashcards, notifications, et dans P2.3 : priorité par leçon (P1.7), sortie SRS après 2 réussites, suivi réel « 1 sujet/semaine ».
+
+### 6 sexies — Sixième passe (P2.1 positionnement, P3.3 recherche + favoris)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P2.1 | Test de positionnement : 22 questions « synthèse » (2/unité, déterministes), ≈ 12 min, proposé une fois après l'écran de consentement, « لاحقًا » en un geste, rejouable depuis « أنا » ; bilan par unité en mots (متين / متوسّط / للتثبيت), message d'accueil dans « اليوم » sans chiffre ni % | `utils/diagnosticQuestions.ts`, `utils/diagnostic.ts`, `components/Diagnostic.tsx` (lazy), `CarteDiagnosticFavoris.tsx`, `Ana.tsx`, `Aujourdhui.tsx`, `App.tsx`, `types.ts` | `diagnostic.test.ts` (4) : 22 q., évaluation, message sans chiffre, **chemin identique avec ou sans diagnostic** (`prochainItem`, `itemVerrouille` sur tout `CHEMIN`) |
+| P3.3 | Recherche locale (index mémoire : titres, `vocabulary`, إشكالية ; normalisation arabe), ouverture en lecture seule | `utils/recherche.ts`, `components/Recherche.tsx` (lazy), `Masari.tsx`, `App.tsx` | `recherche.test.ts` (4) : normalisation, 58/58 indexées, « كالفن » → domaine 2, multi-mots |
+| P3.3 | Favoris : ☆ dans le lecteur, liste dans « أنا », « راجع المفضّلة المُنجزة » (SessionRevision sur leçons terminées seulement) | `LecteurLecon.tsx`, `CarteDiagnosticFavoris.tsx`, `App.tsx`, `types.ts` | tsc 0 ; `etatDepuisBrut` conserve `favoris`/`diagnostic` (spread) |
+
+Total : **68 tests verts**, chunk principal 360 kB (gzip 109) ; `Diagnostic` 5,5 kB et `Recherche` 3,8 kB en chunks séparés ; le banc QCM (92 kB) reste hors du chunk d'entrée.
+
+Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), flashcards, notifications, et dans P2.3 : priorité par leçon (P1.7), sortie SRS après 2 réussites, suivi réel « 1 sujet/semaine ».

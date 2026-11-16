@@ -149,6 +149,7 @@ Composant `SchemaALegender` (tap zone → tap étiquette, compatible petits écr
 ### P2.1 🔴 Test de positionnement (8 j)
 22 QCM (2/unité, niveaux 1–2 existants), ~12 min, proposé après l'inscription, **rejetable**. Effets : message d'accueil personnalisé, file de cartes `kafaa` ordonnée, forces/faiblesses dans أنا (`etat.diagnostic`). **Ne déverrouille pas le chemin** (le verrouillage anti-lacunes reste la garantie structurelle).
 **Preuve :** test unitaire du diagnostic + parcours complet capturé.
+*16/11 : fait — `diagnosticQuestions.ts` (22 questions « synthèse », 2/unité, tirage déterministe) + `diagnostic.ts` (bilan par unité en mots : متين / متوسّط / للتثبيت, message d'accueil sans chiffre) ; écran `Diagnostic.tsx` lazy, proposé une fois après le consentement, « لاحقًا » en un geste, rejouable depuis « أنا » ; test `diagnostic.test.ts` prouvant que `prochainItem`/`itemVerrouille` sont identiques avec ou sans diagnostic. Non fait : ordonnancement de la file `kafaa` par le diagnostic (volontairement, pour ne pas croiser avec P1.7).*
 
 ### P2.2 🔴 Objectif de note + pacing (4 j)
 Choix 10+/14+/18+ modifiable ; règle le quota suggéré (1, 1+bonus, 2–3 leçons/jour) et le plafond de revues `kafaa` (2→3/sem. pour l'objectif 18+).
@@ -186,6 +187,7 @@ Défi hebdomadaire **choisi** par l'élève (20 drills / 1 revue croisée / 1 ex
 ### P3.3 🟡 Recherche, favoris, taille de texte (9 j)
 Index local généré au build (titres, `vocabulary`, glossaire) avec filtres par unité et ouverture au bon `#chapitre` ; `etat.favoris` + écran dans أنا, rejouables en `SessionRevision` ; réglage de taille `s/m/l` propagé aux iframes des leçons HTML.
 **Preuve :** recherche « كالفن » → leçon ouverte au bon chapitre ; favori rejoué ; capture en taille `l`.
+*16/11 : fait — `recherche.ts` (index en mémoire au premier appel : titres, `vocabulary`, إشكالية ; normalisation arabe hamza/ة/ى/تشكيل), écran `Recherche.tsx` lazy depuis « مساري », ouverture en lecture (ne compte pas, ne déverrouille pas) ; `etat.favoris` + ☆ dans `LecteurLecon` + liste dans « أنا » avec « راجع المفضّلة المُنجزة » (SessionRevision limitée aux leçons terminées). Test `recherche.test.ts` (« كالفن » → unité du domaine 2). Reste : filtres par unité, glossaire (P2.5), capture taille `l`.*
 
 ### P3.4 🔴 Validation terrain — la preuve qui conditionne le « 90 » (6 j)
 1. **Appareils bas de gamme** : Redmi 9A / Samsung A1x (RAM ≤ 2 Go) — cold start, leçon HTML, drill, examen chronométré. Cibles : démarrage < 4 s, zéro ANR, précache complet en 3G simulée. Rapport dans `plans/preuves/appareils.md`.
