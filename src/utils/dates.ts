@@ -105,3 +105,12 @@ export function salue(): string {
   const h = new Date().getHours();
   return h >= 4 && h < 12 ? 'صباح الخير' : h >= 12 && h < 18 ? 'مساء الخير' : 'مساء الخير';
 }
+
+/** تنسيق الثواني إلى mm:ss أو hh:mm:ss */
+export function formatChrono(secondes: number): string {
+  const h = Math.floor(secondes / 3600);
+  const m = Math.floor((secondes % 3600) / 60);
+  const s = secondes % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}

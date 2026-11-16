@@ -1,18 +1,24 @@
 // المزامنة الاختيارية — تُرسل ملخّص تقدّم التلميذ إلى قاعدة بيانات المطوّر (Supabase)
-// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
+/// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
 // التطبيق يعمل offline دائمًا، والمزامنة مجرّد إضافة صامتة في الخلفية.
 
 import type { Etat } from '../types';
 import { xpDe, niveauDe } from './xp';
 import { statsActuelles } from './stats';
 
-const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const CLE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 export const VERSION_APP = '0.9.0';
 
+function getSupabaseConfig() {
+  return {
+    url: import.meta.env.VITE_SUPABASE_URL as string | undefined,
+    key: import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined,
+  };
+}
+
 // المزامنة مفعّلة فقط إذا وُضعت مفاتيح Supabase في .env — وإلّا تتحوّل تلقائيًا إلى لا شيء.
-export function syncActive(): boolean {
-  return Boolean(URL_SUPABASE && CLE_ANON);
+export function syncActive(config?: { url?: string; key?: string }): boolean {
+  const { url, key } = config ?? getSupabaseConfig();
+  return Boolean(url && key);
 }
 
 // ما يُرسَل: أرقام ومعرّفات الدروس/الجسور/التدريبات فقط. لا كلمات مرور ولا نصوص الملاحظات.
@@ -87,9 +93,10 @@ async function clientSupabase(jeton: string) {
   if (!syncActive()) return null;
   // Le jeton est passé en en-tête : il est exigé par la policy UPDATE (RLS).
   // Le client est recréé si le compte (donc le jeton) a changé dans l'onglet.
+  const { url, key } = getSupabaseConfig();
   if (!client || jetonClient !== jeton) {
     const { createClient } = await import('@supabase/supabase-js');
-    client = createClient(URL_SUPABASE as string, CLE_ANON as string, {
+    client = createClient(url as string, key as string, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { 'x-kunz-jeton': jeton } },
     });

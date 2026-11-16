@@ -53,7 +53,7 @@ export function premiereRevision(p: ProgressionLecon, fragile: boolean): Progres
   };
 }
 
-export function aReviserAujourdhui(p: Srs | undefined): boolean {
+export function aReviserAujourdhui(p?: { prochaineRevision?: string } | Srs): boolean {
   if (!p || !p.prochaineRevision) return false;
   return differenceJours(aujourdhui(), p.prochaineRevision) <= 0;
 }

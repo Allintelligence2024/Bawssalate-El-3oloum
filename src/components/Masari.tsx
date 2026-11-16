@@ -114,13 +114,21 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
                             {compteLecons(faites)} من {compteLecons(u.lessonIds.length)} · {u.fenetreAr}
                           </p>
                         </div>
-                        {premierVerrouille && (
-                          <span className="grid h-6 w-6 shrink-0 place-items-center text-mute">
-                            <span className="block h-4 w-4">
-                              <IcoVerrou />
-                            </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
+                            title="ثقل الوحدة في البكالوريا (1-5)"
+                          >
+                            {u.poidsBac}/5
                           </span>
-                        )}
+                          {premierVerrouille && (
+                            <span className="grid h-6 w-6 shrink-0 place-items-center text-mute">
+                              <span className="block h-4 w-4">
+                                <IcoVerrou />
+                              </span>
+                            </span>
+                          )}
+                        </div>
                       </button>
 
                       {/* قائمة الدروس — تظهر إن فُتحت الوحدة */}

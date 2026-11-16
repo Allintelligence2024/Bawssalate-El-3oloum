@@ -152,6 +152,6 @@ export function etatVierge(): Etat {
     dateBac: '2027-06-10',
     seancesComptees: 0,
     ateliers: {},
-    consentementSync: true,
+    consentementSync: false, // par défaut: pas d'envoi tant que l'élève n'a pas explicitement dit oui (P0.2/P0.8)
   };
 }

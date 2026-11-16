@@ -9,6 +9,7 @@
 import { useState, type ReactNode } from 'react';
 import { IcoRetour } from './Icones';
 import { sonFaux, sonJuste } from '../utils/son';
+import { nb } from '../utils/dates';
 import MascotteKunz from './MascotteKunz';
 import type { Qualite } from '../utils/srs';
 
@@ -25,9 +26,18 @@ interface Props {
   /** سجلّ الأخطاء الذرّية (v0.8) : chaque erreur d'exercice est capturée (contexte, jeton
    *  fautif, diagnostic typé) — jamais la bonne réponse. Persisté + exportable dans l'onglet « أنا ». */
   onCarnetFaute?: (f: { contexte: string; enonce: string; donne: string; diagnostic: string }) => void;
+  /** خيار فتح السَّمْيَة الْحُرَّة pour les exercices de type synthese (P1.3). */
+  onOuvrirSynthese?: (exo: {
+    uniteId: string;
+    sujet: string;
+    question: string;
+    modele: string[];
+    pieges: string[];
+    diagnostic: { id: string; ar: string };
+  }) => void;
 }
 
-type Ecran = 'accueil' | 'cle' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat';
+type Ecran = 'accueil' | 'cle' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat' | 'diagrammes';
 
 // المفتاح — أربع حركات قبل أن أكتب.
 const cle: [string, string, string][] = [
@@ -907,6 +917,28 @@ const exercicesUnite1: ExerciceUnite1[] = [
   { titre: 'المعلومة والبنية والوظيفة', verbe: 'ركّب', objectif: 'إنجاز خلاصة علمية', consigne: 'أنجز خلاصة تربط بين تسلسل ADN وبنية البروتين ووظيفته.', preuve: 'تسلسل النكليوتيدات يحدد تسلسل الأحماض الأمينية ثم البنية الفراغية', reponse: 'يحدد تسلسل ADN تسلسل ARNm، وهذا يحدد ترتيب الأحماض الأمينية؛ ويحدد الترتيب البنية الفراغية التي تمنح البروتين وظيفته.', erreur: 'لا تنتقل مباشرة من ADN إلى الوظيفة دون ذكر الترجمة والبنية الفراغية.', diagramme: 'synthese', format: 'مقالة تركيبية', document: 'السند 10 · من المعلومة إلى الوظيفة', zones: ['تسلسل ADN', 'الأحماض الأمينية', 'البنية الفراغية', 'الوظيفة'], question: 'ما العلاقة الصحيحة بين تسلسل ADN ووظيفة البروتين؟', choices: ['ADN يحدد التسلسل ثم البنية فالوظيفة', 'البروتين يصنع ADN', 'الوظيفة لا علاقة لها بالبنية'], correctChoice: 0, erreurCible: { 'البروتين يصنع ADN': 'اتجاه مقلوب: المعلومة تتدفق من ADN → ARNm → بروتين، والبروتين لا يصنع ADN.', 'الوظيفة لا علاقة لها بالبنية': 'البنية الفراغية هي التي تمنح الوظيفة؛ لا يمكن فصلهما في الخلاصة.' } },
 ];
 
+// معرض المخططات التفاعلية (Phase 2: diagrams)
+interface DiagrammeInfo {
+  id: string;
+  titre: string;
+  description: string;
+  type: ExerciceUnite1['diagramme'];
+  zones: string[];
+}
+
+const DIAGRAMMES: DiagrammeInfo[] = [
+  { id: 'flux', titre: 'تدفق المعلومة الوراثية', description: 'ADN → ARNm → ريبوزوم → بروتين', type: 'flux', zones: ['ADN', 'ARNm', 'الريبوزوم', 'البروتين'] },
+  { id: 'cellules', titre: 'خلية حقيقية النواة vs بدائية النواة', description: 'مقر الاستنساخ والترجمة في النوعين', type: 'cellules', zones: ['النواة', 'ADN في الهيولى', 'الترجمة', 'الغشاء'] },
+  { id: 'arn', titre: 'نضج ARNm', description: 'حذف الإنترونات وربط الإكسونات', type: 'arn', zones: ['الإكسونات', 'الإنترونات', 'ARNm الأولي', 'ARNm الناضج'] },
+  { id: 'ribosome', titre: 'آلية الترجمة في الريبوزوم', description: 'الرامزة، مضاد الرامزة، ARNt', type: 'ribosome', zones: ['الرامزة', 'مضاد الرامزة', 'ARNt', 'الريبوزوم'] },
+  { id: 'mutation', titre: 'طفرة واستبدال حمض أميني', description: 'مقارنة تسلسلين: الأصلي والطافر', type: 'mutation', zones: ['التسلسل الأصلي', 'القاعدة المستبدلة', 'التسلسل الطافر', 'البروتين'] },
+  { id: 'sequence', titre: 'استخراج تسلسل ARNm', description: 'التكامل القاعدي من السلسلة المستنسخة', type: 'sequence', zones: ['السلسلة المستنسخة', 'ARNm', 'الرامزة', 'اتجاه 5’→3’'] },
+  { id: 'expression', titre: 'تعبير المورثة: ARNm والبروتين', description: 'منحنى الكمية مع الزمن', type: 'expression', zones: ['منحنى ARNm', 'منحنى البروتين', 'لحظة الإضافة', 'محور الزمن'] },
+  { id: 'graphique', titre: 'مسار بروتين مفرز', description: 'الشبكة الهيولية → غولجي → خارج الخلية', type: 'graphique', zones: ['النواة', 'الشبكة الهيولية', 'جهاز غولجي', 'خارج الخلية'] },
+  { id: 'comparaison', titre: 'مقارنة بروتينين', description: 'تشابه واختلاف في التسلسل', type: 'comparaison', zones: ['البروتين أ', 'موضع الاختلاف', 'البروتين ب', 'الوظيفة'] },
+  { id: 'synthese', titre: 'من المعلومة إلى الوظيفة', description: 'ADN → تسلسل → بنية فراغية → وظيفة', type: 'synthese', zones: ['تسلسل ADN', 'الأحماض الأمينية', 'البنية الفراغية', 'الوظيفة'] },
+];
+
 // Les 3 propositions, en rotation déterministe : la bonne réponse n'est pas toujours en 1re position.
 // Port du commit arena fa88370 (choices + correctChoice) : la rotation maison s'applique sur les
 // 3 propositions fournies et recalcule l'index de la bonne réponse.
@@ -1077,9 +1109,9 @@ function barreauxAide(item: ExerciceUnite1): [string, string, string] {
  *   sur arena, 'sequence' et 'graphique' pointaient vers un marker défini dans un autre SVG
  *   (flèche invisible quand le schéma s'affiche seul).
  */
-function SchemaUnite1({ type }: { type: ExerciceUnite1['diagramme'] }) {
+function SchemaUnite1({ type, className = 'h-44 w-full' }: { type: ExerciceUnite1['diagramme']; className?: string }) {
   const common = {
-    className: 'h-44 w-full',
+    className,
     viewBox: '0 0 520 180',
     role: 'img' as const,
   };
@@ -1289,6 +1321,7 @@ export default function Methodologie({
   modeInitial = 'accueil',
   onResultatKafaa,
   onCarnetFaute,
+  onOuvrirSynthese,
 }: Props) {
   const [ecran, setEcran] = useState<Ecran>(modeInitial);
   const [q, setQ] = useState(0);
@@ -1410,6 +1443,22 @@ export default function Methodologie({
   }
 
   function choisirExerciceUnite1(i: number): void {
+    const exo = exercicesUnite1[i];
+    // Si c'est un exercice de type synthese, on ouvre SyntheseLibre (P1.3)
+    if (exo.diagramme === 'synthese' && onOuvrirSynthese) {
+      onOuvrirSynthese({
+        uniteId: 'U1',
+        sujet: exo.document,
+        question: exo.consigne,
+        // Le modèle est découpé en segments (tuiles) pour l'auto-évaluation
+        modele: exo.reponse.split(/[.،؛:]\s*/).filter(Boolean),
+        // Les pièges sont les erreurs ciblées
+        pieges: Object.values(exo.erreurCible ?? {}),
+        // Diagnostic de la brouille (T1-T4)
+        diagnostic: { id: 'T1', ar: exo.erreur },
+      });
+      return;
+    }
     setMethode(i);
     setSourceExo('unite1');
     setEcran('exercice');
@@ -1909,6 +1958,19 @@ export default function Methodologie({
                 <span className="mt-1 block text-xs text-mute">
                   اكشف الأخطاء الأربعة في نسخة تلميذ: حشو بلا معطى، درس منقوص، لغة عاطفية، خلاصة
                   خارجة.
+                </span>
+              </span>
+              <span className="text-mute">←</span>
+            </button>
+
+            <button
+              onClick={() => setEcran('diagrammes')}
+              className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
+            >
+              <span>
+                <b className="text-sm text-forest">معرض المخططات التفاعلية</b>
+                <span className="mt-1 block text-xs text-mute">
+                  استكشف {nb(10)} مخططات SVT: تدفق، خلايا، ريبوزوم، طفرات، تعبير، وأكثر — قابلة للنقر
                 </span>
               </span>
               <span className="text-mute">←</span>
@@ -3096,6 +3158,50 @@ export default function Methodologie({
                 العودة إلى البداية
               </button>
             </div>
+          </section>
+        )}
+
+        {ecran === 'diagrammes' && (
+          <section className="card p-5">
+            <p className="eyebrow">مكتبة المخططات</p>
+            <h2 className="font-naskh mt-1 text-2xl font-bold">مخططات SVT تفاعلية</h2>
+            <p className="mt-2 text-sm leading-relaxed text-mute">
+              {nb(DIAGRAMMES.length)} مخططًا يغطي المجال الأول (تركيب البروتين). انقر على المناطق للاستكشاف.
+            </p>
+            <MascotteKunz
+              compact
+              tone="gold"
+              message="كل مخطط بوابة لفهم آلية بيولوجية. اضغط على المناطق، قارن، وتخيّل الروابط قبل الامتحان."
+            />
+            <div className="mt-4 space-y-4">
+              {DIAGRAMMES.map((d, i) => (
+                <article key={d.id} className="card overflow-hidden">
+                  <div className="flex items-center gap-4 p-4 bg-sage-soft/50">
+                    <span className="shrink-0 grid h-10 w-10 place-items-center rounded-xl bg-forest text-xs font-bold text-paper">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold truncate">{d.titre}</p>
+                      <p className="text-xs text-mute">{d.description}</p>
+                    </div>
+                    <SchemaUnite1 type={d.type} className="h-12 w-12 shrink-0 opacity-80" />
+                  </div>
+                  <div className="border-t border-line bg-paper px-4 py-3">
+                    <SchemaUnite1 type={d.type} />
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {d.zones.map((zone, zi) => (
+                        <span key={zone} className="chip text-[10px] bg-sage-soft text-forest-deep">
+                          {String.fromCharCode(65 + zi)} {zone}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <button onClick={() => setEcran('accueil')} className="btn btn-ghost mt-4 w-full">
+              العودة إلى البداية
+            </button>
           </section>
         )}
       </main>
