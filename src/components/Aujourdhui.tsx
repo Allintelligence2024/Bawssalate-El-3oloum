@@ -1,6 +1,6 @@
 // اليوم — مهمّة واحدة فقط. أولوية: استئناف → استرجاع مستحق → حصّة جديدة → راحة.
 
-import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits } from '../utils/moteur';
+import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits, planIntensif, quotaDe } from '../utils/moteur';
 import { CHEMIN, UNITE_PAR_ID, titreItem, uniteDeItem } from '../data/programme';
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
 import { DUREE_TOTALE_MIN } from '../data/protocole';
@@ -21,6 +21,7 @@ interface Props {
     estRevue?: boolean
   ) => void;
   onOuvrirMethodologie: () => void;
+  onOuvrirExamenBlanc?: () => void;
 }
 
 export default function Aujourdhui({
@@ -30,12 +31,15 @@ export default function Aujourdhui({
   onVoirUnite,
   onResultatKafaa,
   onOuvrirMethodologie,
+  onOuvrirExamenBlanc,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = competenceDue(etat);
   const rythme = rythmeSemaine(etat);
   const position = positionClasse(etat);
   const faits = itemsFaits(etat);
+  const plan = planIntensif(etat);
+  const quota = quotaDe(etat);
 
   // compte le nombre de leçons échouées (statut = vierge ou en_cours sans revision)
   const leconsEchouees = Object.values(etat.progression).filter(
@@ -98,6 +102,47 @@ export default function Aujourdhui({
           </p>
         </div>
       </header>
+
+      {/* المراجعة المكثّفة (P2.3): خطة الأسبوع — تظهر فقط عند تفعيلها */}
+      {plan && (
+        <section className="mb-4 rounded-3xl border border-gold-soft bg-gold-soft/40 p-5">
+          <p className="eyebrow">المراجعة المكثّفة</p>
+          <h2 className="font-naskh mt-1 text-xl font-bold leading-snug">
+            {plan.phase === 'J7'
+              ? 'الأسبوع الأخير: استرجاع ومواضيع'
+              : plan.phase === 'J30'
+                ? 'المرحلة الثانية: وحدات الثقل الكبير والمتوسّط'
+                : 'المرحلة الأولى: وحدات الثقل الأكبر'}
+          </h2>
+          <ul className="mt-3 space-y-1.5 text-sm text-ink-soft">
+            {plan.joursRestants !== null && (
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                <span className="tnum">{nb(plan.joursRestants)}</span> يومًا على امتحانك
+              </li>
+            )}
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              {plan.restants === 0
+                ? 'أنهيت كل بنود الأولوية — الآن استرجاع ومواضيع فقط.'
+                : `${nb(plan.restants)} بندًا ذا أولوية متبقّيًا · نحو ${nb(plan.parSemaine)} في الأسبوع`}
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              موضوع واحد في الأسبوع في شروط الامتحان
+            </li>
+          </ul>
+          <p className="mt-3 text-xs leading-relaxed text-mute">
+            وحدات الأولوية مفتوحة في «مساري» دون انتظار ما قبلها. الحصّة اليوم: حتى {nb(quota.seances)} حصص —
+            سقف، لا واجب.
+          </p>
+          {onOuvrirExamenBlanc && (
+            <button type="button" onClick={onOuvrirExamenBlanc} className="btn btn-ghost mt-3 w-full text-sm">
+              افتح الامتحان التجريبي
+            </button>
+          )}
+        </section>
+      )}
 
       {/* بطاقة المهمّة الواحدة — الورقة الرئيسة في الأطلس */}
       <section className="card animate-lever relative overflow-hidden p-6">
@@ -196,7 +241,7 @@ export default function Aujourdhui({
             )}
             {!action.bonusDispo && (
               <p className="mt-3 text-xs leading-relaxed text-mute">
-                استعملت حصّتك الإضافية اليوم. نلتقي غدًا.
+                {quota.bonus ? 'استعملت حصّتك الإضافية اليوم. نلتقي غدًا.' : 'حصّة واحدة في اليوم هي إيقاع هدفك. نلتقي غدًا.'}
               </p>
             )}
           </>

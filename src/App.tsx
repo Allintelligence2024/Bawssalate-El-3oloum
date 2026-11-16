@@ -6,11 +6,11 @@ import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from '
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
 import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
-import { debutSemaine, enregistrerSeance } from './utils/moteur';
+import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
-import { mettreAJourSrs, premiereRevision } from './utils/srs';
+import { mettreAJourSrs, premiereRevision, PLAFOND_INTENSIF_JOURS } from './utils/srs';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -160,6 +160,11 @@ export default function App() {
     () => sessionOuverte(etat.compte?.email) && doitDemanderConsentement(etat)
   );
 
+  // حجم الخط (P3.3): سمة على <html> تُحرّك rem كلّه، وتُنسخ إلى iframes الدروس عند تحميلها
+  useEffect(() => {
+    document.documentElement.dataset.taille = etat.tailleTexte ?? 'm';
+  }, [etat.tailleTexte]);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('kunz_theme', theme);
@@ -247,7 +252,8 @@ export default function App() {
     setEtat((prev) => {
       const comptees = prev.seancesJour === aujourdhui() ? prev.seancesComptees : 0;
       const suivant = enregistrerSeance(prev);
-      if (comptees >= 1) suivant.bonusJour = aujourdhui();
+      // ما بعد الحصّة اليومية (حسب الهدف / المكثّفة) يُسجَّل كحصّة إضافية
+      if (comptees >= quotaDe(prev).seances) suivant.bonusJour = aujourdhui();
       return suivant;
     });
     setLeconLue(false);
@@ -276,7 +282,8 @@ export default function App() {
     setEtat((prev) => {
       const comptees = prev.seancesJour === aujourdhui() ? prev.seancesComptees : 0;
       const suivant = enregistrerSeance(prev);
-      if (comptees >= 1) suivant.bonusJour = aujourdhui();
+      // ما بعد الحصّة اليومية (حسب الهدف / المكثّفة) يُسجَّل كحصّة إضافية
+      if (comptees >= quotaDe(prev).seances) suivant.bonusJour = aujourdhui();
       return suivant;
     });
     setLeconLue(false);
@@ -306,7 +313,11 @@ export default function App() {
       if (!p) return prev;
       return {
         ...prev,
-        progression: { ...prev.progression, [lessonId]: mettreAJourSrs(p, qualite) },
+        progression: {
+          ...prev.progression,
+          // المراجعة المكثّفة: لا فواصل أطول من J+3 قبل الامتحان
+          [lessonId]: mettreAJourSrs(p, qualite, modeIntensifActif(prev) ? PLAFOND_INTENSIF_JOURS : undefined),
+        },
         revisions: prev.revisions + 1,
       };
     });
@@ -714,6 +725,7 @@ export default function App() {
           onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
           onResultatKafaa={onResultatKafaa}
           onOuvrirMethodologie={() => setOnglet('methodo')}
+          onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
         />
       )}
       {pret && onglet === 'masari' && (
@@ -759,6 +771,9 @@ export default function App() {
           onRestaurer={onRestaurerEtat}
           onDeconnexion={onDeconnexion}
           onConsentementSync={onConsentementSync}
+          onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
+          onModeIntensif={(modeIntensif) => setEtat((prev) => ({ ...prev, modeIntensif }))}
+          onTailleTexte={(tailleTexte) => setEtat((prev) => ({ ...prev, tailleTexte }))}
         />
         </Suspense>
       )}

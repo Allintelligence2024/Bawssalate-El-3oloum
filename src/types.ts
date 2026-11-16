@@ -1,6 +1,13 @@
 // نموذج البيانات العام — معماريّة OPUS 5.5 MAX مُطبّقة
 // الحالة كلها في المتصفح (localStorage). لا خادم.
 
+import { calendrierPour } from './config/annee';
+
+function aujourdhuiIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export type StatutLecon = 'vierge' | 'en_cours' | 'terminee';
 
 export interface Domaine {
@@ -128,7 +135,16 @@ export interface Etat {
   /** تاريخ اختيار التلميذ الصريح (نعم أو لا) على شاشة الموافقة. غيابه = لم يُسأل بعد
    *  (تثبيت قديم كان فيه الإرسال مفعّلًا افتراضيًّا) → لا إرسال حتى يجيب (P0.2/P0.8). */
   consentementSyncDecideLe?: string;
+  /** هدف العلامة (P2.2): 10+ / 14+ / 18+ — يضبط الحصّة اليومية المقترحة وسقف مراجعات الكفاءة. غيابه = 14. */
+  objectif?: Objectif;
+  /** المراجعة المكثّفة (P2.3): 'auto' (تلقائيًّا عند ≤ 60 يومًا من البكالوريا) · 'on' · 'off'. غيابه = auto. */
+  modeIntensif?: 'auto' | 'on' | 'off';
+  /** حجم الخط (P3.3): s / m / l. غيابه = m. */
+  tailleTexte?: TailleTexte;
 }
+
+export type Objectif = 10 | 14 | 18;
+export type TailleTexte = 's' | 'm' | 'l';
 
 export function progressionVierge(): ProgressionLecon {
   return {
@@ -152,7 +168,7 @@ export function etatVierge(): Etat {
     minutesTotales: 0,
     revisions: 0,
     nom: 'تلميذ',
-    dateBac: '2027-06-10',
+    dateBac: calendrierPour(aujourdhuiIso()).bac,
     seancesComptees: 0,
     ateliers: {},
     consentementSync: false, // par défaut: pas d'envoi tant que l'élève n'a pas explicitement dit oui (P0.2/P0.8)

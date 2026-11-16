@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import type { Etat, NoteCarnet, FauteCarnet } from '../types';
+import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
 import { etatDepuisBrut } from '../utils/storage';
 import { itemsFaits } from '../utils/moteur';
 import { aujourdhui, differenceJours, nb, nbMin, formatCourteAr, formatJourAr, joursNb } from '../utils/dates';
@@ -14,6 +14,7 @@ import { CHEMIN } from '../data/programme';
 import { Morceau } from './Communs';
 import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
+import ReglagesParcours from './ReglagesParcours';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -27,6 +28,9 @@ interface Props {
   onRestaurer: (etat: Etat) => void; // استيراد نسخة احتياطية كاملة
   onDeconnexion?: () => void;
   onConsentementSync: (ok: boolean) => void;
+  onObjectif: (o: Objectif) => void;
+  onModeIntensif: (m: 'auto' | 'on' | 'off') => void;
+  onTailleTexte: (t: TailleTexte) => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -100,6 +104,9 @@ export default function Ana({
   onRestaurer,
   onDeconnexion,
   onConsentementSync,
+  onObjectif,
+  onModeIntensif,
+  onTailleTexte,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const [confirmeCarnet, setConfirmeCarnet] = useState(false);
@@ -225,6 +232,14 @@ export default function Ana({
           )}
         </section>
       )}
+
+      {/* الهدف · المراجعة المكثّفة · حجم الخط */}
+      <ReglagesParcours
+        etat={etat}
+        onObjectif={onObjectif}
+        onModeIntensif={onModeIntensif}
+        onTailleTexte={onTailleTexte}
+      />
 
       {/* المزامنة — إعداد دائم */}
       <ReglageSync etat={etat} onChoix={onConsentementSync} />

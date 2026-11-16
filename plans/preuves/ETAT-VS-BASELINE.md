@@ -27,9 +27,10 @@
 
 | Constat | État | Preuve |
 |---|---|---|
-| Aucun test de positionnement, aucun objectif de note | ❌ | P2.1 / P2.2 non commencés |
-| Aucun mode J-60 / J-30 / J-7 | ❌ | P2.3 non commencé |
-| `DEBUT_ANNEE` et `dateBac` codés en dur | ❌ | `src/data/programme.ts:13`, `src/types.ts:155` inchangés |
+| Aucun test de positionnement | ❌ | P2.1 non commencé |
+| Aucun objectif de note | ✅ | P2.2 : `etat.objectif` 10/14/18 → `QUOTA_PAR_OBJECTIF` (1 · 1+bonus · 2+bonus, kafaa 2/2/3 par semaine), réglable dans « أنا » ; tests `parcours.test.ts` (transitions de quota, bonus, plafond kafaa) |
+| Aucun mode J-60 / J-30 / J-7 | 🟡 | P2.3 : bascule auto à ≤ 60 j de la date de Bac **de l'élève** (ou manuelle on/off) ; phases J60 (poidsBac ≥ 4) → J30 (≥ 3) → J7 ; unités prioritaires déverrouillées **entre elles** (ordre conservé dans l'unité) ; quota 3 ; SRS plafonnée J+3 ; plan hebdo affiché dans « اليوم » + bouton examen blanc. Test « élève qui installe à J-45 ». **Manque :** priorité par leçon (dépend de P1.7), « sortie après 2 réussites », compteur « 1 sujet/semaine » réel |
+| `DEBUT_ANNEE` et `dateBac` codés en dur | ✅ | `src/config/annee.ts` : seul fichier à éditer chaque été ; au-delà du dernier calendrier confirmé, dérivation estimée (2e lundi de septembre, 10 juin) marquée `estime` ; `etatVierge().dateBac` et `semaineActuelle()` lisent ce calendrier ; tests `annee.test.ts` |
 | Production écrite jamais vérifiée par l'app | 🟡 | `SyntheseLibre` : rédaction + auto-évaluation par grille + modèle après coup, branchée SM-2 (kafaa) — **unité 1 seulement** |
 | SM-2 bloquant, moteur de prochaine action, carnet de failles | ❌ inchangé (acquis) | 44 → 45 tests couvrent `moteur`, `srs`, `dates`, `storage`, `sync` |
 
@@ -60,7 +61,7 @@
 | Chunk principal 694 kB (> seuil 500 kB) | ✅ | **348 kB** (gzip 106 kB) après lazy-loading de 12 écrans ; `poids.md` |
 | `dist/` 20 Mo (puis 90 Mo avec le PR #1) | ✅ | 8,2 Mo |
 | Précache tout-ou-rien, risque d'échec silencieux | 🟡 | Manifeste de build + SW v4 ; 59/59 entrées vérifiées HTTP 200 (`hors-ligne.md` niveau 1) ; test appareil (niveau 2) **non fait** |
-| Pas de recherche, favoris, taille de texte | ❌ | P3.3 |
+| Pas de recherche, favoris, taille de texte | 🟡 | Taille de texte s/m/l (`html[data-taille]`, propagée aux iframes des leçons) — recherche et favoris toujours absents |
 | Pas de bascule FR | ❌ par design | — |
 
 ## Axe 7 — Interactivité et engagement (baseline 6,0)
@@ -86,6 +87,6 @@
 - **Corrigés avec preuve :** opt-in sync complet (y compris inventaire honnête), mp4, bundle, dist, Hill, ¹⁸O, d101, chrono opt-in, bouton « niveau 3 » mensonger, durée officielle, harnais de tests.
 - **Partiels :** rédaction libre (1/11 unités), hors-ligne (niveau 1 sur 2), sujets (identifiés mais non publiables).
 - **Inchangés et dépendants d'un tiers :** relecture enseignante (58/58), droits des sujets, contenu éditorial (n3, gabarits, glossaire, priorités), terrain (appareils, élèves).
-- **Inchangés et purement dev :** positionnement, objectif, mode J-60, config annuelle, recherche/favoris/taille, flashcards, notifications, politique de confidentialité dédiée.
+- **Inchangés et purement dev :** positionnement, recherche/favoris, flashcards, notifications, politique de confidentialité dédiée. (Objectif, mode J-60, config annuelle, taille de texte : faits le 16/11 — voir lignes ci-dessus.)
 
 Le ré-audit de sortie devra refaire chaque mesure ci-dessus plutôt que reprendre ce tableau.

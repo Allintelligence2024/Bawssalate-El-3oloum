@@ -153,10 +153,12 @@ Composant `SchemaALegender` (tap zone → tap étiquette, compatible petits écr
 ### P2.2 🔴 Objectif de note + pacing (4 j)
 Choix 10+/14+/18+ modifiable ; règle le quota suggéré (1, 1+bonus, 2–3 leçons/jour) et le plafond de revues `kafaa` (2→3/sem. pour l'objectif 18+).
 **Preuve :** table objectif→quota dans le code + tests des transitions de quota.
+*16/11 : fait — `QUOTA_PAR_OBJECTIF` (`moteur.ts`), tests `parcours.test.ts`, réglage dans « أنا ».*
 
 ### P2.3 🔴 Mode « المراجعة المكثّفة » J-60 / J-30 / J-7 (10 j)
 Bascule automatique (date du Bac de l'élève, saisie et modifiable — jamais une constante nationale codée en dur comme l'actuel `dateBac: '2027-06-10'` de `types.ts`) ou manuelle : parcours parallèle limité aux priorités 1 (puis 2 à J-30), SRS compressée J+1/J+3 avec sortie après 2 réussites, quota levé, 1 sujet/semaine. Mode normal toujours accessible.
 **Preuve :** scénario rejoué « élève qui installe à J-45 » : aucune leçon prioritaire inaccessible, plan hebdomadaire affiché.
+*16/11 : version 1 faite — bascule auto/manuelle, phases J60/J30/J7 sur `poidsBac` (en attendant la priorité par leçon de P1.7), verrous relâchés entre unités prioritaires, quota 3, SRS plafonnée J+3, plan hebdo dans « اليوم », calendrier externalisé dans `src/config/annee.ts`. Test du scénario J-45 vert. Reste : sortie SRS après 2 réussites, suivi « 1 sujet/semaine ».*
 
 ### P2.4 🟡 Révisions croisées, stats par unité, rappels (8 j)
 Revue hebdomadaire mixte (1 carte/domaine + 1 `kafaa`, plafonnée) ; `stats.ts` étendu par axe/unité (les drills portent déjà `a: 0..48` (49 axes, `axes.ts`)) ; أنا affiche « الأقوى / الأضعف » avec lien direct vers l'axe faible ; rappels locaux opt-in (1/jour max, heure choisie — plugin Capacitor Local Notifications à intégrer proprement, absent aujourd'hui).

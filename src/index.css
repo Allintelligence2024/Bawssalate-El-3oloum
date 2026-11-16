@@ -382,3 +382,8 @@ h1, h2 { text-wrap: balance; }
   }
   [data-theme='dark'] *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
 }
+
+/* حجم الخط (P3.3): rem كلّه يتبع <html data-taille>؛ تُنسخ السمة إلى iframes الدروس عند التحميل */
+html[data-taille='s'] { font-size: 15px; }
+html[data-taille='m'] { font-size: 16px; }
+html[data-taille='l'] { font-size: 18.5px; }

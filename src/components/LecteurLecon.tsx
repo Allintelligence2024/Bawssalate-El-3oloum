@@ -70,6 +70,15 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
                 className="h-[72vh] w-full bg-cream"
                 loading="eager"
                 onError={() => setContenuIndisponible(true)}
+                onLoad={(e) => {
+                  // حجم الخط (P3.3): ننسخ سمة <html data-taille> إلى وثيقة الدرس (نفس الأصل)
+                  const doc = e.currentTarget.contentDocument;
+                  if (!doc) return;
+                  const t = document.documentElement.dataset.taille ?? 'm';
+                  doc.documentElement.dataset.taille = t;
+                  // صفحات الدروس تستعمل rem: يكفي ضبط جذرها (لا CSS خاص بها)
+                  doc.documentElement.style.fontSize = t === 's' ? '15px' : t === 'l' ? '18.5px' : '16px';
+                }}
               />
             </div>
           ) : (

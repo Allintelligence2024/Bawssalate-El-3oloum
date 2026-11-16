@@ -173,4 +173,15 @@ Conséquences :
 | P0.8 | Inventaire **mot pour mot** des données envoyées (`DONNEES_ENVOYEES`, `DONNEES_JAMAIS_ENVOYEES`) affiché dans l'écran de consentement et dans « أنا » ; test qui casse si un champ du snapshot n'est pas documenté | `src/utils/sync.ts`, `src/components/CarteSync.tsx`, `src/App.tsx`, `sync.test.ts` | **45 tests verts** |
 | P0.6 | Commentaire « 42 min » → 46 min (`protocole.ts`) ; les `<title>` « منصة بنزر العلم » étaient déjà corrigés (0 occurrence) | `src/data/protocole.ts` | `grep -l بنزر public/lecons/*.html` → 0 |
 
-Toujours ouverts : hors-ligne niveau 2 (mode avion sur appareil), appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), et les tâches dev P2.x / P3.x non commencées (positionnement, objectif, J-60, config annuelle, recherche/favoris/taille).
+### 6 quinquies — Cinquième passe (P2.2, P2.3, config annuelle, taille de texte)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| Config annuelle | `src/config/annee.ts` remplace `DEBUT_ANNEE` et `dateBac: '2027-06-10'` ; dérivation estimée au-delà du dernier calendrier confirmé | `src/config/annee.ts`, `programme.ts`, `types.ts`, `moteur.ts` | `annee.test.ts` (4 tests) |
+| P2.2 | Objectif 10/14/18 → `QUOTA_PAR_OBJECTIF` ; `prochaineAction`, bonus, `competenceDue` et le marquage `bonusJour` dans `App.tsx` lisent `quotaDe()` ; réglage dans « أنا » | `moteur.ts`, `App.tsx`, `ReglagesParcours.tsx`, `Ana.tsx` | `parcours.test.ts` : transitions de quota, bonus objectif 10, kafaa 3/sem |
+| P2.3 | Mode intensif auto (≤ 60 j) / on / off ; phases J60/J30/J7 ; `itemVerrouille` relâché entre unités prioritaires ; `prochainItem` prioritaire ; quota 3 ; SRS plafonnée J+3 ; `planIntensif` affiché dans « اليوم » | `moteur.ts`, `srs.ts`, `App.tsx`, `Aujourdhui.tsx`, `ReglagesParcours.tsx` | scénario « installe à J-45 » : toutes les premières leçons prioritaires ouvertes, ordre interne conservé, unités non prioritaires verrouillées ; hors mode, chemin strictement séquentiel |
+| P3.3 (partiel) | Taille de texte s/m/l | `index.css`, `App.tsx`, `LecteurLecon.tsx` | build OK ; capture appareil à faire |
+
+Total : **60 tests verts**, chunk principal 352 kB.
+
+Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), P2.1 positionnement, recherche/favoris, flashcards, notifications, et dans P2.3 : priorité par leçon (P1.7), sortie SRS après 2 réussites, suivi réel « 1 sujet/semaine ».
