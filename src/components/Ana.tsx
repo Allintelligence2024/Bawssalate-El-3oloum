@@ -1,6 +1,9 @@
 // أنا — الكرّاسة، الهوية، الإحصاء بالحروف (لا نسب مئوية)، وسجلّ النشاط.
 
 import { useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import type { Etat, NoteCarnet, FauteCarnet } from '../types';
 import { etatDepuisBrut } from '../utils/storage';
 import { itemsFaits } from '../utils/moteur';
@@ -26,40 +29,64 @@ interface Props {
   onConsentementSync: (ok: boolean) => void;
 }
 
-/** Télécharge le carnet en JSON (offline : Blob + lien local). Numéros latins, zéro pourcentage —
- *  pas de jugement, juste la trace consultable pour revoir ses propres erreurs. */
-function exporterCarnet(fautes: FauteCarnet[]): void {
-  const paquet = {
-    application: 'بوصلة العلوم · منهجية',
-    exporteLe: new Date().toISOString(),
-    total: fautes.length,
-    carnet: fautes,
-  };
-  const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
+/** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
+ *  (a.download + Blob échoue en silence, vérifié empiriquement) — on écrit donc le fichier
+ *  via le plugin Filesystem puis on ouvre la feuille de partage (Share) pour que l'élève
+ *  l'enregistre où il veut. Sur web, on garde le Blob + lien local. Retourne le message
+ *  de confirmation en arabe (chiffres latins, zéro pourcentage — même ton sans jugement). */
+async function exporterJson(paquet: unknown, nomFichier: string, titre: string): Promise<string> {
+  const json = JSON.stringify(paquet, null, 2);
+  if (Capacitor.isNativePlatform()) {
+    const fichier = await Filesystem.writeFile({
+      path: nomFichier,
+      data: json,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+    });
+    try {
+      await Share.share({ title: titre, url: fichier.uri, dialogTitle: titre });
+    } catch {
+      // partage annulé par l'élève : le fichier est déjà écrit dans le cache
+    }
+    return `حُفِظ ملف « ${nomFichier} » — شارِكه أو خزّنه في مكان آمن؛ هو نسختك الوحيدة خارج هذا الجهاز.`;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'carnet-failles.json';
+  a.download = nomFichier;
   a.click();
   URL.revokeObjectURL(url);
+  return `تم تنزيل « ${nomFichier} » — خزّنه في مكان آمن؛ هو نسختك الوحيدة خارج هذا المتصفح.`;
+}
+
+/** Export du carnet d'erreurs (JSON). Numéros latins, zéro pourcentage — pas de jugement. */
+function exporterCarnet(fautes: FauteCarnet[]): Promise<string> {
+  return exporterJson(
+    {
+      application: 'بوصلة العلوم · منهجية',
+      exporteLe: new Date().toISOString(),
+      total: fautes.length,
+      carnet: fautes,
+    },
+    'carnet-failles.json',
+    'سجلّ الأخطاء',
+  );
 }
 
 /** Sauvegarde complète : TOUT l'état de l'app (progression, SM-2, جسور, كفاءة, carnet, journal,
  *  drills, compte local) en un seul JSON local. La progression survit ainsi au changement de
  *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin. */
-function exporterEtatComplet(etat: Etat): void {
-  const paquet = {
-    application: 'بوصلة العلوم · نسخة احتياطية',
-    exporteLe: new Date().toISOString(),
-    etat,
-  };
-  const blob = new Blob([JSON.stringify(paquet, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'bousala-sauvegarde.json';
-  a.click();
-  URL.revokeObjectURL(url);
+function exporterEtatComplet(etat: Etat): Promise<string> {
+  return exporterJson(
+    {
+      application: 'بوصلة العلوم · نسخة احتياطية',
+      exporteLe: new Date().toISOString(),
+      etat,
+    },
+    'bousala-sauvegarde.json',
+    'نسخة احتياطية',
+  );
 }
 
 export default function Ana({
@@ -77,6 +104,7 @@ export default function Ana({
   const [confirme, setConfirme] = useState(false);
   const [confirmeCarnet, setConfirmeCarnet] = useState(false);
   const [erreurImport, setErreurImport] = useState<string | null>(null);
+  const [noteExport, setNoteExport] = useState<{ ou: 'carnet' | 'sauvegarde'; texte: string } | null>(null);
   const entreeFichier = useRef<HTMLInputElement>(null);
   const notes = [...etat.notes].sort((a, b) => (a.ts < b.ts ? 1 : -1));
   const fautes = [...carnet].sort((a, b) => (a.ts < b.ts ? 1 : -1));
@@ -349,7 +377,12 @@ export default function Ana({
         {fautes.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             <button
-              onClick={() => exporterCarnet(fautes)}
+              onClick={() => {
+                setNoteExport(null);
+                exporterCarnet(fautes)
+                  .then((texte) => setNoteExport({ ou: 'carnet', texte }))
+                  .catch(() => setNoteExport({ ou: 'carnet', texte: 'تعذّر التصدير — جرّب من جديد.' }));
+              }}
               className="btn btn-primary flex-1 text-sm"
             >
               تصدير السجلّ
@@ -373,6 +406,15 @@ export default function Ana({
               </button>
             )}
           </div>
+        )}
+
+        {noteExport?.ou === 'carnet' && (
+          <p
+            role="status"
+            className="mt-3 rounded-xl border border-forest bg-sage px-3 py-2 text-sm font-bold text-forest-deep"
+          >
+            {noteExport.texte}
+          </p>
         )}
 
         {fautes.length === 0 ? (
@@ -418,7 +460,12 @@ export default function Ana({
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
-            onClick={() => exporterEtatComplet(etat)}
+            onClick={() => {
+              setNoteExport(null);
+              exporterEtatComplet(etat)
+                .then((texte) => setNoteExport({ ou: 'sauvegarde', texte }))
+                .catch(() => setNoteExport({ ou: 'sauvegarde', texte: 'تعذّر التصدير — جرّب من جديد.' }));
+            }}
             className="btn btn-primary flex-1 text-sm"
           >
             تصدير نسختي
@@ -437,6 +484,14 @@ export default function Ana({
             onChange={importerFichier}
           />
         </div>
+        {noteExport?.ou === 'sauvegarde' && (
+          <p
+            role="status"
+            className="mt-3 rounded-xl border border-forest bg-sage px-3 py-2 text-sm font-bold text-forest-deep"
+          >
+            {noteExport.texte}
+          </p>
+        )}
         {erreurImport && (
           <p
             role="alert"

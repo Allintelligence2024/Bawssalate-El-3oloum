@@ -735,6 +735,13 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
   confetti, XP en `text-[#9a7a2c]` + `.tnum`, `text-wrap: balance` sur les titres. (5) tests
   **Artemis PASS** : منهجية (retour RTL ✓), الخريطة الذهنية (3 domaines/11 unités, leçons
   verrouillées), compte, lecteur. APK `app-debug.apk` reconstruit et réinstallé sur émulateur.
+  (6) **export Android réparé** : vérification empirique — `a.download` + Blob échoue **en
+  silence** dans le WebView Capacitor 8 (aucun DownloadListener, `/sdcard/Download/` reste vide,
+  aucun message) ; nouvel helper `exporterJson` : `Capacitor.isNativePlatform()` → écriture via
+  `@capacitor/filesystem` (cache) + **feuille de partage** `@capacitor/share` (l'élève choisit
+  où garder le fichier), web garde Blob + lien ; message de confirmation inline dans les deux
+  sections (تصدير السجلّ / تصدير نسختي) — vérifié sur émulateur : sheet « Sharing 1 file:
+  bousala-sauvegarde.json », JSON complet dans le cache, message « حُفِظ ملف… » affiché.
 - **v0.9.2** — **APK Capacitor + خريطة ذهنية + boutons de retour** : (1) la cause racine de la
   **transparence** est trouvée et corrigée : le @theme Tailwind 4 ne définissait que `--color-line`,
   les 8 couleurs personnalisées (`cream`, `paper`, `sage`, `sage-soft`, `clay`, `clay-soft`,
