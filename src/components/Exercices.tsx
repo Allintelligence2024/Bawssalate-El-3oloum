@@ -16,7 +16,7 @@ import {
   composerJoueur,
 } from '../utils/drills';
 import { ChoixUnique } from './Communs';
-import { IcoCible, IcoDiplome, IcoOutils, IcoRetour, IcoTamrin, IcoVerrou } from './Icones';
+import { IcoCible, IcoDiplome, IcoDocument, IcoOutils, IcoRetour, IcoTamrin, IcoVerrou } from './Icones';
 
 interface Props {
   etat: Etat;
@@ -27,6 +27,7 @@ interface Props {
   onOuvrirStructureTerre: () => void;
   onOuvrirMethodo: () => void;
   onOuvrirExamen: () => void;
+  onOuvrirSujetsExamen: () => void;
 }
 
 type Portee = { kind: 'axe'; axe: AxeDrill };
@@ -47,9 +48,11 @@ export default function Exercices({
   onOuvrirStructureTerre,
   onOuvrirMethodo,
   onOuvrirExamen,
+  onOuvrirSujetsExamen,
 }: Props) {
   const [vue, setVue] = useState<Vue>({ type: 'choix' });
   const [enCharge, setEnCharge] = useState(false);
+  const [niveauMax, setNiveauMax] = useState<1 | 2 | 3 | undefined>(undefined);
   const reussis = new Set(Object.keys(etat.drills ?? {}));
   // القفل الخطّي مثل مساري تمامًا: محاور الوحدة تُفتح حين يُفتح أوّل بند منها في الطريق.
   const debloquees = unitesDebloquees(etat);
@@ -59,7 +62,7 @@ export default function Exercices({
     try {
       const tous = await chargerDomaineDeUnite(portee.axe.u);
       const cible = tous.filter((i) => i.a === portee.axe.id);
-      const file = composerJoueur(cible, reussis, TAILLE_JOUR);
+      const file = composerJoueur(cible, reussis, TAILLE_JOUR, niveauMax);
       setVue({ type: 'seance', portee, file, index: 0 });
     } finally {
       setEnCharge(false);
@@ -123,6 +126,19 @@ export default function Exercices({
               {nb(TOTAL_QCM + TOTAL_DEFS)} سؤالًا على {nb(AXES.length)} محورًا · جولات من{' '}
               {nb(TAILLE_JOUR)} أسئلة، بلا مؤقّت.
             </p>
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <span className="text-mute">المستوى:</span>
+              <select
+                value={niveauMax ?? ''}
+                onChange={(e) => setNiveauMax(e.target.value ? (Number(e.target.value) as 1 | 2 | 3) : undefined)}
+                className="rounded-xl border border-line bg-paper px-3 py-1.5 text-sm font-bold w-auto"
+              >
+                <option value="">الكل (1–3)</option>
+                <option value="1">1 — سهل</option>
+                <option value="2">1–2 — سهل + متوسط</option>
+                <option value="3">1–3 — جميع المستويات</option>
+              </select>
+            </div>
             <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
               ابدأ ←
             </span>
@@ -145,6 +161,25 @@ export default function Exercices({
             </p>
             <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
               ابدأ ←
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOuvrirSujetsExamen}
+            className="card group p-5 text-right transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-[0_18px_36px_-22px_rgba(38,77,56,0.55)]"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-paper">
+              <span className="block h-6 w-6">
+                <IcoDocument />
+              </span>
+            </span>
+            <h2 className="font-naskh mt-3 text-lg font-bold">بنك المواضيع · Bac</h2>
+            <p className="mt-1 text-sm leading-relaxed text-mute">
+              {nb(34)} موضوعات رسمية SVT وعلوم طبيعية · PDF أصلي · فتح أو تحميل
+            </p>
+            <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
+              استعرض ←
             </span>
           </button>
 
@@ -182,6 +217,26 @@ export default function Exercices({
             <p className="mt-1 text-sm leading-relaxed text-mute">
               المفتاح فعل ← دليل ← جواب ← فحص و{nb(4)} مستويات: القدوة، التمرين الموجه، المستقل،
               تشخيص الخطأ.
+            </p>
+            <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
+              ابدأ ←
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setNiveauMax(3);
+              setVue({ type: 'liste' });
+            }}
+            className="card group p-5 text-right transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-clay hover:shadow-[0_18px_36px_-22px_rgba(180,80,50,0.55)]"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-clay/10 text-clay transition-colors group-hover:bg-clay group-hover:text-paper">
+              <span className="block h-6 w-6 font-bold text-xl">3</span>
+            </span>
+            <h2 className="font-naskh mt-3 text-lg font-bold">تحدي المستوى 3</h2>
+            <p className="mt-1 text-sm leading-relaxed text-mute">
+              أسئلة صعبة فقط (مستوى 3) · تدريب مكثف للبكالوريا
             </p>
             <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
               ابدأ ←

@@ -91,7 +91,7 @@ export const PROTOCOLE: PhaseProtocole[] = [
   },
 ];
 
-export const DUREE_TOTALE_MIN = PROTOCOLE.reduce((s, p) => s + p.dureeMin, 0); // 42
+export const DUREE_TOTALE_MIN = PROTOCOLE.reduce((s, p) => s + p.dureeMin, 0); // 8+3+5+5+15+10 = 46
 
 // تشخيصات الثغرات في المرحلة 6 (OPUS: T1–T4)
 export const DIAGNOSTICS: { id: string; ar: string }[] = [

@@ -1,9 +1,10 @@
 // عامل الخدمة — بوصلة العلوم Lite
 // PWA يدوية: precache الواجهة، network-first للتنقل، cache-first للأصول.
 // يعمل دون اتصال بعد أول تحميل (سياق الشبكة الجزائري المحدود).
+// Phase 2: precache جميع الحزم الكسولة (lazy chunks) عند أول زيارة.
 
-const CACHE = 'murajih-svt-v2';
-const PRECACHE = [
+const CACHE = 'murajih-svt-v3';
+const PRECACHE_STATIC = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
@@ -38,31 +39,65 @@ const PRECACHE = [
   '/lecons/phase22_chapitres_43_44.html',
 ];
 
+const ASSETS_CACHE = 'murajih-svt-assets-v1';
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE_STATIC)).then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ASSETS_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
+
+async function warmAssetsCache(htmlResponse) {
+  const cache = await caches.open(ASSETS_CACHE);
+  const html = await htmlResponse.clone().text();
+  
+  // استخراج جميع روابط JS و CSS من HTML
+  const assetUrls = [
+    ...html.match(/["'](\/assets\/[^"']+\.(?:js|css))["']/g) ?? [],
+    ...html.match(/["'](\/assets\/[^"']+\.(?:js|css))\?/g) ?? [],
+  ].map(u => u.slice(1, -1)); // إزالة علامات التنصيص
+
+  // إزالة المكررات
+  const uniqueUrls = [...new Set(assetUrls)];
+
+  // precache بالتوازي (fire-and-forget مع معالجة الأخطاء)
+  await Promise.allSettled(
+    uniqueUrls.map((url) =>
+      fetch(url)
+        .then((res) => {
+          if (res.ok) return cache.put(url, res);
+        })
+        .catch(() => {}) // تجاهل الأخطاء - سيتم التخزين عند الطلب لاحقاً
+    )
+  );
+}
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   // التنقل: الشبكة أولاً، ثم النسخة المخبأة (offline fallback)
+  // عند أول زيارة، نقوم بتسخين كاش الأصول (warm assets cache)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then((res) => {
+        .then(async (res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          const cache = await caches.open(CACHE);
+          await cache.put(request, copy);
+          
+          // تسخين كاش الأصول في الخلفية (non-blocking)
+          if (res.ok && res.headers.get('content-type')?.includes('text/html')) {
+            warmAssetsCache(res).catch(() => {});
+          }
           return res;
         })
         .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
@@ -70,7 +105,32 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // الأصول: المخبأ أولاً، ثم الشبكة مع تخزين النتيجة
+  // الأصول (JS, CSS, صور, فيديو): المخبأ أولاً، ثم الشبكة مع تخزين النتيجة
+  // كاش مخصص للأصول لتجنب تضخيم الكاش الرئيسي
+  const url = new URL(request.url);
+  if (url.pathname.startsWith('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      caches.open(ASSETS_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+
+        try {
+          const res = await fetch(request);
+          if (res.ok) {
+            cache.put(request, res.clone());
+          }
+          return res;
+        } catch {
+          // fallback للصفحة الرئيسية
+          const mainCache = await caches.open(CACHE);
+          return mainCache.match('/index.html') || mainCache.match('/');
+        }
+      })
+    );
+    return;
+  }
+
+  // باقي الطلبات: الكاش الرئيسي
   event.respondWith(
     caches.match(request).then(
       (cached) =>

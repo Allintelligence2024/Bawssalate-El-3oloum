@@ -30,9 +30,12 @@ export async function chargerDomaineDeUnite(u: number): Promise<ItemDrill[]> {
 }
 
 // بناء جولة: العناصر غير المُجابة أولًا، ثم الباقي، بلا تكرار داخل الجولة.
-export function composerJoueur(tous: ItemDrill[], dejaFait: Set<string>, taille: number): ItemDrill[] {
-  const restants = tous.filter((i) => !dejaFait.has(i.id));
-  const base = restants.length > 0 ? restants : tous;
+export function composerJoueur(tous: ItemDrill[], dejaFait: Set<string>, taille: number, niveauMax?: 1 | 2 | 3): ItemDrill[] {
+  let pool = tous.filter((i) => !dejaFait.has(i.id));
+  if (niveauMax) {
+    pool = pool.filter((i) => i.n <= niveauMax);
+  }
+  const base = pool.length > 0 ? pool : tous.filter((i) => !niveauMax || i.n <= niveauMax);
   const melange = [...base];
   for (let i = melange.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

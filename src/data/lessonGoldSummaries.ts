@@ -35,7 +35,7 @@ export const LESSON_GOLD_SUMMARIES: Record<string, LessonGoldSummary> = {
   'd2-u6-l1-hill-ruben': {
     lessonId: 'd2-u6-l1-hill-ruben',
     status: 'adaptation_pedagogique',
-    source: { sourceLabel: 'Résumé Kunz — manuel SVT DZ, تحويل الطاقة الضوئية (هيل 1937، روبن 1941)' },
+    source: { sourceLabel: 'Résumé Kunz — manuel SVT DZ, تحويل الطاقة الضوئية (هيل 1939، روبن 1941)' },
     missionAr: 'ما مصدر الأكسجين المنطلق في التركيب الضوئي: CO₂ أم H₂O؟',
     mechanismAr: [
       'عزل هيل صانعات خضراء في وسط خال من CO₂ مع مستقبل اصطناعي Fe³⁺ والضوء',
