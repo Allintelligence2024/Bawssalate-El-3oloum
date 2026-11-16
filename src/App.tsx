@@ -1,6 +1,6 @@
-// Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ â€” 5 ØªØ¨ÙˆÙŠØ¨Ø§Øª (Ø§Ù„ÙŠÙˆÙ… / Ù…Ø³Ø§Ø±ÙŠ / ØªØ¯Ø±ÙŠØ¨Ø§Øª / Ù…Ù†Ù‡Ø¬ÙŠØ© / Ø£Ù†Ø§) + Ø£ÙˆØ¶Ø§Ø¹ Ø¬Ù„Ø³Ø© ÙƒØ§Ù…Ù„Ø© Ø§Ù„Ø´Ø§Ø´Ø©.
-// ØªØµÙ…ÙŠÙ… Ø­Ø¯ÙŠØ«ØŒ ØªØ±ÙÙŠÙ‡ÙŠØŒ Ø£ØµÙˆØ§Øª ØªÙØ§Ø¹Ù„ØŒ ØªØ£Ø«ÙŠØ±Ø§Øª ØªØµÙÙŠÙ‚.
-// ÙƒÙ„ Ø§Ù„Ø­Ø§Ù„Ø© ÙÙŠ localStorage. Ù„Ø§ Ø®Ø§Ø¯Ù…ØŒ Ù„Ø§ ØªØ­Ù„ÙŠÙ„Ø§ØªØŒ Ù„Ø§ ØªØ¨Ø¹Ø§Øª Ø«Ù‚ÙŠÙ„Ø©.
+// التطبيق — 5 تبويبات (اليوم / مساري / تدريبات / منهجية / أنا) + أوضاع جلسة كاملة الشاشة.
+// تصميم حديث، ترفيهي، أصوات تفاعل، تأثيرات تصفيق.
+// كل الحالة في localStorage. لا خادم، لا تحليلات، لا تبعات ثقيلة.
 
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
@@ -14,7 +14,7 @@ import { mettreAJourSrs, premiereRevision } from './utils/srs';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
-// Methodologie est l'Ã©cran le plus lourd (~190 kB source) : chargÃ© Ã  la demande (React.lazy).
+// Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
 import ExamBlanc from './components/ExamBlanc';
 import SyntheseLibre from './components/SyntheseLibre';
@@ -62,18 +62,18 @@ type Mode =
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
-  { id: 'aujourdhui', label: 'Ø§Ù„ÙŠÙˆÙ…', icone: IcoSoleil },
-  { id: 'masari', label: 'Ù…Ø³Ø§Ø±ÙŠ', icone: IcoRoute },
-  { id: 'methodo', label: 'Ù…Ù†Ù‡Ø¬ÙŠØ©', icone: IcoCle },
-  { id: 'exercices', label: 'ØªØ¯Ø±ÙŠØ¨Ø§Øª', icone: IcoDumbbell },
-  { id: 'ana', label: 'Ø£Ù†Ø§', icone: IcoCarnet },
+  { id: 'aujourdhui', label: 'اليوم', icone: IcoSoleil },
+  { id: 'masari', label: 'مساري', icone: IcoRoute },
+  { id: 'methodo', label: 'منهجية', icone: IcoCle },
+  { id: 'exercices', label: 'تدريبات', icone: IcoDumbbell },
+  { id: 'ana', label: 'أنا', icone: IcoCarnet },
 ];
 
-/** Ã‰cran d'attente pendant le chargement paresseux de Ø§Ù„Ù…Ù†Ù‡Ø¬ÙŠØ©. */
+/** Écran d'attente pendant le chargement paresseux de المنهجية. */
 function ChargementEcran() {
   return (
     <div className="grid min-h-dvh place-items-center bg-cream">
-      <p className="font-naskh text-lg font-bold text-mute">Ù„Ø­Ø¸Ø©ØŒ Ø£ÙØªØ­ Ø§Ù„Ù…Ù†Ù‡Ø¬ÙŠØ©â€¦</p>
+      <p className="font-naskh text-lg font-bold text-mute">لحظة، أفتح المنهجية…</p>
     </div>
   );
 }
@@ -137,15 +137,15 @@ export default function App() {
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
   const [mode, setMode] = useState<Mode | null>(null);
   const [ouverteLecon, setOuverteLecon] = useState<string | null>(null);
-  // Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„Ø¯Ø±Ø³ Ù…ÙÙØ±ÙˆØ¶Ø©: Ù„Ø§ ØªÙÙØªØ­ Ø¨ÙˆÙ‘Ø§Ø¨Ø© Ø§Ù„Ù…Ø±Ø­Ù„Ø© 1 Ù‚Ø¨Ù„ ÙØªØ­ Ø§Ù„Ù‚Ø§Ø±Ø¦ ÙˆØ¥ØºÙ„Ø§Ù‚Ù‡ ÙØ¹Ù„Ù‹Ø§
+  // قراءة الدرس مُفروضة: لا تُفتح بوّابة المرحلة 1 قبل فتح القارئ وإغلاقه فعلًا
   const [leconLue, setLeconLue] = useState(false);
   const [demarrage, setDemarrage] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     return !sessionStorage.getItem('kunz_demarrage');
   });
-  // Ø¬Ù„Ø³Ø© Ø§Ù„Ø¯Ø®ÙˆÙ„: ØªØ¨Ù‚Ù‰ Ù…ÙØªÙˆØ­Ø© Ù…Ø§ Ø¯Ø§Ù… Ø§Ù„ØªØ¨ÙˆÙŠØ¨ Ù…ÙØªÙˆØ­Ù‹Ø§ (Ù„Ø§ ÙƒÙ„Ù…Ø© Ù…Ø±ÙˆØ± ÙÙŠ ÙƒÙ„ ØªØ­Ù…ÙŠÙ„)
+  // جلسة الدخول: تبقى مفتوحة ما دام التبويب مفتوحًا (لا كلمة مرور في كل تحميل)
   const [session, setSession] = useState<boolean>(() => sessionOuverte(etat.compte?.email));
-  // Ø§Ù„Ø³Ù…Ø©: Ø¯Ø§ÙƒÙ† Ø£Ùˆ ÙØ§ØªØ­ â€” ÙŠÙØ­ÙØ¸ ÙÙŠ localStorage
+  // السمة: داكن أو فاتح — يُحفظ في localStorage
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
     return (localStorage.getItem('kunz_theme') as 'light' | 'dark') ?? 'light';
@@ -168,7 +168,7 @@ export default function App() {
     setDemarrage(false);
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ø­Ø³Ø§Ø¨ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── الحساب ─────────────
 
   function onCompteValide(compte: Compte) {
     setEtat((prev) => ({ ...prev, compte, consentementSync: false }));
@@ -196,25 +196,25 @@ export default function App() {
   }
 
   useEffect(() => {
-    // Ø¥Ø¹Ø§Ø¯Ø© Ø­Ø³Ø§Ø¨ Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø§Ù„Ø¯Ù‚Ø§Ø¦Ù‚ Ù…Ù† ÙƒÙ„ Ø§Ù„Ø¯Ø±ÙˆØ³ (ØªÙØ§Ø¯ÙŠ Ø§Ù„ØªØ±Ø§ÙƒÙ…)
+    // إعادة حساب إجمالي الدقائق من كل الدروس (تفادي التراكم)
     const minutes = Object.values(etat.progression).reduce((s, p) => s + (p.minutes ?? 0), 0);
     sauvegarderEtat({ ...etat, minutesTotales: minutes });
   }, [etat]);
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ù…Ø²Ø§Ù…Ù†Ø© Ø§Ù„Ø§Ø®ØªÙŠØ§Ø±ÙŠØ© (ØµØ§Ù…ØªØ©ØŒ offline-first) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── المزامنة الاختيارية (صامتة، offline-first) ─────────────
 
   const etatRef = useRef(etat);
   etatRef.current = etat;
 
   useEffect(() => {
     if (!syncActive()) return;
-    // Ø¨Ø¹Ø¯ ÙƒÙ„ ØªØºÙŠÙŠØ±: Ø§Ù†ØªØ¸Ø± 6 Ø«ÙˆØ§Ù†Ù Ø«Ù… Ø£Ø±Ø³Ù„ (ØªÙØ§Ø¯ÙŠ Ø§Ù„Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…ØªÙƒØ±Ø±)
+    // بعد كل تغيير: انتظر 6 ثوانٍ ثم أرسل (تفادي الإرسال المتكرر)
     const delai = setTimeout(() => void envoyerSnapshot(etatRef.current), 6000);
-    // Ø¹Ù†Ø¯ ØªØµØºÙŠØ± Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ Ø£Ùˆ ØªØ¨Ø¯ÙŠÙ„ Ø§Ù„ØªØ¨ÙˆÙŠØ¨: Ø£Ø±Ø³Ù„ ÙÙˆØ±Ù‹Ø§
+    // عند تصغير التطبيق أو تبديل التبويب: أرسل فورًا
     const onVisibilite = () => {
       if (document.visibilityState === 'hidden') void envoyerSnapshot(etatRef.current);
     };
-    // Ø¹Ù†Ø¯ Ø¹ÙˆØ¯Ø© Ø§Ù„Ø´Ø¨ÙƒØ©: Ø£Ø±Ø³Ù„ Ù…Ø§ ØªØ¬Ù…Ù‘Ø¹
+    // عند عودة الشبكة: أرسل ما تجمّع
     const onLigne = () => void envoyerSnapshot(etatRef.current);
     document.addEventListener('visibilitychange', onVisibilite);
     window.addEventListener('online', onLigne);
@@ -225,7 +225,7 @@ export default function App() {
     };
   }, [etat]);
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ÙØªØ­ Ø¨Ù†ÙˆØ¯ Ø§Ù„Ø·Ø±ÙŠÙ‚ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── فتح بنود الطريق ─────────────
 
   function ouvrirItem(item: ItemChemin): void {
     if (item.type === 'jalon') {
@@ -237,7 +237,7 @@ export default function App() {
       setMode({ type: 'lecture', lessonId: item.id });
       return;
     }
-    // Ø­ØµÙ‘Ø© Ø¬Ø¯ÙŠØ¯Ø© ØªÙØ­ØªØ³Ø¨ ÙÙŠ Ø§Ù„Ø­ØµÙ‘Ø© Ø§Ù„ÙŠÙˆÙ…ÙŠØ© (Ø£Ùˆ ØªÙØ³Ø¬Ù‘Ù„ ÙƒØ¥Ø¶Ø§ÙÙŠØ©)
+    // حصّة جديدة تُحتسب في الحصّة اليومية (أو تُسجّل كإضافية)
     setEtat((prev) => {
       const comptees = prev.seancesJour === aujourdhui() ? prev.seancesComptees : 0;
       const suivant = enregistrerSeance(prev);
@@ -248,9 +248,9 @@ export default function App() {
     setMode({ type: 'protocole', lessonId: item.id });
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ouverture depuis la Ø§Ù„Ø®Ø±ÙŠØ·Ø© Ø§Ù„Ø°Ù‡Ù†ÙŠØ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  // Fermer une session lancÃ©e depuis la carte mentale y ramÃ¨ne (retour contextuel),
-  // au lieu de renvoyer l'Ã©lÃ¨ve vers Ù…Ø³Ø§Ø±ÙŠ.
+  // ───────────── ouverture depuis la الخريطة الذهنية ─────────────
+  // Fermer une session lancée depuis la carte mentale y ramène (retour contextuel),
+  // au lieu de renvoyer l'élève vers مساري.
   const [retourMindmap, setRetourMindmap] = useState(false);
   useEffect(() => {
     if (!mode) setRetourMindmap(false);
@@ -277,7 +277,7 @@ export default function App() {
     setMode({ type: 'protocole', lessonId: item.id });
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø±Ø¯ÙˆØ¯ Ø§Ù„Ø¨Ø±ÙˆØªÙˆÙƒÙˆÙ„ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── ردود البروتوكول ─────────────
 
   function onProgresse(lessonId: string, p: Etat['progression'][string]): void {
     setEtat((prev) => ({ ...prev, progression: { ...prev.progression, [lessonId]: p } }));
@@ -292,7 +292,7 @@ export default function App() {
     setMode(retourMindmap ? { type: 'mindmap' } : null);
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ø§Ø³ØªØ±Ø¬Ø§Ø¹ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── الاسترجاع ─────────────
 
   function onResultatRevision(lessonId: string, qualite: Qualite): void {
     setEtat((prev) => {
@@ -306,7 +306,7 @@ export default function App() {
     });
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ø¬Ø³Ø± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── الجسر ─────────────
 
   function onEnregistrerJalon(uniteId: string, synthese: string): void {
     setEtat((prev) => ({
@@ -319,7 +319,7 @@ export default function App() {
     setMode(null);
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„ØªØ¯Ø±ÙŠØ¨Ø§Øª â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── التدريبات ─────────────
 
   function onItemReussi(id: string): void {
     setEtat((prev) =>
@@ -329,14 +329,14 @@ export default function App() {
     );
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø¨Ø·Ø§Ù‚Ø§Øª Ø§Ù„ÙƒÙØ§Ø¡Ø© (Ù…Ù†Ù‡Ø¬ÙŠØ©) â€” mÃªme SM-2 que les leÃ§ons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── بطاقات الكفاءة (منهجية) — même SM-2 que les leçons ─────────────
 
-  /** RÃ©ussite d'un exercice de Ù…Ù†Ù‡Ø¬ÙŠØ© ou auto-Ã©valuation d'une revue : la carte ÙƒÙØ§Ø¡Ø©
-   *  est programmÃ©e par mettreAJourSrs (rÃ©ussite directe â†’ J+3, rÃ©ussite aprÃ¨s erreurs â†’ J+1).
-   *  `estRevue` est rÃ©servÃ© Ã  la revue hebdomadaire de l'Ã©cran Ø§Ù„ÙŠÙˆÙ… : seule une REVUE
-   *  consomme le quota kafaaHebdo (â‰¤ 2 par semaine). Une rÃ©ussite d'exercice crÃ©e ou
-   *  programme la carte SANS Ã©puiser le quota (audit : sinon, plus on s'entraÃ®ne,
-   *  plus vite le planificateur se dÃ©sactive). */
+  /** Réussite d'un exercice de منهجية ou auto-évaluation d'une revue : la carte كفاءة
+   *  est programmée par mettreAJourSrs (réussite directe → J+3, réussite après erreurs → J+1).
+   *  `estRevue` est réservé à la revue hebdomadaire de l'écran اليوم : seule une REVUE
+   *  consomme le quota kafaaHebdo (≤ 2 par semaine). Une réussite d'exercice crée ou
+   *  programme la carte SANS épuiser le quota (audit : sinon, plus on s'entraîne,
+   *  plus vite le planificateur se désactive). */
   function onResultatKafaa(
     key: string,
     qualite: Qualite,
@@ -346,7 +346,7 @@ export default function App() {
     setEtat((prev) => {
       const existante = prev.kafaa?.[key];
       const auj = aujourdhui();
-      // DÃ©jÃ  programmÃ©e pour plus tard : pas d'accÃ©lÃ©ration le mÃªme jour.
+      // Déjà programmée pour plus tard : pas d'accélération le même jour.
       if (existante?.prochaineRevision && existante.prochaineRevision > auj) return prev;
       const base: CarteKafaa = existante ?? {
         verbe: meta.verbe,
@@ -357,7 +357,7 @@ export default function App() {
         facilite: 2.5,
       };
       const maj = mettreAJourSrs(base, qualite);
-      // RÃ©ussite directe : premier palier J+3 (audit) ; rÃ©ussite avec erreurs : J+1.
+      // Réussite directe : premier palier J+3 (audit) ; réussite avec erreurs : J+1.
       if (maj.repetitions === 1 && qualite === 5) {
         maj.intervalle = 3;
         maj.prochaineRevision = ajouterJours(aujourdhui(), 3);
@@ -367,18 +367,18 @@ export default function App() {
       return {
         ...prev,
         kafaa: { ...(prev.kafaa ?? {}), [key]: maj },
-        // Seule une REVUE (Ã©cran Ø§Ù„ÙŠÙˆÙ…) consomme le quota hebdomadaire (â‰¤ 2) ;
-        // une rÃ©ussite d'exercice programme la carte sans l'Ã©puiser.
+        // Seule une REVUE (écran اليوم) consomme le quota hebdomadaire (≤ 2) ;
+        // une réussite d'exercice programme la carte sans l'épuiser.
         ...(estRevue ? { kafaaHebdo: { debut, n: hebdo + 1 } } : {}),
       };
     });
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø³Ø¬Ù„Ù‘ Ø§Ù„Ø£Ø®Ø·Ø§Ø¡ Ø§Ù„Ø°Ø±Ù‘ÙŠØ© (v0.8) â€” capturÃ© dans les exercices de Ù…Ù†Ù‡Ø¬ÙŠØ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── سجلّ الأخطاء الذرّية (v0.8) — capturé dans les exercices de منهجية ─────────────
 
-  /** Chaque erreur d'exercice est ajoutÃ©e au carnet (persistÃ©, offline). Cap Ã  400 entrÃ©es :
-   *  l'export JSON du carnet couvre l'historique complet. Les bonnes rÃ©ponses n'y figurent
-   *  jamais (anti-stress) â€” on y voit Â« j'ai choisi X, voici pourquoi c'est fautif Â». */
+  /** Chaque erreur d'exercice est ajoutée au carnet (persisté, offline). Cap à 400 entrées :
+   *  l'export JSON du carnet couvre l'historique complet. Les bonnes réponses n'y figurent
+   *  jamais (anti-stress) — on y voit « j'ai choisi X, voici pourquoi c'est fautif ». */
   function onCarnetFaute(f: Omit<FauteCarnet, 'id' | 'ts'>): void {
     setEtat((prev) => {
       const entree: FauteCarnet = {
@@ -394,14 +394,14 @@ export default function App() {
     setEtat((prev) => ({ ...prev, carnet: [] }));
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ù…ÙˆØ§ÙÙ‚Ø© Ø§Ù„Ù…Ø²Ø§Ù…Ù†Ø© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── موافقة المزامنة ─────────────
 
   function onConsentementSync(ok: boolean): void {
     setEtat((prev) => ({ ...prev, consentementSync: ok }));
     if (ok) void envoyerSnapshot(etatRef.current);
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª ÙˆØ§Ù„Ù‡ÙˆÙŠØ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── الملاحظات والهوية ─────────────
 
   function onSupprimerNote(id: string): void {
     setEtat((prev) => ({ ...prev, notes: prev.notes.filter((n) => n.id !== id) }));
@@ -414,7 +414,7 @@ export default function App() {
     setOnglet('aujourdhui');
   }
 
-  // Ø§Ø³ØªÙŠØ±Ø§Ø¯ Ù†Ø³Ø®Ø© Ø§Ø­ØªÙŠØ§Ø·ÙŠØ© ÙƒØ§Ù…Ù„Ø© (Ù…Ù† Ø£Ù†Ø§) â€” Ø§Ù„Ø­ÙØ¸ Ø§Ù„ÙÙˆØ±ÙŠ ÙŠÙ‚Ø¹ ÙÙŠ useEffect Ø§Ù„Ø­Ø§Ù„Ø©
+  // استيراد نسخة احتياطية كاملة (من أنا) — الحفظ الفوري يقع في useEffect الحالة
   function onRestaurerEtat(nouveau: Etat): void {
     setEtat(nouveau);
     setMode(null);
@@ -432,18 +432,18 @@ export default function App() {
     setMode(null);
   }
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ø§Ù„Ø£ÙˆØ¶Ø§Ø¹ ÙƒØ§Ù…Ù„Ø© Ø§Ù„Ø´Ø§Ø´Ø© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ───────────── الأوضاع كاملة الشاشة ─────────────
 
   if (mode) {
-    // Ø§Ù„Ù‚Ø§Ø±Ø¦ ÙŠÙÙØªØ­ ÙÙˆÙ‚ Ø§Ù„ÙˆØ±Ø´Ø© ÙÙ„Ø§ ÙŠÙÙÙ‚Ø¯ Ø§Ù„ØªÙ‚Ø¯Ù‘Ù… Ø§Ù„Ù…ÙƒØªØ³Ø¨ ÙÙŠÙ‡Ø§
+    // القارئ يُفتح فوق الورشة فلا يُفقد التقدّم المكتسب فيها
     const lecteurAtelier = ouverteLecon ? (
       <div className="fixed inset-0 z-50 overflow-y-auto bg-cream">
         <LecteurLecon lessonId={ouverteLecon} onFermer={() => setOuverteLecon(null)} />
       </div>
     ) : null;
 
-    // ØªÙ…Ø§Ø±ÙŠÙ† Ø§Ù„Ù…Ù†Ù‡Ø¬ÙŠØ©: 3e porte de ØªØ¯Ø±ÙŠØ¨Ø§Øª â€” ouverte directement sur Ù…Ø³ØªÙˆÙŠØ§Øª Ø§Ù„ØªØ¯Ø±ÙŠØ¨,
-    // la fermeture (setMode(null)) retourne Ã  l'onglet ØªØ¯Ø±ÙŠØ¨Ø§Øª.
+    // تمارين المنهجية: 3e porte de تدريبات — ouverte directement sur مستويات التدريب,
+    // la fermeture (setMode(null)) retourne à l'onglet تدريبات.
     if (mode.type === 'methodoExos') {
       return (
         <Suspense fallback={<ChargementEcran />}>
@@ -619,7 +619,7 @@ export default function App() {
   }
 
   const inscrit = Boolean(etat.compte) && session;
-  // Ù„Ø§ ØªØ¨ÙˆÙŠØ¨Ø§Øª ÙˆÙ„Ø§ Ø´Ø§Ø±Ø© Ù‚Ø¨Ù„ Ø§ÙƒØªÙ…Ø§Ù„ Ø´Ø§Ø´Ø© Ø§Ù„Ø¥Ù‚Ù„Ø§Ø¹ ÙˆÙØªØ­ Ø­Ø³Ø§Ø¨
+  // لا تبويبات ولا شارة قبل اكتمال شاشة الإقلاع وفتح حساب
   const pret = inscrit && !demarrage;
 
   return (
@@ -627,29 +627,29 @@ export default function App() {
       {demarrage && <EcranDemarrage onTerminer={fermerDemarrage} />}
       {!demarrage && (
         <>
-          {/* Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ø¹Ù„ÙˆÙŠ Ø§Ù„Ø­Ø¯ÙŠØ« â€” Ø§Ø³Ù… Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ØŒ Ø§Ù„Ø³Ù…Ø©ØŒ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… */}
+          {/* الشريط العلوي الحديث — اسم التطبيق، السمة، المستخدم */}
           <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-line bg-surface">
             <div className="mx-auto flex h-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-primary/25">
-                  ðŸ§­
+                  🧭
                 </div>
                 <div className="hidden min-w-0 sm:block">
-                  <h1 className="app-brand truncate tracking-tight leading-none">Ø¨ÙˆØµÙ„Ø© Ø§Ù„Ø¹Ù„ÙˆÙ…</h1>
-                  <p className="text-[11px] font-medium text-mute">Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¨ÙƒØ§Ù„ÙˆØ±ÙŠØ§ â€” Ø¹Ù„ÙˆÙ… Ø§Ù„Ø·Ø¨ÙŠØ¹Ø© ÙˆØ§Ù„Ø­ÙŠØ§Ø©</p>
+                  <h1 className="app-brand truncate tracking-tight leading-none">بوصلة العلوم</h1>
+                  <p className="text-[11px] font-medium text-mute">مراجعة البكالوريا — علوم الطبيعة والحياة</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {/* Ø´Ø§Ø±Ø© XP â€” Ù…ØµØ¯Ø± ÙˆØ­ÙŠØ¯ Ù„Ù„Ù…Ø³ØªÙˆÙ‰ (popup Ù…Ù†Ø³Ø¯Ù„ØŒ Ù„Ø§ ÙŠØºØ·ÙŠ Ø§Ù„Ù…Ø­ØªÙˆÙ‰) */}
+                {/* شارة XP — مصدر وحيد للمستوى (popup منسدل، لا يغطي المحتوى) */}
                 <BaguetteXp etat={etat} onDeconnexion={onDeconnexion} />
                 <button
                   type="button"
                   onClick={basculerTheme}
                   className="h-10 w-10 shrink-0 rounded-xl border border-line bg-surface flex items-center justify-center text-ink-soft hover:bg-primary/5 hover:text-primary transition-colors"
-                  aria-label={theme === 'light' ? 'Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ù„ÙŠÙ„ÙŠ' : 'Ø§Ù„ÙˆØ¶Ø¹ Ø§Ù„Ù†Ù‡Ø§Ø±ÙŠ'}
+                  aria-label={theme === 'light' ? 'الوضع الليلي' : 'الوضع النهاري'}
                 >
                   {theme === 'light' ? (
-                    /* soleil (mode clair) â€” le path Â« lune pleine Â» en stroke donnait un glyphe dÃ©formÃ© */
+                    /* soleil (mode clair) — le path « lune pleine » en stroke donnait un glyphe déformé */
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                       <circle cx="12" cy="12" r="4.5" />
                       <path d="M12 1.5v2.5m0 16v2.5M4.57 4.57l1.77 1.77m11.32 11.32l1.77 1.77M1.5 12h2.5m16 0h2.5M4.57 19.43l1.77-1.77M17.66 6.34l1.77-1.77" />
@@ -672,7 +672,7 @@ export default function App() {
             </div>
           </header>
 
-          {/* Ø§Ù„Ø·Ø¨Ù‚Ø© Ø§Ù„ØªØ±ÙÙŠÙ‡ÙŠØ© â€” Ø´Ø±ÙŠØ· XP + ØªØµÙÙŠÙ‚ (Ù„Ø§ Ø´ÙŠØ¡ Ø¹Ø§Ø¦Ù… ÙÙˆÙ‚ Ø§Ù„Ù…Ø­ØªÙˆÙ‰) */}
+          {/* الطبقة الترفيهية — شريط XP + تصفيق (لا شيء عائم فوق المحتوى) */}
           <GamifiedOverlay etat={etat} />
 
       {!demarrage && !inscrit && (
@@ -693,7 +693,7 @@ export default function App() {
         />
       )}
 
-      {/* Ø¥Ø²Ø§Ø­Ø© Ø§Ù„Ù…Ø­ØªÙˆÙ‰ Ø£Ø³ÙÙ„ Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ø¹Ù„ÙˆÙŠ Ø§Ù„Ø«Ø§Ø¨Øª (h-16) */}
+      {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
       <div className="pt-16">
       {pret && onglet === 'aujourdhui' && (
         <Aujourdhui
@@ -752,7 +752,7 @@ export default function App() {
       )}
       </div>
 
-          {/* Ø´Ø±ÙŠØ· Ø§Ù„ØªÙ†Ù‚Ù‘Ù„ Ø§Ù„Ø³ÙÙ„ÙŠ Ø§Ù„Ø­Ø¯ÙŠØ« */}
+          {/* شريط التنقّل السفلي الحديث */}
           <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface shadow-[0_-10px_40px_-16px_rgba(0,0,0,0.1)]">
             <div className="mx-auto max-w-5xl">
               <div className="flex h-16 items-center justify-between px-6">
