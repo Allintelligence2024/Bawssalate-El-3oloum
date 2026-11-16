@@ -17,6 +17,7 @@ import Exercices from './components/Exercices';
 // Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
 import EcranDemarrage from './components/EcranDemarrage';
+import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
 // (lessonGoldSummaries, qcmLecons) qui n'ont rien à faire dans le chunk de démarrage.
 const ExamBlanc = lazy(() => import('./components/ExamBlanc'));
@@ -103,9 +104,11 @@ function EcranConsentementSync({ onChoix }: { onChoix: (ok: boolean) => void }) 
 
         <div className="rounded-3xl border border-line bg-paper p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)]">
           <p className="text-xs leading-relaxed text-mute">
-            يُرسَل ملخّص دوري فقط عند توفّر الإنترنت: الدروس المنجزة، الجسور، التدريبات، الدقائق، المراجعات.
-            لا كلمات مرور، لا ملاحظات شخصية، لا حجب عند انقطاع الشبكة.
+            يُرسَل ملخّص دوري فقط عند توفّر الإنترنت، ولا يحجب شيئًا عند انقطاع الشبكة.
           </p>
+          <div className="mt-3 rounded-2xl border border-line bg-cream p-3">
+            <ListeDonneesSync compact />
+          </div>
           <div className="mt-5 flex flex-col gap-3">
             <button
               type="button"

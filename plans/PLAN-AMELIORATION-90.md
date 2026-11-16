@@ -12,7 +12,7 @@ Le plan GLM partait de 65/100 et promettait 90 en « 75–90 jours-homme ». Deu
 
 | Élément | Plan GLM | Réalité vérifiée dans le dépôt | Conséquence |
 |---|---|---|---|
-| Score de départ | 65/100 | **61,1/100** selon la grille critère par critère (`plans/preuves/GRILLE-BASELINE.md`) — jugement d'audit reproductible, pas une vérité objective | Le chemin réel est **61,1 → 89,5**, pas 65 → 90 |
+| Score de départ | 65/100 | **60,5/100** selon la grille critère par critère déposée le 16/11 (`plans/preuves/GRILLE-BASELINE.md`) — jugement d'audit reproductible, pas une vérité objective. *Correctif : les versions antérieures de ce plan annonçaient 61,1 en comptant l'Axe 4 à 5,5 ; la grille déposée le note 5,0.* | Le chemin réel est **60,5 → 89,5**, pas 65 → 90 |
 | Effort total | « 75–90 j-homme » | La somme de ses 41 tâches fait **234 j-homme** (addition vérifiée) | Budget réel : **237 j-homme** (détail §6 : 187 dev/éditorial + 50 relecture étendue, sans double comptage P1/relecture ; marge d'imprévus à ajouter par le planning par rôle), soit 14 semaines à ~4 personnes en scénario conditionnel, ou 20–24 semaines à capacité réduite |
 | Tests | « 40/40 verts, cible 115 » | **aucun test applicatif dans le dépôt** (2 tests Android d'exemple existent, sans rapport avec les fonctionnalités), pas de vitest dans `package.json` | Le harnais de tests est à **créer** (tâche P0.4) avant toute modification du moteur |
 | Sujets Bac | « déjà en PDF dans le dépôt » | `bac-svt-sujet-*.pdf` = pointeurs Git LFS de **132 octets**, non référencés dans `src/` | L'acquisition légale des vrais sujets devient la tâche **P0.1**, prérequis de tout l'Axe 5 |
@@ -27,12 +27,12 @@ Le plan GLM partait de 65/100 et promettait 90 en « 75–90 jours-homme ». Deu
 | 1. Conformité programme | 15 % | 6,0 | **9,0** | 58/58 leçons `manuel_officiel_verifie` avec `reviewedBy/reviewedAt` réels |
 | 2. Richesse & hiérarchisation | 12 % | 6,5 | **9,0** | Priorité par leçon sourcée annales + glossaire bilingue + 58/58 leçons avec contenu |
 | 3. Parcours & assimilation ⭐ | 18 % | 8,0 | **9,0** | Diagnostic + objectif + mode J-60 testés avec de vrais élèves |
-| 4. Exercices & tests | 12 % | 5,5 | **9,0** | Rédaction libre par unité + niveau 3 réel + schémas à légender |
+| 4. Exercices & tests | 12 % | 5,0 | **9,0** | Rédaction libre par unité + niveau 3 réel + schémas à légender |
 | 5. Sujets Bac + simulation | 10 % | 2,5 | **9,0** | ≥ 6 sujets officiels structurés + chrono opt-in + corrigés-barèmes |
 | 6. UX/UI cognitive | 10 % | 6,5 | **9,0** | Recherche + favoris + texte ajustable + mesures sur appareils 2 Go RAM |
 | 7. Interactivité & engagement | 13 % | 6,0 | **9,0** | Quiz adaptatif + défis de régularité (sans classement) + boucle mesurée |
 | 8. Technique & économie | 10 % | 6,5 | **8,5** | Opt-in sync + harnais de tests + Play Store track fermée |
-| **Total pondéré** | | **61,1** | **89,5 (≈ 90 par arrondi explicite)** | Re-audit indépendant sur preuves (§9) — la note finale appartient au ré-auditeur, jamais au plan |
+| **Total pondéré** | | **60,5** | **89,5 (≈ 90 par arrondi explicite)** | Re-audit indépendant sur preuves (§9) — la note finale appartient au ré-auditeur, jamais au plan |
 
 > ⚠️ **Engagement de méthode :** 90/100 est une cible **conditionnelle**, pas une promesse calendaire. Si au re-audit une preuve manque (ex. relecture à 40/58), la note publiée sera celle mesurée — attendue entre 82 et 86 dans ce cas. Mieux vaut annoncer 85 et livrer 85 que promettre 90 et livrer 80.
 
@@ -79,7 +79,7 @@ Recrutement de **2 enseignants SVT 3AS** (dont 1 correcteur du Bac), checklist d
 **Preuve :** checklist signée dans `plans/relecture/` + premier lot (U4 complète : résumés, QCM, drills) avec `reviewedBy/reviewedAt` et registre des arbitrages (dont d101).
 
 ### P0.6 🟡 Hygiène immédiate (1 j)
-Remplacer « منصة بنزر العلم » par بوصلة العلوم dans les `<title>` des **23 HTML concernés sur 25** (vérifié par `grep -l`) ; corriger l'incohérence Hill 1937/1939 (`lessonGoldSummaries.ts:38` vs `ExamBlanc.tsx:68`) après arbitrage du relecteur ; corriger le commentaire « 42 min » de `protocole.ts` (la somme réelle est 46 min, affichée à l'élève).
+Remplacer « منصة بنزر العلم » par بوصلة العلوم dans les `<title>` des **23 HTML concernés sur 25** (vérifié par `grep -l`) ; corriger l'incohérence Hill 1937/1939 (`lessonGoldSummaries.ts:38` vs `ExamBlanc.tsx:68`) après arbitrage du relecteur ; corriger le commentaire « 42 min » de `protocole.ts` (la somme réelle est 46 min, affichée à l'élève) — *fait 16/11*.
 **Preuve :** `grep` de contrôle déposé (0 occurrence de l'ancienne marque).
 
 **Portes de fin P0 (différenciées — correctif audit n° 3, plus de blocage unique) :** (a) *publier un sujet officiel* exige source + droits clarifiés au registre ; (b) *modifier le moteur/SRS* exige le harnais de tests vert ; (c) *affirmer « vérifié par un enseignant »* exige la relecture signée. Les travaux sans dépendance externe (hors-ligne P0.7, confidentialité P0.8, prototypes) avancent en parallèle sans attendre les annales ni les enseignants.
@@ -228,7 +228,7 @@ En cas de retard sur le chemin critique, ce tableau indique où se perd le score
 | P1 Bac réel (sujets, chrono, rédaction, n3, priorités) | 5, 4, 1, 2 | +12 à +14 pts /100 |
 | P2 Assimilation (diagnostic, objectif, J-60, glossaire, contenus) | 3, 2 | +6 à +7 pts /100 |
 | P3 Finition (adaptatif, défis, recherche, terrain) | 7, 6, 8 | +5 à +6 pts /100 |
-| **Total indicatif** | | **61,1 → ≈ 89,5 /100** |
+| **Total indicatif** | | **60,5 → ≈ 89,5 /100** |
 
 **Chemin critique :** P0.1 (sujets) → P1.1 (sujets structurés) → P1.7 (priorités sourcées) → P2.3 (mode J-60). Tout retard sur l'acquisition des sujets décale la cible 90 d'autant ; la relecture (P0.5) démarre en semaine 1 précisément pour ne jamais devenir le goulot final.
 

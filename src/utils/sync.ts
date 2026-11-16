@@ -49,6 +49,25 @@ export interface Snapshot {
   maj: string;
 }
 
+/** قائمة ما يُرسَل فعلًا (P0.8) — تُعرض حرفيًّا في شاشة الموافقة وفي «أنا».
+ *  يجب أن تبقى مطابقة لحقول Snapshot أعلاه: أي حقل جديد يُضاف هنا أيضًا. */
+export const DONNEES_ENVOYEES: ReadonlyArray<{ libelle: string; detail: string }> = [
+  { libelle: 'بريدك الإلكتروني', detail: 'معرّف حسابك (email)' },
+  { libelle: 'اسمك المعروض والولاية والدائرة', detail: 'كما أدخلتها عند التسجيل' },
+  { libelle: 'تاريخ البكالوريا الذي اخترته', detail: 'date_bac' },
+  { libelle: 'معرّفات الدروس والجسور والورشات', detail: 'المنجزة، الجارية، الهشّة — أرقام ومعرّفات فقط' },
+  { libelle: 'أرقام تقدّمك', detail: 'عدد التدريبات، الدقائق، المراجعات، الإجابات الصحيحة/الخاطئة، أيام النشاط، عدد الملاحظات' },
+  { libelle: 'نقاط الخبرة والمستوى وإصدار التطبيق', detail: 'xp، niveau، app_version' },
+  { libelle: 'رمز كتابة خاص بحسابك', detail: 'jeton — يسمح بتحديث سجلّك أنت فقط' },
+];
+
+/** ما لا يُرسَل أبدًا. */
+export const DONNEES_JAMAIS_ENVOYEES: ReadonlyArray<string> = [
+  'كلمة المرور (ولا حتى مشفّرة)',
+  'نصوص ملاحظاتك وكرّاسة الأخطاء',
+  'إجاباتك سؤالًا بسؤال',
+];
+
 export function construireSnapshot(etat: Etat): Snapshot | null {
   if (!etat.compte) return null;
   const stats = statsActuelles();

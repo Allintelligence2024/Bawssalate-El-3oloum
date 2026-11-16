@@ -1,7 +1,7 @@
 # Contre-audit du PR #1 — « Intégration des sujets de Bac SVT (PDF), synthèse libre et suite de tests »
 
 > **Objet :** branche `feature/sujets-bac-et-ameliorations`, commit `1f7dcfb` (85 fichiers, +5 463 / −792), comparé à `origin/main` (`ed93224`).
-> **Référentiel :** `plans/PLAN-AMELIORATION-90.md` (plan final 61,1 → 89,5), règle d'or : *aucun point n'est gagné par une intention*.
+> **Référentiel :** `plans/PLAN-AMELIORATION-90.md` (plan final 60,5 → 89,5), règle d'or : *aucun point n'est gagné par une intention*.
 > **Date :** 16/11/2026. Toutes les vérifications ci-dessous sont reproductibles (commande indiquée).
 > **Mise à jour :** §6 liste les correctifs appliqués ensuite sur la branche `arena/4eaeaa75-bawssalate-el-3oloum`.
 
@@ -164,4 +164,13 @@ Conséquences :
 | P3.6 | 12 écrans plein écran passés en `React.lazy` sous un seul `Suspense` ; `lessonGoldSummaries` et `qcmLecons` sortent du chunk de démarrage | `src/App.tsx` | chunk principal **709 → 345 kB** (gzip 194 → 105 kB) ; `tsc` propre ; 44 tests verts |
 | P0.7 (niveau 1) | Vérification automatisée du précache : 32 statiques + 27 chunks, **59/59 HTTP 200**, 6,6 Mo | `plans/preuves/hors-ligne.md` | script dans le document ; niveau 2 (appareil) toujours à faire |
 
-Toujours ouverts : hors-ligne niveau 2 (mode avion sur appareil), GRILLE-BASELINE.md (grille critère par critère de la baseline — non reconstituable sans l'auditeur d'origine), appareils.md, droits des sujets (A-004), et les validations enseignant (A-001 → A-003).
+### 6 quater — Quatrième passe (grille de baseline reçue)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| Baseline | Grille d'audit déposée **telle quelle** : **60,5/100** (Axe 4 = 5,0). Le plan annonçait 61,1 avec Axe 4 = 5,5 → corrigé partout en 60,5 | `plans/preuves/GRILLE-BASELINE.md`, `plans/PLAN-AMELIORATION-90.md` | `grep -n "61,1" plans/` → uniquement la mention du correctif |
+| Relecture | Chaque [Constat] de la baseline relu sur l'état courant, sans note | `plans/preuves/ETAT-VS-BASELINE.md` | — |
+| P0.8 | Inventaire **mot pour mot** des données envoyées (`DONNEES_ENVOYEES`, `DONNEES_JAMAIS_ENVOYEES`) affiché dans l'écran de consentement et dans « أنا » ; test qui casse si un champ du snapshot n'est pas documenté | `src/utils/sync.ts`, `src/components/CarteSync.tsx`, `src/App.tsx`, `sync.test.ts` | **45 tests verts** |
+| P0.6 | Commentaire « 42 min » → 46 min (`protocole.ts`) ; les `<title>` « منصة بنزر العلم » étaient déjà corrigés (0 occurrence) | `src/data/protocole.ts` | `grep -l بنزر public/lecons/*.html` → 0 |
+
+Toujours ouverts : hors-ligne niveau 2 (mode avion sur appareil), appareils.md, droits des sujets (A-004), validations enseignant (A-001 → A-003), et les tâches dev P2.x / P3.x non commencées (positionnement, objectif, J-60, config annuelle, recherche/favoris/taille).
