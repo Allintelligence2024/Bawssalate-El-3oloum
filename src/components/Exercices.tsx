@@ -38,6 +38,8 @@ interface Props {
   onOuvrirSchemas: () => void;
   /** التركيب الحرّ — 11 وضعية (P1.3) */
   onOuvrirSyntheses: () => void;
+  /** بنية مواضيع البكالوريا (P1.1) */
+  onOuvrirSujets: () => void;
   /** دعوة الدرس بعد خطأين (P1.4 ↔ P3.1) */
   onOuvrirLecon: (lessonId: string) => void;
 }
@@ -64,6 +66,7 @@ export default function Exercices({
   onOuvrirFlashcards,
   onOuvrirSchemas,
   onOuvrirSyntheses,
+  onOuvrirSujets,
   onOuvrirLecon,
 }: Props) {
   const [vue, setVue] = useState<Vue>({ type: 'choix' });
@@ -286,8 +289,25 @@ export default function Exercices({
             </span>
           </button>
 
-          {/* « بنك المواضيع » retiré : les PDF n'étaient ni officiels, ni vérifiés, ni hors ligne
-              (voir plans/sources/REGISTRE.md). Reviendra avec les sujets structurés de P1.1. */}
+          {/* « بنك المواضيع » (PDF) retiré — remplacé par la structure des sujets (P1.1, sans documents ni corrigé). */}
+          <button
+            type="button"
+            onClick={onOuvrirSujets}
+            className="card group p-5 text-right transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-sage hover:shadow-[0_18px_36px_-22px_rgba(47,93,71,0.45)]"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sage-soft text-forest transition-colors group-hover:bg-forest group-hover:text-paper">
+              <span className="block h-6 w-6">
+                <IcoCible />
+              </span>
+            </span>
+            <h2 className="font-naskh mt-3 text-lg font-bold">بنية مواضيع البكالوريا</h2>
+            <p className="mt-1 text-sm leading-relaxed text-mute">
+              2020 · 2021 · 2023 — التمارين، السلّم، التعليمات وأفعالها وما يُنتظر من كلّ فعل. بلا وثائق ولا تصحيح.
+            </p>
+            <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
+              افتح ←
+            </span>
+          </button>
 
           <button
             type="button"

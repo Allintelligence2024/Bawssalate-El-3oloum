@@ -5,7 +5,15 @@ import { UNITES } from '../../data/programme';
 
 describe('synthèses libres', () => {
   it('une situation par unité, complète, avec les pièges officiels de l’unité', () => {
-    expect(SITUATIONS_SYNTHESE.map((s) => s.uniteId)).toEqual(UNITES.map((u) => u.id));
+    // une situation par unité au moins, dans l'ordre du programme ; ids uniques ; 2e situation = suffixe b
+    expect(SITUATIONS_SYNTHESE.slice(0, UNITES.length).map((s) => s.uniteId)).toEqual(UNITES.map((u) => u.id));
+    expect(new Set(SITUATIONS_SYNTHESE.map((s) => s.id)).size).toBe(SITUATIONS_SYNTHESE.length);
+    for (const u of ['u3', 'u1', 'u4', 'u5']) {
+      const deux = SITUATIONS_SYNTHESE.filter((s) => s.uniteId === u);
+      expect(deux.length, u).toBe(2);
+      expect(deux[1].id).toBe(`${u}b`);
+      expect(deux[1].titre).toBeTruthy();
+    }
     for (const s of SITUATIONS_SYNTHESE) {
       expect(s.sujet.length).toBeGreaterThan(40);
       expect(s.question.length).toBeGreaterThan(30);

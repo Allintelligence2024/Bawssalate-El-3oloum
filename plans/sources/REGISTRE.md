@@ -79,3 +79,5 @@
 1. **Droits** : demander à l'ONEC la liste officielle des sujets SE 2013–2026 et les conditions de reproduction ; à défaut, repli P1.1 bis : sujets blancs rédigés par le correcteur, **étiquetés « sujet blanc »**, calibrés sur 4 h 30.
 2. **P1.1** : transcrire en priorité les 6 sujets SE les plus récents (2020 → 2026) en exercices structurés (QCM / enquête / synthèse) avec corrigé-barème signé — jamais un lien vers le PDF.
 3. **P1.7** : l'analyse de fréquence peut démarrer sur les 14 années SE (2013–2026) sans attendre les droits, puisqu'elle ne reproduit pas les épreuves.
+
+*16/11 — P1.1 phase « structure » : 2020, 2021, 2023 SE structurés dans `src/data/sujetsOfficiels.ts` (consignes + barème + unités, sans documents ni corrigé). Les fichiers SE à couche texte incluent la **correction officielle ONEC** après le sujet (ex. 2023 : pages 11–20) — matériau pour la phase 2 une fois les droits clarifiés. 2022 : couche texte illisible (glyphes privés), à traiter par rendu image ; 2024–2026 : scans.*

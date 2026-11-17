@@ -33,6 +33,7 @@ const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
 const SchemaALegender = lazy(() => import('./components/SchemaALegender'));
 const ChoixSynthese = lazy(() => import('./components/ChoixSynthese'));
+const SujetsOfficiels = lazy(() => import('./components/SujetsOfficiels'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -76,6 +77,7 @@ type Mode =
   | { type: 'recherche'; q?: string }
   | { type: 'schemas' }
   | { type: 'choixSynthese' }
+  | { type: 'sujets' }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -544,6 +546,26 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'sujets') {
+      return (
+        <SujetsOfficiels
+          onFermer={() => setMode(null)}
+          onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
+          onOuvrirSynthese={(s: SituationSynthese) =>
+            setMode({
+              type: 'synthese',
+              uniteId: s.id.toUpperCase(),
+              sujet: s.sujet,
+              question: s.question,
+              modele: s.modele,
+              pieges: s.pieges,
+              diagnostic: s.diagnostic,
+              retour: { type: 'sujets' },
+            })
+          }
+        />
+      );
+    }
     if (mode.type === 'choixSynthese') {
       return (
         <ChoixSynthese
@@ -552,7 +574,7 @@ export default function App() {
           onChoisir={(s: SituationSynthese) => {
             setMode({
               type: 'synthese',
-              uniteId: s.uniteId.toUpperCase(),
+              uniteId: s.id.toUpperCase(),
               sujet: s.sujet,
               question: s.question,
               modele: s.modele,
@@ -914,6 +936,7 @@ export default function App() {
           onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
           onOuvrirSchemas={() => setMode({ type: 'schemas' })}
           onOuvrirSyntheses={() => setMode({ type: 'choixSynthese' })}
+          onOuvrirSujets={() => setMode({ type: 'sujets' })}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
         />
       )}

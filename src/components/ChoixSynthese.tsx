@@ -28,19 +28,19 @@ export default function ChoixSynthese({ etat, onChoisir, onFermer }: Props) {
       <main className="flex-1 px-4 pb-16 pt-4">
         <div className="mx-auto max-w-3xl">
           <p className="text-sm leading-relaxed text-mute">
-            وضعية واحدة لكلّ وحدة: تقرأ السند، تكتب بنفسك، ثمّ تقارن بعناصر الإجابة. لا علامة، لا نسبة — الهدف أن تُنتج الجملة لا أن تتعرّف عليها.
+            وضعية لكلّ وحدة (ووضعية ثانية للوحدات الأكثر ورودًا في البكالوريا): تقرأ السند، تكتب بنفسك، ثمّ تقارن بعناصر الإجابة. لا علامة، لا نسبة — الهدف أن تُنتج الجملة لا أن تتعرّف عليها.
           </p>
           <ul className="mt-4 grid gap-2">
             {SITUATIONS_SYNTHESE.map((s) => {
               const u = UNITES.find((x) => x.id === s.uniteId);
-              const carte = etat.kafaa?.[`synthese${s.uniteId.toUpperCase()}`];
+              const carte = etat.kafaa?.[`synthese${s.id.toUpperCase()}`];
               const terminee = (u?.lessonIds ?? []).some((id) => etat.progression[id]?.statut === 'terminee');
               return (
-                <li key={s.uniteId}>
+                <li key={s.id}>
                   <button type="button" onClick={() => onChoisir(s)} className="card flex w-full items-center justify-between gap-3 p-4 text-start transition-colors hover:border-forest">
                     <span className="min-w-0">
                       <p className="eyebrow">الوحدة {nb(u?.numero ?? 0)}</p>
-                      <p className="mt-0.5 truncate text-sm font-bold">{u?.titre}</p>
+                      <p className="mt-0.5 truncate text-sm font-bold">{u?.titre}{s.titre ? ` · ${s.titre}` : ''}</p>
                       <p className="mt-1 text-xs text-mute">
                         {carte ? `كُتبت · مراجعة ${carte.prochaineRevision ?? ''}` : terminee ? 'جاهزة — أنهيت درسًا من هذه الوحدة' : 'يُستحسن إنهاء درس من الوحدة أولًا'}
                       </p>
