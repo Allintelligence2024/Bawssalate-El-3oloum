@@ -9,7 +9,7 @@ Un gain de note n'existe que s'il est démontrable ici (plan §1, « Principe de
 | `ETAT-VS-BASELINE.md` | §9 | Chaque [Constat] de la baseline relu sur l'état courant : corrigé / partiel / inchangé, avec la commande de preuve — **sans nouvelle note** |
 | `poids.md` | P0.3 / P3.6 | Taille du splash, du précache, du chunk principal, avant/après chaque sprint — **déposé** (16/11) |
 | `hors-ligne.md` | P0.7 | Matrice fonctionnalité × en ligne / hors ligne — **niveau 1 (automatisé) déposé** 16/11 ; **niveau 2 (appareil) à rejouer** |
-| `appareils.md` | P3.4 | Mesures Redmi 9A / Samsung A1x — **à déposer** |
+| `appareils.md` | P3.4 | Mesures Redmi 9A / Samsung A1x — **protocole déposé 16/11, mesures à faire** (aucune valeur émulateur) |
 
 Les registres éditoriaux (arbitrages, relecture signée) vivent dans `plans/relecture/` ; le registre
 des sujets officiels (année, session, source, droits, intégrité) dans `plans/sources/REGISTRE.md`.
