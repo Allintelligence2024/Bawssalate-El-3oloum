@@ -292,3 +292,4 @@ Total : **103 tests verts** (porte de fin P3 « ≥ 100 tests » franchie côté
 | P1.6 | 6 schémas SVG à légender, tap numéro → tap étiquette, `etat.schemas`, carte dans التدريبات, lien vers leçon via recherche (`requeteInitiale`) | `src/data/schemas/index.ts`, `components/SchemaALegender.tsx`, `Exercices.tsx`, `App.tsx` (mode `schemas`), `types.ts` | `schemas.test.ts` ; tsc ; captures et conformité au manuel (humain) |
 
 Total : **107 tests verts**, chunk principal 383,9 kB (gzip 115,9) ; chunks `glossaire` 19 kB, `SchemaALegender` 14 kB.
+| P1.5 (dépôt 2) | +12 items n3 (u8 ×4, u10 ×4, u1, u2, u5 ×2) → 40 n3 / 660 items, `TOTAL_QCM = 540` | `niveau3.ts`, `axes.ts`, `drills/README.md`, registre A-005 | `verifier-drills.mjs` 0 problème ; `niveau3.test.ts` (chaque unité ≥ 2 n3) |

@@ -8,6 +8,7 @@ Mesures sur `npm run build` (Vite 7, branche `arena/4eaeaa75-bawssalate-el-3olou
 | 16/11/2026 (1re passe) | `bf849b3` | 13,4 Mo | ≈ 90 Mo | 723 kB | 197 kB | shell + 9 chunks (manifeste) + mp4 |
 | 16/11/2026 (2e passe) | `792761b` | **1,65 Mo** (720×1280, 6,6 s, H.264 CRF 30, AAC 64 kb/s mono) | **8,2 Mo** | 709 kB | 194 kB | shell + 9 chunks + mp4 1,65 Mo |
 | 16/11/2026 (3e passe) | *(ce commit)* | 1,65 Mo | 8,2 Mo | **345 kB** | **105 kB** | 32 statiques + 27 chunks = **6,6 Mo** (tous vérifiés HTTP 200, `hors-ligne.md`) |
+| 16/11/2026 (14e passe) | `b0ec11e` | 1,65 Mo | ≈ 8,6 Mo | 384 kB | 116 kB | + chunks `niveau3` 30 kB, `Mourchid` 19 kB, `glossaire` 19 kB, `SchemaALegender` 14 kB (tous lazy) — chunk principal toujours ≤ 500 kB |
 
 Méthode : `ffmpeg` (binaire `imageio-ffmpeg`) `-t 6.6 -vf scale=720:1280 -crf 30 -c:a aac -b:a 64k -ac 1` ;
 `du -sh dist` ; tailles Vite en sortie de build ; `curl -s -o /dev/null -w "%{size_download}" http://localhost:4173/ouverture.mp4`.

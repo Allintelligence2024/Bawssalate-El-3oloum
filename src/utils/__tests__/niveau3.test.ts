@@ -6,8 +6,8 @@ import { chargerDomaine } from '../drills';
 import { demarrerAdaptatif } from '../adaptatif';
 
 describe('niveau 3', () => {
-  it('28 items, tous n=3, 4 options distinctes, explication, ids uniques et préfixés n', () => {
-    expect(ITEMS_N3.length).toBe(28);
+  it('40 items (2 dépôts), tous n=3, 4 options distinctes, explication, ids uniques et préfixés n', () => {
+    expect(ITEMS_N3.length).toBe(40);
     const ids = new Set<string>();
     for (const i of ITEMS_N3) {
       expect(i.n).toBe(3);
@@ -32,6 +32,8 @@ describe('niveau 3', () => {
     const parU = (u: number) => ITEMS_N3.filter((i) => i.u === u).length;
     expect(parU(4)).toBe(6);
     expect([parU(3), parU(9), parU(11)]).toEqual([4, 4, 4]);
+    // dépôt 2 : chaque unité du programme a désormais au moins 2 items de niveau 3 (u8/u10 incluses)
+    for (let u = 1; u <= 11; u++) expect(parU(u), `u${u}`).toBeGreaterThanOrEqual(2);
   });
 
   it('le chargement par domaine inclut les n3 de ses unités, et l’escalier gagne sa 3ᵉ marche sur un axe doté', async () => {
