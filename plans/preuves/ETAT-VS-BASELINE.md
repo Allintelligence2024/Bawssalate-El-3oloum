@@ -68,7 +68,7 @@
 
 | Constat | État | Preuve |
 |---|---|---|
-| Pas de flashcards générales, pas de quiz adaptatif, pas de notifications | ❌ | P3.1 / P3.2 / P3.5 |
+| Pas de flashcards générales, pas de quiz adaptatif, pas de notifications | 🟡 | Flashcards ✅ (3/leçon dérivées des fiches, Leitner, après protocole) ; rappel quotidien local opt-in ✅ côté code (preuve sur appareil due) ; quiz adaptatif (P3.1) toujours absent — 16/11 |
 | Boucle fermée pour le cours, pas pour l'examen | 🟡 | L'examen blanc alimente désormais kafaa + carnet via le chrono/bilan ; pas encore de re-test ciblé par compétence |
 
 ## Axe 8 — Fiabilité technique et accessibilité économique (baseline 6,5)
@@ -87,6 +87,6 @@
 - **Corrigés avec preuve :** opt-in sync complet (y compris inventaire honnête), mp4, bundle, dist, Hill, ¹⁸O, d101, chrono opt-in, bouton « niveau 3 » mensonger, durée officielle, harnais de tests.
 - **Partiels :** rédaction libre (1/11 unités), hors-ligne (niveau 1 sur 2), sujets (identifiés mais non publiables).
 - **Inchangés et dépendants d'un tiers :** relecture enseignante (58/58), droits des sujets, contenu éditorial (n3, gabarits, glossaire, priorités), terrain (appareils, élèves).
-- **Inchangés et purement dev :** flashcards, notifications, politique de confidentialité dédiée. (Objectif, mode J-60, config annuelle, taille de texte, positionnement, recherche/favoris : faits le 16/11 — voir lignes ci-dessus.)
+- **Inchangés et purement dev :** quiz adaptatif (P3.1), politique de confidentialité dédiée. (Flashcards et rappels : faits le 16/11.) (Objectif, mode J-60, config annuelle, taille de texte, positionnement, recherche/favoris : faits le 16/11 — voir lignes ci-dessus.)
 
 Le ré-audit de sortie devra refaire chaque mesure ci-dessus plutôt que reprendre ce tableau.

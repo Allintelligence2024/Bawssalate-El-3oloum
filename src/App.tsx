@@ -11,6 +11,7 @@ import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/s
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
+import { synchroniserRappel } from './utils/rappels';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -34,6 +35,7 @@ const AtelierStructureTerre = lazy(() => import('./components/AtelierStructureTe
 const Mindmap = lazy(() => import('./components/Mindmap'));
 const Diagnostic = lazy(() => import('./components/Diagnostic'));
 const Recherche = lazy(() => import('./components/Recherche'));
+const Flashcards = lazy(() => import('./components/Flashcards'));
 import Inscription from './components/Inscription';
 import BaguetteXp from './components/BaguetteXp';
 import GamifiedOverlay from './components/GamifiedOverlay';
@@ -63,6 +65,7 @@ type Mode =
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
   | { type: 'mindmap' }
   | { type: 'recherche' }
+  | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
@@ -175,6 +178,12 @@ export default function App() {
     setEtat((prev) => ({ ...prev, diagnosticDecideLe: new Date().toISOString() }));
     setAfficheDiagnostic(false);
   }
+
+  // التذكير اليومي (P2.4): إعادة جدولة هادئة عند الفتح إن كان مفعّلًا (لا شيء يحدث إن كان معطّلًا أو على المتصفح)
+  useEffect(() => {
+    if (etat.rappel?.actif) void synchroniserRappel(etat);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // حجم الخط (P3.3): سمة على <html> تُحرّك rem كلّه، وتُنسخ إلى iframes الدروس عند تحميلها
   useEffect(() => {
@@ -504,6 +513,18 @@ export default function App() {
         </Suspense>
       );
     }
+    if (mode.type === 'flashcards') {
+      return (
+        <Flashcards
+          etat={etat}
+          onFermer={() => setMode(null)}
+          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId, retour: { type: 'flashcards' } })}
+          onReponse={(carteId, etatCarte) =>
+            setEtat((prev) => ({ ...prev, flashcards: { ...(prev.flashcards ?? {}), [carteId]: etatCarte } }))
+          }
+        />
+      );
+    }
     if (mode.type === 'recherche') {
       return (
         <Recherche
@@ -797,6 +818,7 @@ export default function App() {
           onOuvrirStructureTerre={() => setMode({ type: 'structureTerre' })}
           onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
           onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
+          onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
         />
       )}
       {pret && onglet === 'methodo' && (
@@ -829,6 +851,7 @@ export default function App() {
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
           onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
           onBasculerFavori={basculerFavori}
+          onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
         />
         </Suspense>
       )}

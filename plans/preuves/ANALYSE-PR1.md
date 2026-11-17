@@ -211,3 +211,17 @@ Toujours ouverts : hors-ligne niveau 2, appareils.md, droits des sujets (A-004),
 Total : **71 tests verts**, chunk principal 363 kB (gzip 110).
 
 Toujours ouverts : lecture humaine des 8 scans (2013–2015, 2024–2026) et validation enseignante du lexique/attribution ; hors-ligne niveau 2 ; appareils.md ; droits des sujets (A-004) ; validations enseignant (A-001 → A-003) ; flashcards ; notifications.
+
+### 6 octies — Huitième passe (rappels locaux, flashcards, horloge des tests)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P2.4 | Rappel quotidien local **opt-in** : 1 notification/jour (id fixe), heure choisie, 4 textes neutres sans chiffre, permission demandée uniquement à l'activation, refus → rien de programmé, web → « indisponible » annoncé ; resynchronisation silencieuse au lancement si actif et autorisé | `utils/rappels.ts`, `components/ReglageRappel.tsx`, `Ana.tsx`, `App.tsx`, `types.ts` (`rappel`) | `rappels.test.ts` (6) via adaptateur factice ; plugin chargé en import dynamique (hors chunk d'entrée) |
+| P2.4 | Intégration native : `@capacitor/local-notifications@8.3.1`, `cap sync android` (gradle), `SCHEDULE_EXACT_ALARM` retiré via `tools:node="remove"` (alarme inexacte suffisante) | `package.json`, `android/capacitor.settings.gradle`, `android/app/capacitor.build.gradle`, `AndroidManifest.xml` | à prouver sur appareil (capture) — tâche humaine |
+| Flashcards | 3 cartes/leçon dérivées des fiches (`recallQuestionAr`→`mechanismAr`, `evidenceAr`, `commonErrorAr`), ouvertes après protocole ou favori, Leitner 1/3/7 j indépendant du SM-2, session ≤ 12 | `utils/flashcards.ts`, `components/Flashcards.tsx` (lazy), `Exercices.tsx`, `App.tsx`, `types.ts` (`flashcards`) | `flashcards.test.ts` (5) : 58/58, ouverture, Leitner, tri de session, indépendance chemin/SRS |
+| Tests | `srs.test.ts` et `moteur.test.ts` supposaient « aujourd'hui = 16/11/2026 » en dur → échouaient dès le 17/11. Horloge fixée par `vi.setSystemTime` | 2 fichiers de tests | 82/82 verts le 17/11 UTC |
+| CSS | classe `.field` utilisée (inscription, recherche, rappel) mais jamais définie → définie dans `@layer components` | `index.css` | build OK |
+
+Total : **82 tests verts**, chunk principal 367 kB (gzip 111) ; nouveaux chunks `Flashcards` 6,7 kB, plugin notifications hors entrée.
+
+Toujours ouverts (dev) : quiz adaptatif P3.1, revue croisée + stats par unité (P2.4), filtres de recherche. Humain : notification reçue sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.

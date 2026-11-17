@@ -16,6 +16,7 @@ import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
 import ReglagesParcours from './ReglagesParcours';
 import CarteDiagnosticFavoris from './CarteDiagnosticFavoris';
+import ReglageRappel from './ReglageRappel';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -36,6 +37,7 @@ interface Props {
   onOuvrirLecon: (lessonId: string) => void;
   onDemarrerRevision: (lessonIds: string[]) => void;
   onBasculerFavori: (lessonId: string) => void;
+  onRappel: (r: { actif: boolean; heure: string }) => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -116,6 +118,7 @@ export default function Ana({
   onOuvrirLecon,
   onDemarrerRevision,
   onBasculerFavori,
+  onRappel,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const [confirmeCarnet, setConfirmeCarnet] = useState(false);
@@ -258,6 +261,9 @@ export default function Ana({
         onModeIntensif={onModeIntensif}
         onTailleTexte={onTailleTexte}
       />
+
+      {/* التذكير اليومي (P2.4) */}
+      <ReglageRappel etat={etat} onChanger={onRappel} />
 
       {/* المزامنة — إعداد دائم */}
       <ReglageSync etat={etat} onChoix={onConsentementSync} />

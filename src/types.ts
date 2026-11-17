@@ -153,6 +153,10 @@ export interface Etat {
   favoris?: string[];
   /** الامتحانات التجريبية المُنهاة (تواريخ ISO) — لمتابعة «موضوع واحد في الأسبوع» (P2.3). */
   examensBlancs?: string[];
+  /** التذكير اليومي المحلّي (P2.4): اختياري، مرّة في اليوم، الساعة بتوقيت الجهاز. غيابه = معطّل. */
+  rappel?: { actif: boolean; heure: string };
+  /** البطاقات (flashcards): صندوق لايتنر لكل بطاقة — مستقلّة عن SM-2 الدروس. */
+  flashcards?: Record<string, { boite: 1 | 2 | 3; prochaine: string; vues: number }>;
 }
 
 export type Objectif = 10 | 14 | 18;

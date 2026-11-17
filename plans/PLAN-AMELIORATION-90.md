@@ -166,6 +166,7 @@ Bascule automatique (date du Bac de l'élève, saisie et modifiable — jamais u
 ### P2.4 🟡 Révisions croisées, stats par unité, rappels (8 j)
 Revue hebdomadaire mixte (1 carte/domaine + 1 `kafaa`, plafonnée) ; `stats.ts` étendu par axe/unité (les drills portent déjà `a: 0..48` (49 axes, `axes.ts`)) ; أنا affiche « الأقوى / الأضعف » avec lien direct vers l'axe faible ; rappels locaux opt-in (1/jour max, heure choisie — plugin Capacitor Local Notifications à intégrer proprement, absent aujourd'hui).
 **Preuve :** capture أنا avec faiblesse nommée par unité + notification reçue sur l'appareil de test.
+*16/11 : rappels faits — `@capacitor/local-notifications` 8.3.1 intégré (`cap sync` : gradle mis à jour), `src/utils/rappels.ts` (opt-in, 1 notification/jour id 1, heure choisie, 4 textes neutres en rotation sans chiffre, permission demandée seulement à l'activation, jamais re-demandée au lancement, rien sur le web — dit explicitement), réglage dans « أنا » (`ReglageRappel.tsx`), `SCHEDULE_EXACT_ALARM` retiré du manifeste (alarme inexacte suffisante, pas de justification Play à produire). Tests `rappels.test.ts` (6) avec adaptateur factice. **Reste à prouver sur appareil** : notification reçue (capture). Revue croisée et stats par unité : non faites.*
 
 ### P2.5 🟡 Contenu complété — Axe 2 (16 j)
 - **12 cours HTML manquants** sur le gabarit existant — liste exacte vérifiée : `d1-u1-l1-expression-genique`, `d1-u3-l1-enzyme`, `immunity_memory_response`, `immunity_hiv_aids`, `prerequis2AS_genetique`, `d2-u6-l1-hill-ruben`, `d2-u6-l2-jagendorf`, `d2-u6-l3-calvin`, `d2-u7-l1-mitchell-racker`, `d3-u11-l1-migmatite`, `enzyme_inhibitors`, `amino_acid_behavior` → `aContenuLecon()` vrai sur 58/58, précache mis à jour.
@@ -177,6 +178,9 @@ Revue hebdomadaire mixte (1 carte/domaine + 1 `kafaa`, plafonnée) ; `stats.ts` 
 
 ---
 ## 5. Phase P3 — Engagement, finition, validation terrain (S6, sem. 11–14) — Axes 7, 6, 8
+
+### Flashcards (hors numérotation, critère baseline « pas de flashcards générales ») ✅ 16/11
+`src/utils/flashcards.ts` + `Flashcards.tsx` (lazy, 6,7 kB) : 3 cartes par leçon **dérivées des fiches existantes** (استرجاع = question de rappel → mécanisme ; دليل = preuve documentaire ; فخّ = erreur fréquente), 58/58 couvertes (test). Ouvertes après le protocole de la leçon ou si favorite — jamais avant. Boîtes de Leitner 1/3/7 jours indépendantes du SM-2 des leçons (test d'indépendance : chemin et révisions inchangés). Session ≤ 12, dues d'abord. Porte « البطاقات » dans تدريبات.
 
 ### P3.1 🔴 Quiz adaptatif borné (6 j)
 Session de 10 drills : 2 réussites → niveau +1 ; 2 échecs → niveau −1 + invitation cours (P1.4). Bornes [1,3] (dépend de P1.5), présenté comme un escalier à monter, jamais comme une chute.
