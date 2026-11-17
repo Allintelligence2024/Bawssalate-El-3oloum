@@ -48,9 +48,9 @@
 
 | Constat | État | Preuve |
 |---|---|---|
-| 0 sujet officiel intégré (pointeurs LFS) | 🟡 🔒 | 32 PDF réels archivés hors app dans `plans/sources/sujets/`, **tous identifiés** (17 SE 2013→2026, 15 M) ; **aucun n'est publié** : droits non clarifiés (A-004). Le PR #1 qui les publiait avec de fausses métadonnées a été défait |
+| 0 sujet officiel intégré (pointeurs LFS) | 🟡 🔒 | 32 PDF réels archivés hors app dans `plans/sources/sujets/`, **tous identifiés** (17 SE 2013→2026, 15 M) ; **aucun PDF n'est publié** (A-004). Depuis le 16/11 : **30 sujets SE structurés** (consignes typées, barème, unités, étiquette de fidélité a/b/c) + **عناصر الإجابة condensés pour les 30** (`src/data/corriges/`), masqués par défaut, attribution ONEC, drapeau `CORRIGES_ACTIVES` — droits à trancher (A-008, A-009) |
 | Examen blanc : scénario unique, **sans chronomètre** | 🟡 | Chrono **opt-in** réel (case décochée par défaut, badge discret, temps au bilan) ; scénario toujours unique |
-| Pas de barème, pas d'interface copie | ❌ | P1.1 |
+| Pas de barème, pas d'interface copie | 🟡 | Barème par exercice et par consigne affiché (ONEC, avec `baremeCorrige` quand l'ONEC l'a rectifié) ; « حاول الإجابة كتابةً أوّلًا، ثمّ قارن » = comparaison manuelle, **pas d'interface copie** ni de correction automatique (hors périmètre, honnêtement) |
 | Durée officielle inconnue | ✅ | **4 h 30** lue sur 18 en-têtes d'épreuves SE (`REGISTRE.md`) |
 
 ## Axe 6 — UX/UI et ergonomie cognitive (baseline 6,5)
