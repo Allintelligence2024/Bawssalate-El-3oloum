@@ -63,3 +63,5 @@ Appareils cibles : Redmi 9A (2 Go) et Samsung A1x. Pour chaque appareil, PWA Chr
 | Date | Appareil | Mode | Résultat | Par |
 |---|---|---|---|---|
 | — | — | — | **non rejoué** | — |
+
+*16/11 (14e passe) : `precache-manifest.json` généré au build liste désormais **42 assets** ; les nouveaux chunks à la demande (`niveau3`, `Mourchid`, `glossaire`, `SchemaALegender`, `ChoixSynthese`) y figurent automatiquement — vérifié par lecture du manifeste après `npm run build`. Les schémas P1.6 sont du SVG inline (aucune image réseau). Le rejeu appareil reste à faire.*
