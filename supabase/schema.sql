@@ -69,4 +69,15 @@ create policy "maj_app" on public.eleves
     or jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
   );
 
+-- Suppression à la demande (P0.8) : l'élève peut effacer SA ligne depuis l'écran « الخصوصية »
+-- de l'application. Exige le jeton en en-tête ; une ligne sans jeton (ancienne installation)
+-- ne peut pas être supprimée par l'application — elle se verrouille au prochain snapshot.
+drop policy if exists "suppression_app" on public.eleves;
+create policy "suppression_app" on public.eleves
+  for delete to anon
+  using (
+    jeton is not null
+    and jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
+  );
+
 -- ملاحظة: لا توجد سياسة SELECT لـ anon → القراءة مرفوضة تلقائيًّا.

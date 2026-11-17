@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
   syncActive, construireSnapshot, envoyerSnapshot, consentementEtat,
-  consentementExplicite, doitDemanderConsentement, DONNEES_ENVOYEES,
+  consentementExplicite, doitDemanderConsentement, DONNEES_ENVOYEES, supprimerSnapshotServeur,
 } from '../sync';
 
 const base = (): Etat => ({
@@ -100,5 +100,12 @@ describe('sync — confidentialité (P0.2/P0.8)', () => {
     // Et rien de sensible : jamais de mot de passe ni de texte de note
     expect(Object.keys(snap!)).not.toContain('motDePasse');
     expect(JSON.stringify(snap)).not.toContain('hachage');
+  });
+
+  it('supprimerSnapshotServeur : sans configuration → « sync_inactive » ; aucun appel réseau, aucune exception', async () => {
+    // Dans l'environnement de test, aucune clé Supabase n'est injectée : la suppression doit répondre
+    // explicitement (pas de promesse silencieuse) et sans toucher au réseau.
+    await expect(supprimerSnapshotServeur({ ...base(), compte })).resolves.toBe('sync_inactive');
+    await expect(supprimerSnapshotServeur(base())).resolves.toBe('sync_inactive');
   });
 });

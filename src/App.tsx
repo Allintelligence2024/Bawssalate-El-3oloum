@@ -28,6 +28,7 @@ const SyntheseLibre = lazy(() => import('./components/SyntheseLibre'));
 const Ana = lazy(() => import('./components/Ana'));
 const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
+const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -62,6 +63,7 @@ type Mode =
   | { type: 'atelier'; domaineId: string }
   | { type: 'protocole'; lessonId: string }
   | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
+  | { type: 'confidentialite' }
   | { type: 'jalon'; uniteId: string }
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
@@ -535,6 +537,15 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'confidentialite') {
+      return (
+        <Confidentialite
+          etat={etat}
+          onRetirerConsentement={() => onConsentementSync(false)}
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
     if (mode.type === 'recherche') {
       return (
         <Recherche
@@ -549,7 +560,13 @@ export default function App() {
         <ExamBlanc
           etat={etat}
           onFermer={() => setMode(null)}
-          onTermine={() => setEtat((prev) => ({ ...prev, examensBlancs: [...(prev.examensBlancs ?? []), new Date().toISOString()] }))}
+          onTermine={(bilan) =>
+            setEtat((prev) => ({
+              ...prev,
+              examensBlancs: [...(prev.examensBlancs ?? []), bilan.date],
+              examens: [...(prev.examens ?? []), bilan].slice(-20),
+            }))
+          }
           onItemReussi={onItemReussi}
           onResultatKafaa={onResultatKafaa}
           onCarnetFaute={onCarnetFaute}
@@ -877,6 +894,7 @@ export default function App() {
           onBasculerFavori={basculerFavori}
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
           onAllerExercices={() => setOnglet('exercices')}
+          onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
         />
         </Suspense>
       )}

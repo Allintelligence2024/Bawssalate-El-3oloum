@@ -1,7 +1,7 @@
 // P3.3 — recherche locale : normalisation arabe, couverture des 58 leçons, exemple du plan « كالفن »
 import { describe, it, expect } from 'vitest';
 import { normaliser, construireIndex, rechercher } from '../recherche';
-import { CHEMIN } from '../../data/programme';
+import { CHEMIN, DOMAINES, UNITE_PAR_ID } from '../../data/programme';
 
 describe('recherche locale', () => {
   it('normalise hamza, ta marbouta, alif maqsura, tashkil et tatwil', () => {
@@ -31,5 +31,18 @@ describe('recherche locale', () => {
     expect(avecHamza.map((x) => x.entree.lessonId)).toEqual(sansHamza.map((x) => x.entree.lessonId));
     const deux = rechercher('ATP بروتون');
     expect(deux.every((x) => x.entree.cle.includes('atp') && x.entree.cle.includes('بروتون'))).toBe(true);
+  });
+
+  it('filtres par domaine/unité : restreignent la recherche ; sans requête, listent tout le périmètre', () => {
+    const d2 = DOMAINES[1];
+    const tout = rechercher('', 60, { domaineId: d2.id });
+    const attendu = d2.unites.reduce((n, u) => n + (UNITE_PAR_ID[u].prerequis?.length ?? 0) + UNITE_PAR_ID[u].lessonIds.length, 0);
+    expect(tout.length).toBe(attendu);
+    expect(tout.every((r) => d2.unites.includes(r.entree.uniteId))).toBe(true);
+    expect(rechercher('', 60, { uniteId: 'u1' }).every((r) => r.entree.uniteId === 'u1')).toBe(true);
+    // « كالفن » est dans le domaine 2 : filtré sur le domaine 3 → rien
+    expect(rechercher('كالفن', 20, { domaineId: 'd3' })).toEqual([]);
+    expect(rechercher('كالفن', 20, { domaineId: 'd2' }).length).toBeGreaterThan(0);
+    expect(rechercher('', 60)).toEqual([]); // pas de filtre, pas de requête → rien
   });
 });

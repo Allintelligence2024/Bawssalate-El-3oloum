@@ -260,3 +260,17 @@ P2.4 est désormais complet côté code (rappels, stats par unité, revue crois�
 Total : **96 tests verts**, chunk principal 380,8 kB (gzip 115,1).
 
 Toujours ouverts (dev) : filtres de recherche par unité (P3.3 reste), items de niveau 3 (P1.5), politique de confidentialité dédiée. Humain : notification reçue, captures اليوم/أنا, onglet Réseau sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.
+
+### 6 duodecies — Douzième passe (« le reste » dev : confidentialité, historique d'examens, filtres, source des drills)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P0.8 / P3.4 | Écran « الخصوصية · الأسئلة الشائعة · عن التطبيق » (lazy, 10,7 kB) : liste réelle des données (depuis `sync.ts`), quand/vers où, 4 droits, 9 FAQ, à-propos ; **suppression côté serveur** `supprimerSnapshotServeur()` avec résultat explicite + policy `suppression_app` (DELETE, jeton exigé) ; succès → consentement retiré | `components/Confidentialite.tsx`, `utils/sync.ts`, `supabase/schema.sql`, `Ana.tsx`, `App.tsx` (mode `confidentialite`) | `sync.test.ts` (+1 : sans config → `sync_inactive`, 0 appel) ; policy à déployer (humain) |
+| P1.4 | Historique d'examens `Etat.examens[]` (`BilanExamen`), rempli par `ExamBlanc.onTermine(bilan)`, carte « امتحاناتي التجريبية » dans « أنا » (5 derniers, durée, unités en échec, unités récurrentes → تدريبات) | `types.ts`, `ExamBlanc.tsx`, `App.tsx`, `components/CarteExamens.tsx`, `Ana.tsx` | tsc ; capture après 2 examens (humain) |
+| P1.4-bis | Fichiers générés déclarés source de vérité ; `importer-drills.mjs` refuse sans chemin + `--force` (exit 2) ; README avec corrections à ré-appliquer (A-001) | `src/data/drills/README.md`, `scripts/importer-drills.mjs` | `node scripts/importer-drills.mjs` → exit 2 + message |
+| P3.3 | Filtres de recherche par domaine/unité ; filtre sans requête = liste du périmètre | `utils/recherche.ts`, `components/Recherche.tsx` | `recherche.test.ts` (+1) |
+| Audit réseau | Mis à jour : `delete` de sa propre ligne ajouté — toujours 0 lecture | `plans/preuves/audit-reseau.md` | grep |
+
+Total : **98 tests verts**, chunk principal 381,7 kB (gzip 115,3) ; nouveau chunk `Confidentialite` 10,7 kB.
+
+Côté code, le plan n'a plus de tâche purement dev ouverte. Restent : éditorial (P1.5 items n3, glossaire P2.5, المرشد الموسّع P3.5, schémas P1.6), humain/ops (déployer la policy DELETE et la purge annoncée, notification sur appareil, captures, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md, terrain P3.4).

@@ -60,6 +60,16 @@ export interface ProgressionLecon {
   acquisIntensifLe?: string;
 }
 
+export interface BilanExamen {
+  date: string; // ISO complet
+  secondes: number;
+  chrono: boolean;
+  qcm: number; // عدد أسئلة الجزء الأول
+  directs: number; // المُجابة من أول محاولة
+  erreursEnquete: number; // أخطاء الجزء الثاني (استغلال الوثائق)
+  unitesFaibles: number[]; // أرقام الوحدات التي وقع فيها خطأ في الجزء الأول
+}
+
 // بطاقة كفاءة المنهجية — مراجعة قصيرة programmée par la même SM-2 des leçons.
 // Clé dans etat.kafaa : `methodo{index}` (index du تمرين في exercicesUnite1).
 export interface CarteKafaa {
@@ -156,6 +166,8 @@ export interface Etat {
   favoris?: string[];
   /** الامتحانات التجريبية المُنهاة (تواريخ ISO) — لمتابعة «موضوع واحد في الأسبوع» (P2.3). */
   examensBlancs?: string[];
+  /** سجلّ الامتحانات التجريبية (P1.4): تاريخ، مدّة، مع/بدون مؤقّت، أسئلة الجزء الأول المُجابة مباشرة، الوحدات التي تعثّر فيها */
+  examens?: BilanExamen[];
   /** التذكير اليومي المحلّي (P2.4): اختياري، مرّة في اليوم، الساعة بتوقيت الجهاز. غيابه = معطّل. */
   rappel?: { actif: boolean; heure: string };
   /** البطاقات (flashcards): صندوق لايتنر لكل بطاقة — مستقلّة عن SM-2 الدروس. */

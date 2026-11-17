@@ -181,6 +181,30 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
   }
 }
 
+/** حذف سجلّ التلميذ من الخادم (P0.8) — يتطلّب حسابًا وجيتونه (سياسة DELETE في supabase/schema.sql).
+ *  النتيجة صريحة لأن الحذف ليس إرسالًا صامتًا: التلميذ يريد أن يعرف إن نجح. */
+export type ResultatSuppression = 'supprime' | 'hors_ligne' | 'pas_de_compte' | 'sync_inactive' | 'erreur';
+
+export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSuppression> {
+  if (!syncActive()) return 'sync_inactive';
+  if (!etat.compte?.email || !etat.compte.jeton) return 'pas_de_compte';
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return 'hors_ligne';
+  try {
+    const sb = await clientSupabase(etat.compte.jeton);
+    if (!sb) return 'sync_inactive';
+    const { error } = await sb.from('eleves').delete().eq('email', etat.compte.email);
+    if (error) {
+      console.warn('[sync] فشل الحذف:', error.message);
+      return 'erreur';
+    }
+    dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
+    return 'supprime';
+  } catch (e) {
+    console.warn('[sync] استثناء الحذف:', e);
+    return 'erreur';
+  }
+}
+
 /** موافقة صريحة فقط: «نعم» مُسجَّل بتاريخ. التثبيتات القديمة (consentementSync: true بلا تاريخ
  *  لأن القيمة الافتراضية كانت true قبل v0.9.4) لا تُرسل شيئًا حتى يُجيب التلميذ على شاشة الموافقة. */
 export function consentementExplicite(etat: Etat): boolean {

@@ -3,8 +3,8 @@
 
 import { useMemo, useState } from 'react';
 import type { Etat } from '../types';
-import { rechercher } from '../utils/recherche';
-import { UNITE_PAR_ID } from '../data/programme';
+import { rechercher, type FiltreRecherche } from '../utils/recherche';
+import { DOMAINES, UNITE_PAR_ID, UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 
@@ -16,7 +16,10 @@ interface Props {
 
 export default function Recherche({ etat, onOuvrirLecon, onFermer }: Props) {
   const [q, setQ] = useState('');
-  const resultats = useMemo(() => rechercher(q), [q]);
+  const [filtre, setFiltre] = useState<FiltreRecherche>({});
+  const resultats = useMemo(() => rechercher(q, 60, filtre), [q, filtre]);
+  const avecFiltre = Boolean(filtre.domaineId || filtre.uniteId);
+  const unitesDuFiltre = filtre.domaineId ? UNITES.filter((u) => DOMAINES.find((d) => d.id === filtre.domaineId)?.unites.includes(u.id)) : UNITES;
   const favoris = etat.favoris ?? [];
 
   return (
@@ -47,7 +50,41 @@ export default function Recherche({ etat, onOuvrirLecon, onFermer }: Props) {
 
       <main className="flex-1 px-3 pb-12 pt-3">
         <div className="mx-auto max-w-3xl">
-          {q.trim().length < 2 ? (
+          {/* مرشّحات (P3.3): مجال ثم وحدة — تعمل مع البحث أو وحدها */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFiltre({})}
+              className={`chip text-[11px] font-bold ${!filtre.domaineId ? 'border-forest bg-sage-soft/60 text-forest-deep' : 'border-line text-mute'}`}
+            >
+              كلّ المجالات
+            </button>
+            {DOMAINES.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setFiltre((f) => (f.domaineId === d.id ? {} : { domaineId: d.id }))}
+                className={`chip text-[11px] font-bold ${filtre.domaineId === d.id ? 'border-forest bg-sage-soft/60 text-forest-deep' : 'border-line text-mute'}`}
+              >
+                {d.titre.replace(/^المجال \S+: /, '')}
+              </button>
+            ))}
+            <select
+              value={filtre.uniteId ?? ''}
+              onChange={(e) => setFiltre((f) => ({ ...f, uniteId: e.target.value || undefined }))}
+              className="field w-auto py-1.5 text-xs"
+              aria-label="الوحدة"
+            >
+              <option value="">كلّ الوحدات</option>
+              {unitesDuFiltre.map((u) => (
+                <option key={u.id} value={u.id}>
+                  الوحدة {nb(u.numero)} · {u.titre}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {q.trim().length < 2 && !avecFiltre ? (
             <p className="mt-6 text-center text-sm text-mute">
               اكتب حرفين على الأقل. البحث يشمل عناوين الدروس والمصطلحات والإشكاليات — دون اتصال.
             </p>

@@ -1,0 +1,22 @@
+# Banque de drills — source de vérité (P1.4-bis)
+
+Les fichiers `axes.ts`, `domaine1.ts`, `domaine2.ts`, `domaine3.ts` de ce dossier **sont la source de référence versionnée** de la banque (620 items : 500 QCM + 120 définitions converties). Le document Markdown d'origine n'est pas dans le dépôt (chemin local de l'auteur) et n'a plus autorité.
+
+## Règles
+
+1. **Toute correction d'item se fait ici**, dans les `.ts`, et est tracée dans `plans/relecture/REGISTRE-ARBITRAGES.md` (id de l'item, avant/après, statut, date).
+2. **Régénération interdite par défaut** : `scripts/importer-drills.mjs` refuse de tourner sans chemin explicite **et** `--force`. Si une régénération est vraiment nécessaire (nouvelle source éditoriale validée par les enseignants), ré-appliquer ensuite chaque correction du tableau ci-dessous, puis lancer `node scripts/verifier-drills.mjs` (attendu : 0 problème).
+3. Les nouveaux items (P1.5, niveau 3) s'ajoutent directement dans les `.ts` du domaine concerné + `axes.ts` (`ids`, compteurs `qcm`/`defs`), avec leur source (piège officiel / sujet) en commentaire.
+
+## Corrections tracées à ré-appliquer après toute régénération
+
+| Registre | Item | Fichier | Correction |
+|---|---|---|---|
+| A-001 | `d101` (U10, axe 42, سطح غوتنبرغ) | `domaine3.ts` | `o[2]` remplacée par un distracteur distinct (définition du Moho) — l'original était équivalent à `o[0]`. Formulation finale à arbitrer par l'enseignant. |
+
+## Vérification
+
+```
+node scripts/verifier-drills.mjs
+```
+Contrôle : 4 options distinctes, bonne réponse en position 0, ids uniques, axes cohérents, alerte « tige répétée » et « options proches ».

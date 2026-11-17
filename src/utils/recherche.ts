@@ -1,7 +1,7 @@
 // البحث المحلّي (P3.3) — فهرس مبنيّ في الذاكرة من عناوين الدروس والوحدات والمصطلحات والإشكاليات.
 // لا شبكة، لا مكتبة: تطبيع عربي بسيط (همزات، تاء مربوطة، ألف مقصورة، تشكيل) + مطابقة جزئية.
 
-import { UNITES, UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
+import { DOMAINES, UNITES, UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
 import { LESSON_GOLD_SUMMARIES } from '../data/lessonGoldSummaries';
 import { LECONS_PASSIVES } from '../data/leconsPassives';
 
@@ -65,13 +65,37 @@ export interface Resultat {
   score: number;
 }
 
-/** بحث بكلمات متعدّدة: كل كلمة يجب أن تظهر. ترتيب: عنوان > مصطلح > إشكالية > وحدة، ثم ترتيب البرنامج. */
-export function rechercher(requete: string, limite = 20): Resultat[] {
+/** مرشّح اختياري (P3.3): مجال أو وحدة. */
+export interface FiltreRecherche {
+  domaineId?: string;
+  uniteId?: string;
+}
+
+export function entreeDansFiltre(e: EntreeIndex, filtre?: FiltreRecherche): boolean {
+  if (!filtre) return true;
+  if (filtre.uniteId && e.uniteId !== filtre.uniteId) return false;
+  if (filtre.domaineId) {
+    const d = DOMAINES.find((x) => x.id === filtre.domaineId);
+    if (d && !d.unites.includes(e.uniteId)) return false;
+  }
+  return true;
+}
+
+/** بحث بكلمات متعدّدة: كل كلمة يجب أن تظهر. ترتيب: عنوان > مصطلح > إشكالية > وحدة، ثم ترتيب البرنامج.
+ *  مع مرشّح وبلا استعلام (أو استعلام أقصر من حرفين): تُعرض كلّ دروس المجال/الوحدة بترتيب البرنامج. */
+export function rechercher(requete: string, limite = 20, filtre?: FiltreRecherche): Resultat[] {
   const q = normaliser(requete);
-  if (q.length < 2) return [];
+  const avecFiltre = Boolean(filtre?.domaineId || filtre?.uniteId);
+  if (q.length < 2) {
+    if (!avecFiltre) return [];
+    return construireIndex()
+      .filter((e) => entreeDansFiltre(e, filtre))
+      .map((e) => ({ entree: e, contexte: '', score: 0 }));
+  }
   const mots = q.split(' ').filter(Boolean);
   const res: Resultat[] = [];
   for (const e of construireIndex()) {
+    if (!entreeDansFiltre(e, filtre)) continue;
     if (!mots.every((m) => e.cle.includes(m))) continue;
     let score = 0;
     let contexte = '';

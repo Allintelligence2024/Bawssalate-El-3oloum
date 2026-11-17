@@ -3,7 +3,24 @@
 //   + توليد تقرير للمراجعة (scripts/drills-rapport.md)
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const SOURCE = process.argv[2] ?? 'C:/Users/zakaria/Desktop/drills_svt_arabe_500_QCM_120_definitions_programme_joint.md';
+// ⚠️ P1.4-bis : les fichiers générés dans src/data/drills/ sont la SOURCE DE VÉRITÉ versionnée.
+// Toute régénération écrase les corrections tracées au registre (plans/relecture/REGISTRE-ARBITRAGES.md,
+// ex. A-001 d101). Le script exige donc un chemin explicite ET --force, puis rappelle les corrections à ré-appliquer.
+const args = process.argv.slice(2);
+const force = args.includes('--force');
+const SOURCE = args.find((a) => !a.startsWith('--'));
+if (!SOURCE || !force) {
+  console.error(
+    [
+      'Usage : node scripts/importer-drills.mjs <chemin-du-md-source> --force',
+      '',
+      'Refus : src/data/drills/*.ts est la source de vérité versionnée (voir src/data/drills/README.md).',
+      'Régénérer sans ré-appliquer les corrections du registre des arbitrages perdrait des items corrigés.',
+    ].join('\n')
+  );
+  process.exit(2);
+}
+console.warn('Après génération, ré-appliquer les corrections listées dans src/data/drills/README.md puis relancer scripts/verifier-drills.mjs.');
 const SORTIE = 'src/data/drills';
 const RAPPORT = 'scripts/drills-rapport.md';
 

@@ -8,7 +8,7 @@
 //   كل خطأ يُسجَّل في سجلّ الأخطاء الذرّية (بلا كتابة الجواب الصحيح فيه أبدًا).
 
 import { useState, useEffect } from 'react';
-import type { Etat } from '../types';
+import type { BilanExamen, Etat } from '../types';
 import type { ItemDrill } from '../data/drills/types';
 import { chargerDomaine, composerJoueur } from '../utils/drills';
 import { nb, formatChrono } from '../utils/dates';
@@ -20,7 +20,7 @@ interface Props {
   etat: Etat;
   onFermer: () => void;
   /** يُستدعى مرّة عند بلوغ شاشة الحصيلة — لمتابعة «موضوع واحد في الأسبوع» */
-  onTermine?: () => void;
+  onTermine?: (bilan: BilanExamen) => void;
   onItemReussi: (id: string) => void;
   onResultatKafaa: (
     key: string,
@@ -183,6 +183,7 @@ export default function ExamBlanc({
 
   // État pour l'enquête
   const [enqFaux, setEnqFaux] = useState(0);
+  const [unitesFaibles, setUnitesFaibles] = useState<number[]>([]);
   const [kafaaEnvoyee, setKafaaEnvoyee] = useState(false);
 
   const reussis = new Set(Object.keys(etat.drills ?? {}));
@@ -218,6 +219,7 @@ export default function ExamBlanc({
     setMessage(null);
     setEtapeFaite(false);
     setEnqFaux(0);
+    setUnitesFaibles([]);
     setKafaaEnvoyee(false);
     setEcran('partie1');
     setSeconde(0);
@@ -256,6 +258,7 @@ export default function ExamBlanc({
     }
     sonFaux();
     setQFaux(qFaux + 1);
+    if (!unitesFaibles.includes(item.u)) setUnitesFaibles([...unitesFaibles, item.u]);
     setQTentatives(qTentatives + 1);
     setQChoix(null);
     const texteFaux = item.o[ordre[qChoix]];
@@ -306,7 +309,15 @@ export default function ExamBlanc({
       }
       setEcran('bilan');
       setChronoEnMarche(false);
-      onTermine?.();
+      onTermine?.({
+        date: new Date().toISOString(),
+        secondes: seconde,
+        chrono: chronoActif,
+        qcm: fileQcm.length,
+        directs: qDirects,
+        erreursEnquete: enqFaux,
+        unitesFaibles: [...unitesFaibles].sort((a, b) => a - b),
+      });
       return;
     }
     setEtape(etape + 1);
