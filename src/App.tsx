@@ -11,6 +11,7 @@ import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee
 import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
+import type { SituationSynthese } from './data/syntheses';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
@@ -31,6 +32,7 @@ const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
 const SchemaALegender = lazy(() => import('./components/SchemaALegender'));
+const ChoixSynthese = lazy(() => import('./components/ChoixSynthese'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -73,6 +75,7 @@ type Mode =
   | { type: 'mindmap' }
   | { type: 'recherche'; q?: string }
   | { type: 'schemas' }
+  | { type: 'choixSynthese' }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -541,6 +544,26 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'choixSynthese') {
+      return (
+        <ChoixSynthese
+          etat={etat}
+          onFermer={() => setMode(null)}
+          onChoisir={(s: SituationSynthese) => {
+            setMode({
+              type: 'synthese',
+              uniteId: s.uniteId.toUpperCase(),
+              sujet: s.sujet,
+              question: s.question,
+              modele: s.modele,
+              pieges: s.pieges,
+              diagnostic: s.diagnostic,
+              retour: { type: 'choixSynthese' },
+            });
+          }}
+        />
+      );
+    }
     if (mode.type === 'schemas') {
       return (
         <SchemaALegender
@@ -890,6 +913,7 @@ export default function App() {
           onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
           onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
           onOuvrirSchemas={() => setMode({ type: 'schemas' })}
+          onOuvrirSyntheses={() => setMode({ type: 'choixSynthese' })}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
         />
       )}

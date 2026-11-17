@@ -293,3 +293,4 @@ Total : **103 tests verts** (porte de fin P3 « ≥ 100 tests » franchie côté
 
 Total : **107 tests verts**, chunk principal 383,9 kB (gzip 115,9) ; chunks `glossaire` 19 kB, `SchemaALegender` 14 kB.
 | P1.5 (dépôt 2) | +12 items n3 (u8 ×4, u10 ×4, u1, u2, u5 ×2) → 40 n3 / 660 items, `TOTAL_QCM = 540` | `niveau3.ts`, `axes.ts`, `drills/README.md`, registre A-005 | `verifier-drills.mjs` 0 problème ; `niveau3.test.ts` (chaque unité ≥ 2 n3) |
+| P1.3 | 11 situations de synthèse libre (une par unité) + écran de choix, carte dans التدريبات ; `SyntheseLibre` inchangé | `src/data/syntheses.ts`, `ChoixSynthese.tsx`, `Exercices.tsx`, `App.tsx` (mode `choixSynthese`), registre A-007 | `syntheses.test.ts` (1 unité ↔ 1 situation, pièges = `piegesAr`, aucun %) ; **108 tests** ; chunk principal 385,6 kB (gzip 116,2) |

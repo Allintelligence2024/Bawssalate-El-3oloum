@@ -121,6 +121,8 @@ Sur chaque sujet : minuteur optionnel (4 h 30 pour un sujet complet, durée lue 
 Composant `SyntheseLibre` : situation Bac → **saisie clavier libre** → auto-évaluation guidée sur la grille du jury (l'élève coche ce qu'il a réellement produit) → modèle + erreur nucléaire → carte `kafaa` SM-2. Déploiement progressif : 4 unités pilotes (U1, U4, U6, U9) en S2, les 7 autres en S3 après retour des pilotes. Aucune note machine.
 **Preuve :** 11 exercices en production + traces d'auto-évaluations dans le carnet lors du test utilisateurs (P3.4).
 
+*16/11 : **11 situations en production** (`src/data/syntheses.ts`, une par unité : sand + consigne ouverte + 5 éléments de réponse + pièges officiels de l'unité + erreur nucléaire T1–T4), écran de choix `ChoixSynthese.tsx` (carte « التركيب الحرّ » dans التدريبات, chunk lazy 21 kB) → `SyntheseLibre` existant (saisie libre, auto-évaluation, modèle, carte `kafaa` `syntheseU<n>`). Toujours aucune note machine. Rédaction dev à partir des fiches or et des `piegesAr` : **à valider** (registre A-007). Test `syntheses.test.ts`. Reste : traces d'auto-évaluation lors du test terrain (P3.4) et, après validation, un deuxième sujet par unité prioritaire (U3, U1, U4, U5).*
+
 ### P1.4 🟡 Renvoi au cours après échec + stats d'examens (5 j)
 2 échecs consécutifs sur un axe de drills → carte « 📖 راجع الدرس » vers `urlLecon()` (le mapping axe→unité existe dans `axes.ts`, mais la correspondance **axe → leçon précise est à construire et à faire valider par les enseignants** — tâche incluse dans ces 5 j) ; historique `etat.examens[]` (date, sujet, axes faibles, temps) consultable dans أنا et relié au carnet de failles.
 **Preuve :** capture du renvoi déclenché + historique après 2 examens.

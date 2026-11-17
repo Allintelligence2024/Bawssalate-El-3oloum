@@ -40,7 +40,7 @@
 |---|---|---|
 | 100 % QCM, gabarits répétés ×50 | ❌ 🔒 | `verifier-drills.mjs` : 5 tiges × 50 ; réécriture = P1.5 éditorial |
 | `n:3` jamais utilisé **mais** un bouton « تحدي المستوى 3 » l'annonçait | ✅ (honnêteté) | Bouton et option « 1–3 » retirés de `Exercices.tsx` ; `grep -o "n: *3" src/data/drills/*.ts` → 0 (toujours 0 item n3) |
-| Partie III (synthèse rédigée) jamais entraînée ni corrigée | 🟡 | `SyntheseLibre` pour U1 (voir Axe 3) ; 10 autres unités à venir (P1.3) |
+| Partie III (synthèse rédigée) jamais entraînée ni corrigée | 🟡 | `SyntheseLibre` + 11 situations (une par unité, `syntheses.ts`, 16/11) ; auto-évaluation sans note ; contenu à valider (A-007), traces terrain à venir (P3.4) |
 | Schémas à légender : 10 exercices U1 seulement | ❌ | Galerie désormais décrite comme **statique** (plus de « تفاعلية » mensonger) ; P1.6 non commencé |
 | Explications « الجواب الصحيح : … » | ❌ | — |
 
