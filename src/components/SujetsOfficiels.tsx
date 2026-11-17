@@ -1,8 +1,10 @@
-// بنية مواضيع البكالوريا (P1.1، مرحلة «بنية بلا تصحيح») — تعرض هيكل كلّ موضوع: التمارين، السلّم، الأجزاء،
-// التعليمات بأفعالها الإجرائية، الوحدة المستهدفة. لا وثائق ولا PDF ولا عناصر إجابة (الحقوق قيد التسوية).
+// بنية مواضيع البكالوريا (P1.1) — تعرض هيكل كلّ موضوع (2013→2026): التمارين، السلّم، الأجزاء، التعليمات بأفعالها
+// الإجرائية، الوحدة المستهدفة. لا وثائق مرسومة ولا PDF. المرحلة 2 (2023 فقط حاليًّا): وصف نصّي للوثائق وعناصر إجابة
+// مختصرة بتصرّف من التصحيح الرسمي، مخفيّة افتراضيًّا خلف زرّ «أظهر عناصر الإجابة» (A-009).
 import { useState } from 'react';
 import { ANNEES_STRUCTUREES, SUJETS_OFFICIELS, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
 import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
+import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
@@ -44,9 +46,25 @@ function titreUnite(id: string): string {
 
 function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
+  const [montrerReponses, setMontrerReponses] = useState(false);
+  const corrige = corrigeDe(sujet.id);
+  const partieCorrigee = (numero: number, i: number): PartieCorrigee | undefined => corrige?.exercices.find((x) => x.numero === numero)?.parties[i];
   return (
     <div className="space-y-3">
       {sujet.notes && <p className="rounded-xl bg-gold-soft/40 px-3 py-2 text-[11px] leading-relaxed text-forest-deep">{sujet.notes}</p>}
+      {corrige && (
+        <div className="rounded-xl border border-line bg-paper px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-bold">عناصر الإجابة متوفّرة لهذا الموضوع</p>
+            <button type="button" onClick={() => setMontrerReponses((v) => !v)} className={`chip text-xs font-bold ${montrerReponses ? 'border-forest bg-sage-soft/60' : ''}`} aria-pressed={montrerReponses}>
+              {montrerReponses ? 'أخفِ عناصر الإجابة' : 'أظهر عناصر الإجابة'}
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-mute">
+            حاول الإجابة كتابةً أوّلًا، ثمّ قارن. العناصر مختصرة ومعاد صياغتها من {corrige.source} الحقوق محفوظة للديوان الوطني؛ العرض لأغراض التدريب.
+          </p>
+        </div>
+      )}
       {sujet.exercices.map((e) => (
         <section key={e.numero} className="card p-4">
           <div className="flex items-baseline justify-between gap-3">
@@ -75,9 +93,28 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
                       {ouvert === c.verbe && ATTENDU[c.verbe] && (
                         <p className="mt-1 rounded-lg bg-sage-soft/50 px-2.5 py-1.5 text-xs text-forest-deep">ما يُنتظر: {ATTENDU[c.verbe]}</p>
                       )}
+                      {montrerReponses && (() => {
+                        const r = partieCorrigee(e.numero, i)?.reponses.find((x) => x.consigne === j);
+                        return r ? (
+                          <div className="mt-1.5 rounded-lg border border-gold/40 bg-gold-soft/30 px-2.5 py-2 text-xs leading-relaxed text-forest-deep">
+                            <p className="font-bold">عناصر الإجابة{r.points !== undefined ? ` · ${nb(r.points)} ن` : ''}</p>
+                            <ul className="mt-1 list-disc space-y-1 ps-4">
+                              {r.attendu.map((a, k) => <li key={k}>{a}</li>)}
+                            </ul>
+                          </div>
+                        ) : null;
+                      })()}
                     </li>
                   ))}
                 </ol>
+                {montrerReponses && partieCorrigee(e.numero, i)?.documents && (
+                  <div className="mt-2 rounded-lg bg-cream px-2.5 py-2 text-[11px] leading-relaxed text-ink-soft">
+                    <p className="font-bold text-forest-deep">وصف الوثائق (بلا رسم)</p>
+                    <ul className="mt-1 list-disc space-y-1 ps-4">
+                      {partieCorrigee(e.numero, i)!.documents!.map((d, k) => <li key={k}>{d}</li>)}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -99,8 +136,10 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
 
 export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer }: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
-  const [numero, setNumero] = useState<1 | 2>(1);
-  const sujet = SUJETS_OFFICIELS.find((s) => s.annee === annee && s.numero === numero);
+  const [sujetId, setSujetId] = useState<string | null>(null);
+  const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
+  const sujet = deAnnee.find((s) => s.id === sujetId) ?? deAnnee[0];
+  const plusieursSessions = new Set(deAnnee.map((s) => s.session)).size > 1;
   const verbes = frequenceVerbes().slice(0, 8);
   const unites = Object.entries(frequenceUnites()).sort((a, b) => b[1] - a[1]);
   return (
@@ -117,14 +156,15 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
         </div>
         <div className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center gap-2">
           {ANNEES_STRUCTUREES.map((a) => (
-            <button key={a} type="button" onClick={() => setAnnee(a)} className={`chip tnum text-xs font-bold ${annee === a ? 'border-forest bg-sage-soft/60' : ''}`}>
+            <button key={a} type="button" onClick={() => { setAnnee(a); setSujetId(null); }} className={`chip tnum text-xs font-bold ${annee === a ? 'border-forest bg-sage-soft/60' : ''}`}>
               {nb(a)}
             </button>
           ))}
-          <span className="mx-1 h-4 w-px bg-line" />
-          {([1, 2] as const).map((n) => (
-            <button key={n} type="button" onClick={() => setNumero(n)} className={`chip text-xs font-bold ${numero === n ? 'border-forest bg-sage-soft/60' : ''}`}>
-              الموضوع {n === 1 ? 'الأول' : 'الثاني'}
+        </div>
+        <div className="mx-auto mt-2 flex max-w-3xl flex-wrap items-center gap-2">
+          {deAnnee.map((s) => (
+            <button key={s.id} type="button" onClick={() => setSujetId(s.id)} className={`chip text-xs font-bold ${sujet?.id === s.id ? 'border-forest bg-sage-soft/60' : ''}`}>
+              الموضوع {s.numero === 1 ? 'الأول' : 'الثاني'}{plusieursSessions ? ` · ${s.session}` : ''}
             </button>
           ))}
         </div>
@@ -132,8 +172,8 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
       <main className="flex-1 px-4 pb-16 pt-4">
         <div className="mx-auto max-w-3xl space-y-4">
           <p className="text-xs leading-relaxed text-mute">
-            نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الوثائق والإجابات النموذجية غير
-            معروضة في انتظار تسوية حقوق إعادة النشر؛ انقر فعل التعليمة لترى ما يُنتظر منك.
+            نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
+            معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لبعض المواضيع عناصر إجابة مختصرة تظهر عند الطلب.
           </p>
           {sujet ? <Sujet sujet={sujet} onOuvrirSynthese={onOuvrirSynthese} onOuvrirRecherche={onOuvrirRecherche} /> : <p className="text-sm text-mute">لا موضوع.</p>}
 
@@ -151,7 +191,7 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
                 <li key={u} className="chip tnum text-xs">{titreUnite(u).split(' — ')[0]} <span className="text-mute">×{nb(n)}</span></li>
               ))}
             </ul>
-            <p className="mt-3 text-[11px] leading-relaxed text-mute">عيّنة صغيرة (3 سنوات): للتوجيه لا للتنبّؤ. ترتيب الأولويات الكامل في «مساري» يعتمد على 9 دورات.</p>
+            <p className="mt-3 text-[11px] leading-relaxed text-mute">{nb(ANNEES_STRUCTUREES.length)} دورة ({nb(ANNEES_STRUCTUREES[ANNEES_STRUCTUREES.length - 1])}–{nb(ANNEES_STRUCTUREES[0])}): للتوجيه لا للتنبّؤ؛ البرنامج والسلّم تغيّرا عبر السنوات (قبل 2017 لم يكن السلّم 5/7/8).</p>
           </section>
         </div>
       </main>

@@ -1,8 +1,13 @@
-// بنية مواضيع البكالوريا (P1.1 — المرحلة «بنية بلا تصحيح»).
+// بنية مواضيع البكالوريا (P1.1 — المرحلة «بنية بلا تصحيح»)، 2013 → 2026 (14 دورة، 30 موضوعًا).
+// هذا الملفّ: الأنواع، مواضيع 2020–2023 (طبقة نصّية)، الدوالّ. باقي السنوات في ./sujets/*.ts (قراءة بالعين).
 // ما يوجد هنا: هيكل الموضوع فقط — التمارين، الأجزاء، نصّ التعليمات (منقول/مختصر من ورقة الامتحان)، الأفعال الإجرائية،
 // الوحدة المستهدفة والسلّم. ما لا يوجد عمدًا: الوثائق (رسوم، جداول، منحنيات) ولا عناصر الإجابة الرسمية — في انتظار
 // تسوية حقوق إعادة النشر (REGISTRE-ARBITRAGES A-004). المصدر: plans/sources/sujets/SE/ (قراءة الطبقة النصّية بـ pypdf).
 // الحالة: «à valider» — مطابقة التعليمات للورقة الأصلية بالعين + تأكيد السلّم (REGISTRE-ARBITRAGES A-008).
+
+import { SUJETS_2013_2016 } from './sujets/s2013_2016';
+import { SUJETS_2017_2022 } from './sujets/s2017_2022';
+import { SUJETS_2024_2026 } from './sujets/s2024_2026';
 
 export type VerbeConsigne =
   | 'سمِّ'
@@ -59,7 +64,7 @@ export interface SujetOfficiel {
   notes?: string;
 }
 
-export const SUJETS_OFFICIELS: SujetOfficiel[] = [
+const SUJETS_2020_2023: SujetOfficiel[] = [
   // ───────────────────────── 2023 ─────────────────────────
   {
     id: '2023-1', annee: 2023, session: 'عادية', numero: 1, dureeMin: 270,
@@ -382,6 +387,11 @@ export const SUJETS_OFFICIELS: SujetOfficiel[] = [
     ],
   },
 ];
+
+/** كلّ المواضيع المهيكلة، مرتّبة من الأحدث إلى الأقدم (الدورة العادية قبل الاستثنائية داخل السنة) */
+export const SUJETS_OFFICIELS: SujetOfficiel[] = [...SUJETS_2024_2026, ...SUJETS_2020_2023, ...SUJETS_2017_2022, ...SUJETS_2013_2016].sort(
+  (a, b) => b.annee - a.annee || (a.session === b.session ? a.numero - b.numero : a.session === 'عادية' ? -1 : 1),
+);
 
 /** تواتر الأفعال الإجرائية عبر كلّ المواضيع المهيكلة — يُحسب من البيانات لا يُكتب يدويًّا */
 export function frequenceVerbes(sujets: SujetOfficiel[] = SUJETS_OFFICIELS): { verbe: VerbeConsigne; n: number }[] {

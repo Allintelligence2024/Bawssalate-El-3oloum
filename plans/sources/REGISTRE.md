@@ -81,3 +81,5 @@
 3. **P1.7** : l'analyse de fréquence peut démarrer sur les 14 années SE (2013–2026) sans attendre les droits, puisqu'elle ne reproduit pas les épreuves.
 
 *16/11 — P1.1 phase « structure » : 2020, 2021, 2023 SE structurés dans `src/data/sujetsOfficiels.ts` (consignes + barème + unités, sans documents ni corrigé). Les fichiers SE à couche texte incluent la **correction officielle ONEC** après le sujet (ex. 2023 : pages 11–20) — matériau pour la phase 2 une fois les droits clarifiés. 2022 : couche texte illisible (glyphes privés), à traiter par rendu image ; 2024–2026 : scans.*
+
+*16/11 (2ᵉ passe) — P1.1 structure sur **tout le corpus SE** (30 sujets, 2013→2026) par lecture à l'œil des pages rendues en image ; `…-2116452.pdf` identifié comme **session exceptionnelle 2017** (en-tête « الدورة الاستثنائية 2017 ») ; `…-3814840.pdf` (2016, scan) non confronté à `…-2586794.pdf` (supposé doublon). Corrections officielles ONEC repérées dans les PDF 2018, 2019, 2023, 2025 ; **2023 transcrite condensée** dans `src/data/sujetsCorriges.ts` (A-009).*
