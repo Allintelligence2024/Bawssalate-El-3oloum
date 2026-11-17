@@ -247,3 +247,16 @@ Toujours ouverts (dev) : revue croisée hebdomadaire (P2.4), filtres de recherch
 Total : **93 tests verts**, chunk principal 375,4 kB (gzip 113,5).
 
 P2.4 est désormais complet côté code (rappels, stats par unité, revue croisée). Toujours ouverts (dev) : filtres de recherche par unité, items de niveau 3 (P1.5), P3.2 défis de régularité. Humain : notification reçue sur appareil, capture « أنا » avec faiblesse nommée, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.
+
+### 6 undecies — Onzième passe (défis de régularité, badges, audit réseau)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P3.2 | Défi hebdomadaire choisi (20 drills / revue croisée / examen), 1 par semaine, figé après choix, progrès local (base de drills figée au choix), consolidation unique dans `defisAccomplis` ; carte dans « اليوم » masquée si استرجاع dû | `utils/defis.ts`, `components/CarteDefi.tsx`, `Aujourdhui.tsx`, `App.tsx`, `types.ts` (`defi`, `defisAccomplis`) | `defis.test.ts` (3) : base/progrès/idempotence/reset hebdo, événements de la semaine seulement, badges |
+| P3.2 | Badges de contenu : 4 familles × 3 paliers, obtenus + un prochain par famille, texte « لا ترتيب » | `components/CarteBadges.tsx`, `Ana.tsx` | idem |
+| P3.2 | Audit réseau : 0 lecture de données d'autrui (seul `upsert` de sa propre ligne, assets du SW) | `plans/preuves/audit-reseau.md` | `grep` reproductible documenté |
+| Sync | Texte « jamais envoyé » complété (مراجعة متقاطعة، تحدّيات، شارات) | `utils/sync.ts` | — |
+
+Total : **96 tests verts**, chunk principal 380,8 kB (gzip 115,1).
+
+Toujours ouverts (dev) : filtres de recherche par unité (P3.3 reste), items de niveau 3 (P1.5), politique de confidentialité dédiée. Humain : notification reçue, captures اليوم/أنا, onglet Réseau sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.

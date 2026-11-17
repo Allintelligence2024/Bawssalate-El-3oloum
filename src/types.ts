@@ -136,6 +136,8 @@ export interface Etat {
   kafaa?: Record<string, CarteKafaa>; // بطاقات كفاءة المنهجية (مفتاح: methodo{index})
   kafaaHebdo?: { debut: string; n: number }; // مراجعات الكفاءة هذا الأسبوع (الأحد → samedi): ≤ 2
   revueCroisee?: { semaine: string; lessonIds: string[]; faiteLe?: string }; // المراجعة المتقاطعة الأسبوعية (P2.4) — درس/مجال، مرّة في الأسبوع
+  defi?: { semaine: string; type: 'drills' | 'croisee' | 'examen'; choisiLe: string; baseDrills: number }; // تحدّي الأسبوع المختار (P3.2)
+  defisAccomplis?: string[]; // أسابيع التحدّيات المُنجزة (ISO بداية الأسبوع) — للشارة فقط
   consentementSync?: boolean; // موافقة التلميذ على إرسال ملخّص تقدّمه للمطوّر (انظر utils/sync.ts)
   /** تاريخ اختيار التلميذ الصريح (نعم أو لا) على شاشة الموافقة. غيابه = لم يُسأل بعد
    *  (تثبيت قديم كان فيه الإرسال مفعّلًا افتراضيًّا) → لا إرسال حتى يجيب (P0.2/P0.8). */

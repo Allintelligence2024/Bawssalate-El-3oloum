@@ -18,6 +18,7 @@ import ReglagesParcours from './ReglagesParcours';
 import CarteDiagnosticFavoris from './CarteDiagnosticFavoris';
 import ReglageRappel from './ReglageRappel';
 import CarteForcesFaiblesses from './CarteForcesFaiblesses';
+import CarteBadges from './CarteBadges';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -250,6 +251,9 @@ export default function Ana({
 
       {/* الأقوى / الأضعف (P2.4) */}
       <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
+
+      {/* شارات المحتوى (P3.2) */}
+      <CarteBadges etat={etat} />
 
       {/* التموضع · المفضّلة */}
       <CarteDiagnosticFavoris

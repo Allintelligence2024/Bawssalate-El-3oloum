@@ -13,3 +13,4 @@ Un gain de note n'existe que s'il est démontrable ici (plan §1, « Principe de
 
 Les registres éditoriaux (arbitrages, relecture signée) vivent dans `plans/relecture/` ; le registre
 des sujets officiels (année, session, source, droits, intégrité) dans `plans/sources/REGISTRE.md`.
+- `audit-reseau.md` — relecture des primitives réseau du client : 0 lecture de données d'autrui (P3.2).

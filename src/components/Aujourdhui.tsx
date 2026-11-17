@@ -7,6 +7,8 @@ import { DUREE_TOTALE_MIN } from '../data/protocole';
 import { messageAccueil } from '../utils/diagnostic';
 import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteStats from './CarteStats';
+import CarteDefi from './CarteDefi';
+import type { TypeDefi } from '../utils/defis';
 import type { Etat } from '../types';
 import type { ItemChemin } from '../data/programme';
 import type { Qualite } from '../utils/srs';
@@ -26,6 +28,8 @@ interface Props {
   onOuvrirExamenBlanc?: () => void;
   /** المراجعة المتقاطعة الأسبوعية (P2.4) */
   onDemarrerRevueCroisee?: () => void;
+  /** تحدّي الأسبوع (P3.2) */
+  onChoisirDefi?: (type: TypeDefi) => void;
 }
 
 export default function Aujourdhui({
@@ -37,6 +41,7 @@ export default function Aujourdhui({
   onOuvrirMethodologie,
   onOuvrirExamenBlanc,
   onDemarrerRevueCroisee,
+  onChoisirDefi,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = competenceDue(etat);
@@ -289,6 +294,9 @@ export default function Aujourdhui({
         )}
         </div>
       </section>
+
+      {/* تحدّي الأسبوع (P3.2) — يظهر بعد المهمّة الواحدة، ولا يُطلب حين يكون استرجاع مستحقًّا */}
+      {onChoisirDefi && action.type !== 'rappel' && <CarteDefi etat={etat} onChoisir={onChoisirDefi} />}
 
       {/* المراجعة المتقاطعة الأسبوعية (P2.4) — درس مُنهى من كلّ مجال، مرّة في الأسبوع؛ لا تظهر قبل مجالين */}
       {onDemarrerRevueCroisee && croisee === 'prete' && action.type !== 'rappel' && (

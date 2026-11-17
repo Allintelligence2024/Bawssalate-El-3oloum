@@ -8,6 +8,7 @@ import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
+import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
@@ -185,6 +186,14 @@ export default function App() {
     if (etat.rappel?.actif) void synchroniserRappel(etat);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // تحدّي الأسبوع (P3.2): حين يكتمل يُسجَّل أسبوعه مرّة واحدة (للشارة) — حساب محلّي صرف
+  useEffect(() => {
+    if (avancementDefi(etat)?.accompli && !(etat.defisAccomplis ?? []).includes(etat.defi?.semaine ?? '')) {
+      setEtat((prev) => consoliderDefi(prev));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etat.drills, etat.revueCroisee, etat.examensBlancs, etat.defi]);
 
   // حجم الخط (P3.3): سمة على <html> تُحرّك rem كلّه، وتُنسخ إلى iframes الدروس عند تحميلها
   useEffect(() => {
@@ -804,6 +813,7 @@ export default function App() {
           onResultatKafaa={onResultatKafaa}
           onOuvrirMethodologie={() => setOnglet('methodo')}
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
+          onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
