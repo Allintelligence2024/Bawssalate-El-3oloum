@@ -1,6 +1,6 @@
 // P1.1 (structure sans corrigé) — 30 sujets structurés (2013→2026, 2017 ×2 sessions) : barème 20, 3 exercices, unités valides, verbes typés
 import { describe, it, expect } from 'vitest';
-import { SUJETS_OFFICIELS, frequenceVerbes, frequenceUnites, ANNEES_STRUCTUREES } from '../../data/sujetsOfficiels';
+import { SUJETS_OFFICIELS, frequenceVerbes, frequenceUnites, ANNEES_STRUCTUREES, fideliteDe, LIBELLE_FIDELITE } from '../../data/sujetsOfficiels';
 import { UNITES } from '../../data/programme';
 import { situationDeUnite } from '../../data/syntheses';
 
@@ -40,5 +40,18 @@ describe('sujets officiels structurés', () => {
     // l'immunologie (u4) et le nerveux (u5) sont les unités les plus visées comme exercice complet
     expect(u.u4).toBeGreaterThanOrEqual(u.u1);
     expect(u.u5).toBeGreaterThanOrEqual(u.u6);
+  });
+
+  it('étiquette de fidélité : a (couche texte) pour 2021/2023, c (reformulé) pour 2020, b (lecture à l\'œil) ailleurs — libellé défini', () => {
+    const parAnnee: Record<number, Set<string>> = {};
+    for (const s of SUJETS_OFFICIELS) {
+      const f = fideliteDe(s);
+      expect(LIBELLE_FIDELITE[f]).toBeTruthy();
+      (parAnnee[s.annee] ??= new Set()).add(f);
+    }
+    expect([...parAnnee[2023]]).toEqual(['a']);
+    expect([...parAnnee[2021]]).toEqual(['a']);
+    expect([...parAnnee[2020]]).toEqual(['c']);
+    for (const a of [2026, 2025, 2024, 2022, 2019, 2018, 2017, 2016, 2015, 2014, 2013]) expect([...parAnnee[a]]).toEqual(['b']);
   });
 });

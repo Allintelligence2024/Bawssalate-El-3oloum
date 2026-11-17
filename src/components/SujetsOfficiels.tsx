@@ -2,7 +2,7 @@
 // الإجرائية، الوحدة المستهدفة. لا وثائق مرسومة ولا PDF. المرحلة 2 (2023 فقط حاليًّا): وصف نصّي للوثائق وعناصر إجابة
 // مختصرة بتصرّف من التصحيح الرسمي، مخفيّة افتراضيًّا خلف زرّ «أظهر عناصر الإجابة» (A-009).
 import { useState } from 'react';
-import { ANNEES_STRUCTUREES, SUJETS_OFFICIELS, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
+import { ANNEES_STRUCTUREES, LIBELLE_FIDELITE, SUJETS_OFFICIELS, fideliteDe, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
 import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
 import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
 import { UNITES } from '../data/programme';
@@ -48,10 +48,14 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const corrige = corrigeDe(sujet.id);
-  const partieCorrigee = (numero: number, i: number): PartieCorrigee | undefined => corrige?.exercices.find((x) => x.numero === numero)?.parties[i];
+  const exerciceCorrige = (numero: number) => corrige?.exercices.find((x) => x.numero === numero);
+  const partieCorrigee = (numero: number, i: number): PartieCorrigee | undefined => exerciceCorrige(numero)?.parties[i];
   return (
     <div className="space-y-3">
-      {sujet.notes && <p className="rounded-xl bg-gold-soft/40 px-3 py-2 text-[11px] leading-relaxed text-forest-deep">{sujet.notes}</p>}
+      <p className="flex flex-wrap items-center gap-2 text-[11px] leading-relaxed text-mute">
+        <span className="chip text-[11px]" title="درجة أمانة النقل">أمانة النقل ({fideliteDe(sujet)}): {LIBELLE_FIDELITE[fideliteDe(sujet)]}</span>
+        {sujet.notes && <span>{sujet.notes}</span>}
+      </p>
       {corrige && (
         <div className="rounded-xl border border-line bg-paper px-3 py-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -71,6 +75,11 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
             <h2 className="font-naskh text-lg font-bold">التمرين {['الأول', 'الثاني', 'الثالث'][e.numero - 1]}</h2>
             <span className="tnum shrink-0 rounded-full bg-sage px-2.5 py-0.5 text-[11px] font-bold text-forest-deep">{nb(e.bareme)} نقاط</span>
           </div>
+          {montrerReponses && exerciceCorrige(e.numero)?.baremeCorrige !== undefined && exerciceCorrige(e.numero)!.baremeCorrige !== e.bareme && (
+            <p className="mt-1 rounded-lg bg-gold-soft/40 px-2.5 py-1 text-[11px] leading-relaxed text-forest-deep">
+              عدّل التصحيح الرسمي سلّم هذا التمرين إلى {nb(exerciceCorrige(e.numero)!.baremeCorrige!)} نقاط بعد إلغاء بعض الأسئلة.
+            </p>
+          )}
           <p className="mt-1 text-sm font-bold text-forest">{e.theme}</p>
           <p className="mt-0.5 text-xs text-mute">{e.unites.map(titreUnite).join(' · ')}</p>
           <div className="mt-3 space-y-3">
@@ -97,7 +106,7 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
                         const r = partieCorrigee(e.numero, i)?.reponses.find((x) => x.consigne === j);
                         return r ? (
                           <div className="mt-1.5 rounded-lg border border-gold/40 bg-gold-soft/30 px-2.5 py-2 text-xs leading-relaxed text-forest-deep">
-                            <p className="font-bold">عناصر الإجابة{r.points !== undefined ? ` · ${nb(r.points)} ن` : ''}</p>
+                            <p className="font-bold">عناصر الإجابة{r.points === 0 ? ' · ملغى' : r.points !== undefined ? ` · ${nb(r.points)} ن` : ''}</p>
                             <ul className="mt-1 list-disc space-y-1 ps-4">
                               {r.attendu.map((a, k) => <li key={k}>{a}</li>)}
                             </ul>
@@ -173,7 +182,7 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
         <div className="mx-auto max-w-3xl space-y-4">
           <p className="text-xs leading-relaxed text-mute">
             نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
-            معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لبعض المواضيع عناصر إجابة مختصرة تظهر عند الطلب.
+            معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لكلّ موضوع عناصر إجابة مختصرة (معاد صياغتها من التصحيح الرسمي) تظهر عند الطلب.
           </p>
           {sujet ? <Sujet sujet={sujet} onOuvrirSynthese={onOuvrirSynthese} onOuvrirRecherche={onOuvrirRecherche} /> : <p className="text-sm text-mute">لا موضوع.</p>}
 
