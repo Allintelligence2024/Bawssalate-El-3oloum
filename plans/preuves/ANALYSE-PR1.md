@@ -274,3 +274,12 @@ Toujours ouverts (dev) : filtres de recherche par unité (P3.3 reste), items de 
 Total : **98 tests verts**, chunk principal 381,7 kB (gzip 115,3) ; nouveau chunk `Confidentialite` 10,7 kB.
 
 Côté code, le plan n'a plus de tâche purement dev ouverte. Restent : éditorial (P1.5 items n3, glossaire P2.5, المرشد الموسّع P3.5, schémas P1.6), humain/ops (déployer la policy DELETE et la purge annoncée, notification sur appareil, captures, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md, terrain P3.4).
+
+### 6 terdecies — Treizième passe (items niveau 3 dépôt 1, المرشد الموسّع)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P1.5 | 28 items n3 manuscrits, tracés aux `piegesAr` / expériences de référence, tiges variées, fusionnés au chargement du domaine ; `TOTAL_QCM` 528 ; axes mis à jour | `src/data/drills/niveau3.ts`, `axes.ts`, `utils/drills.ts`, `scripts/verifier-drills.mjs` (+ fichier), `drills/README.md`, registre A-005 | `verifier-drills.mjs` : 648 items, 0 problème ; `niveau3.test.ts` (3) dont « l'escalier gagne sa 3ᵉ marche sur l'axe 15 » |
+| P3.5 | المرشد الموسّع : 25 questions / 5 branches, liens d'action, « انظر أيضًا » ; entrée depuis la méthodologie ; mode `mourchid` | `src/data/mourchid.ts`, `components/Mourchid.tsx`, `Methodologie.tsx`, `App.tsx` | `mourchid.test.ts` (2) |
+
+Total : **103 tests verts** (porte de fin P3 « ≥ 100 tests » franchie côté chiffre), chunk principal 382,4 kB (gzip 115,6) ; chunks `niveau3` 29,7 kB et `Mourchid` 19 kB hors entrée.

@@ -17,6 +17,8 @@ interface Props {
   onFermer: () => void;
   /** Écran d'ouverture : accueil (onglet منهجية) ou niveaux (3e porte تمارين dans تدريبات). */
   modeInitial?: 'accueil' | 'niveaux';
+  /** المرشد الموسّع (P3.5) */
+  onOuvrirMourchid?: () => void;
   /** Bataille de كفاءة : enregistre la réussite d'un exercice dans la file SM-2 (audit). */
   onResultatKafaa?: (
     key: string,
@@ -1319,6 +1321,7 @@ function SchemaUnite1({ type, className = 'h-44 w-full' }: { type: ExerciceUnite
 export default function Methodologie({
   onFermer,
   modeInitial = 'accueil',
+  onOuvrirMourchid,
   onResultatKafaa,
   onCarnetFaute,
   onOuvrirSynthese,
@@ -1975,6 +1978,24 @@ export default function Methodologie({
               </span>
               <span className="text-mute">←</span>
             </button>
+
+            {onOuvrirMourchid && (
+              <button
+                onClick={onOuvrirMourchid}
+                className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
+              >
+                <span className="flex items-center gap-3">
+                  <img src="/mascotte.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
+                  <span>
+                    <b className="text-sm text-forest">اسأل المُرشد</b>
+                    <span className="mt-1 block text-xs text-mute">
+                      25 سؤالًا في المنهجية بالنقر: قبل الامتحان، قراءة الموضوع، الكتابة، الأخطاء الشائعة، أثناء الامتحان — بلا إنترنت
+                    </span>
+                  </span>
+                </span>
+                <span className="text-mute">←</span>
+              </button>
+            )}
 
             <button onClick={() => setEcran('niveaux')} className="btn btn-gold w-full">
               مستويات التدريب الأربعة

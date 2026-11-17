@@ -29,6 +29,7 @@ const Ana = lazy(() => import('./components/Ana'));
 const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
+const Mourchid = lazy(() => import('./components/Mourchid'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -64,6 +65,7 @@ type Mode =
   | { type: 'protocole'; lessonId: string }
   | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
   | { type: 'confidentialite' }
+  | { type: 'mourchid' }
   | { type: 'jalon'; uniteId: string }
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
@@ -537,6 +539,21 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'mourchid') {
+      return (
+        <Mourchid
+          onFermer={() => setMode(null)}
+          onAller={(vers) => {
+            setMode(null);
+            if (vers === 'examen') setMode({ type: 'examenBlanc' });
+            else if (vers === 'recherche') setMode({ type: 'recherche' });
+            else if (vers === 'methodo') setOnglet('methodo');
+            else if (vers === 'exercices') setOnglet('exercices');
+            else setOnglet('aujourdhui');
+          }}
+        />
+      );
+    }
     if (mode.type === 'confidentialite') {
       return (
         <Confidentialite
@@ -869,6 +886,7 @@ export default function App() {
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
+            onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
           />
         </Suspense>
       )}

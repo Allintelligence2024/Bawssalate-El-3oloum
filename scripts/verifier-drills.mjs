@@ -1,7 +1,7 @@
 // ضبط بنك التدريبات المولّد: بنية، خيارات، تكرار، نصوص فارغة
 import { readFileSync } from 'node:fs';
 
-const fichiers = ['domaine1', 'domaine2', 'domaine3'];
+const fichiers = ['domaine1', 'domaine2', 'domaine3', 'niveau3'];
 const items = [];
 const problemesLignes = [];
 for (const f of fichiers) {
@@ -60,7 +60,7 @@ for (const i of items) {
   squelettes[k] = (squelettes[k] ?? 0) + 1;
 }
 
-console.log(`عناصر: ${items.length} · تعريفات: ${items.filter((i) => i.def).length} · مشاكل: ${problemes.length}`);
+console.log(`عناصر: ${items.length} · تعريفات: ${items.filter((i) => i.def).length} · مستوى 3: ${items.filter((i) => i.n === 3).length} · مشاكل: ${problemes.length}`);
 for (const p of problemesLignes) console.log('- ' + p);
 for (const p of problemes.slice(0, 40)) console.log('- ' + p);
 console.log('\nأكثر الصيغ (5 كلمات):');
