@@ -15,6 +15,7 @@ import { CORRIGES_2020 } from './corriges/c2020';
 import { CORRIGES_2019 } from './corriges/c2019';
 import { CORRIGES_2018 } from './corriges/c2018';
 import { CORRIGES_2017 } from './corriges/c2017';
+import { CORRIGES_2017X } from './corriges/c2017x';
 import { CORRIGES_2016 } from './corriges/c2016';
 import { CORRIGES_2015 } from './corriges/c2015';
 import { CORRIGES_2014 } from './corriges/c2014';
@@ -37,6 +38,8 @@ export interface PartieCorrigee {
 
 export interface ExerciceCorrige {
   numero: 1 | 2 | 3;
+  /** سلّم معدَّل في التصحيح الرسمي (مثلًا 2017 الموضوع الثاني: 9/6 بدل 7/8 بعد إلغاء أسئلة) */
+  baremeCorrige?: number;
   parties: PartieCorrigee[];
 }
 
@@ -311,7 +314,7 @@ const CORRIGES_2023: CorrigeSujet[] = [
 export const SUJETS_CORRIGES: CorrigeSujet[] = [
   ...CORRIGES_2026, ...CORRIGES_2025, ...CORRIGES_2024, ...CORRIGES_2023,
   ...CORRIGES_2022, ...CORRIGES_2021, ...CORRIGES_2020, ...CORRIGES_2019, ...CORRIGES_2018,
-  ...CORRIGES_2017, ...CORRIGES_2016, ...CORRIGES_2015, ...CORRIGES_2014, ...CORRIGES_2013,
+  ...CORRIGES_2017, ...CORRIGES_2017X, ...CORRIGES_2016, ...CORRIGES_2015, ...CORRIGES_2014, ...CORRIGES_2013,
 ];
 
 export function corrigeDe(sujetId: string): CorrigeSujet | undefined {

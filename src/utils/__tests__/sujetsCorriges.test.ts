@@ -24,7 +24,7 @@ describe('corrigés officiels (phase 2)', () => {
             total += r.points ?? 0;
           }
         });
-        expect(total, `${c.sujetId}/ex${ex.numero}`).toBe(e.bareme);
+        expect(total, `${c.sujetId}/ex${ex.numero}`).toBe(ex.baremeCorrige ?? e.bareme);
       }
     }
     for (const s of SUJETS_OFFICIELS) expect(ids, `corrigé manquant pour ${s.id}`).toContain(s.id);
