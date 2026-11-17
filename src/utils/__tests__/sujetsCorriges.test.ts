@@ -4,9 +4,10 @@ import { SUJETS_CORRIGES, corrigeDe, CORRIGES_ACTIVES } from '../../data/sujetsC
 import { SUJETS_OFFICIELS } from '../../data/sujetsOfficiels';
 
 describe('corrigés officiels (phase 2)', () => {
-  it('2023 : les deux sujets ont un corrigé aligné sur la structure, somme des points = barème de l\'exercice', () => {
+  it('chaque sujet officiel a un corrigé aligné sur la structure, somme des points = barème de l\'exercice', () => {
     expect(CORRIGES_ACTIVES).toBe(true);
-    expect(SUJETS_CORRIGES.map((c) => c.sujetId)).toEqual(['2023-1', '2023-2']);
+    const ids = SUJETS_CORRIGES.map((c) => c.sujetId);
+    expect(new Set(ids).size).toBe(ids.length);
     for (const c of SUJETS_CORRIGES) {
       const sujet = SUJETS_OFFICIELS.find((s) => s.id === c.sujetId)!;
       expect(sujet).toBeDefined();
@@ -26,7 +27,8 @@ describe('corrigés officiels (phase 2)', () => {
         expect(total, `${c.sujetId}/ex${ex.numero}`).toBe(e.bareme);
       }
     }
+    for (const s of SUJETS_OFFICIELS) expect(ids, `corrigé manquant pour ${s.id}`).toContain(s.id);
     expect(corrigeDe('2023-1')).toBeDefined();
-    expect(corrigeDe('2022-1')).toBeUndefined();
+    expect(corrigeDe('1999-1')).toBeUndefined();
   });
 });

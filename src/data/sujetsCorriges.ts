@@ -6,6 +6,20 @@
 /** هل تُعرض عناصر الإجابة في التطبيق؟ (درع A-009: يمكن إطفاؤه دون حذف البيانات) */
 export const CORRIGES_ACTIVES = true;
 
+import { CORRIGES_2026 } from './corriges/c2026';
+import { CORRIGES_2025 } from './corriges/c2025';
+import { CORRIGES_2024 } from './corriges/c2024';
+import { CORRIGES_2022 } from './corriges/c2022';
+import { CORRIGES_2021 } from './corriges/c2021';
+import { CORRIGES_2020 } from './corriges/c2020';
+import { CORRIGES_2019 } from './corriges/c2019';
+import { CORRIGES_2018 } from './corriges/c2018';
+import { CORRIGES_2017 } from './corriges/c2017';
+import { CORRIGES_2016 } from './corriges/c2016';
+import { CORRIGES_2015 } from './corriges/c2015';
+import { CORRIGES_2014 } from './corriges/c2014';
+import { CORRIGES_2013 } from './corriges/c2013';
+
 export interface ElementsReponse {
   /** رقم التعليمة داخل الجزء (0-based) — يطابق ترتيب consignes في sujetsOfficiels */
   consigne: number;
@@ -32,7 +46,7 @@ export interface CorrigeSujet {
   exercices: ExerciceCorrige[];
 }
 
-export const SUJETS_CORRIGES: CorrigeSujet[] = [
+const CORRIGES_2023: CorrigeSujet[] = [
   {
     sujetId: '2023-1',
     source: 'الإجابة النموذجية للديوان الوطني للامتحانات والمسابقات — بكالوريا 2023، علوم تجريبية، الموضوع الأول (بتصرّف).',
@@ -291,6 +305,13 @@ export const SUJETS_CORRIGES: CorrigeSujet[] = [
       },
     ],
   },
+];
+
+/** كلّ الإجابات النموذجية المتاحة، مرتّبة من الأحدث إلى الأقدم */
+export const SUJETS_CORRIGES: CorrigeSujet[] = [
+  ...CORRIGES_2026, ...CORRIGES_2025, ...CORRIGES_2024, ...CORRIGES_2023,
+  ...CORRIGES_2022, ...CORRIGES_2021, ...CORRIGES_2020, ...CORRIGES_2019, ...CORRIGES_2018,
+  ...CORRIGES_2017, ...CORRIGES_2016, ...CORRIGES_2015, ...CORRIGES_2014, ...CORRIGES_2013,
 ];
 
 export function corrigeDe(sujetId: string): CorrigeSujet | undefined {
