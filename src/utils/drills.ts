@@ -14,7 +14,12 @@ const PARTIES: Record<NumeroDomaine, () => Promise<{ ITEMS: ItemDrill[] }>> = {
 const cache: Partial<Record<NumeroDomaine, Promise<ItemDrill[]>>> = {};
 
 export function chargerDomaine(n: NumeroDomaine): Promise<ItemDrill[]> {
-  if (!cache[n]) cache[n] = PARTIES[n]().then((m) => m.ITEMS);
+  // عناصر المستوى 3 (P1.5) في ملف واحد مكتوب يدويًّا؛ تُضمّ إلى مجال وحدتها عند التحميل
+  if (!cache[n])
+    cache[n] = Promise.all([PARTIES[n](), import('../data/drills/niveau3')]).then(([m, n3]) => [
+      ...m.ITEMS,
+      ...n3.ITEMS_N3.filter((i) => domaineDeUnite(i.u) === n),
+    ]);
   return cache[n] as Promise<ItemDrill[]>;
 }
 

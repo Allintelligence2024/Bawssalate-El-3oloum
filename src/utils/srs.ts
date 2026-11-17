@@ -7,6 +7,9 @@ import { ajouterJours, aujourdhui, differenceJours } from './dates';
 
 export type Qualite = 0 | 1 | 2 | 3 | 4 | 5;
 
+/** سقف الفاصل في المراجعة المكثّفة (P2.3): J+1 / J+3 — لا J+7 ولا J+14 قبل الامتحان. */
+export const PLAFOND_INTENSIF_JOURS = 3;
+
 // نواة تكرار سباقات — مشتركة بين دروس وبطاقات الكفاءة (منهجية)
 export interface Srs {
   repetitions: number;
@@ -17,7 +20,8 @@ export interface Srs {
 }
 
 // نتيجة واحدة ← تحديث معاملات الدرس
-export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite): T {
+/** @param plafondIntervalle سقف الفاصل بالأيام (المراجعة المكثّفة: 3 — J+1/J+3 فقط) */
+export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite, plafondIntervalle?: number): T {
   let { repetitions, intervalle, facilite } = p;
 
   if (qualite < 3) {
@@ -32,6 +36,8 @@ export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite): T {
     facilite = Math.max(1.3, facilite + (0.1 - (5 - qualite) * (0.08 + (5 - qualite) * 0.02)));
   }
 
+  if (plafondIntervalle !== undefined) intervalle = Math.min(intervalle, plafondIntervalle);
+
   return {
     ...p,
     repetitions,
@@ -40,6 +46,23 @@ export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite): T {
     fragile: qualite < 3,
     prochaineRevision: ajouterJours(aujourdhui(), intervalle),
   };
+}
+
+/** عدد النجاحات المتتالية التي تُخرج الدرس من الاسترجاع في المراجعة المكثّفة. */
+export const SORTIE_INTENSIF_REUSSITES = 2;
+
+/**
+ * المراجعة المكثّفة (P2.3): J+1 عند الخطأ، J+3 عند أول نجاح، وبعد نجاحين متتاليين يخرج الدرس من قائمة
+ * الاسترجاع حتى الامتحان (لا موعد قادم) — الوقت المتبقّي يُصرف على ما لم يثبت بعد. الخطأ يعيد العدّاد إلى الصفر.
+ */
+export function mettreAJourSrsIntensif(p: ProgressionLecon, qualite: Qualite): ProgressionLecon {
+  const base = mettreAJourSrs(p, qualite, PLAFOND_INTENSIF_JOURS);
+  if (qualite < 3) return { ...base, reussitesIntensif: 0, acquisIntensifLe: undefined };
+  const reussites = (p.reussitesIntensif ?? 0) + 1;
+  if (reussites >= SORTIE_INTENSIF_REUSSITES) {
+    return { ...base, reussitesIntensif: reussites, prochaineRevision: undefined, fragile: false, acquisIntensifLe: aujourdhui() };
+  }
+  return { ...base, reussitesIntensif: reussites };
 }
 
 // أول دورة بعد إنهاء البروتوكول

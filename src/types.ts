@@ -1,6 +1,13 @@
 // نموذج البيانات العام — معماريّة OPUS 5.5 MAX مُطبّقة
 // الحالة كلها في المتصفح (localStorage). لا خادم.
 
+import { calendrierPour } from './config/annee';
+
+function aujourdhuiIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export type StatutLecon = 'vierge' | 'en_cours' | 'terminee';
 
 export interface Domaine {
@@ -47,6 +54,20 @@ export interface ProgressionLecon {
   reponses?: Record<number, string>; // إجابات التلميذ المكتوبة (إعادة القراءة)
   diagnostic?: string; // تشخيص الثغرة في المرحلة 6
   note?: number; // آخر تقييم ذاتي 0..10
+  /** المراجعة المكثّفة (P2.3): نجاحات متتالية؛ عند 2 يخرج الدرس من قائمة الاسترجاع حتى الامتحان */
+  reussitesIntensif?: number;
+  /** خرج من الاسترجاع المكثّف بعد نجاحين (تاريخ ISO) */
+  acquisIntensifLe?: string;
+}
+
+export interface BilanExamen {
+  date: string; // ISO complet
+  secondes: number;
+  chrono: boolean;
+  qcm: number; // عدد أسئلة الجزء الأول
+  directs: number; // المُجابة من أول محاولة
+  erreursEnquete: number; // أخطاء الجزء الثاني (استغلال الوثائق)
+  unitesFaibles: number[]; // أرقام الوحدات التي وقع فيها خطأ في الجزء الأول
 }
 
 // بطاقة كفاءة المنهجية — مراجعة قصيرة programmée par la même SM-2 des leçons.
@@ -124,8 +145,38 @@ export interface Etat {
   ateliers?: Record<string, { fait: boolean; ts: string }>;
   kafaa?: Record<string, CarteKafaa>; // بطاقات كفاءة المنهجية (مفتاح: methodo{index})
   kafaaHebdo?: { debut: string; n: number }; // مراجعات الكفاءة هذا الأسبوع (الأحد → samedi): ≤ 2
+  revueCroisee?: { semaine: string; lessonIds: string[]; faiteLe?: string }; // المراجعة المتقاطعة الأسبوعية (P2.4) — درس/مجال، مرّة في الأسبوع
+  defi?: { semaine: string; type: 'drills' | 'croisee' | 'examen'; choisiLe: string; baseDrills: number }; // تحدّي الأسبوع المختار (P3.2)
+  defisAccomplis?: string[]; // أسابيع التحدّيات المُنجزة (ISO بداية الأسبوع) — للشارة فقط
   consentementSync?: boolean; // موافقة التلميذ على إرسال ملخّص تقدّمه للمطوّر (انظر utils/sync.ts)
+  /** تاريخ اختيار التلميذ الصريح (نعم أو لا) على شاشة الموافقة. غيابه = لم يُسأل بعد
+   *  (تثبيت قديم كان فيه الإرسال مفعّلًا افتراضيًّا) → لا إرسال حتى يجيب (P0.2/P0.8). */
+  consentementSyncDecideLe?: string;
+  /** هدف العلامة (P2.2): 10+ / 14+ / 18+ — يضبط الحصّة اليومية المقترحة وسقف مراجعات الكفاءة. غيابه = 14. */
+  objectif?: Objectif;
+  /** المراجعة المكثّفة (P2.3): 'auto' (تلقائيًّا عند ≤ 60 يومًا من البكالوريا) · 'on' · 'off'. غيابه = auto. */
+  modeIntensif?: 'auto' | 'on' | 'off';
+  /** حجم الخط (P3.3): s / m / l. غيابه = m. */
+  tailleTexte?: TailleTexte;
+  /** اختبار التموضع (P2.1): النتيجة لكل وحدة. لا يفتح الطريق ولا يُقارن. */
+  diagnostic?: { date: string; parUnite: Record<string, { justes: number; total: number }> };
+  /** تاريخ آخر عرض/قرار لاختبار التموضع (قبول أو «لاحقًا») — يُعرض مرّة واحدة تلقائيًّا. */
+  diagnosticDecideLe?: string;
+  /** المفضّلة (P3.3): معرّفات الدروس المحفوظة — تُعاد مراجعتها في SessionRevision. */
+  favoris?: string[];
+  /** الامتحانات التجريبية المُنهاة (تواريخ ISO) — لمتابعة «موضوع واحد في الأسبوع» (P2.3). */
+  examensBlancs?: string[];
+  /** سجلّ الامتحانات التجريبية (P1.4): تاريخ، مدّة، مع/بدون مؤقّت، أسئلة الجزء الأول المُجابة مباشرة، الوحدات التي تعثّر فيها */
+  examens?: BilanExamen[];
+  /** التذكير اليومي المحلّي (P2.4): اختياري، مرّة في اليوم، الساعة بتوقيت الجهاز. غيابه = معطّل. */
+  rappel?: { actif: boolean; heure: string };
+  /** البطاقات (flashcards): صندوق لايتنر لكل بطاقة — مستقلّة عن SM-2 الدروس. */
+  flashcards?: Record<string, { boite: 1 | 2 | 3; prochaine: string; vues: number }>;
+  schemas?: Record<string, true>; // مخطّطات التسمية المُنهاة (P1.6)
 }
+
+export type Objectif = 10 | 14 | 18;
+export type TailleTexte = 's' | 'm' | 'l';
 
 export function progressionVierge(): ProgressionLecon {
   return {
@@ -149,7 +200,7 @@ export function etatVierge(): Etat {
     minutesTotales: 0,
     revisions: 0,
     nom: 'تلميذ',
-    dateBac: '2027-06-10',
+    dateBac: calendrierPour(aujourdhuiIso()).bac,
     seancesComptees: 0,
     ateliers: {},
     consentementSync: false, // par défaut: pas d'envoi tant que l'élève n'a pas explicitement dit oui (P0.2/P0.8)

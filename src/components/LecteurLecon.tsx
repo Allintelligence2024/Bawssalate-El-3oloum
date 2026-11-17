@@ -2,6 +2,7 @@
 // يعرض محتوى الكتاب (HTML) + الملخّص الذهبي. لا أزرار تخطّي، لا تقييم.
 
 import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
+import { termeGlossaire } from '../data/glossaire';
 import { titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
@@ -11,13 +12,17 @@ import { useState } from 'react';
 interface Props {
   lessonId: string;
   onFermer: () => void;
+  /** المفضّلة (P3.3) — اختياريّان كي يبقى القارئ صالحًا داخل الورشة */
+  favori?: boolean;
+  onBasculerFavori?: () => void;
 }
 
-export default function LecteurLecon({ lessonId, onFermer }: Props) {
+export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFavori }: Props) {
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const aContenu = aContenuLecon(lessonId);
   const [contenuIndisponible, setContenuIndisponible] = useState(false);
+  const [motOuvert, setMotOuvert] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
@@ -38,6 +43,19 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
             </p>
             <h1 className="truncate text-base font-bold">{titreLecon(lessonId)}</h1>
           </div>
+          {onBasculerFavori && (
+            <button
+              type="button"
+              onClick={onBasculerFavori}
+              aria-pressed={favori}
+              aria-label={favori ? 'إزالة من المفضّلة' : 'إضافة إلى المفضّلة'}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg transition-colors ${
+                favori ? 'bg-gold-soft text-forest-deep' : 'bg-cream text-mute hover:bg-sage-soft'
+              }`}
+            >
+              {favori ? '★' : '☆'}
+            </button>
+          )}
           <span className="shrink-0 rounded-full bg-sage px-2.5 py-1 text-[11px] font-bold text-forest-deep">
             قراءة
           </span>
@@ -48,7 +66,14 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
         <div className="mx-auto max-w-3xl space-y-4">
           {lecon && (
             <div className="card p-4">
-              <p className="eyebrow">الإشكالية</p>
+              {/* هدف الافتتاح + «الأساسي في 3 جمل» (P2.5) — من الملخّص الذهبي نفسه */}
+              <p className="eyebrow">في نهاية هذا الدرس ستكون قادرًا على…</p>
+              <ol className="mt-1.5 list-decimal space-y-1 pr-5 text-sm leading-relaxed">
+                <li>أن تشرح: {lecon.mechanismAr[0]}</li>
+                {lecon.mechanismAr.length > 1 && <li>أن تربط: {lecon.mechanismAr[lecon.mechanismAr.length - 1]}</li>}
+                <li>أن تتجنّب: {lecon.commonErrorAr}</li>
+              </ol>
+              <p className="eyebrow mt-4">الإشكالية</p>
               <p className="mt-1.5 text-sm font-bold leading-relaxed">{lecon.missionAr}</p>
               {aContenu && (
                 <p className="mt-3 text-[11px] leading-relaxed text-mute">
@@ -70,6 +95,15 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
                 className="h-[72vh] w-full bg-cream"
                 loading="eager"
                 onError={() => setContenuIndisponible(true)}
+                onLoad={(e) => {
+                  // حجم الخط (P3.3): ننسخ سمة <html data-taille> إلى وثيقة الدرس (نفس الأصل)
+                  const doc = e.currentTarget.contentDocument;
+                  if (!doc) return;
+                  const t = document.documentElement.dataset.taille ?? 'm';
+                  doc.documentElement.dataset.taille = t;
+                  // صفحات الدروس تستعمل rem: يكفي ضبط جذرها (لا CSS خاص بها)
+                  doc.documentElement.style.fontSize = t === 's' ? '15px' : t === 'l' ? '18.5px' : '16px';
+                }}
               />
             </div>
           ) : (
@@ -105,12 +139,28 @@ export default function LecteurLecon({ lessonId, onFermer }: Props) {
 
               <p className="mt-4 text-[11px] font-bold text-forest">الكلمات المفتاحية</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {lecon.vocabulary.map((v) => (
-                  <span key={v} className="chip text-xs font-bold">
-                    {v}
-                  </span>
-                ))}
+                {lecon.vocabulary.map((v) => {
+                  const t = termeGlossaire(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setMotOuvert(motOuvert === v ? null : v)}
+                      className={`chip text-xs font-bold ${t ? 'cursor-pointer hover:border-forest' : 'cursor-default'} ${motOuvert === v ? 'border-forest bg-sage-soft/60' : ''}`}
+                      aria-expanded={motOuvert === v}
+                    >
+                      {v}
+                    </button>
+                  );
+                })}
               </div>
+              {motOuvert && termeGlossaire(motOuvert) && (
+                <p className="mt-2 rounded-xl bg-paper px-3 py-2 text-xs">
+                  <span className="font-bold">{motOuvert}</span>
+                  <span className="text-mute"> ← بالفرنسية: </span>
+                  <span dir="ltr" className="font-bold text-forest-deep">{termeGlossaire(motOuvert)!.fr}</span>
+                </p>
+              )}
 
               {lecon.evidenceAr && (
                 <>

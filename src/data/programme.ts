@@ -9,8 +9,12 @@
 //   piegesAr    — فخّان رسميان يظهران في جسر الوحدة
 
 import type { Domaine, Unite } from '../types';
+import { calendrierPour } from '../config/annee';
 
-export const DEBUT_ANNEE = '2026-09-14'; // بداية الأسبوع 1 (3 علامات)
+/** بداية الأسبوع 1 — تُقرأ من التقويم المدرسي (src/config/annee.ts)، لا ثابت مدفون هنا. */
+export function debutAnnee(isoAujourdhui: string): string {
+  return calendrierPour(isoAujourdhui).debut;
+}
 
 export const DOMAINES: Domaine[] = [
   {

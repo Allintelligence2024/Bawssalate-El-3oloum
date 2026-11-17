@@ -82,11 +82,14 @@ export function ChoixUnique({
   qcm,
   fait,
   onValide,
+  onPremiereTentative,
   source,
 }: {
   qcm: QcmLecon;
   fait?: boolean;
   onValide: () => void;
+  /** يُستدعى مرّة واحدة عند أول «تحقّق» — للجولة التكيّفية (P3.1). لا يُغيّر سلوك إعادة المحاولة. */
+  onPremiereTentative?: (juste: boolean) => void;
   source: SourceReponse;
 }) {
   const [ordre, setOrdre] = useState<number[]>(() => melanger(qcm.options.length));
@@ -99,6 +102,12 @@ export function ChoixUnique({
   // au lieu de re-mélanger à l'infini. On ne donne JAMAIS la réponse, on débloque le raisonnement.
   const [echecs, setEchecs] = useState(0);
   const [planB, setPlanB] = useState(false);
+  const [premiereFaite, setPremiereFaite] = useState(false);
+  function signalerPremiere(juste: boolean) {
+    if (premiereFaite) return;
+    setPremiereFaite(true);
+    onPremiereTentative?.(juste);
+  }
 
   if (juste) {
     return (
@@ -164,6 +173,7 @@ export function ChoixUnique({
         onClick={() => {
           if (choix === null) return;
           if (choix === ordre.indexOf(0)) {
+            signalerPremiere(true);
             sonJuste();
             noterReponse(source, true);
             setJuste(true);
@@ -171,6 +181,7 @@ export function ChoixUnique({
             setDernierFaux(null);
             onValide();
           } else {
+            signalerPremiere(false);
             sonFaux();
             noterReponse(source, false);
             setErreur(true);

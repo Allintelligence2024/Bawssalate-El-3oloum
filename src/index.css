@@ -130,6 +130,27 @@ h1, h2 { text-wrap: balance; }
    أنماط UI مشتركة (Components) — الجزء الأول
    ======================================================================== */
 @layer components {
+  /* حقل إدخال مشترك (التسجيل، البحث، ساعة التذكير) — كان مستعملًا بلا تعريف */
+  .field {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    border-radius: 14px;
+    background: var(--color-paper, #fff);
+    color: inherit;
+    padding: 0.65rem 0.9rem;
+    font: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(47, 93, 71, 0.12);
+  }
+  [data-theme='dark'] .field {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
   .card {
     background: var(--gradient-surface);
     border: 1px solid var(--color-line);
@@ -382,3 +403,8 @@ h1, h2 { text-wrap: balance; }
   }
   [data-theme='dark'] *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
 }
+
+/* حجم الخط (P3.3): rem كلّه يتبع <html data-taille>؛ تُنسخ السمة إلى iframes الدروس عند التحميل */
+html[data-taille='s'] { font-size: 15px; }
+html[data-taille='m'] { font-size: 16px; }
+html[data-taille='l'] { font-size: 18.5px; }

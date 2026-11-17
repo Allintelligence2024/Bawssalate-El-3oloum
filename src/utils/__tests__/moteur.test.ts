@@ -1,5 +1,5 @@
 // Tests du moteur (Next Best Action) — P0.4
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
   itemFait,
@@ -39,6 +39,13 @@ function etatBase() {
   };
   return etat;
 }
+
+// Horloge fixée : ces tests raisonnent sur « aujourd'hui = 16/11/2026 » (dates en dur ci-dessous).
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-16T09:00:00'));
+});
+afterEach(() => vi.useRealTimers());
 
 describe('moteur — itemFait', () => {
   it('reporte une leçon terminee', () => {

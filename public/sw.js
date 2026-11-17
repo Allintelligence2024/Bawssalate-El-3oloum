@@ -1,9 +1,11 @@
 // عامل الخدمة — بوصلة العلوم Lite
 // PWA يدوية: precache الواجهة، network-first للتنقل، cache-first للأصول.
 // يعمل دون اتصال بعد أول تحميل (سياق الشبكة الجزائري المحدود).
-// Phase 2: precache جميع الحزم الكسولة (lazy chunks) عند أول زيارة.
+// P0.7: الحزم الكسولة (Methodologie، بنوك التدريبات، supabase) تُقرأ من
+// /precache-manifest.json (يولّده vite.config.ts عند البناء) وتُخزَّن عند التثبيت —
+// لا من index.html الذي لا يذكر سوى حزمة الدخول.
 
-const CACHE = 'murajih-svt-v3';
+const CACHE = 'murajih-svt-v4';
 const PRECACHE_STATIC = [
   '/',
   '/index.html',
@@ -39,65 +41,94 @@ const PRECACHE_STATIC = [
   '/lecons/phase22_chapitres_43_44.html',
 ];
 
-const ASSETS_CACHE = 'murajih-svt-assets-v1';
+const ASSETS_CACHE = 'murajih-svt-assets-v2';
+const MANIFESTE_ASSETS = '/precache-manifest.json';
+
+/** قائمة الحزم الحالية من مانيفست البناء (أو [] إن تعذّر). */
+async function listeAssetsDuManifeste() {
+  try {
+    const res = await fetch(MANIFESTE_ASSETS, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.assets) ? json.assets.filter((u) => typeof u === 'string' && u.startsWith('/assets/')) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * تخزين كل الحزم المذكورة في المانيفست (الناقصة فقط). لا نُفشل التثبيت إن تعذّر
+ * تنزيل حزمة: يُعاد المحاولة عند كل تنقّل متّصل بالشبكة (voir fetch/navigate).
+ * يُرجع عدد الحزم الناقصة بعد المحاولة.
+ */
+async function chaufferAssets() {
+  const liste = await listeAssetsDuManifeste();
+  if (liste.length === 0) return -1;
+  const cache = await caches.open(ASSETS_CACHE);
+  const manquants = [];
+  for (const url of liste) {
+    if (!(await cache.match(url))) manquants.push(url);
+  }
+  await Promise.allSettled(
+    manquants.map(async (url) => {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (res.ok) await cache.put(url, res);
+    })
+  );
+  let restants = 0;
+  for (const url of liste) if (!(await cache.match(url))) restants++;
+  return restants;
+}
+
+/** حذف الحزم القديمة (هاش مختلف) التي لم تعد في المانيفست — يمنع تضخّم الكاش. */
+async function purgerAssetsObsoletes() {
+  const liste = new Set(await listeAssetsDuManifeste());
+  if (liste.size === 0) return; // بلا شبكة لا نحذف شيئًا
+  const cache = await caches.open(ASSETS_CACHE);
+  for (const req of await cache.keys()) {
+    const chemin = new URL(req.url).pathname;
+    if (!liste.has(chemin)) await cache.delete(req);
+  }
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE_STATIC)).then(() => self.skipWaiting())
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll(PRECACHE_STATIC))
+      .then(() => chaufferAssets())
+      .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
+    caches
+      .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ASSETS_CACHE).map((k) => caches.delete(k))))
+      .then(() => purgerAssetsObsoletes())
       .then(() => self.clients.claim())
   );
 });
-
-async function warmAssetsCache(htmlResponse) {
-  const cache = await caches.open(ASSETS_CACHE);
-  const html = await htmlResponse.clone().text();
-  
-  // استخراج جميع روابط JS و CSS من HTML
-  const assetUrls = [
-    ...html.match(/["'](\/assets\/[^"']+\.(?:js|css))["']/g) ?? [],
-    ...html.match(/["'](\/assets\/[^"']+\.(?:js|css))\?/g) ?? [],
-  ].map(u => u.slice(1, -1)); // إزالة علامات التنصيص
-
-  // إزالة المكررات
-  const uniqueUrls = [...new Set(assetUrls)];
-
-  // precache بالتوازي (fire-and-forget مع معالجة الأخطاء)
-  await Promise.allSettled(
-    uniqueUrls.map((url) =>
-      fetch(url)
-        .then((res) => {
-          if (res.ok) return cache.put(url, res);
-        })
-        .catch(() => {}) // تجاهل الأخطاء - سيتم التخزين عند الطلب لاحقاً
-    )
-  );
-}
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  // التنقل: الشبكة أولاً، ثم النسخة المخبأة (offline fallback)
-  // عند أول زيارة، نقوم بتسخين كاش الأصول (warm assets cache)
+  // التنقل: الشبكة أولاً، ثم النسخة المخبأة (offline fallback).
+  // عند كل تنقّل ناجح نُكمل الحزم الناقصة في الخلفية (بلا حجب للاستجابة).
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then(async (res) => {
+        .then((res) => {
           const copy = res.clone();
-          const cache = await caches.open(CACHE);
-          await cache.put(request, copy);
-          
-          // تسخين كاش الأصول في الخلفية (non-blocking)
-          if (res.ok && res.headers.get('content-type')?.includes('text/html')) {
-            warmAssetsCache(res).catch(() => {});
-          }
+          event.waitUntil(
+            caches
+              .open(CACHE)
+              .then((cache) => cache.put(request, copy))
+              .then(() => chaufferAssets())
+              .catch(() => {})
+          );
           return res;
         })
         .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
@@ -105,43 +136,41 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // الأصول (JS, CSS, صور, فيديو): المخبأ أولاً، ثم الشبكة مع تخزين النتيجة
-  // كاش مخصص للأصول لتجنب تضخيم الكاش الرئيسي
   const url = new URL(request.url);
-  if (url.pathname.startsWith('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+
+  // الحزم (JS/CSS): الكاش أولاً، ثم الشبكة مع تخزين. عند الفشل: خطأ شبكة صريح —
+  // لا نُرجع index.html أبدًا مكان وحدة JS (نوع MIME خاطئ يكسر التطبيق بصمت).
+  if (url.origin === self.location.origin && (url.pathname.startsWith('/assets/') || /\.(?:js|css)$/.test(url.pathname))) {
     event.respondWith(
       caches.open(ASSETS_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) return cached;
-
         try {
           const res = await fetch(request);
-          if (res.ok) {
-            cache.put(request, res.clone());
-          }
+          if (res.ok) cache.put(request, res.clone());
           return res;
         } catch {
-          // fallback للصفحة الرئيسية
-          const mainCache = await caches.open(CACHE);
-          return mainCache.match('/index.html') || mainCache.match('/');
+          return new Response('', { status: 503, statusText: 'Hors ligne — chunk non mis en cache' });
         }
       })
     );
     return;
   }
 
-  // باقي الطلبات: الكاش الرئيسي
+  // باقي الطلبات (صور، دروس HTML، PDF مفتوحة سابقًا): الكاش الرئيسي أولاً
   event.respondWith(
     caches.match(request).then(
       (cached) =>
         cached ||
         fetch(request)
           .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, copy));
+            if (res.ok && url.origin === self.location.origin) {
+              const copy = res.clone();
+              caches.open(CACHE).then((cache) => cache.put(request, copy));
+            }
             return res;
           })
-          .catch(() => caches.match('/index.html'))
+          .catch(() => (request.destination === 'document' ? caches.match('/index.html') : Response.error()))
     )
   );
 });
