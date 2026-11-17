@@ -34,6 +34,8 @@ interface Props {
   onOuvrirMethodo: () => void;
   onOuvrirExamen: () => void;
   onOuvrirFlashcards: () => void;
+  /** مخطّطات للتسمية (P1.6) */
+  onOuvrirSchemas: () => void;
   /** دعوة الدرس بعد خطأين (P1.4 ↔ P3.1) */
   onOuvrirLecon: (lessonId: string) => void;
 }
@@ -58,6 +60,7 @@ export default function Exercices({
   onOuvrirMethodo,
   onOuvrirExamen,
   onOuvrirFlashcards,
+  onOuvrirSchemas,
   onOuvrirLecon,
 }: Props) {
   const [vue, setVue] = useState<Vue>({ type: 'choix' });
@@ -235,6 +238,26 @@ export default function Exercices({
             <h2 className="font-naskh mt-3 text-lg font-bold">البطاقات</h2>
             <p className="mt-1 text-sm leading-relaxed text-mute">
               استرجاع · دليل · فخّ — ثلاث بطاقات لكل درس أنهيته، في صناديق تعود غدًا أو بعد ثلاثة أيام أو بعد أسبوع.
+            </p>
+            <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
+              ابدأ ←
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOuvrirSchemas}
+            className="card group p-5 text-right transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-sage hover:shadow-[0_18px_36px_-22px_rgba(47,93,71,0.45)]"
+          >
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-sage-soft text-forest transition-colors group-hover:bg-forest group-hover:text-paper">
+              <span className="block h-6 w-6">
+                <IcoCible />
+              </span>
+            </span>
+            <h2 className="font-naskh mt-3 text-lg font-bold">مخطّطات للتسمية</h2>
+            <p className="mt-1 text-sm leading-relaxed text-mute">
+              المشبك، الصانعة الخضراء، الميتوكندري، الغوص، أغلفة الأرض، الترجمة — انقر الرقم ثمّ الاسم.
+              {Object.keys(etat.schemas ?? {}).length ? ` مكتمل: ${nb(Object.keys(etat.schemas ?? {}).length)} من 6.` : ''}
             </p>
             <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
               ابدأ ←

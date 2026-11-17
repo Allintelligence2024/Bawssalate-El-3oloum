@@ -2,6 +2,7 @@
 // يعرض محتوى الكتاب (HTML) + الملخّص الذهبي. لا أزرار تخطّي، لا تقييم.
 
 import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
+import { termeGlossaire } from '../data/glossaire';
 import { titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
@@ -21,6 +22,7 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
   const unite = uniteDeLecon(lessonId);
   const aContenu = aContenuLecon(lessonId);
   const [contenuIndisponible, setContenuIndisponible] = useState(false);
+  const [motOuvert, setMotOuvert] = useState<string | null>(null);
 
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
@@ -64,7 +66,14 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
         <div className="mx-auto max-w-3xl space-y-4">
           {lecon && (
             <div className="card p-4">
-              <p className="eyebrow">الإشكالية</p>
+              {/* هدف الافتتاح + «الأساسي في 3 جمل» (P2.5) — من الملخّص الذهبي نفسه */}
+              <p className="eyebrow">في نهاية هذا الدرس ستكون قادرًا على…</p>
+              <ol className="mt-1.5 list-decimal space-y-1 pr-5 text-sm leading-relaxed">
+                <li>أن تشرح: {lecon.mechanismAr[0]}</li>
+                {lecon.mechanismAr.length > 1 && <li>أن تربط: {lecon.mechanismAr[lecon.mechanismAr.length - 1]}</li>}
+                <li>أن تتجنّب: {lecon.commonErrorAr}</li>
+              </ol>
+              <p className="eyebrow mt-4">الإشكالية</p>
               <p className="mt-1.5 text-sm font-bold leading-relaxed">{lecon.missionAr}</p>
               {aContenu && (
                 <p className="mt-3 text-[11px] leading-relaxed text-mute">
@@ -130,12 +139,28 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
 
               <p className="mt-4 text-[11px] font-bold text-forest">الكلمات المفتاحية</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                {lecon.vocabulary.map((v) => (
-                  <span key={v} className="chip text-xs font-bold">
-                    {v}
-                  </span>
-                ))}
+                {lecon.vocabulary.map((v) => {
+                  const t = termeGlossaire(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setMotOuvert(motOuvert === v ? null : v)}
+                      className={`chip text-xs font-bold ${t ? 'cursor-pointer hover:border-forest' : 'cursor-default'} ${motOuvert === v ? 'border-forest bg-sage-soft/60' : ''}`}
+                      aria-expanded={motOuvert === v}
+                    >
+                      {v}
+                    </button>
+                  );
+                })}
               </div>
+              {motOuvert && termeGlossaire(motOuvert) && (
+                <p className="mt-2 rounded-xl bg-paper px-3 py-2 text-xs">
+                  <span className="font-bold">{motOuvert}</span>
+                  <span className="text-mute"> ← بالفرنسية: </span>
+                  <span dir="ltr" className="font-bold text-forest-deep">{termeGlossaire(motOuvert)!.fr}</span>
+                </p>
+              )}
 
               {lecon.evidenceAr && (
                 <>

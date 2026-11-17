@@ -172,6 +172,7 @@ export interface Etat {
   rappel?: { actif: boolean; heure: string };
   /** البطاقات (flashcards): صندوق لايتنر لكل بطاقة — مستقلّة عن SM-2 الدروس. */
   flashcards?: Record<string, { boite: 1 | 2 | 3; prochaine: string; vues: number }>;
+  schemas?: Record<string, true>; // مخطّطات التسمية المُنهاة (P1.6)
 }
 
 export type Objectif = 10 | 14 | 18;

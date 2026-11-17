@@ -145,6 +145,8 @@ Les fichiers `src/data/drills/*.ts` sont générés par `scripts/importer-drills
 Composant `SchemaALegender` (tap zone → tap étiquette, compatible petits écrans) ; 6 schémas prioritaires : synapse, chloroplaste/thylakoïde, mitochondrie, subduction/Benioff, profil des enveloppes terrestres, codon/ARNt. Réutilisé en Partie I des sujets.
 **Preuve :** 6 schémas jouables + taux de réussite au test utilisateurs.
 
+*16/11 : fait côté code — `src/data/schemas/index.ts` (6 schémas : synapse, chloroplaste/thylakoïde, mitochondrie, subduction/Benioff, enveloppes terrestres avec discontinuités, codon/ARNt/ribosome ; SVG simplifiés dessinés dans le dépôt, 5 à 8 zones chacun) + `SchemaALegender.tsx` (lazy 14 kB) : **tap numéro → tap étiquette**, pas de glisser-déposer (petits écrans), erreur = message doux, aucune note ; fin → lien vers la leçon via la recherche ; `etat.schemas` mémorise les schémas terminés (compte dans la carte « مخطّطات للتسمية » de التدريبات). Test `schemas.test.ts`. **Reste humain :** conformité des dessins au manuel (relecture P0.5) et taux de réussite au test utilisateurs (P3.4). Réutilisation en Partie I des sujets : à faire quand P1.1 livrera les sujets structurés.*
+
 ### P1.7 🟡 Priorité par leçon, enfin sourcée (4 j)
 **Après** P0.1/P1.1 seulement : analyse de fréquence sur les sujets réellement acquis (2018–2025), tableau déposé dans `plans/analyse-frequence-bac.md`, champ `priorite: 1|2|3` sur les 58 leçons, badges qualitatifs discrets dans مساري et la Mindmap.
 **Preuve :** tableau de fréquence reproductible depuis le registre des sujets.
@@ -181,6 +183,8 @@ Revue hebdomadaire mixte (1 carte/domaine + 1 `kafaa`, plafonnée) ; `stats.ts` 
 - **Glossaire bilingue AR↔FR** (~200 termes issus des `vocabulary`, équivalents français validés dans le flux de relecture), cherchable, termes cliquables dans `LecteurLecon`, 100 % hors ligne.
 - **Fiche « الأساسي في 3 جمل »** par leçon (depuis `missionAr`/`mechanismAr`/`commonErrorAr`) + objectif d'ouverture « في نهاية هذا الدرس ستكون قادرًا على… ».
 **Preuve :** script de comptage 58/58 + fichier glossaire + captures lecteur.
+
+*16/11 : **glossaire fait** — `src/data/glossaire.ts`, 317 termes AR→FR dérivés des `vocabulary` (couverture : tous les termes conceptuels des 58 fiches ; seuls les symboles/valeurs — ATP, Km, −70 mV… — ne sont pas traduits), alias de graphie (التشبّع/التشبع, الموقع النشط/الفعال…), cherchable AR **ou** FR dans l'écran de recherche (section « المسرد » avec lien vers la leçon porteuse), **termes cliquables** dans `LecteurLecon` (équivalent français affiché au tap), 100 % hors ligne, chunk séparé (19 kB). Équivalents FR rédigés par le dev : **à valider** (registre A-006). **Fiche « الأساسي في 3 جمل » + objectif d'ouverture faits** : en tête du lecteur, « في نهاية هذا الدرس ستكون قادرًا على… » avec 3 points dérivés de `mechanismAr` (première et dernière étape) et `commonErrorAr`. Test `glossaire.test.ts` (3). **Reste éditorial :** les 12 cours HTML manquants (gabarit existant, rédaction + relecture — hors de portée sans enseignant).*
 
 **Porte de fin P2 :** diagnostic, objectif, J-60, glossaire et 58/58 contenus démontrés ; relecture ≥ 40/58 ; tests ≥ 80 verts.
 

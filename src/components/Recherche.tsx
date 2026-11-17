@@ -4,6 +4,8 @@
 import { useMemo, useState } from 'react';
 import type { Etat } from '../types';
 import { rechercher, type FiltreRecherche } from '../utils/recherche';
+import { chercherGlossaire } from '../data/glossaire';
+import { LESSON_GOLD_SUMMARIES } from '../data/lessonGoldSummaries';
 import { DOMAINES, UNITE_PAR_ID, UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
@@ -12,13 +14,20 @@ interface Props {
   etat: Etat;
   onOuvrirLecon: (lessonId: string) => void;
   onFermer: () => void;
+  /** استعلام ابتدائي (من مخطّطات التسمية مثلًا) */
+  requeteInitiale?: string;
 }
 
-export default function Recherche({ etat, onOuvrirLecon, onFermer }: Props) {
-  const [q, setQ] = useState('');
+export default function Recherche({ etat, onOuvrirLecon, onFermer, requeteInitiale }: Props) {
+  const [q, setQ] = useState(requeteInitiale ?? '');
   const [filtre, setFiltre] = useState<FiltreRecherche>({});
   const resultats = useMemo(() => rechercher(q, 60, filtre), [q, filtre]);
   const avecFiltre = Boolean(filtre.domaineId || filtre.uniteId);
+  const termes = useMemo(() => (q.trim().length >= 2 ? chercherGlossaire(q, 8) : []), [q]);
+  function leconDuTerme(ar: string, alias: string[] = []): string | undefined {
+    const cibles = new Set([ar, ...alias]);
+    return Object.entries(LESSON_GOLD_SUMMARIES).find(([, l]) => l.vocabulary.some((v) => cibles.has(v)))?.[0];
+  }
   const unitesDuFiltre = filtre.domaineId ? UNITES.filter((u) => DOMAINES.find((d) => d.id === filtre.domaineId)?.unites.includes(u.id)) : UNITES;
   const favoris = etat.favoris ?? [];
 
@@ -83,6 +92,30 @@ export default function Recherche({ etat, onOuvrirLecon, onFermer }: Props) {
               ))}
             </select>
           </div>
+
+          {termes.length > 0 && (
+            <section className="mt-3 rounded-2xl border border-line bg-paper p-3">
+              <p className="eyebrow">المسرد عربي ↔ فرنسي</p>
+              <ul className="mt-1.5 divide-y divide-line">
+                {termes.map((t) => {
+                  const lessonId = leconDuTerme(t.ar, t.alias);
+                  return (
+                    <li key={t.ar} className="flex items-center justify-between gap-3 py-1.5 text-sm">
+                      <span>
+                        <span className="font-bold">{t.ar}</span>
+                        <span dir="ltr" className="mr-2 text-xs text-forest-deep">{t.fr}</span>
+                      </span>
+                      {lessonId && (
+                        <button type="button" onClick={() => onOuvrirLecon(lessonId)} className="shrink-0 text-xs font-bold text-forest hover:underline">
+                          الدرس ←
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
 
           {q.trim().length < 2 && !avecFiltre ? (
             <p className="mt-6 text-center text-sm text-mute">

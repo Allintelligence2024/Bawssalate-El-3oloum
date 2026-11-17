@@ -283,3 +283,12 @@ Côté code, le plan n'a plus de tâche purement dev ouverte. Restent : éditori
 | P3.5 | المرشد الموسّع : 25 questions / 5 branches, liens d'action, « انظر أيضًا » ; entrée depuis la méthodologie ; mode `mourchid` | `src/data/mourchid.ts`, `components/Mourchid.tsx`, `Methodologie.tsx`, `App.tsx` | `mourchid.test.ts` (2) |
 
 Total : **103 tests verts** (porte de fin P3 « ≥ 100 tests » franchie côté chiffre), chunk principal 382,4 kB (gzip 115,6) ; chunks `niveau3` 29,7 kB et `Mourchid` 19 kB hors entrée.
+
+### 6 quaterdecies — Quatorzième passe (glossaire, fiche 3 phrases, schémas à légender)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P2.5 | Glossaire AR↔FR 317 termes + alias, recherche bilingue, termes cliquables dans le lecteur (chunk séparé) ; fiche « الأساسي في 3 جمل » + objectif d'ouverture | `src/data/glossaire.ts`, `Recherche.tsx`, `LecteurLecon.tsx`, registre A-006 | `glossaire.test.ts` (3 : ≥ 200, unicité, couverture des conceptuels, recherche « كالفن »/« calvin ») |
+| P1.6 | 6 schémas SVG à légender, tap numéro → tap étiquette, `etat.schemas`, carte dans التدريبات, lien vers leçon via recherche (`requeteInitiale`) | `src/data/schemas/index.ts`, `components/SchemaALegender.tsx`, `Exercices.tsx`, `App.tsx` (mode `schemas`), `types.ts` | `schemas.test.ts` ; tsc ; captures et conformité au manuel (humain) |
+
+Total : **107 tests verts**, chunk principal 383,9 kB (gzip 115,9) ; chunks `glossaire` 19 kB, `SchemaALegender` 14 kB.

@@ -30,6 +30,7 @@ const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
+const SchemaALegender = lazy(() => import('./components/SchemaALegender'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -70,7 +71,8 @@ type Mode =
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
   | { type: 'mindmap' }
-  | { type: 'recherche' }
+  | { type: 'recherche'; q?: string }
+  | { type: 'schemas' }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -539,6 +541,16 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'schemas') {
+      return (
+        <SchemaALegender
+          faits={etat.schemas ?? {}}
+          onTermine={(id) => setEtat((prev) => (prev.schemas?.[id] ? prev : { ...prev, schemas: { ...(prev.schemas ?? {}), [id]: true } }))}
+          onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
     if (mode.type === 'mourchid') {
       return (
         <Mourchid
@@ -567,6 +579,7 @@ export default function App() {
       return (
         <Recherche
           etat={etat}
+          requeteInitiale={mode.q}
           onFermer={() => setMode(null)}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId, retour: { type: 'recherche' } })}
         />
@@ -876,6 +889,7 @@ export default function App() {
           onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
           onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
           onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
+          onOuvrirSchemas={() => setMode({ type: 'schemas' })}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
         />
       )}
