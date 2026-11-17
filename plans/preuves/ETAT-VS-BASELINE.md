@@ -87,6 +87,6 @@
 - **Corrigés avec preuve :** opt-in sync complet (y compris inventaire honnête), mp4, bundle, dist, Hill, ¹⁸O, d101, chrono opt-in, bouton « niveau 3 » mensonger, durée officielle, harnais de tests.
 - **Partiels :** rédaction libre (1/11 unités), hors-ligne (niveau 1 sur 2), sujets (identifiés mais non publiables).
 - **Inchangés et dépendants d'un tiers :** relecture enseignante (58/58), droits des sujets, contenu éditorial (n3, gabarits, glossaire, priorités), terrain (appareils, élèves).
-- **Inchangés et purement dev :** politique de confidentialité dédiée, revue croisée hebdomadaire. (Quiz adaptatif et stats par unité : faits le 16/11.) (Flashcards et rappels : faits le 16/11.) (Objectif, mode J-60, config annuelle, taille de texte, positionnement, recherche/favoris : faits le 16/11 — voir lignes ci-dessus.)
+- **Inchangés et purement dev :** politique de confidentialité dédiée. (Quiz adaptatif, stats par unité et revue croisée hebdomadaire : faits le 16/11.) (Flashcards et rappels : faits le 16/11.) (Objectif, mode J-60, config annuelle, taille de texte, positionnement, recherche/favoris : faits le 16/11 — voir lignes ci-dessus.)
 
 Le ré-audit de sortie devra refaire chaque mesure ci-dessus plutôt que reprendre ce tableau.

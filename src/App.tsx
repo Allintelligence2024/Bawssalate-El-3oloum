@@ -7,6 +7,7 @@ import type { Etat, CarteKafaa, FauteCarnet } from './types';
 import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
+import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { Qualite } from './utils/srs';
@@ -59,7 +60,7 @@ type Mode =
   | { type: 'immunite' }
   | { type: 'atelier'; domaineId: string }
   | { type: 'protocole'; lessonId: string }
-  | { type: 'revision'; lessonIds: string[] }
+  | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
   | { type: 'jalon'; uniteId: string }
   | { type: 'examenBlanc' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
@@ -654,7 +655,13 @@ export default function App() {
       return (
         <SessionRevision
           lessonIds={mode.lessonIds}
-          onResultat={onResultatRevision}
+          onResultat={(lessonId, qualite) => {
+            onResultatRevision(lessonId, qualite);
+            // المراجعة المتقاطعة تُعدّ مُنجزة حين يُقيَّم آخر درس فيها
+            if (mode.croisee && lessonId === mode.lessonIds[mode.lessonIds.length - 1]) {
+              setEtat((prev) => terminerRevueCroisee(prev));
+            }
+          }}
           onFermer={() => setMode(null)}
           diagnostics={diagnostics}
         />
@@ -797,6 +804,12 @@ export default function App() {
           onResultatKafaa={onResultatKafaa}
           onOuvrirMethodologie={() => setOnglet('methodo')}
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
+          onDemarrerRevueCroisee={() => {
+            const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
+            if (lessonIds.length < 2) return;
+            setEtat(suivant);
+            setMode({ type: 'revision', lessonIds, croisee: true });
+          }}
         />
       )}
       {pret && onglet === 'masari' && (

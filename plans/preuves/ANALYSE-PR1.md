@@ -237,3 +237,13 @@ Toujours ouverts (dev) : quiz adaptatif P3.1, revue croisée + stats par unité 
 Total : **90 tests verts**, chunk principal 372,5 kB (gzip 112,7).
 
 Toujours ouverts (dev) : revue croisée hebdomadaire (P2.4), filtres de recherche par unité, items de niveau 3 (P1.5). Humain : notification reçue sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md, session adaptative enregistrée sur appareil (capture du bilan).
+
+### 6 decies — Dixième passe (revue croisée hebdomadaire)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P2.4 | Revue croisée hebdomadaire : 1 leçon terminée par domaine (≤ 3), fragiles d'abord puis la moins récemment vue, dues du jour exclues, proposée seulement si ≥ 2 domaines représentés, composition figée pour la semaine (dimanche → samedi), marquée faite à l'évaluation de la dernière leçon ; jouée par `SessionRevision` → alimente la SM-2 ; carte كفاءة inchangée (plafond `kafaaSemaine`) | `utils/revueCroisee.ts`, `types.ts` (`revueCroisee`), `Aujourdhui.tsx` (carte, masquée si استرجاع dû), `App.tsx` (mode `revision.croisee`), `sync.ts` (texte « jamais envoyé ») | `revueCroisee.test.ts` (3) : seuil 2 domaines, tri/exclusion, figé + faite + reset dimanche suivant |
+
+Total : **93 tests verts**, chunk principal 375,4 kB (gzip 113,5).
+
+P2.4 est désormais complet côté code (rappels, stats par unité, revue croisée). Toujours ouverts (dev) : filtres de recherche par unité, items de niveau 3 (P1.5), P3.2 défis de régularité. Humain : notification reçue sur appareil, capture « أنا » avec faiblesse nommée, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.

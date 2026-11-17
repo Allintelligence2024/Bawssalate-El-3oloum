@@ -1,10 +1,11 @@
 // اليوم — مهمّة واحدة فقط. أولوية: استئناف → استرجاع مستحق → حصّة جديدة → راحة.
 
 import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits, planIntensif, quotaDe } from '../utils/moteur';
-import { CHEMIN, UNITE_PAR_ID, titreItem, uniteDeItem } from '../data/programme';
+import { CHEMIN, UNITE_PAR_ID, titreItem, titreLecon, uniteDeItem } from '../data/programme';
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
 import { DUREE_TOTALE_MIN } from '../data/protocole';
 import { messageAccueil } from '../utils/diagnostic';
+import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteStats from './CarteStats';
 import type { Etat } from '../types';
 import type { ItemChemin } from '../data/programme';
@@ -23,6 +24,8 @@ interface Props {
   ) => void;
   onOuvrirMethodologie: () => void;
   onOuvrirExamenBlanc?: () => void;
+  /** المراجعة المتقاطعة الأسبوعية (P2.4) */
+  onDemarrerRevueCroisee?: () => void;
 }
 
 export default function Aujourdhui({
@@ -33,9 +36,17 @@ export default function Aujourdhui({
   onResultatKafaa,
   onOuvrirMethodologie,
   onOuvrirExamenBlanc,
+  onDemarrerRevueCroisee,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = competenceDue(etat);
+  const croisee = disponibiliteCroisee(etat);
+  const leconsCroisees =
+    croisee === 'prete'
+      ? etat.revueCroisee && !etat.revueCroisee.faiteLe && etat.revueCroisee.lessonIds.length >= 2
+        ? etat.revueCroisee.lessonIds
+        : composerRevueCroisee(etat)
+      : [];
   const rythme = rythmeSemaine(etat);
   const position = positionClasse(etat);
   const faits = itemsFaits(etat);
@@ -278,6 +289,33 @@ export default function Aujourdhui({
         )}
         </div>
       </section>
+
+      {/* المراجعة المتقاطعة الأسبوعية (P2.4) — درس مُنهى من كلّ مجال، مرّة في الأسبوع؛ لا تظهر قبل مجالين */}
+      {onDemarrerRevueCroisee && croisee === 'prete' && action.type !== 'rappel' && (
+        <section className="card mt-5 border border-line p-5">
+          <p className="eyebrow">مراجعة متقاطعة · مرّة في الأسبوع</p>
+          <p className="font-naskh mt-1 text-lg font-bold leading-snug text-forest-deep">
+            {nb(leconsCroisees.length)} دروس من مجالات مختلفة، في جلسة واحدة
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-mute">
+            الاسترجاع اليومي يأخذ كلّ درس حين يحين موعده؛ هذه تخلط المجالات عمدًا — الخلط هو ما يكشف ما ظننته ثابتًا.
+          </p>
+          <ul className="mt-3 space-y-1 text-sm">
+            {leconsCroisees.map((id) => (
+              <li key={id} className="flex items-baseline justify-between gap-3">
+                <span className="font-bold">{titreLecon(id)}</span>
+                <span className="shrink-0 text-[11px] text-mute">{nomDomaine(id)}</span>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={onDemarrerRevueCroisee} className="btn btn-primary mt-4 w-full text-sm">
+            ابدأ المراجعة المتقاطعة
+          </button>
+        </section>
+      )}
+      {croisee === 'faite' && (
+        <p className="mt-4 text-center text-[11px] text-mute">المراجعة المتقاطعة لهذا الأسبوع أُنجزت — تعود الأحد القادم.</p>
+      )}
 
       {/* بطاقة كفاءة — مراجعة منهجية قصيرة (audit) : 1 à 2 fois par semaine */}
       {competence && (
