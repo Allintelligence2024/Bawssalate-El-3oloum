@@ -819,6 +819,7 @@ export default function App() {
           onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
           onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
           onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
+          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
         />
       )}
       {pret && onglet === 'methodo' && (
@@ -852,6 +853,7 @@ export default function App() {
           onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
           onBasculerFavori={basculerFavori}
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
+          onAllerExercices={() => setOnglet('exercices')}
         />
         </Suspense>
       )}

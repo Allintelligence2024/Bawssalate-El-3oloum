@@ -225,3 +225,15 @@ Toujours ouverts : lecture humaine des 8 scans (2013–2015, 2024–2026) et val
 Total : **82 tests verts**, chunk principal 367 kB (gzip 111) ; nouveaux chunks `Flashcards` 6,7 kB, plugin notifications hors entrée.
 
 Toujours ouverts (dev) : quiz adaptatif P3.1, revue croisée + stats par unité (P2.4), filtres de recherche. Humain : notification reçue sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md.
+
+### 6 nonies — Neuvième passe (quiz adaptatif, stats par unité)
+
+| # | Correctif | Fichiers | Vérification |
+|---|---|---|---|
+| P3.1 | Escalier adaptatif : départ au niveau le plus bas du pool de l'axe, 2 réussites consécutives → +1, 2 échecs consécutifs → −1 + invitation cours (au plancher : invitation seule) ; bornes = niveaux réellement présents dans le pool ; « juste » = première tentative ; bilan en mots + schéma, sans % ; sélecteur « niveau max » retiré | `utils/adaptatif.ts`, `Exercices.tsx` (vues `seance`/`bilan`), `Communs.tsx` (`onPremiereTentative`), `App.tsx` (`onOuvrirLecon`) | `adaptatif.test.ts` (5) : bornes, transitions, plancher, choix d'item (niveau courant puis voisins, non faits d'abord), session montée 1→2→3 puis descente 3→2→1 sur pool synthétique |
+| P3.1 | Constat banque : n1 = 120, n2 = 500, **n3 = 0** → 2 marches effectives ; affiché à l'élève sans marche vide | — | `verifier-drills.mjs` ; dépend de P1.5 |
+| P2.4 | Stats par unité « الأقوى / الأضعف » : calcul local (leçons terminées, fragiles SM-2, couverture drills, positionnement) sur les unités commencées seulement, résultat en mots avec action (révision des fragiles / tab تدريبات) | `utils/statsUnite.ts`, `components/CarteForcesFaiblesses.tsx`, `Ana.tsx`, `App.tsx` | `statsUnite.test.ts` (3) |
+
+Total : **90 tests verts**, chunk principal 372,5 kB (gzip 112,7).
+
+Toujours ouverts (dev) : revue croisée hebdomadaire (P2.4), filtres de recherche par unité, items de niveau 3 (P1.5). Humain : notification reçue sur appareil, lecture des 8 scans, droits des sujets, relecture 58/58, appareils.md, session adaptative enregistrée sur appareil (capture du bilan).
