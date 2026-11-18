@@ -9,3 +9,8 @@ dist/
 .env
 .env.local
 .env.production
+
+# Outils agents locaux (OpenCode, skills)
+.agents/
+skills-lock.json
+opencode.json

@@ -33,11 +33,66 @@ export function etatDepuisBrut(analyse: Partial<Etat>): Etat {
   };
 }
 
+// P-1.4 (D4) : l'échec d'écriture n'est plus avalé en silence. Les écouteurs
+// enregistrés ici sont prévenus — l'app affiche un bandeau qui propose l'export.
+type EcouteurEchec = () => void;
+const ecouteursEchec: EcouteurEchec[] = [];
+
+/** Écoute les échecs d'écriture localStorage (mode privé, quota plein…).
+ *  Retourne une fonction de désinscription. */
+export function surEchecSauvegarde(ecouteur: EcouteurEchec): () => void {
+  ecouteursEchec.push(ecouteur);
+  return () => {
+    const i = ecouteursEchec.indexOf(ecouteur);
+    if (i >= 0) ecouteursEchec.splice(i, 1);
+  };
+}
+
+// ───────────── Sauvegarde complète exportée/importée (P-1.1, D1) ─────────────
+
+/** Paquet d'export complet : enveloppe {application, version, exporteLe, etat}.
+ *  Aucun secret réutilisable dans le fichier : le hachage de motDePasse est vidé
+ *  (jeton conservé — exigé par la policy Supabase). Un fichier volé ne permet pas
+ *  de retrouver le mot de passe, et l'import ne restaure jamais un hachage. */
+export function paquetExportComplet(etat: Etat): {
+  application: string;
+  version: number;
+  exporteLe: string;
+  etat: Etat;
+} {
+  const sansSecret: Etat = etat.compte ? { ...etat, compte: { ...etat.compte, motDePasse: '' } } : etat;
+  return {
+    application: 'بوصلة العلوم · نسخة احتياطية',
+    version: 2,
+    exporteLe: new Date().toISOString(),
+    etat: sansSecret,
+  };
+}
+
+/** Import d'une sauvegarde : accepte l'export enveloppé {application, …, etat}
+ *  (format actuel) ET le format plat historique (progression à la racine).
+ *  Retourne null si ni l'un ni l'autre. Les secrets d'un fichier importé ne sont
+ *  jamais restaurés : le hachage de motDePasse est vidé (voir Inscription pour
+ *  la re-tétée à la reconnexion). */
+export function etatDepuisFichier(brut: unknown): Etat | null {
+  const enveloppe = brut as { etat?: Partial<Etat>; version?: number } | null;
+  const source =
+    enveloppe && typeof enveloppe === 'object' && enveloppe.etat
+      ? enveloppe.etat
+      : (brut as Partial<Etat> | null);
+  if (!source || typeof source !== 'object' || !source.progression) return null;
+  const copie = { ...source };
+  if (copie.compte) copie.compte = { ...copie.compte, motDePasse: '' };
+  return etatDepuisBrut(copie);
+}
+
 export function sauvegarderEtat(etat: Etat): void {
   try {
     localStorage.setItem(CLE, JSON.stringify(etat));
   } catch {
-    // وضع التصفّح الخاص أو امتلاء التخزين — تجاهل
+    // وضع التصفّح الخاص أو امتلاء التخزين — لا نتجاهل بعد الآن: نُنبّه الواجهة
+    // (l'état en mémoire n'est pas perdu ; la prochaine sauvegarde réessaie).
+    for (const ecouteur of ecouteursEchec) ecouteur();
   }
 }
 

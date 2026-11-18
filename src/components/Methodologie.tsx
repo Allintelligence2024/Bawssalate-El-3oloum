@@ -17,6 +17,8 @@ interface Props {
   onFermer: () => void;
   /** Écran d'ouverture : accueil (onglet منهجية) ou niveaux (3e porte تمارين dans تدريبات). */
   modeInitial?: 'accueil' | 'niveaux';
+  /** المرشد الموسّع (P3.5) */
+  onOuvrirMourchid?: () => void;
   /** Bataille de كفاءة : enregistre la réussite d'un exercice dans la file SM-2 (audit). */
   onResultatKafaa?: (
     key: string,
@@ -917,7 +919,7 @@ const exercicesUnite1: ExerciceUnite1[] = [
   { titre: 'المعلومة والبنية والوظيفة', verbe: 'ركّب', objectif: 'إنجاز خلاصة علمية', consigne: 'أنجز خلاصة تربط بين تسلسل ADN وبنية البروتين ووظيفته.', preuve: 'تسلسل النكليوتيدات يحدد تسلسل الأحماض الأمينية ثم البنية الفراغية', reponse: 'يحدد تسلسل ADN تسلسل ARNm، وهذا يحدد ترتيب الأحماض الأمينية؛ ويحدد الترتيب البنية الفراغية التي تمنح البروتين وظيفته.', erreur: 'لا تنتقل مباشرة من ADN إلى الوظيفة دون ذكر الترجمة والبنية الفراغية.', diagramme: 'synthese', format: 'مقالة تركيبية', document: 'السند 10 · من المعلومة إلى الوظيفة', zones: ['تسلسل ADN', 'الأحماض الأمينية', 'البنية الفراغية', 'الوظيفة'], question: 'ما العلاقة الصحيحة بين تسلسل ADN ووظيفة البروتين؟', choices: ['ADN يحدد التسلسل ثم البنية فالوظيفة', 'البروتين يصنع ADN', 'الوظيفة لا علاقة لها بالبنية'], correctChoice: 0, erreurCible: { 'البروتين يصنع ADN': 'اتجاه مقلوب: المعلومة تتدفق من ADN → ARNm → بروتين، والبروتين لا يصنع ADN.', 'الوظيفة لا علاقة لها بالبنية': 'البنية الفراغية هي التي تمنح الوظيفة؛ لا يمكن فصلهما في الخلاصة.' } },
 ];
 
-// معرض المخططات التفاعلية (Phase 2: diagrams)
+// معرض مخططات المجال الأول — عرض ثابت (SchemaALegender التفاعلي = P1.6، غير منجز)
 interface DiagrammeInfo {
   id: string;
   titre: string;
@@ -1319,6 +1321,7 @@ function SchemaUnite1({ type, className = 'h-44 w-full' }: { type: ExerciceUnite
 export default function Methodologie({
   onFermer,
   modeInitial = 'accueil',
+  onOuvrirMourchid,
   onResultatKafaa,
   onCarnetFaute,
   onOuvrirSynthese,
@@ -1968,13 +1971,31 @@ export default function Methodologie({
               className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
             >
               <span>
-                <b className="text-sm text-forest">معرض المخططات التفاعلية</b>
+                <b className="text-sm text-forest">معرض مخططات المجال الأول</b>
                 <span className="mt-1 block text-xs text-mute">
-                  استكشف {nb(10)} مخططات SVT: تدفق، خلايا، ريبوزوم، طفرات، تعبير، وأكثر — قابلة للنقر
+                  {nb(DIAGRAMMES.length)} مخططات للمراجعة البصرية: تدفق المعلومة، الخلايا، الريبوزوم، الطفرات، التعبير… (عرض فقط، بلا تمرين)
                 </span>
               </span>
               <span className="text-mute">←</span>
             </button>
+
+            {onOuvrirMourchid && (
+              <button
+                onClick={onOuvrirMourchid}
+                className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
+              >
+                <span className="flex items-center gap-3">
+                  <img src="/mascotte.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
+                  <span>
+                    <b className="text-sm text-forest">اسأل المُرشد</b>
+                    <span className="mt-1 block text-xs text-mute">
+                      25 سؤالًا في المنهجية بالنقر: قبل الامتحان، قراءة الموضوع، الكتابة، الأخطاء الشائعة، أثناء الامتحان — بلا إنترنت
+                    </span>
+                  </span>
+                </span>
+                <span className="text-mute">←</span>
+              </button>
+            )}
 
             <button onClick={() => setEcran('niveaux')} className="btn btn-gold w-full">
               مستويات التدريب الأربعة
@@ -3164,14 +3185,14 @@ export default function Methodologie({
         {ecran === 'diagrammes' && (
           <section className="card p-5">
             <p className="eyebrow">مكتبة المخططات</p>
-            <h2 className="font-naskh mt-1 text-2xl font-bold">مخططات SVT تفاعلية</h2>
+            <h2 className="font-naskh mt-1 text-2xl font-bold">مخططات المجال الأول</h2>
             <p className="mt-2 text-sm leading-relaxed text-mute">
-              {nb(DIAGRAMMES.length)} مخططًا يغطي المجال الأول (تركيب البروتين). انقر على المناطق للاستكشاف.
+              {nb(DIAGRAMMES.length)} مخططات تغطي المجال الأول (تركيب البروتين) — للمراجعة البصرية قبل التمارين. (مخططات التسمية التفاعلية ستأتي لاحقًا.)
             </p>
             <MascotteKunz
               compact
               tone="gold"
-              message="كل مخطط بوابة لفهم آلية بيولوجية. اضغط على المناطق، قارن، وتخيّل الروابط قبل الامتحان."
+              message="كل مخطط بوابة لفهم آلية بيولوجية: سمِّ العناصر بصوت خافت قبل قراءة الرقعات، ثم قارن."
             />
             <div className="mt-4 space-y-4">
               {DIAGRAMMES.map((d, i) => (

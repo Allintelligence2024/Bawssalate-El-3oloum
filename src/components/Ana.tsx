@@ -4,8 +4,8 @@ import { useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import type { Etat, NoteCarnet, FauteCarnet } from '../types';
-import { etatDepuisBrut } from '../utils/storage';
+import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
+import { etatDepuisFichier, paquetExportComplet } from '../utils/storage';
 import { itemsFaits } from '../utils/moteur';
 import { aujourdhui, differenceJours, nb, nbMin, formatCourteAr, formatJourAr, joursNb } from '../utils/dates';
 import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
@@ -14,6 +14,12 @@ import { CHEMIN } from '../data/programme';
 import { Morceau } from './Communs';
 import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
+import ReglagesParcours from './ReglagesParcours';
+import CarteDiagnosticFavoris from './CarteDiagnosticFavoris';
+import ReglageRappel from './ReglageRappel';
+import CarteForcesFaiblesses from './CarteForcesFaiblesses';
+import CarteBadges from './CarteBadges';
+import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
 
 interface Props {
@@ -27,6 +33,16 @@ interface Props {
   onRestaurer: (etat: Etat) => void; // استيراد نسخة احتياطية كاملة
   onDeconnexion?: () => void;
   onConsentementSync: (ok: boolean) => void;
+  onObjectif: (o: Objectif) => void;
+  onModeIntensif: (m: 'auto' | 'on' | 'off') => void;
+  onTailleTexte: (t: TailleTexte) => void;
+  onOuvrirDiagnostic: () => void;
+  onOuvrirLecon: (lessonId: string) => void;
+  onDemarrerRevision: (lessonIds: string[]) => void;
+  onBasculerFavori: (lessonId: string) => void;
+  onRappel: (r: { actif: boolean; heure: string }) => void;
+  onAllerExercices: () => void;
+  onOuvrirConfidentialite: () => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -76,14 +92,12 @@ function exporterCarnet(fautes: FauteCarnet[]): Promise<string> {
 
 /** Sauvegarde complète : TOUT l'état de l'app (progression, SM-2, جسور, كفاءة, carnet, journal,
  *  drills, compte local) en un seul JSON local. La progression survit ainsi au changement de
- *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin. */
+ *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin.
+ *  Le paquet est construit par paquetExportComplet (P-1.1) : enveloppe versionnée, secrets
+ *  exclus — l'import (étatDepuisFichier) accepte ce format ET l'ancien format plat. */
 function exporterEtatComplet(etat: Etat): Promise<string> {
   return exporterJson(
-    {
-      application: 'بوصلة العلوم · نسخة احتياطية',
-      exporteLe: new Date().toISOString(),
-      etat,
-    },
+    paquetExportComplet(etat),
     'bousala-sauvegarde.json',
     'نسخة احتياطية',
   );
@@ -100,6 +114,16 @@ export default function Ana({
   onRestaurer,
   onDeconnexion,
   onConsentementSync,
+  onObjectif,
+  onModeIntensif,
+  onTailleTexte,
+  onOuvrirDiagnostic,
+  onOuvrirLecon,
+  onDemarrerRevision,
+  onBasculerFavori,
+  onRappel,
+  onAllerExercices,
+  onOuvrirConfidentialite,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const [confirmeCarnet, setConfirmeCarnet] = useState(false);
@@ -127,20 +151,22 @@ export default function Ana({
 
   const derniersJours = [...etat.journal].sort().slice(-12);
 
-  /** Import d'une sauvegarde : lecture locale, validation douce, normalisation
-   *  (même voie que chargerEtat) puis restauration — l'app sauvegarde immédiatement. */
+  /** Import d'une sauvegarde : lecture locale, validation douce (etatDepuisFichier — P-1.1,
+   *  deux formats acceptés : enveloppé {application, …, etat} et plat historique), secrets
+   *  jamais restaurés (hachage vidé), normalisation même voie que chargerEtat, puis
+   *  restauration — l'app sauvegarde immédiatement. */
   async function importerFichier(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const fichier = e.target.files?.[0];
     e.target.value = ''; // permet de ré-importer le même fichier ensuite
     if (!fichier) return;
     try {
-      const brut = JSON.parse(await fichier.text()) as Partial<Etat>;
-      if (!brut || typeof brut !== 'object' || !brut.progression) {
+      const etat = etatDepuisFichier(JSON.parse(await fichier.text()));
+      if (!etat) {
         setErreurImport('هذا الملف ليس نسخة احتياطية من التطبيق.');
         return;
       }
       setErreurImport(null);
-      onRestaurer(etatDepuisBrut(brut));
+      onRestaurer(etat);
     } catch {
       setErreurImport('لم أستطع قراءة الملف — جرّب ملف JSON صادرًا من هذا التطبيق.');
     }
@@ -226,8 +252,43 @@ export default function Ana({
         </section>
       )}
 
+      {/* الأقوى / الأضعف (P2.4) */}
+      <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
+
+      {/* شارات المحتوى (P3.2) */}
+      <CarteBadges etat={etat} />
+
+      {/* سجلّ الامتحانات التجريبية (P1.4) */}
+      <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
+
+      {/* التموضع · المفضّلة */}
+      <CarteDiagnosticFavoris
+        etat={etat}
+        onOuvrirDiagnostic={onOuvrirDiagnostic}
+        onOuvrirLecon={onOuvrirLecon}
+        onDemarrerRevision={onDemarrerRevision}
+        onBasculerFavori={onBasculerFavori}
+      />
+
+      {/* الهدف · المراجعة المكثّفة · حجم الخط */}
+      <ReglagesParcours
+        etat={etat}
+        onObjectif={onObjectif}
+        onModeIntensif={onModeIntensif}
+        onTailleTexte={onTailleTexte}
+      />
+
+      {/* التذكير اليومي (P2.4) */}
+      <ReglageRappel etat={etat} onChanger={onRappel} />
+
       {/* المزامنة — إعداد دائم */}
       <ReglageSync etat={etat} onChoix={onConsentementSync} />
+
+      {/* الخصوصية · الأسئلة الشائعة · عن التطبيق (P0.8 / P3.4) */}
+      <button type="button" onClick={onOuvrirConfidentialite} className="card mt-5 w-full p-5 text-start transition-colors hover:border-forest">
+        <p className="eyebrow">الخصوصية · الأسئلة الشائعة · عن التطبيق</p>
+        <p className="mt-1 text-sm font-bold">ما يحدث لبياناتك بالضبط، حقوقك، وحذف سجلّك من الخادم ←</p>
+      </button>
 
       {/* الإحصاء بالحروف */}
       <section className="card mt-5 p-5">

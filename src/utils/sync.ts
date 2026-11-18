@@ -1,5 +1,5 @@
 // المزامنة الاختيارية — تُرسل ملخّص تقدّم التلميذ إلى قاعدة بيانات المطوّر (Supabase)
-/// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
+// فقط عند موافقته الصريحة. لا كلمات مرور، لا ملاحظات شخصية، لا حظر عند انقطاع الشبكة:
 // التطبيق يعمل offline دائمًا، والمزامنة مجرّد إضافة صامتة في الخلفية.
 
 import type { Etat } from '../types';
@@ -48,6 +48,26 @@ export interface Snapshot {
   app_version: string;
   maj: string;
 }
+
+/** قائمة ما يُرسَل فعلًا (P0.8) — تُعرض حرفيًّا في شاشة الموافقة وفي «أنا».
+ *  يجب أن تبقى مطابقة لحقول Snapshot أعلاه: أي حقل جديد يُضاف هنا أيضًا. */
+export const DONNEES_ENVOYEES: ReadonlyArray<{ libelle: string; detail: string }> = [
+  { libelle: 'بريدك الإلكتروني', detail: 'معرّف حسابك (email)' },
+  { libelle: 'اسمك المعروض والولاية والدائرة', detail: 'كما أدخلتها عند التسجيل' },
+  { libelle: 'تاريخ البكالوريا الذي اخترته', detail: 'date_bac' },
+  { libelle: 'معرّفات الدروس والجسور والورشات', detail: 'المنجزة، الجارية، الهشّة — أرقام ومعرّفات فقط' },
+  { libelle: 'أرقام تقدّمك', detail: 'عدد التدريبات، الدقائق، المراجعات، الإجابات الصحيحة/الخاطئة، أيام النشاط، عدد الملاحظات' },
+  { libelle: 'نقاط الخبرة والمستوى وإصدار التطبيق', detail: 'xp، niveau، app_version' },
+  { libelle: 'رمز كتابة خاص بحسابك', detail: 'jeton — يسمح بتحديث سجلّك أنت فقط' },
+];
+
+/** ما لا يُرسَل أبدًا. */
+export const DONNEES_JAMAIS_ENVOYEES: ReadonlyArray<string> = [
+  'كلمة المرور (ولا حتى مشفّرة)',
+  'نصوص ملاحظاتك وكرّاسة الأخطاء',
+  'إجاباتك سؤالًا بسؤال',
+  'نتيجة اختبار التموضع، مفضّلتك، بطاقاتك، إعداد التذكير، مراجعتك المتقاطعة، تحدّياتك وشاراتك، وتواريخ امتحاناتك التجريبية (تبقى على جهازك)',
+];
 
 export function construireSnapshot(etat: Etat): Snapshot | null {
   if (!etat.compte) return null;
@@ -108,7 +128,7 @@ async function clientSupabase(jeton: string) {
 // إرسال صامت: أي خطأ يُبتلع — التطبيق لا يعتمد على نجاحها أبدًا.
 export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (!syncActive()) return;
-  if (!etat.compte || etat.consentementSync === false) return;
+  if (!etat.compte || !consentementExplicite(etat)) return;
   if (typeof navigator !== 'undefined' && !navigator.onLine) return;
   const snap = construireSnapshot(etat);
   if (!snap) return;
@@ -161,7 +181,42 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
   }
 }
 
-// حالة المزامنة: مفعّلة افتراضيًّا — التلميذ يستطيع إيقافها من «أنا»
+/** حذف سجلّ التلميذ من الخادم (P0.8) — يتطلّب حسابًا وجيتونه (سياسة DELETE في supabase/schema.sql).
+ *  النتيجة صريحة لأن الحذف ليس إرسالًا صامتًا: التلميذ يريد أن يعرف إن نجح. */
+export type ResultatSuppression = 'supprime' | 'hors_ligne' | 'pas_de_compte' | 'sync_inactive' | 'erreur';
+
+export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSuppression> {
+  if (!syncActive()) return 'sync_inactive';
+  if (!etat.compte?.email || !etat.compte.jeton) return 'pas_de_compte';
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return 'hors_ligne';
+  try {
+    const sb = await clientSupabase(etat.compte.jeton);
+    if (!sb) return 'sync_inactive';
+    const { error } = await sb.from('eleves').delete().eq('email', etat.compte.email);
+    if (error) {
+      console.warn('[sync] فشل الحذف:', error.message);
+      return 'erreur';
+    }
+    dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
+    return 'supprime';
+  } catch (e) {
+    console.warn('[sync] استثناء الحذف:', e);
+    return 'erreur';
+  }
+}
+
+/** موافقة صريحة فقط: «نعم» مُسجَّل بتاريخ. التثبيتات القديمة (consentementSync: true بلا تاريخ
+ *  لأن القيمة الافتراضية كانت true قبل v0.9.4) لا تُرسل شيئًا حتى يُجيب التلميذ على شاشة الموافقة. */
+export function consentementExplicite(etat: Etat): boolean {
+  return etat.consentementSync === true && Boolean(etat.consentementSyncDecideLe);
+}
+
+/** هل يجب عرض شاشة الموافقة؟ حساب موجود + مزامنة مهيّأة + لم يُجب بعد. */
+export function doitDemanderConsentement(etat: Etat): boolean {
+  return Boolean(etat.compte) && syncActive() && !etat.consentementSyncDecideLe;
+}
+
+// حالة المزامنة كما تُعرض في «أنا»: «نعم» فقط عند موافقة صريحة
 export function consentementEtat(etat: Etat): 'oui' | 'non' {
-  return etat.consentementSync === false ? 'non' : 'oui';
+  return consentementExplicite(etat) ? 'oui' : 'non';
 }

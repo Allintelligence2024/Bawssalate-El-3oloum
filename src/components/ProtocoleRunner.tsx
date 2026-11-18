@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
-import { DIAGNOSTICS, PROTOCOLE, type PhaseProtocole } from '../data/protocole';
+import { DIAGNOSTICS, PROTOCOLE, minutesCumulees, type PhaseProtocole } from '../data/protocole';
 import { UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, questionLecon } from '../data/leconsPassives';
 import { ajouterJours, aujourdhui, nb, formatJourAr, minutesNb } from '../utils/dates';
@@ -150,6 +150,10 @@ export default function ProtocoleRunner({
 
   // متى فُتحت الجلسة (لحساب الدقائق عند الإنهاء)
   const [minutesDepart] = useState(() => progression?.minutes ?? 0);
+  // تصحيح D5: الدقائق تُجمع فوق ما حُسب فعلًا (minutesDepart) فحسب — إذن
+  // نبدأ الجمع من أول مرحلة *غير محسوبة* في هذه الجلسة، لا من أول المرحلة 1،
+  // وإلّا فُضّعت المراحل المنجزة سابقًا مرّتين (8 → 19 بدل 11).
+  const [indiceDepart] = useState(() => Math.min(faites.length, PROTOCOLE.length - 1));
 
   // إعادة الضبط عند تغيير المرحلة
   useEffect(() => {
@@ -250,7 +254,7 @@ export default function ProtocoleRunner({
       ...base,
       statut: 'en_cours',
       phases: Array.from(new Set([...faites, phase.id])),
-      minutes: minutesDepart + PROTOCOLE.slice(0, index + 1).reduce((s, p) => s + p.dureeMin, 0),
+      minutes: minutesCumulees(minutesDepart, indiceDepart, index),
       derniereSession: aujourdhui(),
       reponses,
       diagnostic: phase.id === 6 && diagnostic ? diagnostic : base.diagnostic,
@@ -287,7 +291,7 @@ export default function ProtocoleRunner({
   if (cloture) {
     const frag = fragile();
     const prochaine = ajouterJours(aujourdhui(), frag ? 1 : 3);
-    const minutes = minutesDepart + PROTOCOLE.reduce((s, p) => s + p.dureeMin, 0);
+    const minutes = minutesCumulees(minutesDepart, indiceDepart, PROTOCOLE.length - 1);
     return (
       <div className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center px-4 py-10">
         <div className="card animate-pop-in p-7 text-center">
@@ -299,7 +303,7 @@ export default function ProtocoleRunner({
           <p className="eyebrow mt-4">أنهيت الدرس</p>
           <h1 className="font-naskh mt-2 text-2xl font-bold">{titreLecon(lessonId)}</h1>
           <p className="mt-2 text-sm text-mute">
-            {minutesNb(minutes)} من التركيز — هذا هو الاستثمار الحقيقي.
+            {minutesNb(minutes)} من التركيز في هذا الدرس — الوقت المقدّر للجلسة.
           </p>
 
           <div className="mt-5 space-y-3 text-right">
@@ -319,7 +323,7 @@ export default function ProtocoleRunner({
           <button
             onClick={() => {
               const base = progressionBase(progression);
-              const minutesFinales = minutesDepart + PROTOCOLE.reduce((s, p) => s + p.dureeMin, 0);
+              const minutesFinales = minutesCumulees(minutesDepart, indiceDepart, PROTOCOLE.length - 1);
               onTerminer(
                 premiereRevision(
                   {

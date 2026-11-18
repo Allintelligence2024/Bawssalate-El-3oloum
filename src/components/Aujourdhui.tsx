@@ -1,10 +1,14 @@
 // اليوم — مهمّة واحدة فقط. أولوية: استئناف → استرجاع مستحق → حصّة جديدة → راحة.
 
-import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits } from '../utils/moteur';
-import { CHEMIN, UNITE_PAR_ID, titreItem, uniteDeItem } from '../data/programme';
+import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits, planIntensif, quotaDe } from '../utils/moteur';
+import { CHEMIN, UNITE_PAR_ID, titreItem, titreLecon, uniteDeItem } from '../data/programme';
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
 import { DUREE_TOTALE_MIN } from '../data/protocole';
+import { messageAccueil } from '../utils/diagnostic';
+import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteStats from './CarteStats';
+import CarteDefi from './CarteDefi';
+import type { TypeDefi } from '../utils/defis';
 import type { Etat } from '../types';
 import type { ItemChemin } from '../data/programme';
 import type { Qualite } from '../utils/srs';
@@ -21,6 +25,11 @@ interface Props {
     estRevue?: boolean
   ) => void;
   onOuvrirMethodologie: () => void;
+  onOuvrirExamenBlanc?: () => void;
+  /** المراجعة المتقاطعة الأسبوعية (P2.4) */
+  onDemarrerRevueCroisee?: () => void;
+  /** تحدّي الأسبوع (P3.2) */
+  onChoisirDefi?: (type: TypeDefi) => void;
 }
 
 export default function Aujourdhui({
@@ -30,12 +39,24 @@ export default function Aujourdhui({
   onVoirUnite,
   onResultatKafaa,
   onOuvrirMethodologie,
+  onOuvrirExamenBlanc,
+  onDemarrerRevueCroisee,
+  onChoisirDefi,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = competenceDue(etat);
+  const croisee = disponibiliteCroisee(etat);
+  const leconsCroisees =
+    croisee === 'prete'
+      ? etat.revueCroisee && !etat.revueCroisee.faiteLe && etat.revueCroisee.lessonIds.length >= 2
+        ? etat.revueCroisee.lessonIds
+        : composerRevueCroisee(etat)
+      : [];
   const rythme = rythmeSemaine(etat);
   const position = positionClasse(etat);
   const faits = itemsFaits(etat);
+  const plan = planIntensif(etat);
+  const quota = quotaDe(etat);
 
   // compte le nombre de leçons échouées (statut = vierge ou en_cours sans revision)
   const leconsEchouees = Object.values(etat.progression).filter(
@@ -96,8 +117,58 @@ export default function Aujourdhui({
               ? 'كل شيء يبدأ بخطوة واحدة. مهمّة اليوم وحدها تكفي.'
               : `أنجزت ${nbMin(faits)} من ${nbMin(CHEMIN.length)} بنية في طريقك. مهمّة واحدة في كل مرة.`}
           </p>
+          {faits < 3 && messageAccueil(etat) && (
+            <p className="mt-1.5 text-xs leading-relaxed text-forest-deep">{messageAccueil(etat)}</p>
+          )}
         </div>
       </header>
+
+      {/* المراجعة المكثّفة (P2.3): خطة الأسبوع — تظهر فقط عند تفعيلها */}
+      {plan && (
+        <section className="mb-4 rounded-3xl border border-gold-soft bg-gold-soft/40 p-5">
+          <p className="eyebrow">المراجعة المكثّفة</p>
+          <h2 className="font-naskh mt-1 text-xl font-bold leading-snug">
+            {plan.phase === 'J7'
+              ? 'الأسبوع الأخير: استرجاع ومواضيع'
+              : plan.phase === 'J30'
+                ? 'المرحلة الثانية: الدروس المتكرّرة والمنتظمة في البكالوريا'
+                : 'المرحلة الأولى: الدروس التي تتكرّر في البكالوريا'}
+          </h2>
+          <ul className="mt-3 space-y-1.5 text-sm text-ink-soft">
+            {plan.joursRestants !== null && (
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                <span className="tnum">{nb(plan.joursRestants)}</span> يومًا على امتحانك
+              </li>
+            )}
+            <li className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              {plan.restants === 0
+                ? 'أنهيت كل بنود الأولوية — الآن استرجاع ومواضيع فقط.'
+                : `${nb(plan.restants)} بندًا ذا أولوية متبقّيًا · نحو ${nb(plan.parSemaine)} في الأسبوع`}
+            </li>
+            <li className="flex items-center gap-2">
+              <span className={`h-1.5 w-1.5 rounded-full ${plan.sujetFait ? 'bg-forest' : 'bg-gold'}`} />
+              {plan.sujetFait ? 'موضوع هذا الأسبوع: أُنجز ✓' : 'موضوع واحد في الأسبوع في شروط الامتحان — لم يُنجز بعد'}
+            </li>
+            {plan.acquises > 0 && (
+              <li className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-forest" />
+                {nb(plan.acquises)} درسًا ثبت بعد نجاحين — خرج من الاسترجاع حتى الامتحان
+              </li>
+            )}
+          </ul>
+          <p className="mt-3 text-xs leading-relaxed text-mute">
+            وحدات الأولوية مفتوحة في «مساري» دون انتظار ما قبلها. الحصّة اليوم: حتى {nb(quota.seances)} حصص —
+            سقف، لا واجب.
+          </p>
+          {onOuvrirExamenBlanc && (
+            <button type="button" onClick={onOuvrirExamenBlanc} className="btn btn-ghost mt-3 w-full text-sm">
+              افتح الامتحان التجريبي
+            </button>
+          )}
+        </section>
+      )}
 
       {/* بطاقة المهمّة الواحدة — الورقة الرئيسة في الأطلس */}
       <section className="card animate-lever relative overflow-hidden p-6">
@@ -196,7 +267,7 @@ export default function Aujourdhui({
             )}
             {!action.bonusDispo && (
               <p className="mt-3 text-xs leading-relaxed text-mute">
-                استعملت حصّتك الإضافية اليوم. نلتقي غدًا.
+                {quota.bonus ? 'استعملت حصّتك الإضافية اليوم. نلتقي غدًا.' : 'حصّة واحدة في اليوم هي إيقاع هدفك. نلتقي غدًا.'}
               </p>
             )}
           </>
@@ -223,6 +294,36 @@ export default function Aujourdhui({
         )}
         </div>
       </section>
+
+      {/* تحدّي الأسبوع (P3.2) — يظهر بعد المهمّة الواحدة، ولا يُطلب حين يكون استرجاع مستحقًّا */}
+      {onChoisirDefi && action.type !== 'rappel' && <CarteDefi etat={etat} onChoisir={onChoisirDefi} />}
+
+      {/* المراجعة المتقاطعة الأسبوعية (P2.4) — درس مُنهى من كلّ مجال، مرّة في الأسبوع؛ لا تظهر قبل مجالين */}
+      {onDemarrerRevueCroisee && croisee === 'prete' && action.type !== 'rappel' && (
+        <section className="card mt-5 border border-line p-5">
+          <p className="eyebrow">مراجعة متقاطعة · مرّة في الأسبوع</p>
+          <p className="font-naskh mt-1 text-lg font-bold leading-snug text-forest-deep">
+            {nb(leconsCroisees.length)} دروس من مجالات مختلفة، في جلسة واحدة
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-mute">
+            الاسترجاع اليومي يأخذ كلّ درس حين يحين موعده؛ هذه تخلط المجالات عمدًا — الخلط هو ما يكشف ما ظننته ثابتًا.
+          </p>
+          <ul className="mt-3 space-y-1 text-sm">
+            {leconsCroisees.map((id) => (
+              <li key={id} className="flex items-baseline justify-between gap-3">
+                <span className="font-bold">{titreLecon(id)}</span>
+                <span className="shrink-0 text-[11px] text-mute">{nomDomaine(id)}</span>
+              </li>
+            ))}
+          </ul>
+          <button type="button" onClick={onDemarrerRevueCroisee} className="btn btn-primary mt-4 w-full text-sm">
+            ابدأ المراجعة المتقاطعة
+          </button>
+        </section>
+      )}
+      {croisee === 'faite' && (
+        <p className="mt-4 text-center text-[11px] text-mute">المراجعة المتقاطعة لهذا الأسبوع أُنجزت — تعود الأحد القادم.</p>
+      )}
 
       {/* بطاقة كفاءة — مراجعة منهجية قصيرة (audit) : 1 à 2 fois par semaine */}
       {competence && (

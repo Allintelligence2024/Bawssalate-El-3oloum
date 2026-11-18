@@ -69,4 +69,28 @@ create policy "maj_app" on public.eleves
     or jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
   );
 
--- ملاحظة: لا توجد سياسة SELECT لـ anon → القراءة مرفوضة تلقائيًّا.
+-- Suppression à la demande (P0.8) : l'élève peut effacer SA ligne depuis l'écran « الخصوصية »
+-- de l'application. Exige le jeton en en-tête ; une ligne sans jeton (ancienne installation)
+-- ne peut pas être supprimée par l'application — elle se verrouille au prochain snapshot.
+drop policy if exists "suppression_app" on public.eleves;
+create policy "suppression_app" on public.eleves
+  for delete to anon
+  using (
+    jeton is not null
+    and jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
+  );
+
+-- Lecture restreinte (correctif P-1.7, preuve : plans/preuves/confidentialite-serveur.md) :
+-- avec RLS, la policy DELETE ne voit que les lignes VISIBLES pour anon ; sans aucune policy
+-- SELECT, anon ne voit rien et le DELETE de l'application (sync.ts:195) ne matche jamais
+-- (testé en direct : 0 ligne supprimée au bon jeton). Cette lecture est verrouillée par le
+-- jeton : l'élève ne lit QUE sa propre ligne, et seulement en envoyant son jeton.
+drop policy if exists "lecture_proprietaire" on public.eleves;
+create policy "lecture_proprietaire" on public.eleves
+  for select to anon
+  using (
+    jeton is not null
+    and jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
+  );
+
+-- ملاحظة: بدون الجيتون لا تُقرأ ولا تُعدَّل ولا تُحذف أي سطر — القراءة مرفوضة تلقائيًّا.

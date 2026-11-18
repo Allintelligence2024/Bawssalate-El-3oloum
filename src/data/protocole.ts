@@ -1,4 +1,4 @@
-// بروتوكول المراجعة في 6 مراحل — 42 دقيقة للدرس
+// بروتوكول المراجعة في 6 مراحل — 46 دقيقة للدرس (8+3+5+5+15+10، انظر DUREE_TOTALE_MIN)
 // كل مرحلة تأكل حقلاً محدداً من «الملخص الذهبي» (lessonGoldSummaries.ts):
 //   1 السؤال والقراءة → سؤال الدرس + قراءة كاملة + بنية الدرس → questionLecon + missionAr + mechanismAr.length
 //   2 الأنماط    → الكلمات المفتاحية          → vocabulary
@@ -20,6 +20,14 @@ export interface PhaseProtocole {
   morchidAr: string; // كلام المُرشد في هذه المرحلة
   indiceAr: string; // تلميح صمّام «أنا عالق»
   verrouAr: string; // ما الذي يجب تحقيقه لفتح المرحلة التالية
+}
+
+/** P-1.5 (D5) : minutes cumulées = ce qui est déjà compté (minutesDepart) + les phases
+ *  validées DEPUIS l'ouverture de la session courante (indiceDepart → indexInclus compris).
+ *  Évite de recompter les phases déjà payées dans minutesDepart (8 + 3 = 11, pas 19).
+ *  Pure et testée — ProtocoleRunner ne fait que l'appeler. */
+export function minutesCumulees(minutesDepart: number, indiceDepart: number, indexInclus: number): number {
+  return minutesDepart + PROTOCOLE.slice(indiceDepart, indexInclus + 1).reduce((s, p) => s + p.dureeMin, 0);
 }
 
 export const PROTOCOLE: PhaseProtocole[] = [

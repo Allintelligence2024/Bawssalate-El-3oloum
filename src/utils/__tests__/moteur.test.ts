@@ -1,5 +1,5 @@
 // Tests du moteur (Next Best Action) — P0.4
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
   itemFait,
@@ -14,7 +14,9 @@ import {
   enregistrerActivite,
   competenceDue,
   debutSemaine,
+  prochaineAction,
 } from '../moteur';
+import { CHEMIN } from '../../data/programme';
 
 // Etat de base avec 2 leçons finies et 1 en cours
 function etatBase() {
@@ -39,6 +41,13 @@ function etatBase() {
   };
   return etat;
 }
+
+// Horloge fixée : ces tests raisonnent sur « aujourd'hui = 16/11/2026 » (dates en dur ci-dessous).
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-16T09:00:00'));
+});
+afterEach(() => vi.useRealTimers());
 
 describe('moteur — itemFait', () => {
   it('reporte une leçon terminee', () => {
@@ -109,5 +118,62 @@ describe('moteur — debutSemaine (calendrier algérien: sam → dim)', () => {
     const wed = '2026-11-18';
     const dim = debutSemaine(wed);
     expect(dim).toBe('2026-11-15');
+  });
+});
+
+// ───────────── prochaineAction (P-1.2 — D2) ─────────────
+
+/** État avec TOUT le chemin accompli (chaque leçon terminee, chaque jalon fait). */
+function etatCheminComplet(): Etat {
+  const etat = etatBase();
+  etat.progression = {};
+  etat.jalons = {};
+  for (const item of CHEMIN) {
+    if (item.type === 'lecon') {
+      etat.progression[item.id] = {
+        statut: 'terminee', phases: [1, 2, 3, 4, 5, 6], minutes: 10,
+        repetitions: 1, intervalle: 1, facilite: 2.5,
+      };
+    } else {
+      etat.jalons[item.uniteId] = { fait: true };
+    }
+  }
+  return etat;
+}
+
+describe('moteur — prochaineAction (P-1.2 : rappels dus avant fini)', () => {
+  it('chemin complet + une révision due → rappel (jamais fini avant les rappels)', () => {
+    const etat = etatCheminComplet();
+    const premiere = CHEMIN.find((c) => c.type === 'lecon');
+    if (!premiere || premiere.type !== 'lecon') throw new Error('pas de leçon dans CHEMIN');
+    etat.progression[premiere.id].prochaineRevision = '2026-11-15'; // hier → due
+    const action = prochaineAction(etat);
+    expect(action.type).toBe('rappel');
+    if (action.type === 'rappel') {
+      expect(action.lessonIds).toContain(premiere.id);
+    }
+  });
+
+  it('chemin complet + rien de dû → fini', () => {
+    const action = prochaineAction(etatCheminComplet());
+    expect(action.type).toBe('fini');
+  });
+
+  it('régression : chemin non fini + révision due → rappel (les rappels passent avant le nouveau)', () => {
+    const etat = etatBase();
+    // plus de leçon en cours (sinon ce serait reprise)
+    etat.progression['lecon_transcription'] = {
+      statut: 'terminee', phases: [1, 2, 3], minutes: 9,
+      repetitions: 0, intervalle: 1, facilite: 2.5,
+      prochaineRevision: '2026-11-15', // due
+    };
+    const action = prochaineAction(etat);
+    expect(action.type).toBe('rappel');
+  });
+
+  it('régression : leçon en cours + révisions dues → reprise reste prioritaire', () => {
+    const etat = etatBase(); // lecon_transcription en cours
+    etat.progression['phase1_chapitres_1_2'].prochaineRevision = '2026-11-15';
+    expect(prochaineAction(etat).type).toBe('reprise');
   });
 });

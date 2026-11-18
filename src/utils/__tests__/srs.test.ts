@@ -1,7 +1,14 @@
 // Tests du SM-2 (répétition espacée) — P0.4
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { ProgressionLecon } from '../../types';
 import { mettreAJourSrs, premiereRevision, aReviserAujourdhui, GRILLE_EBBINGHAUS } from '../srs';
+
+// Horloge fixée : ces tests raisonnent sur « aujourd'hui = 16/11/2026 » (dates en dur ci-dessous).
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-11-16T09:00:00'));
+});
+afterEach(() => vi.useRealTimers());
 
 describe('srs — mettreAJourSrs', () => {
   it('négligence: reset à 0 répétitions, intervalle 1', () => {
