@@ -55,10 +55,16 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
       }
       if (mdp.length === 0) return annoncer(messageCompte('mdp'));
       setOccupe(true);
-      const bon = await verifierMdp(mdp, compte.motDePasse);
+      // Compte restauré depuis une sauvegarde (sans hachage — P-1.1) : la connexion
+      // réinstalle le hachage avec le mot de passe saisi, sans exiger l'ancien.
+      const bon = compte.motDePasse ? await verifierMdp(mdp, compte.motDePasse) : true;
       setOccupe(false);
       if (!bon) return annoncer(messageCompte('mdp', { mdp: true }));
-      onValide(compte);
+      onValide(
+        compte.motDePasse
+          ? compte
+          : { ...compte, motDePasse: await hacher(mdp) }
+      );
       return;
     }
 

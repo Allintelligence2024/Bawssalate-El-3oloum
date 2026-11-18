@@ -4,7 +4,7 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
-import { chargerEtat, sauvegarderEtat, viderStockage } from './utils/storage';
+import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage } from './utils/storage';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
@@ -157,6 +157,8 @@ function EcranConsentementSync({ onChoix }: { onChoix: (ok: boolean) => void }) 
 export default function App() {
   const [etat, setEtat] = useState<Etat>(() => chargerEtat());
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
+  // P-1.4 (D4): échec d'écriture localStorage → bandeau visible (perte silencieuse interdite)
+  const [stockageDefaillant, setStockageDefaillant] = useState(false);
   const [mode, setMode] = useState<Mode | null>(null);
   const [ouverteLecon, setOuverteLecon] = useState<string | null>(null);
   // قراءة الدرس مُفروضة: لا تُفتح بوّابة المرحلة 1 قبل فتح القارئ وإغلاقه فعلًا
@@ -258,6 +260,9 @@ export default function App() {
     const minutes = Object.values(etat.progression).reduce((s, p) => s + (p.minutes ?? 0), 0);
     sauvegarderEtat({ ...etat, minutesTotales: minutes });
   }, [etat]);
+
+  // P-1.4: كل فشل كتابة في التخزين يرفع البانر — يُخفى يدويًّا، ويُعاد عند الفشل التالي
+  useEffect(() => surEchecSauvegarde(() => setStockageDefaillant(true)), []);
 
   // ───────────── المزامنة الاختيارية (صامتة، offline-first) ─────────────
 
@@ -896,6 +901,36 @@ export default function App() {
 
       {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
       <div className="pt-16">
+      {/* P-1.4: بانر فشل التخزين — يظهر تحت الشريط، قابل للرفض، يُعاد عند أي فشل جديد */}
+      {pret && stockageDefaillant && (
+        <div
+          role="alert"
+          className="fixed inset-x-0 top-16 z-30 border-b border-line bg-cream shadow-md"
+        >
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+            <p className="text-sm leading-relaxed text-ink-soft">
+              ⚠️ تعذّر حفظ تقدّمك في هذا الجهاز (قد يكون التخزين ممتلئًا أو في وضع التصفّح الخاص).
+              صدّر نسخة احتياطية الآن حتى لا تفقد شيئًا.
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOnglet('ana')}
+                className="btn btn-primary px-4 py-1.5 text-xs"
+              >
+                النسخة الاحتياطية
+              </button>
+              <button
+                type="button"
+                onClick={() => setStockageDefaillant(false)}
+                className="btn btn-ghost px-3 py-1.5 text-xs"
+              >
+                لاحقًا
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {pret && onglet === 'aujourdhui' && (
         <Aujourdhui
           etat={etat}

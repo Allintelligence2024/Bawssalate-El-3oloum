@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
-import { etatDepuisBrut } from '../utils/storage';
+import { etatDepuisFichier, paquetExportComplet } from '../utils/storage';
 import { itemsFaits } from '../utils/moteur';
 import { aujourdhui, differenceJours, nb, nbMin, formatCourteAr, formatJourAr, joursNb } from '../utils/dates';
 import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
@@ -92,14 +92,12 @@ function exporterCarnet(fautes: FauteCarnet[]): Promise<string> {
 
 /** Sauvegarde complète : TOUT l'état de l'app (progression, SM-2, جسور, كفاءة, carnet, journal,
  *  drills, compte local) en un seul JSON local. La progression survit ainsi au changement de
- *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin. */
+ *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin.
+ *  Le paquet est construit par paquetExportComplet (P-1.1) : enveloppe versionnée, secrets
+ *  exclus — l'import (étatDepuisFichier) accepte ce format ET l'ancien format plat. */
 function exporterEtatComplet(etat: Etat): Promise<string> {
   return exporterJson(
-    {
-      application: 'بوصلة العلوم · نسخة احتياطية',
-      exporteLe: new Date().toISOString(),
-      etat,
-    },
+    paquetExportComplet(etat),
     'bousala-sauvegarde.json',
     'نسخة احتياطية',
   );
@@ -153,20 +151,22 @@ export default function Ana({
 
   const derniersJours = [...etat.journal].sort().slice(-12);
 
-  /** Import d'une sauvegarde : lecture locale, validation douce, normalisation
-   *  (même voie que chargerEtat) puis restauration — l'app sauvegarde immédiatement. */
+  /** Import d'une sauvegarde : lecture locale, validation douce (etatDepuisFichier — P-1.1,
+   *  deux formats acceptés : enveloppé {application, …, etat} et plat historique), secrets
+   *  jamais restaurés (hachage vidé), normalisation même voie que chargerEtat, puis
+   *  restauration — l'app sauvegarde immédiatement. */
   async function importerFichier(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const fichier = e.target.files?.[0];
     e.target.value = ''; // permet de ré-importer le même fichier ensuite
     if (!fichier) return;
     try {
-      const brut = JSON.parse(await fichier.text()) as Partial<Etat>;
-      if (!brut || typeof brut !== 'object' || !brut.progression) {
+      const etat = etatDepuisFichier(JSON.parse(await fichier.text()));
+      if (!etat) {
         setErreurImport('هذا الملف ليس نسخة احتياطية من التطبيق.');
         return;
       }
       setErreurImport(null);
-      onRestaurer(etatDepuisBrut(brut));
+      onRestaurer(etat);
     } catch {
       setErreurImport('لم أستطع قراءة الملف — جرّب ملف JSON صادرًا من هذا التطبيق.');
     }
