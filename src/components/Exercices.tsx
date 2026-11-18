@@ -653,10 +653,12 @@ function Seance({ vue, onItemReussi, onReponse, onSuivant, onOuvrirCours, onArre
   const item = vue.courant;
   const numero = vue.adaptatif.historique.length + 1;
 
+  // P-1.3 (D6) : quand l'explication n'est pas encore rédigée (items def avec e:""),
+  // on n'affiche PAS la réponse à la place — l'élève relit la leçon, la réponse reste sienne.
   const qcm: QcmLecon = {
     question: item.q,
     options: item.o,
-    explication: item.e || `الجواب الصحيح: «${item.o[0]}».`,
+    explication: item.e || 'هذا مصطلح من البرنامج: راجع بطاقة الدرس ثم أعِد المحاولة.',
   };
 
   const dernier = numero >= TAILLE_JOUR;
