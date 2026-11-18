@@ -105,7 +105,49 @@ Appareils cibles : Redmi 9A (2 Go) et Samsung A1x. Pour chaque appareil, PWA Chr
 
 | Date | Appareil | Mode | Résultat | Par |
 |---|---|---|---|---|
-| — | — | — | **non rejoué** | — |
+| 18/11/2026 | **Navigateur réel** — Chrome 157.0.8103.78 (Windows 11), CDP sur `127.0.0.1:9222`, instance isolée | `vite preview` du build `53d1377cc45ff7e56f82`, réseau coupé par `Network.emulateNetworkConditions(offline=true)` | **OK** — voir détail ci-dessous (volet web du niveau 2) | agent |
+| — | Redmi 9A / Samsung A1x (2 Go) | mode avion physique | **non rejoué — reste humain** | — |
+
+### 2b. Volet navigateur réel exécuté le 18/11 (P1-1, web)
+
+Méthode : instance Chrome **isolée** (profil `C:\Users\pc\AppData\Local\Temp\opencode\bh-profile`,
+port CDP 9222) pilotée par `browser-harness` v0.1.13 — **aucun réglage demandé à l'utilisateur**
+et aucune modification de son Chrome principal (son profil n'autorise pas le débogage distant).
+Compte **fictif** créé localement (`el?ve.test@example.com`, mot de passe local, aucune sync,
+aucun consentement accordé → **0 requête réseau vers Supabase**). Build servi par
+`vite preview --port 4173`. Script répétable : `cdp("Network.enable")` +
+`cdp("Network.emulateNetworkConditions", offline=True)` + `cdp("Page.reload", ignoreCache=False)`.
+
+Déroulé capturé en une seule passe (sortie brute) :
+
+```
+A. onLine apres coupure: False
+B. shell apres reload (longueur): 1365
+B. debut: 🧭 بوصلة العلوم ... E el?ve.test@example.com | الأربعاء 18 نوفمبر 2026 | مساء...
+C. lecon (longueur): 5343 | titre: بوصلة العلوم | استنساخ المعلومات الوراثية
+C. debut: 📖 1 وضعية | 🔬 2 تحليل | 🧪 3 محاكي | 📝 4 خلاصة | ✅ 5 تقويم ...
+D. onLine: False | app rendue: True
+E. onLine apres retablissement: True
+```
+
+Ce que cela prouve :
+
+| Vérification | Résultat |
+|---|---|
+| Téléchargement depuis « أنا › العمل دون إنترنت » → « تنزيل / استكمال الملفات » | ligne d'état « الملفات المطلوبة لهذا الإصدار موجودة على الجهاز » (73 fichiers) |
+| Coupure réseau réelle (CDP) puis **rechargement complet** `Page.reload` | app shell + en-tête + nom/compte fictif + date rendus **uniquement depuis le cache** (`navigator.onLine=False`) |
+| Ouverture d'une leçon HTML précachée `/lecons/lecon_transcription.html` | 5 343 caractères de contenu arabe, titre « استنساخ المعلومات الوراثية », 5 onglets pédagogiques — **aucun HTML de repli** |
+| Retour à l'app hors-ligne puis rétablissement du réseau | `navigator.onLine` repasse `True`, aucune erreur |
+
+**Limites honnêtes :** c'est un **vrai navigateur mais sur poste Windows avec réseau simulé par CDP**,
+pas un téléphone 2 Go en mode avion physique, ni l'APK Capacitor. Le chargement de tous les chunks
+lazy (drills 3 domaines, examen blanc, méthodologie), le coût réel en DA et la tenue sur Redmi 9A
+ne sont **pas** vérifiés ici : ils restent au protocole §2 et à `appareils.md` (humain).
+Note : après plusieurs cycles navigateur, l'état « تحقّق » a pu afficher un décompte de manquants
+(6 puis 13) dû à des entrées d'**anciens builds** dans le cache — un nouveau
+« تنزيل / استكمال الملفات » le ramène systématiquement à « موجودة على الجهاز ». C'est le
+comportement attendu du cache **par version** (-worker v5), pas une régression.
 
 *18/11 : niveau 1 rejoué par `scripts/verifier-hors-ligne.mjs` sur le build `53d1377cc45ff7e56f82`
-(75 fichiers, 0 échec). Le rejeu appareil (niveau 2) reste à faire.*
+(75 fichiers, 0 échec) + volet web du niveau 2 exécuté sur Chrome 157 (ci-dessus). Le rejeu
+**appareil** (niveau 2, Redmi 9A / A1x, APK) reste exclusivement humain.*
