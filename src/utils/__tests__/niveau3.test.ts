@@ -1,13 +1,16 @@
-// P1.5 (dépôt 1) — items niveau 3 : cohérence avec les axes, chargement par domaine, escalier à 3 marches
+// P1.5 + P-2.1 — items niveau 3 : cohérence avec les axes, chargement par domaine, escalier à 3 marches
 import { describe, it, expect } from 'vitest';
 import { ITEMS_N3 } from '../../data/drills/niveau3';
 import { AXES, TOTAL_QCM } from '../../data/drills/axes';
 import { chargerDomaine } from '../drills';
 import { demarrerAdaptatif } from '../adaptatif';
 
+// distribution finale du plan (P-2.1) : u1=7, u2=7, u3=5, u4=8, u5=8, u6=8, u7=8, u8=9, u9=5, u10=10, u11=5 (=80)
+const DISTRIBUTION_FINALE: Record<number, number> = { 1: 7, 2: 7, 3: 5, 4: 8, 5: 8, 6: 8, 7: 8, 8: 9, 9: 5, 10: 10, 11: 5 };
+
 describe('niveau 3', () => {
-  it('40 items (2 dépôts), tous n=3, 4 options distinctes, explication, ids uniques et préfixés n', () => {
-    expect(ITEMS_N3.length).toBe(40);
+  it('80 items (3 dépôts), tous n=3, 4 options distinctes, explication, ids uniques et préfixés n', () => {
+    expect(ITEMS_N3.length).toBe(80);
     const ids = new Set<string>();
     for (const i of ITEMS_N3) {
       expect(i.n).toBe(3);
@@ -20,7 +23,7 @@ describe('niveau 3', () => {
     }
   });
 
-  it("chaque item appartient à un axe de sa propre unité, et l'axe le référence", () => {
+  it("chaque item appartient à un axe de sa propre unité, et l'axe le référence (compteur qcm cohérent)", () => {
     for (const i of ITEMS_N3) {
       const axe = AXES.find((a) => a.id === i.a);
       expect(axe, i.id).toBeDefined();
@@ -28,12 +31,17 @@ describe('niveau 3', () => {
       expect(axe!.ids, i.id).toContain(i.id);
     }
     expect(TOTAL_QCM).toBe(500 + ITEMS_N3.length);
-    // distribution prioritaire du plan : U4 d'abord, puis U3/U9/U11
-    const parU = (u: number) => ITEMS_N3.filter((i) => i.u === u).length;
-    expect(parU(4)).toBe(6);
-    expect([parU(3), parU(9), parU(11)]).toEqual([4, 4, 4]);
-    // dépôt 2 : chaque unité du programme a désormais au moins 2 items de niveau 3 (u8/u10 incluses)
-    for (let u = 1; u <= 11; u++) expect(parU(u), `u${u}`).toBeGreaterThanOrEqual(2);
+    // distribution finale : chaque unité a son effectif cible
+    for (const u of Object.keys(DISTRIBUTION_FINALE).map(Number)) {
+      expect(ITEMS_N3.filter((i) => i.u === u).length, `u${u}`).toBe(DISTRIBUTION_FINALE[u]);
+    }
+    expect(ITEMS_N3.length).toBe(Object.values(DISTRIBUTION_FINALE).reduce((s, x) => s + x, 0));
+  });
+
+  it("les compteurs qcm+defs de chaque axe coïncident avec son nombre d'ids", () => {
+    for (const a of AXES) {
+      expect(a.ids.length, `axe ${a.id}`).toBe(a.qcm + a.defs);
+    }
   });
 
   it('le chargement par domaine inclut les n3 de ses unités, et l’escalier gagne sa 3ᵉ marche sur un axe doté', async () => {
