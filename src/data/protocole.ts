@@ -22,6 +22,14 @@ export interface PhaseProtocole {
   verrouAr: string; // ما الذي يجب تحقيقه لفتح المرحلة التالية
 }
 
+/** P-1.5 (D5) : minutes cumulées = ce qui est déjà compté (minutesDepart) + les phases
+ *  validées DEPUIS l'ouverture de la session courante (indiceDepart → indexInclus compris).
+ *  Évite de recompter les phases déjà payées dans minutesDepart (8 + 3 = 11, pas 19).
+ *  Pure et testée — ProtocoleRunner ne fait que l'appeler. */
+export function minutesCumulees(minutesDepart: number, indiceDepart: number, indexInclus: number): number {
+  return minutesDepart + PROTOCOLE.slice(indiceDepart, indexInclus + 1).reduce((s, p) => s + p.dureeMin, 0);
+}
+
 export const PROTOCOLE: PhaseProtocole[] = [
   {
     id: 1,
