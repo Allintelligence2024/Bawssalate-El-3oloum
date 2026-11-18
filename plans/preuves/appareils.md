@@ -16,8 +16,11 @@ et de performance viennent surtout de là.
 
 ## Protocole (par appareil, 2 passes : réseau coupé puis 3G simulée)
 
-Préparation : installer l'AAB de la track fermée ; **premier lancement en ligne** jusqu'au message « جاهز للعمل دون اتصال »
-(précache des 46 entrées du manifeste, cf. `hors-ligne.md`) ; puis **mode avion**.
+Préparation : installer l'AAB de la track fermée ; **premier lancement en ligne**, puis
+« أنا › العمل دون إنترنت » → bouton « تنزيل / استكمال الملفات » jusqu'à l'état
+«الملفات المطلوبة لهذا الإصدار موجودة على الجهاز» (état **par version** : 75 fichiers et
+~6,2 Mio non compressés sur le build `53d1377cc45ff7e56f82`, cf. `hors-ligne.md` §1) ;
+puis **mode avion**.
 
 | # | Tâche | Mesure | Cible | Redmi 9A | Galaxy A1x | Remarques |
 |---|---|---|---|---|---|---|
@@ -28,7 +31,8 @@ Préparation : installer l'AAB de la track fermée ; **premier lancement en lign
 | 5 | « بنية مواضيع البكالوريا » → 2017 → أظهر عناصر الإجابة | temps d'ouverture du chunk (498 kB) depuis le cache | < 2 s | | | |
 | 6 | Mémoire : `adb shell dumpsys meminfo <package>` après 4 et 5 | PSS total | < 250 Mo | | | |
 | 7 | Reprise après 3 jours sans ouverture (ou date système avancée) | écran « مراجعة اليوم » cohérent, aucune requête réseau requise | OK hors ligne | | | |
-| 8 | Passe 3G simulée (Chrome DevTools remote ou throttling routeur) : premier lancement complet | durée du précache complet | < 90 s | | | |
+| 8 | Passe 3G simulée (Chrome DevTools remote ou throttling routeur) : premier lancement complet | durée du téléchargement complet depuis « تنزيل / استكمال الملفات », taille annoncée vs octets réels, reprise après coupure | < 90 s, 0 manquant après reprise | | | |
+| 9 | « أنا › العمل دون إنترنت » → « تحقّق » en mode avion (après changement de version) | décompte des manquants affiché sans réseau ; comportement d'un contenu non téléchargé | 0 manquant ; échec **explicite** jamais d'accueil à la place | | | |
 
 ANR / crash : relever `adb logcat` sur la durée ; toute trace `ANR in` ou `FATAL EXCEPTION` = échec de la tâche.
 

@@ -1,5 +1,20 @@
 # Passation — reste à faire avant diffusion
 
+## Avancement (18/11/2026 — exécution agent)
+
+**Terminé et prouvé (preuves déposées, CI à rejouer sur le commit) :**
+
+- **P0.1 — audit RLS + matrice d'essais : fait** → `plans/AUDIT-RLS-P0.1-2026-11-18.md` (17 cas exécutés sur le projet réel en `begin/rollback`, données fictives, 0 résidu ; propositions §4 **non approuvées**, revue humaine §5).
+- **P0.2 — suppression durable : fait (qualifiée)** → `plans/preuves/suppression-durable.md` + `src/utils/__tests__/suppression-durable.test.ts` (6 tests). Garantie prouvée **dans un même onglet** ; course inter-onglets **démontrée** (avertissement UI conforme) ; conservation = aucune purge, texte UI honnête. Reste humain : coordination serveur, politique de conservation.
+- **P0.3 — sauvegarde/restauration : fait (qualifié)** → `plans/preuves/sauvegarde-restauration.md` + `src/utils/__tests__/sauvegarde-compat.test.ts` (11 tests) + 2 tests UI ajoutés. Matrice v1-v3 plats/enveloppés, pannes (quota, corrompu, écriture partielle), assistance documentée. Reste humain : essais web/Android réels, fichiers réels.
+- **P1 hors ligne — niveau 1 rejoué + protocoles adaptés** → `scripts/verifier-hors-ligne.mjs` (75 fichiers, 0 échec sur le build `53d1377cc45ff7e56f82`), `plans/preuves/hors-ligne.md` et `appareils.md` mis au nouveau bouton « تنزيل / استكمال الملفات » et au worker v5.
+
+**Reste exclusivement humain (rappel unique en fin d'exécution) :** revue de sécurité
+indépendante + arbitrages F1/F6 et propositions §4 (P0.1) ; coordination serveur et
+conservation (P0.2) ; essais réels appareils/web/Android (P0.3, P1 niveau 2, coûts DA) ;
+pédagogie/droits/sources officielles/ONEC (P1) ; terrain, notifications, Data Safety et
+publication (P2). Aucune validation humaine n'a été remplacée par une affirmation.
+
 ## État et portée
 
 Les correctifs applicatifs de la [PR #4](https://github.com/Allintelligence2024/Bawssalate-El-3oloum/pull/4) reposent sur le merge PR #3 `62b3ee2` ; le commit applicatif est `6f863d4`. Ils améliorent les sauvegardes, les alertes de stockage, la suppression serveur dans l'onglet courant, le hors-ligne et un énoncé Hill. Ils ne constituent pas une certification de sécurité, de conformité au programme ni une validation de terrain. Une fusion Git ne signifie pas que le site, l'APK ou la base sont déployés.

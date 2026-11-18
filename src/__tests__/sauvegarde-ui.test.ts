@@ -49,4 +49,15 @@ describe('restauration dans l’interface', () => {
     expect(restaurer.mock.calls[0][0].consentementSync).toBe(false);
     expect(restaurer.mock.calls[0][1]).toEqual(paquet.stats);
   });
+  it('JSON illisible → message d\'erreur explicite, aucune restauration', async () => {
+    await charger('{ceci n\'est pas du JSON');
+    expect(restaurer).not.toHaveBeenCalled();
+    expect(zone.textContent).toContain('لم أستطع قراءة الملف');
+  });
+  it('ancien fichier plat sans statistiques → restaurer(etat, undefined) : les stats courantes restent', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await charger(JSON.stringify({ progression: {}, version: 1 }));
+    expect(restaurer).toHaveBeenCalledTimes(1);
+    expect(restaurer.mock.calls[0][1]).toBeUndefined();
+  });
 });
