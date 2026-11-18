@@ -47,15 +47,14 @@ export async function verifierMdp(motDePasse: string, hashAttendu: string): Prom
 /** Jeton d'écriture aléatoire — stores in the compte, sent as `x-kunz-jeton` header.
  *  La policy UPDATE de Supabase l'exige : seul le client qui le connaît peut modifier
  *  la ligne de l'élève (n'importe qui d'autre avec l'URL publique ne peut qu'insérer). */
-export function nouveauJeton(): string {
+export function nouveauJeton(): string | undefined {
   try {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-    const octets = new Uint8Array(16);
-    globalThis.crypto?.getRandomValues(octets);
+    if (!globalThis.crypto?.getRandomValues) return undefined;
+    const octets = globalThis.crypto.getRandomValues(new Uint8Array(16));
     return [...octets].map((b) => b.toString(16).padStart(2, '0')).join('');
   } catch {
-    // Repli (environnement sans crypto) : horodatage + aléa faible — mieux que rien.
-    return `j-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+    return undefined; // pas d'aléa fiable : le compte reste local, sans synchronisation
   }
 }
 

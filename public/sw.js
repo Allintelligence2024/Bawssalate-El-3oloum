@@ -1,176 +1,144 @@
-// عامل الخدمة — بوصلة العلوم Lite
-// PWA يدوية: precache الواجهة، network-first للتنقل، cache-first للأصول.
-// يعمل دون اتصال بعد أول تحميل (سياق الشبكة الجزائري المحدود).
-// P0.7: الحزم الكسولة (Methodologie، بنوك التدريبات، supabase) تُقرأ من
-// /precache-manifest.json (يولّده vite.config.ts عند البناء) وتُخزَّن عند التثبيت —
-// لا من index.html الذي لا يذكر سوى حزمة الدخول.
+// Cache par version : une mise à jour attend la fermeture des anciens onglets.
+// Le téléchargement complet est demandé explicitement et peut être repris.
+const VERSION = '__KUNZ_BUILD_ID__';
+const CACHE = `kunz-hors-ligne-${VERSION}`;
+const MANIFESTE = '/precache-manifest.json';
+const INDEX = '/index.html';
 
-const CACHE = 'murajih-svt-v4';
-const PRECACHE_STATIC = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/mascotte.png',
-  '/personnage-pirate.png',
-  '/ouverture.mp4',
-  '/lecons/lecon_activite_structure.html',
-  '/lecons/lecon_representation.html',
-  '/lecons/lecon_transcription.html',
-  '/lecons/phase1_chapitres_1_2.html',
-  '/lecons/phase2_chapitres_3_4.html',
-  '/lecons/phase3_chapitres_5_6.html',
-  '/lecons/phase4_chapitres_7_8.html',
-  '/lecons/phase5_chapitres_9_10.html',
-  '/lecons/phase6_chapitres_11_12.html',
-  '/lecons/phase7_chapitres_13_14.html',
-  '/lecons/phase8_chapitres_15_16.html',
-  '/lecons/phase9_chapitres_17_18.html',
-  '/lecons/phase10_chapitres_19_20.html',
-  '/lecons/phase11_chapitres_21_22.html',
-  '/lecons/phase12_chapitres_23_24.html',
-  '/lecons/phase13_chapitres_25_26.html',
-  '/lecons/phase14_chapitres_27_28.html',
-  '/lecons/phase15_chapitres_29_30.html',
-  '/lecons/phase16_chapitres_31_32.html',
-  '/lecons/phase17_chapitres_33_34.html',
-  '/lecons/phase18_chapitres_35_36.html',
-  '/lecons/phase19_chapitres_37_38.html',
-  '/lecons/phase20_chapitres_39_40.html',
-  '/lecons/phase21_chapitres_41_42.html',
-  '/lecons/phase22_chapitres_43_44.html',
-];
+function valideManifeste(m) {
+  return m && m.version === VERSION && Array.isArray(m.assets) && m.assets.length > 0 &&
+    m.assets.every(u => typeof u === 'string' && /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u)) &&
+    Array.isArray(m.statiques) && m.statiques.length > 0 &&
+    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u))) &&
+    Number.isFinite(m.octets) && m.octets >= 0;
+}
 
-const ASSETS_CACHE = 'murajih-svt-assets-v2';
-const MANIFESTE_ASSETS = '/precache-manifest.json';
+function typeValide(url, res) {
+  const type = (res.headers.get('content-type') || '').toLowerCase();
+  if (url.endsWith('.js')) return type.includes('javascript');
+  if (url.endsWith('.css')) return type.includes('text/css');
+  if (url.endsWith('.html') || url === '/') return type.includes('text/html');
+  return true;
+}
 
-/** قائمة الحزم الحالية من مانيفست البناء (أو [] إن تعذّر). */
-async function listeAssetsDuManifeste() {
+async function telecharger(cache, url) {
+  if (await cache.match(url)) return true;
   try {
-    const res = await fetch(MANIFESTE_ASSETS, { cache: 'no-store' });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return Array.isArray(json.assets) ? json.assets.filter((u) => typeof u === 'string' && u.startsWith('/assets/')) : [];
-  } catch {
-    return [];
-  }
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok || !typeValide(url, res)) return false;
+    await cache.put(url, res);
+    return true;
+  } catch { return false; }
 }
 
-/**
- * تخزين كل الحزم المذكورة في المانيفست (الناقصة فقط). لا نُفشل التثبيت إن تعذّر
- * تنزيل حزمة: يُعاد المحاولة عند كل تنقّل متّصل بالشبكة (voir fetch/navigate).
- * يُرجع عدد الحزم الناقصة بعد المحاولة.
- */
-async function chaufferAssets() {
-  const liste = await listeAssetsDuManifeste();
-  if (liste.length === 0) return -1;
-  const cache = await caches.open(ASSETS_CACHE);
-  const manquants = [];
-  for (const url of liste) {
-    if (!(await cache.match(url))) manquants.push(url);
-  }
-  await Promise.allSettled(
-    manquants.map(async (url) => {
-      const res = await fetch(url, { cache: 'no-cache' });
-      if (res.ok) await cache.put(url, res);
-    })
-  );
-  let restants = 0;
-  for (const url of liste) if (!(await cache.match(url))) restants++;
-  return restants;
+async function manifesteCache(cache) {
+  try {
+    const res = await cache.match(MANIFESTE);
+    const m = res && await res.json();
+    return valideManifeste(m) ? m : null;
+  } catch { return null; }
 }
 
-/** حذف الحزم القديمة (هاش مختلف) التي لم تعد في المانيفست — يمنع تضخّم الكاش. */
-async function purgerAssetsObsoletes() {
-  const liste = new Set(await listeAssetsDuManifeste());
-  if (liste.size === 0) return; // بلا شبكة لا نحذف شيئًا
-  const cache = await caches.open(ASSETS_CACHE);
-  for (const req of await cache.keys()) {
-    const chemin = new URL(req.url).pathname;
-    if (!liste.has(chemin)) await cache.delete(req);
-  }
-}
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE)
-      .then((cache) => cache.addAll(PRECACHE_STATIC))
-      .then(() => chaufferAssets())
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', event => {
+  event.waitUntil((async () => {
+    try {
+      const res = await fetch(MANIFESTE, { cache: 'no-store' });
+      if (!res.ok) throw new Error('manifeste indisponible');
+      const m = await res.clone().json();
+      if (!valideManifeste(m)) throw new Error('version du manifeste incompatible');
+      const index = await fetch(INDEX, { cache: 'no-store' });
+      if (!index.ok || !typeValide(INDEX, index)) throw new Error('interface indisponible');
+      const html = await index.clone().text();
+      if (!html.includes(`name="kunz-build-id" content="${VERSION}"`)) throw new Error('version de l’interface incompatible');
+      const cache = await caches.open(CACHE);
+      await cache.put(INDEX, index);
+      await cache.put(MANIFESTE, res);
+      const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map(x => x[1]);
+      if (!demarrage.length || demarrage.some(u => !m.assets.includes(u))) throw new Error('assets de démarrage incompatibles');
+      for (const url of demarrage) if (!await telecharger(cache, url)) throw new Error('asset de démarrage indisponible');
+      // Pas de skipWaiting : ne pas casser les onglets de la version précédente.
+    } catch (e) {
+      await caches.delete(CACHE);
+      throw e;
+    }
+  })());
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches
-      .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== ASSETS_CACHE).map((k) => caches.delete(k))))
-      .then(() => purgerAssetsObsoletes())
-      .then(() => self.clients.claim())
-  );
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    // Un nouveau worker n'active qu'après la fermeture des clients de l'ancien.
+    // Ne supprimer que nos propres caches ; jamais ceux d'une autre application.
+    const cles = await caches.keys();
+    await Promise.all(cles.filter(k => (k.startsWith('kunz-hors-ligne-') || k.startsWith('murajih-svt-')) && k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
 });
 
-self.addEventListener('fetch', (event) => {
+async function verifier(cache, m) {
+  const urls = [INDEX, ...m.statiques, ...m.assets];
+  let manquants = 0;
+  for (const url of urls) if (!await cache.match(url)) manquants++;
+  return { version: VERSION, total: urls.length, manquants, octets: m.octets };
+}
+
+let telechargement = null;
+async function remplir(cache, m) {
+  const urls = [...m.statiques, ...m.assets];
+  let suivant = 0;
+  async function ouvrier() {
+    while (suivant < urls.length) {
+      const url = urls[suivant++];
+      await telecharger(cache, url);
+    }
+  }
+  // Une connexion 3G et un téléphone modeste ne doivent pas subir 50 requêtes en parallèle.
+  await Promise.all([ouvrier(), ouvrier(), ouvrier()]);
+}
+
+self.addEventListener('message', event => {
+  const port = event.ports && event.ports[0];
+  if (!port || !['ETAT_HORS_LIGNE', 'TELECHARGER_HORS_LIGNE'].includes(event.data?.type)) return;
+  event.waitUntil((async () => {
+    try {
+      const cache = await caches.open(CACHE);
+      const m = await manifesteCache(cache);
+      if (!m) throw new Error('manifeste absent ou invalide');
+      if (event.data.type === 'TELECHARGER_HORS_LIGNE') {
+        if (!telechargement) telechargement = remplir(cache, m).finally(() => { telechargement = null; });
+        await telechargement;
+      }
+      port.postMessage({ ok: true, ...await verifier(cache, m) });
+    } catch {
+      port.postMessage({ ok: false, version: VERSION });
+    }
+  })());
+});
+
+self.addEventListener('fetch', event => {
   const { request } = event;
-  if (request.method !== 'GET') return;
-
-  // التنقل: الشبكة أولاً، ثم النسخة المخبأة (offline fallback).
-  // عند كل تنقّل ناجح نُكمل الحزم الناقصة في الخلفية (بلا حجب للاستجابة).
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const copy = res.clone();
-          event.waitUntil(
-            caches
-              .open(CACHE)
-              .then((cache) => cache.put(request, copy))
-              .then(() => chaufferAssets())
-              .catch(() => {})
-          );
-          return res;
-        })
-        .catch(() => caches.match('/index.html').then((r) => r || caches.match('/')))
-    );
-    return;
-  }
-
+  if (request.method !== 'GET' || request.headers.has('range')) return;
   const url = new URL(request.url);
-
-  // الحزم (JS/CSS): الكاش أولاً، ثم الشبكة مع تخزين. عند الفشل: خطأ شبكة صريح —
-  // لا نُرجع index.html أبدًا مكان وحدة JS (نوع MIME خاطئ يكسر التطبيق بصمت).
-  if (url.origin === self.location.origin && (url.pathname.startsWith('/assets/') || /\.(?:js|css)$/.test(url.pathname))) {
-    event.respondWith(
-      caches.open(ASSETS_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        if (cached) return cached;
-        try {
-          const res = await fetch(request);
-          if (res.ok) cache.put(request, res.clone());
-          return res;
-        } catch {
-          return new Response('', { status: 503, statusText: 'Hors ligne — chunk non mis en cache' });
-        }
-      })
-    );
+  if (url.origin !== self.location.origin) return;
+  if (request.mode === 'navigate' && (url.pathname === '/' || url.pathname === INDEX)) {
+    event.respondWith(caches.open(CACHE).then(cache => cache.match(INDEX)).then(res => res || fetch(request)));
     return;
   }
-
-  // باقي الطلبات (صور، دروس HTML، PDF مفتوحة سابقًا): الكاش الرئيسي أولاً
-  event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request)
-          .then((res) => {
-            if (res.ok && url.origin === self.location.origin) {
-              const copy = res.clone();
-              caches.open(CACHE).then((cache) => cache.put(request, copy));
-            }
-            return res;
-          })
-          .catch(() => (request.destination === 'document' ? caches.match('/index.html') : Response.error()))
-    )
-  );
+  // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
+  if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
+      !['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(url.pathname)) return;
+  // Ne jamais substituer index.html à une leçon ou à un module absent.
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(request, { ignoreSearch: true });
+    if (cached) return cached;
+    try {
+      const res = await fetch(request);
+      if (res.ok && typeValide(url.pathname, res) && !request.headers.has('range')) {
+        await cache.put(request, res.clone()).catch(() => {});
+      }
+      return res;
+    } catch {
+      return new Response('Ressource indisponible hors ligne', { status: 503, statusText: 'Unavailable Offline' });
+    }
+  })());
 });

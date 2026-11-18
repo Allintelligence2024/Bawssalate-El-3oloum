@@ -18,7 +18,8 @@
     "@capacitor/share": "^8.0.3",
     "@supabase/supabase-js": "^2.117.2",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.0",

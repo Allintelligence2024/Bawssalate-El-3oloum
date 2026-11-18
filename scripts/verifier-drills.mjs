@@ -42,6 +42,7 @@ for (const f of fichiers) {
 }
 
 const problemes = [];
+if (items.length === 0) problemes.push('Aucun item reconnu dans la banque');
 const تنبيهات = [];
 const ids = new Set();
 
@@ -101,7 +102,7 @@ for (const i of items) {
   squelettes[k] = (squelettes[k] ?? 0) + 1;
 }
 
-console.log(`عناصر: ${items.length} · تعريفات: ${items.filter((i) => i.def).length} · مستوى 3: ${items.filter((i) => i.n === 3).length} · مشاكل: ${problemes.length} · تنبيهات: ${تنبيهات.length}`);
+console.log(`عناصر: ${items.length} · تعريفات: ${items.filter((i) => i.def).length} · مستوى 3: ${items.filter((i) => i.n === 3).length} · مشاكل: ${problemes.length + problemesLignes.length} · تنبيهات: ${تنبيهات.length}`);
 for (const p of problemesLignes) console.log('- ' + p);
 for (const p of problemes.slice(0, 40)) console.log('- ' + p);
 if (تنبيهات.length) {
@@ -113,3 +114,6 @@ console.log('\nأكثر الصيغ (5 كلمات):');
 for (const [k, v] of Object.entries(squelettes).sort((a, b) => b[1] - a[1]).slice(0, 25)) {
   console.log(`${v} × ${k}`);
 }
+
+// Les erreurs structurelles doivent échouer en CI ; les alertes de similarité restent à arbitrer.
+if (problemes.length || problemesLignes.length) process.exitCode = 1;

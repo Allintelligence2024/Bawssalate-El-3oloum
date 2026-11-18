@@ -106,7 +106,17 @@ export function construireSnapshot(etat: Etat): Snapshot | null {
 
 let client: import('@supabase/supabase-js').SupabaseClient | null = null;
 let jetonClient = '';
-let enCours = false;
+let enCours: Promise<void> | null = null;
+const comptesSuspendus = new Set<string>();
+const suppressionsEnCours = new Set<string>();
+/** Les anciens jetons déterministes ou issus du repli faible ne sont pas sûrs. */
+export function jetonUtilisable(jeton?: string): boolean {
+  return Boolean(jeton && !/^0{32}$/.test(jeton) && !jeton.startsWith('j-'));
+}
+/** Arrête les nouveaux envois dans cet onglet ; les requêtes déjà parties peuvent continuer. */
+export function suspendreSync(email?: string): void { if (email) comptesSuspendus.add(email); }
+/** Un nouveau consentement explicite est nécessaire pour reprendre. */
+export function reprendreSync(email?: string): void { if (email && !suppressionsEnCours.has(email)) comptesSuspendus.delete(email); }
 let dernierEnvoye = '';
 
 async function clientSupabase(jeton: string) {
@@ -128,14 +138,14 @@ async function clientSupabase(jeton: string) {
 // إرسال صامت: أي خطأ يُبتلع — التطبيق لا يعتمد على نجاحها أبدًا.
 export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (!syncActive()) return;
-  if (!etat.compte || !consentementExplicite(etat)) return;
+  if (!etat.compte || !jetonUtilisable(etat.compte.jeton) || comptesSuspendus.has(etat.compte.email) || !consentementExplicite(etat)) return;
   if (typeof navigator !== 'undefined' && !navigator.onLine) return;
   const snap = construireSnapshot(etat);
   if (!snap) return;
   const json = JSON.stringify(snap);
   if (json === dernierEnvoye) return; // لا شيء تغيّر منذ آخر إرسال
   if (enCours) return; // لا إرسالان متزامنان
-  enCours = true;
+  const travail = Promise.resolve().then(async () => {
   try {
     const sb = await clientSupabase(snap.jeton);
     if (!sb) return;
@@ -176,32 +186,40 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
     }
   } catch (e) {
     console.warn('[sync] استثناء:', e);
-  } finally {
-    enCours = false;
   }
+  });
+  enCours = travail;
+  try { await travail; } finally { if (enCours === travail) enCours = null; }
 }
 
 /** حذف سجلّ التلميذ من الخادم (P0.8) — يتطلّب حسابًا وجيتونه (سياسة DELETE في supabase/schema.sql).
  *  النتيجة صريحة لأن الحذف ليس إرسالًا صامتًا: التلميذ يريد أن يعرف إن نجح. */
-export type ResultatSuppression = 'supprime' | 'hors_ligne' | 'pas_de_compte' | 'sync_inactive' | 'erreur';
+export type ResultatSuppression = 'supprime' | 'hors_ligne' | 'pas_de_compte' | 'sync_inactive' | 'indetermine' | 'erreur';
 
 export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSuppression> {
+  suspendreSync(etat.compte?.email);
   if (!syncActive()) return 'sync_inactive';
   if (!etat.compte?.email || !etat.compte.jeton) return 'pas_de_compte';
   if (typeof navigator !== 'undefined' && !navigator.onLine) return 'hors_ligne';
+  if (suppressionsEnCours.has(etat.compte.email)) return 'erreur';
+  suppressionsEnCours.add(etat.compte.email);
   try {
+    if (enCours) await enCours;
     const sb = await clientSupabase(etat.compte.jeton);
     if (!sb) return 'sync_inactive';
-    const { error } = await sb.from('eleves').delete().eq('email', etat.compte.email);
+    const { data, error } = await sb.from('eleves').delete().eq('email', etat.compte.email).select('email');
     if (error) {
       console.warn('[sync] فشل الحذف:', error.message);
       return 'erreur';
     }
+    if (!data || data.length !== 1) return 'indetermine'; // RLS ou ligne absente : impossible de distinguer
     dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
     return 'supprime';
   } catch (e) {
     console.warn('[sync] استثناء الحذف:', e);
     return 'erreur';
+  } finally {
+    suppressionsEnCours.delete(etat.compte.email);
   }
 }
 

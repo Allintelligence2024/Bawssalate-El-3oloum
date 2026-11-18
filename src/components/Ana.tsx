@@ -5,7 +5,9 @@ import { Capacitor } from '@capacitor/core';
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
-import { etatDepuisFichier, paquetExportComplet } from '../utils/storage';
+import { paquetExportComplet } from '../utils/storage';
+import { lireSauvegarde, etatDepuisFichier } from '../utils/backup';
+import type { StatsReponses } from '../utils/stats';
 import { itemsFaits } from '../utils/moteur';
 import { aujourdhui, differenceJours, nb, nbMin, formatCourteAr, formatJourAr, joursNb } from '../utils/dates';
 import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
@@ -21,6 +23,7 @@ import CarteForcesFaiblesses from './CarteForcesFaiblesses';
 import CarteBadges from './CarteBadges';
 import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
+import CarteHorsLigne from './CarteHorsLigne';
 
 interface Props {
   etat: Etat;
@@ -30,7 +33,7 @@ interface Props {
   onDateBac: (iso: string) => void;
   onSupprimerNote: (id: string) => void;
   onReinitialiser: () => void;
-  onRestaurer: (etat: Etat) => void; // استيراد نسخة احتياطية كاملة
+  onRestaurer: (etat: Etat, stats?: StatsReponses) => void; // استيراد نسخة احتياطية كاملة
   onDeconnexion?: () => void;
   onConsentementSync: (ok: boolean) => void;
   onObjectif: (o: Objectif) => void;
@@ -62,9 +65,10 @@ async function exporterJson(paquet: unknown, nomFichier: string, titre: string):
     try {
       await Share.share({ title: titre, url: fichier.uri, dialogTitle: titre });
     } catch {
-      // partage annulé par l'élève : le fichier est déjà écrit dans le cache
+      // Le cache natif est temporaire : une annulation ne signifie pas que la copie est sauvée.
+      return `أُلغي أو تعذّر المشاركة. الملف المؤقّت قد يُحذف؛ أعد التصدير واحفظه في مكان آمن.`;
     }
-    return `حُفِظ ملف « ${nomFichier} » — شارِكه أو خزّنه في مكان آمن؛ هو نسختك الوحيدة خارج هذا الجهاز.`;
+    return `فُتحت المشاركة للملف « ${nomFichier} ». تأكّد بنفسك من حفظه في مكان آمن؛ نسخة ذاكرة التخزين المؤقّت قد تُحذف.`;
   }
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -73,7 +77,7 @@ async function exporterJson(paquet: unknown, nomFichier: string, titre: string):
   a.download = nomFichier;
   a.click();
   URL.revokeObjectURL(url);
-  return `تم تنزيل « ${nomFichier} » — خزّنه في مكان آمن؛ هو نسختك الوحيدة خارج هذا المتصفح.`;
+  return `طُلِب تنزيل « ${nomFichier} » — تأكّد من وجود الملف واحفظه في مكان آمن.`;
 }
 
 /** Export du carnet d'erreurs (JSON). Numéros latins, zéro pourcentage — pas de jugement. */
@@ -91,7 +95,7 @@ function exporterCarnet(fautes: FauteCarnet[]): Promise<string> {
 }
 
 /** Sauvegarde complète : TOUT l'état de l'app (progression, SM-2, جسور, كفاءة, carnet, journal,
- *  drills, compte local) en un seul JSON local. La progression survit ainsi au changement de
+ *  drills et statistiques, sans compte ni consentement) en un seul JSON local. La progression survit ainsi au changement de
  *  navigateur, d'appareil ou à un effacement du stockage — un fichier = tout le chemin.
  *  Le paquet est construit par paquetExportComplet (P-1.1) : enveloppe versionnée, secrets
  *  exclus — l'import (étatDepuisFichier) accepte ce format ET l'ancien format plat. */
@@ -151,22 +155,25 @@ export default function Ana({
 
   const derniersJours = [...etat.journal].sort().slice(-12);
 
-  /** Import d'une sauvegarde : lecture locale, validation douce (etatDepuisFichier — P-1.1,
-   *  deux formats acceptés : enveloppé {application, …, etat} et plat historique), secrets
-   *  jamais restaurés (hachage vidé), normalisation même voie que chargerEtat, puis
-   *  restauration — l'app sauvegarde immédiatement. */
+  /** Validation et confirmation avant toute restauration. */
   async function importerFichier(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const fichier = e.target.files?.[0];
     e.target.value = ''; // permet de ré-importer le même fichier ensuite
     if (!fichier) return;
     try {
-      const etat = etatDepuisFichier(JSON.parse(await fichier.text()));
+      if (fichier.size > 5 * 1024 * 1024) {
+        setErreurImport('الملف أكبر من ٥ ميغابايت.'); return;
+      }
+      const brut: unknown = JSON.parse(await fichier.text());
+      const lu = lireSauvegarde(brut);
+      const etat = etatDepuisFichier(brut);
       if (!etat) {
         setErreurImport('هذا الملف ليس نسخة احتياطية من التطبيق.');
         return;
       }
+      if (!window.confirm('ستُستبدل بيانات تقدّمك الحالية. سيبقى الحساب والموافقة على هذا الجهاز كما هما. النسخ القديمة لا تحتوي على الإحصاءات، فتظلّ الحالية. هل تتابع؟')) return;
       setErreurImport(null);
-      onRestaurer(etat);
+      onRestaurer(etat, lu?.stats);
     } catch {
       setErreurImport('لم أستطع قراءة الملف — جرّب ملف JSON صادرًا من هذا التطبيق.');
     }
@@ -512,12 +519,14 @@ export default function Ana({
         )}
       </section>
 
+      <CarteHorsLigne />
+
       {/* النسخة الاحتياطية — export/import complet de l'état (v0.9.1) */}
       <section className="card mt-5 p-5">
         <p className="eyebrow">النسخة الاحتياطية</p>
         <p className="mt-2 text-xs leading-relaxed text-mute">
           صدّر كل مسارك — الدروس، الاسترجاعات، الجسور، بطاقات الكفاءة، سجلّ الأخطاء — في ملف
-          واحد، واستعده في أي جهاز. احفظ الملف في مكان آمن؛ هو نسختك الوحيدة خارج هذا المتصفح.
+          واحد، واستعده في أي جهاز. يحتوي الملف ملاحظاتك وتقدّمك بنص واضح؛ احفظه في مكان آمن. لا ينقل حسابك أو رمز المزامنة أو موافقتك.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
