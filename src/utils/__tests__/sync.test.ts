@@ -109,3 +109,102 @@ describe('sync — confidentialité (P0.2/P0.8)', () => {
     await expect(supprimerSnapshotServeur(base())).resolves.toBe('sync_inactive');
   });
 });
+
+// ───────────── Preuve réseau du consentement (P-1.6 — D7) ─────────────
+// Client Supabase simulé : la garantie « 0 requête sans consentement explicite »
+// est prouvée en comptant les appels, pas seulement en lisant le code.
+
+const sbMocks = vi.hoisted(() => ({
+  upsert: vi.fn(async (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({ error: null })),
+  createClient: vi.fn(),
+}));
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: sbMocks.createClient,
+}));
+
+describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', () => {
+  const etatAvec = (maj: Partial<Etat>): Etat => ({ ...base(), ...maj });
+
+  beforeEach(() => {
+    // horloge figée : sinon le champ « maj » (ISO à chaque appel) rend chaque
+    // JSON différent et la déduplication dernierEnvoye ne peut jamais s'appliquer
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-16T10:00:00Z'));
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
+    // l'environnement de test déclare navigator.onLine = false → sinon aucun envoi ne part
+    vi.stubGlobal('navigator', { onLine: true });
+    sbMocks.upsert.mockClear();
+    sbMocks.createClient.mockClear();
+    sbMocks.createClient.mockImplementation(() => ({
+      from: () => ({
+        upsert: sbMocks.upsert,
+        delete: () => ({ eq: async () => ({ error: null }) }),
+      }),
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('(a) consentementSync: false → 0 requête réseau', async () => {
+    await envoyerSnapshot(etatAvec({ compte, consentementSync: false, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 1 }));
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it('(b) consentementSync: undefined (ancien état migré) → 0 requête', async () => {
+    await envoyerSnapshot(etatAvec({ compte, minutesTotales: 2 }));
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it('(c) true sans consentementSyncDecideLe (installation v0.9.3) → 0 requête', async () => {
+    await envoyerSnapshot(etatAvec({ compte, consentementSync: true, minutesTotales: 3 }));
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it('(d) true + date → exactement 1 upsert avec x-kunz-jeton, jamais le mot de passe', async () => {
+    const etat = etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 4 });
+    await envoyerSnapshot(etat);
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+    const [payload, options] = sbMocks.upsert.mock.calls[0];
+    expect(payload.email).toBe('test@example.com');
+    expect(payload.jeton).toBe('jeton-123');
+    expect((options as any).onConflict).toBe('email');
+    expect(JSON.stringify(payload)).not.toContain('motDePasse');
+    expect(JSON.stringify(payload)).not.toContain('hachage');
+    // Le client est créé une seule fois, avec les clés d'environnement et l'en-tête policy
+    expect(sbMocks.createClient).toHaveBeenCalledTimes(1);
+    const [url, , optionsClient] = sbMocks.createClient.mock.calls[0];
+    expect(url).toContain('test.supabase.co');
+    expect((optionsClient as any).global.headers['x-kunz-jeton']).toBe('jeton-123');
+  });
+
+  it('(e) état identique ré-envoyé → 0 nouvelle requête ; état modifié → exactement 1 nouvelle', async () => {
+    const etat = etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 5 });
+    await envoyerSnapshot(etat);
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+    await envoyerSnapshot(etat); // rien n'a changé
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+    await envoyerSnapshot({ ...etat, minutesTotales: 6 }); // progression a bougé
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(2);
+  });
+
+  it('(f) révocation (true → false) → plus aucun envoi ensuite', async () => {
+    const etat = etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 7 });
+    await envoyerSnapshot(etat);
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+    await envoyerSnapshot({ ...etat, consentementSync: false, minutesTotales: 8 });
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1); // 0 requête de plus
+  });
+
+  it('(g) supprimerSnapshotServeur avec compte + jeton → DELETE « supprime »', async () => {
+    await expect(supprimerSnapshotServeur(etatAvec({ compte }))).resolves.toBe('supprime');
+    // après suppression, un nouvel envoi (même état) repart de zéro : le cache est vidé
+    await envoyerSnapshot(etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 9 }));
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+  });
+});
