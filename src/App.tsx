@@ -4,12 +4,14 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
-import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage } from './utils/storage';
+import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, fusionnerProgressionImportee, autoriserRemplacementEtat } from './utils/storage';
+import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
+import { restaurerStats, type StatsReponses } from './utils/stats';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
 import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
-import { envoyerSnapshot, syncActive, doitDemanderConsentement } from './utils/sync';
+import { envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { SituationSynthese } from './data/syntheses';
 import type { Qualite } from './utils/srs';
@@ -154,6 +156,23 @@ function EcranConsentementSync({ onChoix }: { onChoix: (ok: boolean) => void }) 
   );
 }
 
+function AlerteStockage({ visible, pret, onBackup, onFermer }: { visible: boolean; pret: boolean; onBackup: () => void; onFermer: () => void }) {
+  if (!visible) return null;
+  return (
+    <div role="alert" className="fixed inset-x-0 top-0 z-[120] border-b border-line bg-cream shadow-md">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+        <p className="text-sm leading-relaxed text-ink-soft">
+          ⚠️ تعذّر قراءة بياناتك أو حفظها على هذا الجهاز. قد لا تُحفَظ التغييرات، وقد تكون البيانات السابقة غير ظاهرة. تحقّق من التخزين ثم أعد فتح التطبيق؛ لا تمسح بياناته قبل التأكّد. التصدير يشمل البيانات الظاهرة فقط.
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          {pret && <button type="button" onClick={onBackup} className="btn btn-primary px-4 py-1.5 text-xs">النسخة الاحتياطية</button>}
+          <button type="button" onClick={onFermer} className="btn btn-ghost px-3 py-1.5 text-xs">لاحقًا</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [etat, setEtat] = useState<Etat>(() => chargerEtat());
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
@@ -165,14 +184,15 @@ export default function App() {
   const [leconLue, setLeconLue] = useState(false);
   const [demarrage, setDemarrage] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return !sessionStorage.getItem('kunz_demarrage');
+    try { return !sessionStorage.getItem('kunz_demarrage'); } catch { return true; }
   });
   // جلسة الدخول: تبقى مفتوحة ما دام التبويب مفتوحًا (لا كلمة مرور في كل تحميل)
   const [session, setSession] = useState<boolean>(() => sessionOuverte(etat.compte?.email));
   // السمة: داكن أو فاتح — يُحفظ في localStorage
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
-    return (localStorage.getItem('kunz_theme') as 'light' | 'dark') ?? 'light';
+    try { return (localStorage.getItem('kunz_theme') as 'light' | 'dark') ?? 'light'; }
+    catch { signalerEchecStockage(); return 'light'; }
   });
 
   // Écran de consentement sync (P0.2/P0.8) : après inscription, et aussi pour les comptes
@@ -215,7 +235,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('kunz_theme', theme);
+    try { localStorage.setItem('kunz_theme', theme); } catch { signalerEchecStockage(); }
   }, [theme]);
 
   function basculerTheme() {
@@ -223,19 +243,22 @@ export default function App() {
   }
 
   function fermerDemarrage() {
-    sessionStorage.setItem('kunz_demarrage', '1');
+    try { sessionStorage.setItem('kunz_demarrage', '1'); } catch { /* le parcours reste accessible dans cet onglet */ }
     setDemarrage(false);
   }
 
   // ───────────── الحساب ─────────────
 
   function onCompteValide(compte: Compte) {
-    setEtat((prev) => ({ ...prev, compte }));
+    const memeCompte = etat.compte?.email === compte.email && etat.compte?.jeton === compte.jeton;
+    const suivant = memeCompte ? { ...etat, compte } : { ...etat, compte, consentementSync: false, consentementSyncDecideLe: undefined };
+    if (!memeCompte) suspendreSync(etat.compte?.email);
+    setEtat(suivant);
     ouvrirSession(compte.email);
     setSession(true);
     // Afficher l'écran de consentement si l'élève n'a encore jamais répondu
-    if (doitDemanderConsentement({ ...etat, compte })) setAfficheConsentement(true);
-    else if (doitProposerDiagnostic({ ...etat, compte })) setAfficheDiagnostic(true);
+    if (doitDemanderConsentement(suivant)) setAfficheConsentement(true);
+    else if (doitProposerDiagnostic(suivant)) setAfficheDiagnostic(true);
   }
 
   function onDeconnexion() {
@@ -248,8 +271,9 @@ export default function App() {
   function onSupprimerCompte() {
     fermerSession();
     setSession(false);
+    suspendreSync(etat.compte?.email);
     setEtat((prev) => {
-      const suivant = { ...prev };
+      const suivant = { ...prev, consentementSync: false, consentementSyncDecideLe: undefined };
       delete suivant.compte;
       return suivant;
     });
@@ -474,6 +498,8 @@ export default function App() {
   }
 
   function onConsentementSync(ok: boolean): void {
+    if (ok) reprendreSync(etatRef.current.compte?.email);
+    else suspendreSync(etatRef.current.compte?.email);
     const decide = { consentementSync: ok, consentementSyncDecideLe: new Date().toISOString() };
     setEtat((prev) => ({ ...prev, ...decide }));
     if (ok) void envoyerSnapshot({ ...etatRef.current, ...decide });
@@ -493,8 +519,12 @@ export default function App() {
   }
 
   // استيراد نسخة احتياطية كاملة (من أنا) — الحفظ الفوري يقع في useEffect الحالة
-  function onRestaurerEtat(nouveau: Etat): void {
-    setEtat(nouveau);
+  function onRestaurerEtat(nouveau: Etat, stats?: StatsReponses): void {
+    // Une restauration confirmée autorise le remplacement, même après une lecture impossible.
+    autoriserRemplacementEtat();
+    // L'identité, la session et le consentement appartiennent à l'appareil courant.
+    setEtat((prev) => fusionnerProgressionImportee(prev, nouveau));
+    if (stats) restaurerStats(stats);
     setMode(null);
     setOnglet('ana');
   }
@@ -514,7 +544,10 @@ export default function App() {
 
   if (mode) {
     // كل الشاشات أدناه كسولة التحميل (P3.6): Suspense واحد يغلّفها جميعًا
-    return <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>;
+    return <>
+      <AlerteStockage visible={stockageDefaillant} pret={false} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
+      <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>
+    </>;
   }
 
   function ecranMode(mode: Mode): ReactElement | null {
@@ -817,6 +850,7 @@ export default function App() {
 
   return (
     <div className="min-h-dvh">
+      <AlerteStockage visible={stockageDefaillant} pret={pret} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
       {demarrage && <EcranDemarrage onTerminer={fermerDemarrage} />}
       {!demarrage && (
         <>
@@ -901,36 +935,6 @@ export default function App() {
 
       {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
       <div className="pt-16">
-      {/* P-1.4: بانر فشل التخزين — يظهر تحت الشريط، قابل للرفض، يُعاد عند أي فشل جديد */}
-      {pret && stockageDefaillant && (
-        <div
-          role="alert"
-          className="fixed inset-x-0 top-16 z-30 border-b border-line bg-cream shadow-md"
-        >
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
-            <p className="text-sm leading-relaxed text-ink-soft">
-              ⚠️ تعذّر حفظ تقدّمك في هذا الجهاز (قد يكون التخزين ممتلئًا أو في وضع التصفّح الخاص).
-              صدّر نسخة احتياطية الآن حتى لا تفقد شيئًا.
-            </p>
-            <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setOnglet('ana')}
-                className="btn btn-primary px-4 py-1.5 text-xs"
-              >
-                النسخة الاحتياطية
-              </button>
-              <button
-                type="button"
-                onClick={() => setStockageDefaillant(false)}
-                className="btn btn-ghost px-3 py-1.5 text-xs"
-              >
-                لاحقًا
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {pret && onglet === 'aujourdhui' && (
         <Aujourdhui
           etat={etat}

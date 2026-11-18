@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import type { Etat } from '../types';
-import { consentementEtat, supprimerSnapshotServeur, syncActive, VERSION_APP, type ResultatSuppression } from '../utils/sync';
+import { consentementEtat, supprimerSnapshotServeur, syncActive, jetonUtilisable, VERSION_APP, type ResultatSuppression } from '../utils/sync';
 import { ListeDonneesSync } from './CarteSync';
 import { IcoRetour } from './Icones';
 
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const FAQ: { q: string; r: string }[] = [
-  { q: 'هل يعمل التطبيق بلا إنترنت؟', r: 'نعم. الدروس والتدريبات والامتحانات التجريبية والبطاقات كلّها على جهازك بعد أول تحميل. الإنترنت يلزم فقط للتحديثات وللمزامنة إن وافقت عليها.' },
+  { q: 'هل يعمل التطبيق بلا إنترنت؟', r: 'صُمّم التطبيق للعمل دون اتصال بعد تنزيل ملفاته. قد لا يكتمل التنزيل من أول زيارة، خصوصًا إذا انقطعت الشبكة أو امتلأ التخزين؛ جرّب فتح المحتوى قبل قطع الاتصال. التحديثات والمزامنة الاختيارية تحتاج إلى الإنترنت.' },
   { q: 'لماذا بعض الدروس مقفلة؟', r: 'الطريق يتبع ترتيب البرنامج الرسمي: كلّ درس يبني على ما قبله. القراءة الحرّة متاحة دائمًا من البحث، لكن الحصّة المحسوبة تمرّ بالترتيب.' },
   { q: 'لماذا لا أرى علامات ولا نسبًا مئوية؟', r: 'لأنّها لا تساعد على التعلّم في هذه المرحلة. نقول لك ما أتقنته وما يستحقّ عودة، بالكلمات والأعداد الصغيرة، لا بالترتيب ولا بالمقارنة.' },
   { q: 'كيف يقرّر التطبيق متى أراجع؟', r: 'بخوارزمية تكرار متباعد (SM-2): تقييمك الذاتي بعد كلّ استرجاع يحدّد الفاصل التالي. درس سهل يبتعد، درس صعب يعود غدًا. لا شيء عشوائيًّا.' },
@@ -33,17 +33,21 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
 
   async function supprimer() {
     setSuppression('encours');
+    // Retirer le consentement même si la suppression échoue ou si l'appareil est hors ligne.
+    onRetirerConsentement();
     const r = await supprimerSnapshotServeur(etat);
-    if (r === 'supprime' && consent === 'oui') onRetirerConsentement();
+    // Si l'utilisateur a tenté de réactiver entre-temps, révoquer à nouveau.
+    onRetirerConsentement();
     setSuppression(r);
   }
 
   const texteSuppression: Record<ResultatSuppression, string> = {
-    supprime: 'حُذف سجلّك من الخادم، وأُوقفت المزامنة. بياناتك على هاتفك لم تُمسّ.',
+    supprime: 'أكّد الخادم حذف السجلّ وأُوقفت المزامنة هنا. قد ترسل الأجهزة أو التبويبات الأخرى بيانات من جديد؛ أوقفها أيضًا. بيانات هاتفك لم تُمسّ.',
+    indetermine: 'لم يُؤكّد الحذف: قد يكون السجلّ غير موجود أو رمز الحساب غير صالح. المزامنة متوقّفة هنا؛ تحقّق مع المطوّر.',
     hors_ligne: 'لا اتصال الآن — أعد المحاولة حين يتوفّر الإنترنت.',
-    pas_de_compte: 'لا حساب مزامنة على هذا الجهاز — لا شيء على الخادم يخصّك.',
+    pas_de_compte: 'لا يتوفّر حساب ورمز صالحان على هذا الجهاز؛ لا يمكن التأكّد من بيانات الخادم.',
     sync_inactive: 'المزامنة غير مهيّأة في هذا الإصدار — لا شيء يُرسَل أصلًا.',
-    erreur: 'تعذّر الحذف هذه المرّة. أعد المحاولة لاحقًا؛ وإن تكرّر، أوقف المزامنة من «أنا» فلن يُرسَل شيء جديد.',
+    erreur: 'تعذّر تأكيد الحذف. المزامنة متوقّفة هنا؛ أعد المحاولة لاحقًا.',
   };
 
   return (
@@ -52,6 +56,7 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <button
             onClick={onFermer}
+            disabled={suppression === 'encours'}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cream text-mute transition-colors hover:bg-sage-soft"
             aria-label="رجوع"
           >
@@ -71,11 +76,11 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
           <section className="card p-5">
             <p className="eyebrow">١ · المبدأ</p>
             <p className="mt-2 text-sm leading-relaxed">
-              كلّ ما تفعله في التطبيق يُحفَظ <span className="font-bold">على هاتفك</span>. لا حساب إجباري، لا إعلانات، لا تتبّع، لا قراءة لبيانات تلميذ آخر.
+              يُحفَظ تقدّمك على جهازك إذا كان التخزين متاحًا. يتطلّب الدخول حاليًّا حسابًا محلّيًّا؛ لا إعلانات، ولا قراءة لبيانات تلميذ آخر من التطبيق.
               الشيء الوحيد الذي قد يغادر جهازك هو <span className="font-bold">ملخّص تقدّمك</span> نحو المطوّر — وفقط إن وافقت صراحةً، بتاريخ مسجَّل.
             </p>
             <p className="mt-2 text-xs text-mute">
-              حالتك الآن: {sync ? (consent === 'oui' ? 'المزامنة مفعَّلة بموافقتك.' : 'لا يُرسَل شيء — لم توافق أو سحبت موافقتك.') : 'المزامنة غير مهيّأة في هذا الإصدار — لا يُرسَل شيء.'}
+              حالتك الآن: {sync ? (!jetonUtilisable(etat.compte?.jeton) ? 'لا يُرسَل شيء: رمز المزامنة غير متوفّر أو غير آمن.' : consent === 'oui' ? 'المزامنة مفعَّلة بموافقتك.' : 'لا يُرسَل شيء — لم توافق أو سحبت موافقتك.') : 'المزامنة غير مهيّأة في هذا الإصدار — لا يُرسَل شيء.'}
             </p>
           </section>
 
@@ -85,17 +90,17 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
               <ListeDonneesSync />
             </div>
             <p className="mt-3 text-xs leading-relaxed text-mute">
-              متى؟ في الخلفية، حين يتوفّر الإنترنت، وفقط إن تغيّر شيء منذ آخر إرسال. إلى أين؟ قاعدة بيانات واحدة يملكها مطوّر التطبيق؛ سطرك لا يستطيع تعديله أو حذفه إلا جهازك (رمز كتابة خاص بك).
+              متى؟ في الخلفية، حين يتوفّر الإنترنت، وفقط إن تغيّر شيء منذ آخر إرسال. إلى أين؟ قاعدة بيانات واحدة يملكها مطوّر التطبيق؛ يمكن تعديل سطرك أو حذفه برمز الكتابة؛ من يملك الرمز يستطيع استعماله أيضًا.
             </p>
           </section>
 
           <section className="card p-5">
             <p className="eyebrow">٣ · حقوقك</p>
             <ul className="mt-2 space-y-2 text-sm leading-relaxed">
-              <li><span className="font-bold">سحب الموافقة</span> — من «أنا › المزامنة مع المطوّر» في أيّ وقت؛ يتوقّف الإرسال فورًا.</li>
-              <li><span className="font-bold">نسخة من بياناتك</span> — زرّ «تصدير نسخة كاملة» في «أنا» يعطيك كلّ شيء في ملفّ واحد.</li>
+              <li><span className="font-bold">سحب الموافقة</span> — من «أنا › المزامنة مع المطوّر» في أيّ وقت؛ تتوقّف الطلبات الجديدة هنا، وقد تكتمل الطلبات التي بدأت قبل السحب.</li>
+              <li><span className="font-bold">نسخة من بياناتك</span> — زرّ «تصدير نسخة كاملة» في «أنا» يحفظ التقدّم والإحصاءات دون الحساب أو رمز المزامنة أو الموافقة.</li>
               <li><span className="font-bold">الحذف من الخادم</span> — الزرّ أدناه يحذف سطرك من قاعدة البيانات ويوقف المزامنة. ما على هاتفك يبقى لك.</li>
-              <li><span className="font-bold">مدّة الاحتفاظ</span> — إلى أن تحذفه أنت؛ والسجلّات التي لم تُحدَّث منذ أكثر من سنة بعد تاريخ البكالوريا المُدخل تُحذف من جهة المطوّر.</li>
+              <li><span className="font-bold">مدّة الاحتفاظ</span> — يمكن طلب الحذف. مدّة الاحتفاظ والحذف التلقائي من جهة المطوّر غير مؤكّدين حاليًّا.</li>
             </ul>
             {sync && (
               <div className="mt-4">
@@ -115,9 +120,10 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
                 )}
                 {suppression === 'encours' && <p className="text-sm text-mute">جارٍ الحذف…</p>}
                 {suppression !== 'idle' && suppression !== 'confirmer' && suppression !== 'encours' && (
-                  <p className={`rounded-2xl p-3 text-sm ${suppression === 'supprime' ? 'bg-sage-soft/60 text-forest-deep' : 'bg-gold-soft/40 text-forest-deep'}`}>
-                    {texteSuppression[suppression]}
-                  </p>
+                  <div className={`rounded-2xl p-3 text-sm ${suppression === 'supprime' ? 'bg-sage-soft/60 text-forest-deep' : 'bg-gold-soft/40 text-forest-deep'}`}>
+                    <p>{texteSuppression[suppression]}</p>
+                    {suppression !== 'supprime' && <button type="button" onClick={() => setSuppression('confirmer')} className="mt-2 font-bold underline">إعادة المحاولة</button>}
+                  </div>
                 )}
               </div>
             )}
@@ -141,7 +147,7 @@ export default function Confidentialite({ etat, onRetirerConsentement, onFermer 
           <section className="card p-5">
             <p className="eyebrow">٥ · عن التطبيق</p>
             <p className="mt-2 text-sm leading-relaxed">
-              <span className="font-naskh font-black">بوصلة العلوم</span> — مرافق مراجعة علوم الطبيعة والحياة لبكالوريا شعبة العلوم التجريبية، يعمل بلا إنترنت، بلا إعلانات، بلا تتبّع.
+              <span className="font-naskh font-black">بوصلة العلوم</span> — مرافق مراجعة علوم الطبيعة والحياة لبكالوريا شعبة العلوم التجريبية، يُصمَّم للعمل دون اتصال بعد تنزيل ملفاته، بلا إعلانات.
             </p>
             <ul className="mt-2 space-y-1 text-xs leading-relaxed text-mute">
               <li>الإصدار {VERSION_APP}.</li>

@@ -2,6 +2,7 @@
 // مخزّن في مفتاح مستقل (kunz_stats_v1) حتى لا يمسّه حفظ Etat، وبلا نسبة مئوية وبلا لوم.
 
 import { useSyncExternalStore } from 'react';
+import { signalerEchecStockage } from './echecsStockage';
 import { ajouterJours, aujourdhui, nb } from './dates';
 
 export type SourceReponse = 'phase' | 'revision' | 'jalon' | 'atelier' | 'exercice';
@@ -28,6 +29,7 @@ export const SOURCES: { id: SourceReponse; label: string }[] = [
 
 const CLE = 'kunz_stats_v1';
 const JOURS_GARDES = 45;
+let lectureEnEchec = false;
 
 function vierge(): StatsReponses {
   return {
@@ -49,6 +51,18 @@ function lire(): StatsReponses {
     const brut = localStorage.getItem(CLE);
     if (!brut) return vierge();
     const a = JSON.parse(brut) as Partial<StatsReponses>;
+    if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('statistiques invalides');
+    const compteurValide = (c: unknown): boolean => {
+      if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
+      const { justes, fausses } = c as Record<string, unknown>;
+      return [justes, fausses].every(n => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0);
+    };
+    const dictionnaireValide = (d: unknown): boolean =>
+      !!d && typeof d === 'object' && !Array.isArray(d) && Object.values(d).every(compteurValide);
+    if ((a.justes !== undefined && (!Number.isSafeInteger(a.justes) || a.justes < 0)) ||
+        (a.fausses !== undefined && (!Number.isSafeInteger(a.fausses) || a.fausses < 0)) ||
+        (a.parSource !== undefined && !dictionnaireValide(a.parSource)) ||
+        (a.parJour !== undefined && !dictionnaireValide(a.parJour))) throw new Error('statistiques invalides');
     const base = vierge();
     return {
       justes: a.justes ?? 0,
@@ -57,6 +71,9 @@ function lire(): StatsReponses {
       parJour: a.parJour ?? {},
     };
   } catch {
+    lectureEnEchec = true;
+    // En dehors d'un navigateur (tests/SSR), l'absence du stockage est normale.
+    if (typeof window !== 'undefined') signalerEchecStockage();
     return vierge();
   }
 }
@@ -87,10 +104,20 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
     parJour,
   };
   try {
+    if (lectureEnEchec) throw new Error('lecture précédente impossible');
     localStorage.setItem(CLE, JSON.stringify(stats));
   } catch {
-    // وضع التصفّح الخاص أو امتلاء التخزين — تجاهل
+    signalerEchecStockage();
   }
+  ecouteurs.forEach((fn) => fn());
+}
+
+/** Restaurer uniquement des statistiques validées par lireSauvegarde. */
+export function restaurerStats(nouvelles: StatsReponses): void {
+  stats = nouvelles;
+  lectureEnEchec = false; // remplacement explicitement confirmé
+  try { localStorage.setItem(CLE, JSON.stringify(stats)); }
+  catch { signalerEchecStockage(); }
   ecouteurs.forEach((fn) => fn());
 }
 
@@ -151,8 +178,10 @@ export function viderStats(): void {
   stats = vierge();
   try {
     localStorage.removeItem(CLE);
+    lectureEnEchec = false;
   } catch {
-    // تجاهل
+    lectureEnEchec = true;
+    signalerEchecStockage();
   }
   ecouteurs.forEach((fn) => fn());
 }

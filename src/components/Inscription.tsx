@@ -55,16 +55,14 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
       }
       if (mdp.length === 0) return annoncer(messageCompte('mdp'));
       setOccupe(true);
-      // Compte restauré depuis une sauvegarde (sans hachage — P-1.1) : la connexion
-      // réinstalle le hachage avec le mot de passe saisi, sans exiger l'ancien.
-      const bon = compte.motDePasse ? await verifierMdp(mdp, compte.motDePasse) : true;
+      if (!compte.motDePasse) {
+        setOccupe(false);
+        return annoncer('لا يمكن التحقّق من كلمة مرور هذا الحساب القديم. يمكنك حذف الحساب المحلي مع إبقاء تقدّمك وإنشاء حساب جديد؛ هذا لا يستعيد رمز الخادم.');
+      }
+      const bon = await verifierMdp(mdp, compte.motDePasse);
       setOccupe(false);
       if (!bon) return annoncer(messageCompte('mdp', { mdp: true }));
-      onValide(
-        compte.motDePasse
-          ? compte
-          : { ...compte, motDePasse: await hacher(mdp) }
-      );
+      onValide(compte);
       return;
     }
 
@@ -277,7 +275,7 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
                   نسيت كلمة المرور؟ احذف الحساب وابدأ من جديد
                 </button>
               ) : (
-                <div className="flex gap-2">
+                <div><p className="mb-2 text-xs">يُحذف الحساب المحلي فقط ويظلّ التقدّم. لا يحذف هذا بيانات الخادم ولا يستعيد رمزها.</p><div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -295,14 +293,14 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
                   >
                     تراجع
                   </button>
-                </div>
+                </div></div>
               )}
             </div>
           )}
         </form>
 
         <p className="mt-5 text-center text-[11px] leading-relaxed text-sage/75">
-          🔒 بريدك وكلمة مرورك وولايتك لا تغادرون هذا الجهاز: لا خادم، لا إرسال، لا إعلانات.
+          كلمة المرور تبقى على جهازك. عند الموافقة على المزامنة يُرسَل البريد والولاية وملخّص التقدّم.
         </p>
       </div>
     </div>

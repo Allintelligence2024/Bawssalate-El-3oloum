@@ -2,7 +2,7 @@
 // المزامنة متوقّفة حتى يوافق التلميذ صراحةً (P0.2/P0.8)؛ هذه البطاقة تعرض الحالة وقائمة ما يُرسَل حرفيًّا.
 
 import { useState } from 'react';
-import { consentementEtat, syncActive, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
+import { consentementEtat, syncActive, jetonUtilisable, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
 import type { Etat } from '../types';
 
 interface Props {
@@ -37,11 +37,12 @@ export function ReglageSync({ etat, onChoix }: Props) {
   const [details, setDetails] = useState(false);
   if (!syncActive()) return null;
   const c = consentementEtat(etat);
+  const jetonSain = jetonUtilisable(etat.compte?.jeton);
   return (
     <section className="card mt-5 p-5">
       <p className="eyebrow">المزامنة مع المطوّر</p>
       <p className="mt-2 text-xs leading-relaxed text-mute">
-        {c === 'oui'
+        {!jetonSain ? 'المزامنة غير متاحة: رمز الحساب غير متوفّر أو غير آمن. تقدّمك يبقى على جهازك؛ تواصل مع المطوّر بشأن بيانات الخادم.' : c === 'oui'
           ? 'يُرسَل ملخّص تقدّمك دوريًّا في الخلفية عند توفّر الإنترنت. تُحفَظ كل بياناتك على هاتفك أولًا.'
           : 'لن يُرسَل شيء أبدًا. تقدّمك يبقى على هاتفك وحدك — وهذا حقّك كاملًا.'}
       </p>
@@ -59,6 +60,7 @@ export function ReglageSync({ etat, onChoix }: Props) {
       )}
       <button
         onClick={() => onChoix(c !== 'oui')}
+        disabled={!jetonSain && c !== 'oui'}
         className={`btn mt-4 w-full text-sm ${c === 'oui' ? 'btn-ghost' : 'btn-primary'}`}
       >
         {c === 'oui' ? 'إيقاف المزامنة' : 'تفعيل المزامنة'}

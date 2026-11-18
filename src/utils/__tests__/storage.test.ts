@@ -1,21 +1,27 @@
 // Tests de l'export/import et de la persistance — P0.4
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
+import { etatDepuisFichier, lireSauvegarde } from '../backup';
+import { noterReponse, statsActuelles, restaurerStats } from '../stats';
+import { effacerAlerteStockage } from '../echecsStockage';
 import {
   chargerEtat,
   sauvegarderEtat,
   etatDepuisBrut,
-  etatDepuisFichier,
   paquetExportComplet,
   surEchecSauvegarde,
   progressionDe,
   viderStockage,
   minutesStockees,
+  fusionnerProgressionImportee,
+  autoriserRemplacementEtat,
 } from '../storage';
 
 // Mock localStorage global avant chaque test
 let stored = '';
 beforeEach(() => {
+  effacerAlerteStockage();
+  autoriserRemplacementEtat();
   (globalThis as any).localStorage = {
     getItem: (k: string) => (k === 'murajih_svt_v1' ? stored : null),
     setItem: (k: string, v: string) => { stored = v; },
@@ -93,6 +99,45 @@ describe('storage — chargeur/sauveur', () => {
   });
 });
 
+describe('protection après échec de lecture', () => {
+  it('ne remplace pas des données existantes si la lecture échoue', () => {
+    let brut = '{"progression":{"important":{}}}';
+    const writes = vi.fn((_cle: string, valeur: string) => { brut = valeur; });
+    (globalThis as any).localStorage = { getItem: () => { throw new Error('lecture refusée'); }, setItem: writes };
+    const ecouteur = vi.fn();
+    const stop = surEchecSauvegarde(ecouteur);
+    const etat = chargerEtat();
+    sauvegarderEtat(etat);
+    expect(writes).not.toHaveBeenCalled();
+    expect(brut).toContain('important');
+    expect(ecouteur).toHaveBeenCalled();
+    stop();
+  });
+  it('protège les données illisibles jusqu’à un remplacement explicite', () => {
+    stored = '{JSON cassé';
+    const etat = chargerEtat();
+    sauvegarderEtat(etat);
+    expect(stored).toBe('{JSON cassé');
+    autoriserRemplacementEtat();
+    sauvegarderEtat(etat);
+    expect(JSON.parse(stored).progression).toEqual({});
+  });
+  it('ne remplace pas un état de structure incohérente', () => {
+    stored = JSON.stringify({ progression: {}, notes: 'pas une liste' });
+    const brut = stored;
+    sauvegarderEtat(chargerEtat());
+    expect(stored).toBe(brut);
+  });
+  it('signale un échec de suppression', () => {
+    const ecouteur = vi.fn();
+    const stop = surEchecSauvegarde(ecouteur);
+    (globalThis as any).localStorage.removeItem = () => { throw new Error('refus'); };
+    viderStockage();
+    expect(ecouteur).toHaveBeenCalled();
+    stop();
+  });
+});
+
 // ───────────── Export complet → import (P-1.1 — D1) ─────────────
 
 /** État complet avec compte, progression, SRS, carnet, notes — pour l'aller-retour. */
@@ -106,7 +151,7 @@ function etatComplet(): Etat {
     },
     jalons: { u1: { fait: true, synthese: 's', ts: '2026-11-16T09:00:00Z' } },
     notes: [{ id: 'n1', kind: 'question', uniteId: 'u1', texte: 'pourquoi ?', ts: '2026-11-16T09:00:00Z' } as any],
-    carnet: [{ id: 'f1', ts: '2026-11-16T09:00:00Z' } as any],
+    carnet: [{ id: 'f1', ts: '2026-11-16T09:00:00Z', contexte: 'test', enonce: 'question', donne: 'réponse', diagnostic: 'erreur' }],
     journal: ['2026-11-16'],
     minutesTotales: 17, revisions: 3,
     nom: 'تلميذ', dateBac: '2027-06-10', seancesJour: '2026-11-16', seancesComptees: 1,
@@ -121,12 +166,13 @@ describe('storage — export complet → import (P-1.1)', () => {
     const original = etatComplet();
     const paquet = paquetExportComplet(original);
     // enveloppe versionnée
-    expect(paquet.version).toBe(2);
+    expect(paquet.version).toBe(3);
     expect(paquet.application).toContain('بوصلة العلوم');
     expect(typeof paquet.exporteLe).toBe('string');
     // l'export n'embarque aucun secret réutilisable
-    expect(paquet.etat.compte?.motDePasse).toBe('');
-    expect(paquet.etat.compte?.jeton).toBe('jeton-123'); // exigé par la policy Supabase
+    expect(paquet.etat.compte).toBeUndefined();
+    expect(JSON.stringify(paquet)).not.toContain('jeton-123');
+    expect(paquet.etat.consentementSync).toBeUndefined();
     // re-import du JSON sérialisé (le vrai chemin passe par JSON.stringify)
     const restaure = etatDepuisFichier(JSON.parse(JSON.stringify(paquet)));
     expect(restaure).not.toBeNull();
@@ -134,10 +180,9 @@ describe('storage — export complet → import (P-1.1)', () => {
     expect(restaure!.jalons).toEqual(original.jalons);
     expect(restaure!.notes).toEqual(original.notes);
     expect(restaure!.carnet).toEqual(original.carnet);
-    expect(restaure!.consentementSync).toBe(true);
-    expect(restaure!.consentementSyncDecideLe).toBe(original.consentementSyncDecideLe);
-    expect(restaure!.compte?.email).toBe('test@example.com');
-    expect(restaure!.compte?.motDePasse).toBe(''); // jamais de hachage restauré
+    expect(restaure!.consentementSync).toBe(false);
+    expect(restaure!.consentementSyncDecideLe).toBeUndefined();
+    expect(restaure!.compte).toBeUndefined();
   });
 
   it('l\'import accepte le format plat historique (progression à la racine)', () => {
@@ -165,7 +210,7 @@ describe('storage — export complet → import (P-1.1)', () => {
       },
     };
     const restaure = etatDepuisFichier(paquet);
-    expect(restaure!.compte?.motDePasse).toBe('');
+    expect(restaure!.compte).toBeUndefined();
   });
 });
 
@@ -194,4 +239,43 @@ describe('storage — surEchecSauvegarde (P-1.4)', () => {
     sauvegarderEtat(etatComplet());
     expect(appels).toEqual([]);
   });
+});
+
+describe('sauvegarde sécurisée', () => {
+  it('rejette les données mal formées, les versions futures et les valeurs hors limites', () => {
+    expect(etatDepuisFichier({ progression: [] })).toBeNull();
+    expect(etatDepuisFichier({ progression: { a: { statut: 'terminee' } } })).toBeNull();
+    expect(etatDepuisFichier({ progression: {}, notes: 'oops' })).toBeNull();
+    expect(etatDepuisFichier({ progression: {}, minutesTotales: -1 })).toBeNull();
+    expect(etatDepuisFichier({ version: 999, etat: { progression: {} } })).toBeNull();
+    expect(etatDepuisFichier({ etat: { progression: {} }, stats: { justes: 'oops' } })).toBeNull();
+  });
+  it('exporte et restaure les statistiques, sans transférer le compte ni le consentement', () => {
+    noterReponse('phase', true);
+    const avant = statsActuelles();
+    const lu = lireSauvegarde(JSON.parse(JSON.stringify(paquetExportComplet({ ...etatComplet(), consentementSync: true }))));
+    expect(lu?.stats).toEqual(avant);
+    expect(lu?.etat.compte).toBeUndefined();
+    expect(lu?.etat.consentementSync).toBeUndefined();
+    restaurerStats(lu!.stats!);
+    expect(statsActuelles()).toEqual(avant);
+  });
+  it('conserve le compte et le consentement courants, jamais ceux du fichier', () => {
+    const courant = etatComplet();
+    const lu = etatDepuisFichier({ ...etatComplet(), compte: { email: 'intrus', jeton: 'secret' }, consentementSync: false });
+    expect(lu).not.toBeNull();
+    const resultat = fusionnerProgressionImportee(courant, lu!);
+    expect(resultat.compte).toEqual(courant.compte);
+    expect(resultat.consentementSync).toBe(courant.consentementSync);
+    expect(resultat.consentementSyncDecideLe).toBe(courant.consentementSyncDecideLe);
+  });
+  it('signale aussi une erreur antérieure à l’abonnement et les échecs de statistiques', () => {
+    (globalThis as any).localStorage.setItem = () => { throw new Error('quota'); };
+    noterReponse('phase', true);
+    const appel = vi.fn();
+    const stop = surEchecSauvegarde(appel);
+    expect(appel).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
 });

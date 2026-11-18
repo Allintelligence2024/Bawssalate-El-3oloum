@@ -2,16 +2,40 @@
 // المفتاح: murajih_svt_v1 (تبقى عليه التقدّم القديم)
 
 import { etatVierge, progressionVierge, type Etat, type ProgressionLecon } from '../types';
-import { viderStats } from './stats';
+import { viderStats, statsActuelles, type StatsReponses } from './stats';
+import { signalerEchecStockage } from './echecsStockage';
+export { surEchecSauvegarde } from './echecsStockage';
 
 const CLE = 'murajih_svt_v1';
+// Ne pas écraser des données existantes si leur lecture a échoué.
+let lectureEnEchec = false;
+
+/** Un remplacement explicite par une sauvegarde validée lève la protection. */
+export function autoriserRemplacementEtat(): void { lectureEnEchec = false; }
 
 export function chargerEtat(): Etat {
   try {
     const brut = localStorage.getItem(CLE);
-    if (!brut) return etatVierge();
-    return etatDepuisBrut(JSON.parse(brut) as Partial<Etat>);
+    if (!brut) { lectureEnEchec = false; return etatVierge(); }
+    const analyse: unknown = JSON.parse(brut);
+    if (!analyse || typeof analyse !== 'object' || Array.isArray(analyse)) throw new Error('état invalide');
+    const progression = (analyse as Record<string, unknown>).progression;
+    if (progression !== undefined && (!progression || typeof progression !== 'object' || Array.isArray(progression))) throw new Error('progression invalide');
+    const champs = analyse as Record<string, unknown>;
+    for (const champ of ['notes', 'carnet', 'journal']) {
+      if (champs[champ] !== undefined && !Array.isArray(champs[champ])) throw new Error(`${champ} invalide`);
+    }
+    for (const champ of ['jalons', 'kafaa', 'drills', 'ateliers']) {
+      const valeur = champs[champ];
+      if (valeur !== undefined && (!valeur || typeof valeur !== 'object' || Array.isArray(valeur))) throw new Error(`${champ} invalide`);
+    }
+    if (progression && Object.values(progression).some(p => !p || typeof p !== 'object' || Array.isArray(p))) throw new Error('leçon invalide');
+    const etat = etatDepuisBrut(analyse as Partial<Etat>);
+    lectureEnEchec = false;
+    return etat;
   } catch {
+    lectureEnEchec = true;
+    signalerEchecStockage();
     return etatVierge();
   }
 }
@@ -33,66 +57,34 @@ export function etatDepuisBrut(analyse: Partial<Etat>): Etat {
   };
 }
 
-// P-1.4 (D4) : l'échec d'écriture n'est plus avalé en silence. Les écouteurs
-// enregistrés ici sont prévenus — l'app affiche un bandeau qui propose l'export.
-type EcouteurEchec = () => void;
-const ecouteursEchec: EcouteurEchec[] = [];
-
-/** Écoute les échecs d'écriture localStorage (mode privé, quota plein…).
- *  Retourne une fonction de désinscription. */
-export function surEchecSauvegarde(ecouteur: EcouteurEchec): () => void {
-  ecouteursEchec.push(ecouteur);
-  return () => {
-    const i = ecouteursEchec.indexOf(ecouteur);
-    if (i >= 0) ecouteursEchec.splice(i, 1);
-  };
-}
-
-// ───────────── Sauvegarde complète exportée/importée (P-1.1, D1) ─────────────
-
-/** Paquet d'export complet : enveloppe {application, version, exporteLe, etat}.
- *  Aucun secret réutilisable dans le fichier : le hachage de motDePasse est vidé
- *  (jeton conservé — exigé par la policy Supabase). Un fichier volé ne permet pas
- *  de retrouver le mot de passe, et l'import ne restaure jamais un hachage. */
+// Les sauvegardes ne contiennent ni compte, ni jeton, ni consentement.
+// Elles restent personnelles : progression et notes sont en clair.
 export function paquetExportComplet(etat: Etat): {
-  application: string;
-  version: number;
-  exporteLe: string;
-  etat: Etat;
+  application: string; version: number; exporteLe: string;
+  etat: Partial<Etat>; stats: StatsReponses;
 } {
-  const sansSecret: Etat = etat.compte ? { ...etat, compte: { ...etat.compte, motDePasse: '' } } : etat;
+  const { compte: _compte, consentementSync: _consentement,
+    consentementSyncDecideLe: _dateConsentement, ...progression } = etat;
   return {
-    application: 'بوصلة العلوم · نسخة احتياطية',
-    version: 2,
-    exporteLe: new Date().toISOString(),
-    etat: sansSecret,
+    application: 'بوصلة العلوم · نسخة احتياطية', version: 3,
+    exporteLe: new Date().toISOString(), etat: progression, stats: statsActuelles(),
   };
 }
 
-/** Import d'une sauvegarde : accepte l'export enveloppé {application, …, etat}
- *  (format actuel) ET le format plat historique (progression à la racine).
- *  Retourne null si ni l'un ni l'autre. Les secrets d'un fichier importé ne sont
- *  jamais restaurés : le hachage de motDePasse est vidé (voir Inscription pour
- *  la re-tétée à la reconnexion). */
-export function etatDepuisFichier(brut: unknown): Etat | null {
-  const enveloppe = brut as { etat?: Partial<Etat>; version?: number } | null;
-  const source =
-    enveloppe && typeof enveloppe === 'object' && enveloppe.etat
-      ? enveloppe.etat
-      : (brut as Partial<Etat> | null);
-  if (!source || typeof source !== 'object' || !source.progression) return null;
-  const copie = { ...source };
-  if (copie.compte) copie.compte = { ...copie.compte, motDePasse: '' };
-  return etatDepuisBrut(copie);
+/** L'import de progression ne change jamais l'identité ni le consentement locaux. */
+export function fusionnerProgressionImportee(courant: Etat, importe: Etat): Etat {
+  return { ...importe, compte: courant.compte,
+    consentementSync: courant.consentementSync, consentementSyncDecideLe: courant.consentementSyncDecideLe };
 }
 
 export function sauvegarderEtat(etat: Etat): void {
+  if (lectureEnEchec) { signalerEchecStockage(); return; }
   try {
     localStorage.setItem(CLE, JSON.stringify(etat));
   } catch {
     // وضع التصفّح الخاص أو امتلاء التخزين — لا نتجاهل بعد الآن: نُنبّه الواجهة
     // (l'état en mémoire n'est pas perdu ; la prochaine sauvegarde réessaie).
-    for (const ecouteur of ecouteursEchec) ecouteur();
+    signalerEchecStockage();
   }
 }
 
@@ -103,8 +95,10 @@ export function progressionDe(etat: Etat, lessonId: string): ProgressionLecon {
 export function viderStockage(): void {
   try {
     localStorage.removeItem(CLE);
+    lectureEnEchec = false;
   } catch {
-    // تجاهل
+    lectureEnEchec = true;
+    signalerEchecStockage();
   }
   // إحصاء المُرشد يُمسح مع كل شيء عند إعادة الضبط
   viderStats();

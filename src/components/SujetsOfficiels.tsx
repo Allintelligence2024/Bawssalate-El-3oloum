@@ -65,7 +65,7 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
             </button>
           </div>
           <p className="mt-1 text-[11px] leading-relaxed text-mute">
-            حاول الإجابة كتابةً أوّلًا، ثمّ قارن. العناصر مختصرة ومعاد صياغتها من {corrige.source} الحقوق محفوظة للديوان الوطني؛ العرض لأغراض التدريب.
+            حاول الإجابة كتابةً أوّلًا، ثمّ قارن. العناصر مختصرة ومعاد صياغتها من مصادر منسوبة إلى {corrige.source} لم تُؤكَّد حقوق استخدامها أو مطابقتها كاملة؛ تحقّق من المصادر الرسمية ولا تعتبرها سلّمًا رسميًّا معتمدًا.
           </p>
         </div>
       )}

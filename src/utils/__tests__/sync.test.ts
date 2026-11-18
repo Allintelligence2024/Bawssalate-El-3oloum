@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
   syncActive, construireSnapshot, envoyerSnapshot, consentementEtat,
-  consentementExplicite, doitDemanderConsentement, DONNEES_ENVOYEES, supprimerSnapshotServeur,
+  consentementExplicite, doitDemanderConsentement, DONNEES_ENVOYEES, supprimerSnapshotServeur, reprendreSync, jetonUtilisable,
 } from '../sync';
 
 const base = (): Etat => ({
@@ -117,6 +117,7 @@ describe('sync — confidentialité (P0.2/P0.8)', () => {
 const sbMocks = vi.hoisted(() => ({
   upsert: vi.fn(async (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({ error: null })),
   createClient: vi.fn(),
+  select: vi.fn(async () => ({ data: [{ email: 'test@example.com' }], error: null })),
 }));
 
 vi.mock('@supabase/supabase-js', () => ({
@@ -135,12 +136,16 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key');
     // l'environnement de test déclare navigator.onLine = false → sinon aucun envoi ne part
     vi.stubGlobal('navigator', { onLine: true });
-    sbMocks.upsert.mockClear();
+    reprendreSync(compte.email);
+    sbMocks.select.mockReset();
+    sbMocks.select.mockResolvedValue({ data: [{ email: compte.email }], error: null });
+    sbMocks.upsert.mockReset();
+    sbMocks.upsert.mockResolvedValue({ error: null });
     sbMocks.createClient.mockClear();
     sbMocks.createClient.mockImplementation(() => ({
       from: () => ({
         upsert: sbMocks.upsert,
-        delete: () => ({ eq: async () => ({ error: null }) }),
+        delete: () => ({ eq: () => ({ select: sbMocks.select }) }),
       }),
     }));
   });
@@ -203,8 +208,48 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
 
   it('(g) supprimerSnapshotServeur avec compte + jeton → DELETE « supprime »', async () => {
     await expect(supprimerSnapshotServeur(etatAvec({ compte }))).resolves.toBe('supprime');
-    // après suppression, un nouvel envoi (même état) repart de zéro : le cache est vidé
+    // Après suppression, seul un nouveau consentement permet l'envoi.
+    await envoyerSnapshot(etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 9 }));
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+    reprendreSync(compte.email);
     await envoyerSnapshot(etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: '2026-11-16T10:00:00Z', minutesTotales: 9 }));
     expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
   });
+  it('zéro ligne est indéterminé, et une erreur ne confirme jamais la suppression', async () => {
+    sbMocks.select.mockResolvedValueOnce({ data: [], error: null });
+    await expect(supprimerSnapshotServeur(etatAvec({ compte }))).resolves.toBe('indetermine');
+    sbMocks.select.mockRejectedValueOnce(new Error('réseau'));
+    await expect(supprimerSnapshotServeur(etatAvec({ compte }))).resolves.toBe('erreur');
+    await envoyerSnapshot(etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: 'date', minutesTotales: 100 }));
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it('attend un envoi déjà parti et bloque tout nouvel envoi avant DELETE', async () => {
+    let terminer!: (result: { error: null }) => void;
+    let demarre!: () => void;
+    const parti = new Promise<void>(resolve => { demarre = resolve; });
+    sbMocks.upsert.mockImplementationOnce(() => { demarre(); return new Promise(resolve => { terminer = resolve; }); });
+    const etat = etatAvec({ compte, consentementSync: true, consentementSyncDecideLe: 'date', minutesTotales: 101 });
+    const envoi = envoyerSnapshot(etat);
+    await parti;
+    const suppression = supprimerSnapshotServeur(etat);
+    await envoyerSnapshot({ ...etat, minutesTotales: 102 });
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+    expect(sbMocks.select).not.toHaveBeenCalled();
+    terminer({ error: null });
+    await envoi;
+    await expect(suppression).resolves.toBe('supprime');
+    expect(sbMocks.select).toHaveBeenCalledTimes(1);
+    await envoyerSnapshot({ ...etat, minutesTotales: 103 });
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('aucun envoi avec un jeton faible, nul ou absent', async () => {
+    for (const jeton of [undefined, '00000000000000000000000000000000', 'j-ancien-aleatoire']) {
+      expect(jetonUtilisable(jeton)).toBe(false);
+      await envoyerSnapshot(etatAvec({ compte: { ...compte, jeton }, consentementSync: true, consentementSyncDecideLe: 'date' }));
+    }
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
 });
