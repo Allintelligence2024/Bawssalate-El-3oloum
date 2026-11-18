@@ -337,24 +337,26 @@ export function planIntensif(etat: Etat): PlanIntensif | null {
 // ───────────── المهمّة الواحدة ─────────────
 
 export function prochaineAction(etat: Etat): ActionJour {
-  // 0. كل شيء أُنجز
-  if (!prochainItem(etat)) return { type: 'fini' };
-
-  // 1. استئناف
+  // 1. استئناف (الدرس المبدوء أولًا دائمًا)
   const enCours = leconEnCours(etat);
   if (enCours) return { type: 'reprise', item: enCours };
 
-  // 2. استرجاع مستحق قبل أي جديد
+  // 2. استرجاع مستحق قبل أي جديد — والتحقق منه قبل « fini » : حتى
+  //    بعد اكتمال الطريق تبقى المراجعات المتأخرة مهمّة (تصحيح D2:
+  //    « fini » كان يُعاد قبل فحص الاسترجاع فتختفي المراجعات المستحقة).
   const dues = revisionsDues(etat);
   if (dues.length) return { type: 'rappel', lessonIds: dues };
 
-  // 3. حصّة جديدة ضمن الحصّة اليومية (حسب الهدف أو المراجعة المكثّفة)
+  // 3. الطريق كامل وبلا مراجعات مستحقة → راحة نهائية
+  if (!prochainItem(etat)) return { type: 'fini' };
+
+  // 4. حصّة جديدة ضمن الحصّة اليومية (حسب الهدف أو المراجعة المكثّفة)
   if (seancesAujourdhui(etat) < quotaDe(etat).seances) {
     const item = prochainItem(etat);
     if (item) return { type: 'nouvelle', item };
   }
 
-  // 4. راحة (مع إمكانية حصّة إضافية واحدة)
+  // 5. راحة (مع إمكانية حصّة إضافية واحدة)
   return {
     type: 'repos',
     bonusDispo: bonusDispoAujourdhui(etat),
