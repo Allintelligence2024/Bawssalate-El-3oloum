@@ -4,9 +4,9 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
-import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, fusionnerProgressionImportee, autoriserRemplacementEtat } from './utils/storage';
+import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, fusionnerProgressionImportee, restaurerEtatEtStats } from './utils/storage';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
-import { restaurerStats, type StatsReponses } from './utils/stats';
+import type { StatsReponses } from './utils/stats';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
@@ -518,13 +518,15 @@ export default function App() {
     setOnglet('aujourdhui');
   }
 
-  // استيراد نسخة احتياطية كاملة (من أنا) — الحفظ الفوري يقع في useEffect الحالة
+  // استيراد نسخة احتياطية كاملة (من أنا) — l'écriture est portée par restaurerEtatEtStats
   function onRestaurerEtat(nouveau: Etat, stats?: StatsReponses): void {
-    // Une restauration confirmée autorise le remplacement, même après une lecture impossible.
-    autoriserRemplacementEtat();
     // L'identité, la session et le consentement appartiennent à l'appareil courant.
-    setEtat((prev) => fusionnerProgressionImportee(prev, nouveau));
-    if (stats) restaurerStats(stats);
+    const fusionne = fusionnerProgressionImportee(etatRef.current, nouveau);
+    // Écriture atomique : progression ET statistiques engagées ensemble. Si le quota
+    // refuse, rien n'est appliqué — les anciennes données et l'état affiché restent
+    // inchangés et le bandeau d'alerte est déjà signalé.
+    if (!restaurerEtatEtStats(fusionne, stats)) return;
+    setEtat(fusionne);
     setMode(null);
     setOnglet('ana');
   }

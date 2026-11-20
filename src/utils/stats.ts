@@ -27,7 +27,7 @@ export const SOURCES: { id: SourceReponse; label: string }[] = [
   { id: 'exercice', label: 'التدريبات' },
 ];
 
-const CLE = 'kunz_stats_v1';
+export const CLE_STATS = 'kunz_stats_v1';
 const JOURS_GARDES = 45;
 let lectureEnEchec = false;
 
@@ -48,7 +48,7 @@ function vierge(): StatsReponses {
 
 function lire(): StatsReponses {
   try {
-    const brut = localStorage.getItem(CLE);
+    const brut = localStorage.getItem(CLE_STATS);
     if (!brut) return vierge();
     const a = JSON.parse(brut) as Partial<StatsReponses>;
     if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('statistiques invalides');
@@ -105,20 +105,26 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
   };
   try {
     if (lectureEnEchec) throw new Error('lecture précédente impossible');
-    localStorage.setItem(CLE, JSON.stringify(stats));
+    localStorage.setItem(CLE_STATS, JSON.stringify(stats));
   } catch {
     signalerEchecStockage();
   }
   ecouteurs.forEach((fn) => fn());
 }
 
-/** Restaurer uniquement des statistiques validées par lireSauvegarde. */
-export function restaurerStats(nouvelles: StatsReponses): void {
+/** Applique des statistiques en mémoire sans écrire — l'écriture appartient à la
+ *  restauration atomique (storage.restaurerEtatEtStats) ou à restaurerStats. */
+export function appliquerStats(nouvelles: StatsReponses): void {
   stats = nouvelles;
   lectureEnEchec = false; // remplacement explicitement confirmé
-  try { localStorage.setItem(CLE, JSON.stringify(stats)); }
-  catch { signalerEchecStockage(); }
   ecouteurs.forEach((fn) => fn());
+}
+
+/** Restaurer uniquement des statistiques validées par lireSauvegarde. */
+export function restaurerStats(nouvelles: StatsReponses): void {
+  appliquerStats(nouvelles);
+  try { localStorage.setItem(CLE_STATS, JSON.stringify(stats)); }
+  catch { signalerEchecStockage(); }
 }
 
 export function statsActuelles(): StatsReponses {
@@ -177,7 +183,7 @@ export function messageTuteur(s: StatsReponses): string {
 export function viderStats(): void {
   stats = vierge();
   try {
-    localStorage.removeItem(CLE);
+    localStorage.removeItem(CLE_STATS);
     lectureEnEchec = false;
   } catch {
     lectureEnEchec = true;

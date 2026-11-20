@@ -12,7 +12,7 @@ Un gain de note n'existe que s'il est démontrable ici (plan §1, « Principe de
 | `appareils.md` | P3.4 | Mesures Redmi 9A / Samsung A1x — **protocole déposé 16/11, adapté au bouton « تنزيل / استكمال الملفات » et au worker v5 le 18/11 ; mesures à faire** (aucune valeur émulateur) |
 | `confidentialite-serveur.md` | P-1.7 | Schéma RLS déployé sur le projet réel + DELETE prouvé (matrice S1-S10 dans l'audit P0.1) — **déposé** 18/11 |
 | `suppression-durable.md` | P0.2 | Chaîne UI → réseau → serveur de la suppression : 6 tests + textes UI conformes, conservation vérifiée **non confirmée** — **déposé** 18/11 ; coordination serveur = humain |
-| `sauvegarde-restauration.md` | P0.3 | Matrice de compatibilité (plats/enveloppés v1-v3), tests de panne (quota, JSON corrompu, écriture partielle), parcours d'assistance — **déposé** 18/11 ; essais réels = humain |
+| `sauvegarde-restauration.md` | P0.3 | Matrice de compatibilité (plats/enveloppés v1-v3), tests de panne (quota, JSON corrompu, écriture partielle), parcours d'assistance — **déposé** 18/11 ; **§5 : restauration atomique état+stats (journal d'engagement) prouvée le 20/11** (9 tests, 191/191) ; essais réels quota = humain |
 
 Les registres éditoriaux (arbitrages, relecture signée) vivent dans `plans/relecture/` ; le registre
 des sujets officiels (année, session, source, droits, intégrité) dans `plans/sources/REGISTRE.md`.
