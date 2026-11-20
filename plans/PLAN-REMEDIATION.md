@@ -48,3 +48,9 @@ Le transport historique conserve un emplacement d’attente par onglet pendant u
 ### Phase 3 — Durées locales invalides (BUG-004, partiel)
 
 Contrôle ciblé des minutes par leçon, du total et de la lecture directe utilisée par le chronomètre. Une chaîne, `null`, une valeur négative ou au-delà de la borne d’import n’est pas traitée comme une durée ; si l’état ne peut être chargé, l’écriture automatique ne remplace pas les octets initiaux. Les champs historiques absents restent tolérés. 211 tests et build réussis localement. Ce contrôle ne remplace pas la validation de tous les champs ni la coordination entre onglets. Voir [recette isolée pas à pas](RECETTE-ISOLEE-PAS-A-PAS.md) pour la préparation externe nécessaire au pilote.
+
+### Outillage et recette sans changement de forfait
+
+Vitest `5.1.1` et Vite `8.3.8` remplacent les versions signalées ; types Node 22 déclarés pour la compilation des tests. L’audit complet rapporte zéro vulnérabilité au moment du contrôle et la CI vérifie désormais les dépendances de développement aussi. 211 tests, build et 76 ressources HTTP réussis. Aucun changement d’infrastructure.
+
+La recette hébergée du lien et de PostgREST est **reportée**, sans achat ni changement du forfait. Alternative pour plus tard : lancer Supabase CLI et Docker sur une machine de développement, avec base et boîte de capture locales (Mailpit), et un frontend de test servi sur une origine HTTPS compatible avec le pilote. Ne pas réutiliser les données, clés ou paramètres de production. PGlite reste adapté aux tests SQL séquentiels déjà passés, mais ne remplace pas cette recette. D’ici là, continuer les travaux indépendants et conserver le pilote désactivé ; ne pas autoriser une diffusion de la synchronisation sur ces seules preuves.
