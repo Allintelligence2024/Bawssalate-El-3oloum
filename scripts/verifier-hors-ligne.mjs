@@ -4,10 +4,8 @@
 // S'exécuter APRÈS `npm run build`. Le niveau 2 (appareil réel, mode avion) n'est jamais
 // remplacé par ce script : cf. plans/preuves/hors-ligne.md §2.
 import { readFileSync, existsSync } from 'node:fs';
-import { spawn, spawnSync } from 'node:child_process';
+import { preview } from 'vite';
 
-const PORT = 4187;
-const BASE = `http://127.0.0.1:${PORT}`;
 
 if (!existsSync('dist/precache-manifest.json')) {
   console.error('ABSENT : dist/precache-manifest.json — lancer « npm run build » d\'abord.');
@@ -38,18 +36,8 @@ if (!demarrage.length) problemes.push('index.html : aucun asset de démarrage');
 for (const u of demarrage) if (!manifeste.assets.includes(u)) problemes.push(`asset de démarrage hors manifeste : ${u}`);
 
 // ── 2. Serveur preview + requêtes HTTP réelles ──
-const serveur = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], {
-  stdio: 'ignore', shell: true,
-});
-let pret = false;
-for (let i = 0; i < 60 && !pret; i++) {
-  try { const r = await fetch(BASE + '/index.html'); pret = r.ok; } catch { await new Promise((r) => setTimeout(r, 500)); }
-}
-if (!pret) {
-  console.error('ÉCHEC : le serveur preview n\'a pas démarré sur ' + BASE);
-  spawnSync('taskkill', ['/pid', String(serveur.pid), '/T', '/F']);
-  process.exit(1);
-}
+const serveur = await preview({ preview: { port: 0, host: '127.0.0.1' } });
+const BASE = `http://127.0.0.1:${serveur.httpServer.address().port}`;
 
 const typeOk = (url, res) => {
   const t = (res.headers.get('content-type') || '').toLowerCase();
@@ -77,7 +65,7 @@ for (const u of cibles) {
     lignesEchec.push(`${u} — ${e.message}`);
   }
 }
-spawnSync('taskkill', ['/pid', String(serveur.pid), '/T', '/F']);
+await serveur.close();
 
 // ── 3. Rapport ──
 console.log('── vérification hors-ligne (niveau 1) ──');

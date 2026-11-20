@@ -1,5 +1,5 @@
 // Simulation du worker : aucune affirmation de compatibilité navigateur/appareil.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
@@ -33,15 +33,22 @@ function environnement() {
   const handlers: Record<string, Handler> = {};
   const self = { location: { origin: 'https://app.test' }, clients: { claim: async () => {} }, addEventListener: (nom: string, cb: Handler) => { handlers[nom] = cb; } };
   let online = true, enVol = 0, maxEnVol = 0;
-  const fetch = async (url: any) => {
+  let bloquee: string | undefined;
+  const demandes: string[] = [];
+  const fetch = async (url: any, options?: RequestInit) => {
+    demandes.push(key(url));
     enVol++; maxEnVol = Math.max(maxEnVol, enVol);
-    await Promise.resolve();
-    enVol--;
+    try {
+      if (bloquee === key(url)) await new Promise((_, reject) => {
+        options?.signal?.addEventListener('abort', () => reject(new Error('délai')), { once: true });
+      });
+      await Promise.resolve();
+    } finally { enVol--; }
     const response = urls.get(key(url));
     if (!online) throw new Error('offline');
     return response?.clone() ?? new Response('missing', { status: 404 });
   };
-  vm.runInNewContext(readFileSync('public/sw.js', 'utf8').replaceAll('__KUNZ_BUILD_ID__', version), { self, caches, fetch, URL, Response, Promise, Number, Error });
+  vm.runInNewContext(readFileSync('public/sw.js', 'utf8').replaceAll('__KUNZ_BUILD_ID__', version), { self, caches, fetch, URL, Response, Promise, Number, Error, AbortController, setTimeout, clearTimeout });
   async function lifecycle(nom: string) {
     let promise: Promise<void> | undefined;
     handlers[nom]({ waitUntil: (p: Promise<void>) => { promise = p; } });
@@ -58,7 +65,7 @@ function environnement() {
     handlers.fetch({ request: { url: `https://app.test${path}`, method: 'GET', mode, headers: { has: () => range } }, respondWith: (p: Promise<Response>) => { promise = p; } });
     return promise;
   }
-  return { manifest, urls, put, cachesData, lifecycle, message, demande, setOnline: (v: boolean) => { online = v; }, maxEnVol: () => maxEnVol };
+  return { demandes, bloquer: (url?: string) => { bloquee = url; }, manifest, urls, put, cachesData, lifecycle, message, demande, setOnline: (v: boolean) => { online = v; }, maxEnVol: () => maxEnVol };
 }
 
 describe('service worker — simulation', () => {
@@ -86,6 +93,22 @@ describe('service worker — simulation', () => {
     const manque = await e.demande('/lecons/absente.html', 'navigate');
     expect(manque!.status).toBe(503);
     expect(await manque!.text()).not.toContain('kunz-build-id');
+  });
+  it('annule une ressource bloquée puis reprend sans retélécharger celles déjà présentes', async () => {
+    vi.useFakeTimers();
+    try {
+      const e = environnement();
+      await e.lifecycle('install');
+      e.bloquer('/assets/suite.js');
+      const essai = e.message('TELECHARGER_HORS_LIGNE');
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect((await essai).manquants).toBe(1);
+      expect(vi.getTimerCount()).toBe(0);
+      e.bloquer();
+      e.demandes.length = 0;
+      expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+      expect(e.demandes).toEqual(['/assets/suite.js']);
+    } finally { vi.useRealTimers(); }
   });
   it('ne compte pas une réponse HTML 200 à la place d’un module', async () => {
     const e = environnement();

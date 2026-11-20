@@ -1,5 +1,5 @@
 // إحصاء الإجابات — يقيسه المُرشد: كم إجابة صحيحة، كم ليست صحيحة، ومن أين جاءت.
-// مخزّن في مفتاح مستقل (kunz_stats_v1) حتى لا يمسّه حفظ Etat، وبلا نسبة مئوية وبلا لوم.
+// مفتاح مستقل تاريخيًا، ويُحفظ مع التقدّم بعد استيراد نسخة كاملة.
 
 import { useSyncExternalStore } from 'react';
 import { signalerEchecStockage } from './echecsStockage';
@@ -27,7 +27,7 @@ export const SOURCES: { id: SourceReponse; label: string }[] = [
   { id: 'exercice', label: 'التدريبات' },
 ];
 
-const CLE = 'kunz_stats_v1';
+import { CLE_STATS_HISTORIQUE as CLE, lireStatsBrutes, ecrireStatsBrutes } from './stockageCommun';
 const JOURS_GARDES = 45;
 let lectureEnEchec = false;
 
@@ -48,9 +48,8 @@ function vierge(): StatsReponses {
 
 function lire(): StatsReponses {
   try {
-    const brut = localStorage.getItem(CLE);
-    if (!brut) return vierge();
-    const a = JSON.parse(brut) as Partial<StatsReponses>;
+    const a = lireStatsBrutes() as Partial<StatsReponses> | null;
+    if (a === null) return vierge();
     if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('statistiques invalides');
     const compteurValide = (c: unknown): boolean => {
       if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
@@ -105,7 +104,7 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
   };
   try {
     if (lectureEnEchec) throw new Error('lecture précédente impossible');
-    localStorage.setItem(CLE, JSON.stringify(stats));
+    ecrireStatsBrutes(stats);
   } catch {
     signalerEchecStockage();
   }
@@ -116,9 +115,16 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
 export function restaurerStats(nouvelles: StatsReponses): void {
   stats = nouvelles;
   lectureEnEchec = false; // remplacement explicitement confirmé
-  try { localStorage.setItem(CLE, JSON.stringify(stats)); }
+  try { ecrireStatsBrutes(stats); }
   catch { signalerEchecStockage(); }
   ecouteurs.forEach((fn) => fn());
+}
+
+/** Met à jour la mémoire après une écriture atomique effectuée par storage.ts. */
+export function publierStatsRestaurees(nouvelles: StatsReponses): void {
+  stats = nouvelles;
+  lectureEnEchec = false;
+  ecouteurs.forEach(fn => fn());
 }
 
 export function statsActuelles(): StatsReponses {

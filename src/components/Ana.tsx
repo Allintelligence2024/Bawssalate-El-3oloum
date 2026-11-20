@@ -6,7 +6,7 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
 import { paquetExportComplet } from '../utils/storage';
-import { lireSauvegarde, etatDepuisFichier } from '../utils/backup';
+import { lireSauvegarde, normaliserSauvegarde } from '../utils/backup';
 import type { StatsReponses } from '../utils/stats';
 import { itemsFaits } from '../utils/moteur';
 import { aujourdhui, differenceJours, nb, nbMin, formatCourteAr, formatJourAr, joursNb } from '../utils/dates';
@@ -166,14 +166,13 @@ export default function Ana({
       }
       const brut: unknown = JSON.parse(await fichier.text());
       const lu = lireSauvegarde(brut);
-      const etat = etatDepuisFichier(brut);
-      if (!etat) {
+      if (!lu) {
         setErreurImport('هذا الملف ليس نسخة احتياطية من التطبيق.');
         return;
       }
       if (!window.confirm('ستُستبدل بيانات تقدّمك الحالية. سيبقى الحساب والموافقة على هذا الجهاز كما هما. النسخ القديمة لا تحتوي على الإحصاءات، فتظلّ الحالية. هل تتابع؟')) return;
       setErreurImport(null);
-      onRestaurer(etat, lu?.stats);
+      onRestaurer(normaliserSauvegarde(lu), lu.stats);
     } catch {
       setErreurImport('لم أستطع قراءة الملف — جرّب ملف JSON صادرًا من هذا التطبيق.');
     }
