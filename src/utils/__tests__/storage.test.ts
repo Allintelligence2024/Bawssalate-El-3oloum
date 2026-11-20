@@ -41,6 +41,16 @@ describe('storage — chargeur/sauveur', () => {
     expect(e.progression).toEqual({});
   });
 
+  it.each(['5', null, -1, 1_000_000_001])('protège un état avec des minutes locales invalides : %j', (minutes) => {
+    stored = JSON.stringify({ progression: { l1: { minutes } } });
+    const initial = stored;
+    const lu = chargerEtat();
+    expect(lu.progression).toEqual({});
+    expect(minutesStockees('l1')).toBe(0);
+    sauvegarderEtat(lu);
+    expect(stored).toBe(initial);
+  });
+
   it('recharge un état sauvegardé', () => {
     const etat: Etat = {
       version: 2, progression: { 'd1-u1-l1-expression-genique': { statut: 'terminee', phases: [], minutes: 5, repetitions: 0, intervalle: 0, facilite: 2.5 } },

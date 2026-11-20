@@ -44,3 +44,7 @@ Le transport historique conserve un emplacement d’attente par onglet pendant u
 ### Intégration avec `main`
 
 `main` a avancé jusqu’à `ee9baf1` et contient déjà une restauration via journal d’engagement (`bc5870b`). Pour éviter deux formats concurrents, cette PR conserve l’implémentation et les tests de `main` : la preuve de l’enregistrement unique intégré décrite historiquement dans le rapport du 19/11 ne décrit donc pas le code final de la PR. L’import UI conserve la validation unique et le test de borne UTF-8. Les garanties de quota, de rejeu et de concurrence doivent être évaluées sur le mécanisme retenu.
+
+### Phase 3 — Durées locales invalides (BUG-004, partiel)
+
+Contrôle ciblé des minutes par leçon, du total et de la lecture directe utilisée par le chronomètre. Une chaîne, `null`, une valeur négative ou au-delà de la borne d’import n’est pas traitée comme une durée ; si l’état ne peut être chargé, l’écriture automatique ne remplace pas les octets initiaux. Les champs historiques absents restent tolérés. 211 tests et build réussis localement. Ce contrôle ne remplace pas la validation de tous les champs ni la coordination entre onglets. Voir [recette isolée pas à pas](RECETTE-ISOLEE-PAS-A-PAS.md) pour la préparation externe nécessaire au pilote.

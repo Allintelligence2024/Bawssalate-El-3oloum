@@ -15,6 +15,10 @@ let lectureEnEchec = false;
 /** Un remplacement explicite par une sauvegarde validée lève la protection. */
 export function autoriserRemplacementEtat(): void { lectureEnEchec = false; }
 
+function minutesValides(valeur: unknown): valeur is number {
+  return typeof valeur === 'number' && Number.isFinite(valeur) && valeur >= 0 && valeur <= 1_000_000_000;
+}
+
 export function chargerEtat(): Etat {
   // Une restauration engagée mais interrompue (rechargement au milieu de l'opération)
   // est rejouée avant toute lecture : l'import est complet ou absent, jamais à moitié.
@@ -34,7 +38,12 @@ export function chargerEtat(): Etat {
       const valeur = champs[champ];
       if (valeur !== undefined && (!valeur || typeof valeur !== 'object' || Array.isArray(valeur))) throw new Error(`${champ} invalide`);
     }
-    if (progression && Object.values(progression).some(p => !p || typeof p !== 'object' || Array.isArray(p))) throw new Error('leçon invalide');
+    if (champs.minutesTotales !== undefined && !minutesValides(champs.minutesTotales)) throw new Error('total invalide');
+    if (progression && Object.values(progression).some(p => {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return true;
+      const { minutes } = p as Record<string, unknown>;
+      return minutes !== undefined && !minutesValides(minutes);
+    })) throw new Error('leçon invalide');
     const etat = etatDepuisBrut(analyse as Partial<Etat>);
     lectureEnEchec = false;
     return etat;
@@ -208,7 +217,8 @@ export function minutesStockees(lessonId: string): number {
     const brut = localStorage.getItem(CLE);
     if (!brut) return 0;
     const analyse = JSON.parse(brut) as Partial<Etat>;
-    return analyse.progression?.[lessonId]?.minutes ?? 0;
+    const minutes = analyse.progression?.[lessonId]?.minutes;
+    return minutesValides(minutes) ? minutes : 0;
   } catch {
     return 0;
   }
