@@ -4,9 +4,9 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
-import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, fusionnerProgressionImportee, autoriserRemplacementEtat } from './utils/storage';
+import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, restaurerProgression } from './utils/storage';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
-import { restaurerStats, type StatsReponses } from './utils/stats';
+import type { StatsReponses } from './utils/stats';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
@@ -518,13 +518,11 @@ export default function App() {
     setOnglet('aujourdhui');
   }
 
-  // استيراد نسخة احتياطية كاملة (من أنا) — الحفظ الفوري يقع في useEffect الحالة
+  // استيراد نسخة احتياطية كاملة — لا نغيّر الواجهة قبل نجاح التخزين.
   function onRestaurerEtat(nouveau: Etat, stats?: StatsReponses): void {
-    // Une restauration confirmée autorise le remplacement, même après une lecture impossible.
-    autoriserRemplacementEtat();
-    // L'identité, la session et le consentement appartiennent à l'appareil courant.
-    setEtat((prev) => fusionnerProgressionImportee(prev, nouveau));
-    if (stats) restaurerStats(stats);
+    const restaure = restaurerProgression(etat, nouveau, stats);
+    if (!restaure) return;
+    setEtat(restaure);
     setMode(null);
     setOnglet('ana');
   }

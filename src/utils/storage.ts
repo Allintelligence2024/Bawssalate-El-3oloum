@@ -2,11 +2,11 @@
 // المفتاح: murajih_svt_v1 (تبقى عليه التقدّم القديم)
 
 import { etatVierge, progressionVierge, type Etat, type ProgressionLecon } from '../types';
-import { viderStats, statsActuelles, type StatsReponses } from './stats';
+import { viderStats, statsActuelles, publierStatsRestaurees, type StatsReponses } from './stats';
 import { signalerEchecStockage } from './echecsStockage';
 export { surEchecSauvegarde } from './echecsStockage';
 
-const CLE = 'murajih_svt_v1';
+import { CLE_ETAT as CLE, CHAMP_STATS, lireEtatBrut } from './stockageCommun';
 // Ne pas écraser des données existantes si leur lecture a échoué.
 let lectureEnEchec = false;
 
@@ -30,7 +30,8 @@ export function chargerEtat(): Etat {
       if (valeur !== undefined && (!valeur || typeof valeur !== 'object' || Array.isArray(valeur))) throw new Error(`${champ} invalide`);
     }
     if (progression && Object.values(progression).some(p => !p || typeof p !== 'object' || Array.isArray(p))) throw new Error('leçon invalide');
-    const etat = etatDepuisBrut(analyse as Partial<Etat>);
+    const { [CHAMP_STATS]: _stats, ...progressionSeule } = champs;
+    const etat = etatDepuisBrut(progressionSeule as Partial<Etat>);
     lectureEnEchec = false;
     return etat;
   } catch {
@@ -80,12 +81,36 @@ export function fusionnerProgressionImportee(courant: Etat, importe: Etat): Etat
 export function sauvegarderEtat(etat: Etat): void {
   if (lectureEnEchec) { signalerEchecStockage(); return; }
   try {
-    localStorage.setItem(CLE, JSON.stringify(etat));
+    ecrireEtat(etat);
   } catch {
     // وضع التصفّح الخاص أو امتلاء التخزين — لا نتجاهل بعد الآن: نُنبّه الواجهة
     // (l'état en mémoire n'est pas perdu ; la prochaine sauvegarde réessaie).
     signalerEchecStockage();
   }
+}
+
+function ecrireEtat(etat: Etat, stats?: StatsReponses): void {
+  let existant: Record<string, unknown> | null = null;
+  if (stats === undefined) {
+    try { existant = lireEtatBrut(); } catch (e) {
+      if (!(e instanceof SyntaxError)) throw e;
+    }
+  }
+  const donnees = { ...etat } as Record<string, unknown>;
+  delete donnees[CHAMP_STATS];
+  if (stats !== undefined) donnees[CHAMP_STATS] = stats;
+  else if (existant && Object.hasOwn(existant, CHAMP_STATS)) donnees[CHAMP_STATS] = existant[CHAMP_STATS];
+  localStorage.setItem(CLE, JSON.stringify(donnees));
+}
+
+/** Ne publie ni état React ni stats tant que l'unique écriture n'a pas réussi. */
+export function restaurerProgression(courant: Etat, importe: Etat, stats?: StatsReponses): Etat | null {
+  const prochain = fusionnerProgressionImportee(courant, importe);
+  try { ecrireEtat(prochain, stats); }
+  catch { signalerEchecStockage(); return null; }
+  lectureEnEchec = false;
+  if (stats !== undefined) publierStatsRestaurees(stats);
+  return prochain;
 }
 
 export function progressionDe(etat: Etat, lessonId: string): ProgressionLecon {

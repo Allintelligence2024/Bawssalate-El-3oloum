@@ -75,5 +75,9 @@ export function lireSauvegarde(brut: unknown): SauvegardeLue | null {
 export function etatDepuisFichier(brut: unknown): Etat | null {
   const lu = lireSauvegarde(brut);
   if (!lu) return null;
+  return normaliserSauvegarde(lu);
+}
+
+export function normaliserSauvegarde(lu: SauvegardeLue): Etat {
   return { ...etatDepuisBrut(lu.etat), consentementSync: false, consentementSyncDecideLe: undefined };
 }
