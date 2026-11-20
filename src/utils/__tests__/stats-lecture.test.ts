@@ -16,7 +16,7 @@ describe('protection des statistiques illisibles', () => {
     expect(setItem).not.toHaveBeenCalled();
     expect(alerte).toHaveBeenCalled();
     restaurerStats(statsActuelles());
-    expect(setItem).not.toHaveBeenCalled(); // Impossible de déterminer la clé active.
+    expect(setItem).toHaveBeenCalledTimes(1);
     stop();
   });
 

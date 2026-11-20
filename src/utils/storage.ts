@@ -2,11 +2,13 @@
 // المفتاح: murajih_svt_v1 (تبقى عليه التقدّم القديم)
 
 import { etatVierge, progressionVierge, type Etat, type ProgressionLecon } from '../types';
-import { viderStats, statsActuelles, publierStatsRestaurees, type StatsReponses } from './stats';
+import { viderStats, statsActuelles, appliquerStats, CLE_STATS, type StatsReponses } from './stats';
 import { signalerEchecStockage } from './echecsStockage';
 export { surEchecSauvegarde } from './echecsStockage';
 
-import { CLE_ETAT as CLE, CHAMP_STATS, lireEtatBrut } from './stockageCommun';
+const CLE = 'murajih_svt_v1';
+// Journal d'engagement de la restauration atomique (état + statistiques en une seule écriture).
+const CLE_RESTAURATION = 'murajih_restauration_v1';
 // Ne pas écraser des données existantes si leur lecture a échoué.
 let lectureEnEchec = false;
 
@@ -14,6 +16,9 @@ let lectureEnEchec = false;
 export function autoriserRemplacementEtat(): void { lectureEnEchec = false; }
 
 export function chargerEtat(): Etat {
+  // Une restauration engagée mais interrompue (rechargement au milieu de l'opération)
+  // est rejouée avant toute lecture : l'import est complet ou absent, jamais à moitié.
+  rejouerJournalRestauration();
   try {
     const brut = localStorage.getItem(CLE);
     if (!brut) { lectureEnEchec = false; return etatVierge(); }
@@ -30,8 +35,7 @@ export function chargerEtat(): Etat {
       if (valeur !== undefined && (!valeur || typeof valeur !== 'object' || Array.isArray(valeur))) throw new Error(`${champ} invalide`);
     }
     if (progression && Object.values(progression).some(p => !p || typeof p !== 'object' || Array.isArray(p))) throw new Error('leçon invalide');
-    const { [CHAMP_STATS]: _stats, ...progressionSeule } = champs;
-    const etat = etatDepuisBrut(progressionSeule as Partial<Etat>);
+    const etat = etatDepuisBrut(analyse as Partial<Etat>);
     lectureEnEchec = false;
     return etat;
   } catch {
@@ -78,39 +82,108 @@ export function fusionnerProgressionImportee(courant: Etat, importe: Etat): Etat
     consentementSync: courant.consentementSync, consentementSyncDecideLe: courant.consentementSyncDecideLe };
 }
 
+interface JournalRestauration { etat?: unknown; stats?: unknown }
+
+/** Achève une restauration engagée mais inachevée, avant toute lecture de l'état. */
+function rejouerJournalRestauration(): void {
+  let brut: string | null = null;
+  try { brut = localStorage.getItem(CLE_RESTAURATION); } catch { return; }
+  if (!brut) return;
+  let journal: JournalRestauration;
+  try {
+    journal = JSON.parse(brut) as JournalRestauration;
+  } catch {
+    // Journal illisible : abandonné, l'état sur le disque reste la source.
+    try { localStorage.removeItem(CLE_RESTAURATION); } catch { /* rien */ }
+    return;
+  }
+  const etatValide = !!journal && typeof journal === 'object' && !!journal.etat &&
+    typeof journal.etat === 'object' && !Array.isArray(journal.etat);
+  const statsValides = !!journal && (journal.stats === undefined || journal.stats === null ||
+    (typeof journal.stats === 'object' && !Array.isArray(journal.stats)));
+  if (!etatValide || !statsValides) {
+    try { localStorage.removeItem(CLE_RESTAURATION); } catch { /* rien */ }
+    return;
+  }
+  try {
+    // Phase d'application rejouée, dans le même ordre que l'opération initiale.
+    localStorage.setItem(CLE, JSON.stringify(journal.etat));
+    if (journal.stats) {
+      localStorage.setItem(CLE_STATS, JSON.stringify(journal.stats));
+      appliquerStats(journal.stats as StatsReponses);
+    }
+    localStorage.removeItem(CLE_RESTAURATION);
+    lectureEnEchec = false;
+  } catch {
+    // Quota pendant le rejeu : le journal reste, l'état lu restera l'ancien jusqu'au prochain essai.
+  }
+}
+
+/**
+ * Restauration atomique d'un import complet : la progression ET les statistiques sont
+ * engagées par une seule écriture (le journal d'engagement), puis appliquées sur les
+ * deux clés canoniques.
+ *
+ * @returns true si tout est appliqué. false si le stockage a refusé (quota) : dans ce
+ * cas les anciennes données sur le disque, la mémoire et l'état affiché restent
+ * inchangés — seule une écriture du journal a eu lieu, aussitôt annulée.
+ * Une sauvegarde ancienne sans statistiques (stats undefined) ne touche pas les
+ * statistiques existantes.
+ */
+export function restaurerEtatEtStats(nouveau: Etat, stats?: StatsReponses): boolean {
+  let ancienEtat: string | null = null;
+  try {
+    ancienEtat = localStorage.getItem(CLE);
+    // Phase d'engagement : une seule écriture contient les deux valeurs.
+    localStorage.setItem(CLE_RESTAURATION, JSON.stringify({ etat: nouveau, stats: stats ?? null }));
+  } catch {
+    signalerEchecStockage(); // aucune autre clé n'a été touchée
+    return false;
+  }
+  try {
+    // Phase d'application, clé 1 : l'état.
+    localStorage.setItem(CLE, JSON.stringify(nouveau));
+  } catch {
+    // setItem est atomique par clé : l'ancien contenu est déjà intact.
+    // Il suffit d'annuler l'engagement pour que rien n'ait changé.
+    try { localStorage.removeItem(CLE_RESTAURATION); } catch { /* rien */ }
+    signalerEchecStockage();
+    return false; // mémoire jamais touchée : l'état affiché ne bouge pas
+  }
+  if (stats) {
+    try {
+      // Phase d'application, clé 2 : les statistiques.
+      localStorage.setItem(CLE_STATS, JSON.stringify(stats));
+    } catch {
+      // L'état a été écrit : on remet l'ancien octet de l'état, puis on retire le
+      // journal. Remettre l'ancien octet coûte exactement ce que le journal (qui a
+      // réussi) vient d'ajouter : cette écriture ne peut pas échouer à son tour.
+      let remis = false;
+      try {
+        if (ancienEtat === null) localStorage.removeItem(CLE);
+        else localStorage.setItem(CLE, ancienEtat);
+        remis = true;
+      } catch { remis = false; }
+      if (remis) { try { localStorage.removeItem(CLE_RESTAURATION); } catch { /* rien */ } }
+      signalerEchecStockage();
+      return false; // mémoire jamais touchée : l'état affiché ne bouge pas
+    }
+  }
+  try { localStorage.removeItem(CLE_RESTAURATION); } catch { /* rien */ }
+  lectureEnEchec = false; // remplacement validé par l'import
+  if (stats) appliquerStats(stats); // sinon les statistiques existantes sont conservées
+  return true;
+}
+
 export function sauvegarderEtat(etat: Etat): void {
   if (lectureEnEchec) { signalerEchecStockage(); return; }
   try {
-    ecrireEtat(etat);
+    localStorage.setItem(CLE, JSON.stringify(etat));
   } catch {
     // وضع التصفّح الخاص أو امتلاء التخزين — لا نتجاهل بعد الآن: نُنبّه الواجهة
     // (l'état en mémoire n'est pas perdu ; la prochaine sauvegarde réessaie).
     signalerEchecStockage();
   }
-}
-
-function ecrireEtat(etat: Etat, stats?: StatsReponses): void {
-  let existant: Record<string, unknown> | null = null;
-  if (stats === undefined) {
-    try { existant = lireEtatBrut(); } catch (e) {
-      if (!(e instanceof SyntaxError)) throw e;
-    }
-  }
-  const donnees = { ...etat } as Record<string, unknown>;
-  delete donnees[CHAMP_STATS];
-  if (stats !== undefined) donnees[CHAMP_STATS] = stats;
-  else if (existant && Object.hasOwn(existant, CHAMP_STATS)) donnees[CHAMP_STATS] = existant[CHAMP_STATS];
-  localStorage.setItem(CLE, JSON.stringify(donnees));
-}
-
-/** Ne publie ni état React ni stats tant que l'unique écriture n'a pas réussi. */
-export function restaurerProgression(courant: Etat, importe: Etat, stats?: StatsReponses): Etat | null {
-  const prochain = fusionnerProgressionImportee(courant, importe);
-  try { ecrireEtat(prochain, stats); }
-  catch { signalerEchecStockage(); return null; }
-  lectureEnEchec = false;
-  if (stats !== undefined) publierStatsRestaurees(stats);
-  return prochain;
 }
 
 export function progressionDe(etat: Etat, lessonId: string): ProgressionLecon {

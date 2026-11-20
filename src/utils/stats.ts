@@ -1,5 +1,5 @@
 // إحصاء الإجابات — يقيسه المُرشد: كم إجابة صحيحة، كم ليست صحيحة، ومن أين جاءت.
-// مفتاح مستقل تاريخيًا، ويُحفظ مع التقدّم بعد استيراد نسخة كاملة.
+// مخزّن في مفتاح مستقل (kunz_stats_v1) حتى لا يمسّه حفظ Etat، وبلا نسبة مئوية وبلا لوم.
 
 import { useSyncExternalStore } from 'react';
 import { signalerEchecStockage } from './echecsStockage';
@@ -27,7 +27,7 @@ export const SOURCES: { id: SourceReponse; label: string }[] = [
   { id: 'exercice', label: 'التدريبات' },
 ];
 
-import { CLE_STATS_HISTORIQUE as CLE, lireStatsBrutes, ecrireStatsBrutes } from './stockageCommun';
+export const CLE_STATS = 'kunz_stats_v1';
 const JOURS_GARDES = 45;
 let lectureEnEchec = false;
 
@@ -48,8 +48,9 @@ function vierge(): StatsReponses {
 
 function lire(): StatsReponses {
   try {
-    const a = lireStatsBrutes() as Partial<StatsReponses> | null;
-    if (a === null) return vierge();
+    const brut = localStorage.getItem(CLE_STATS);
+    if (!brut) return vierge();
+    const a = JSON.parse(brut) as Partial<StatsReponses>;
     if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('statistiques invalides');
     const compteurValide = (c: unknown): boolean => {
       if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
@@ -104,27 +105,26 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
   };
   try {
     if (lectureEnEchec) throw new Error('lecture précédente impossible');
-    ecrireStatsBrutes(stats);
+    localStorage.setItem(CLE_STATS, JSON.stringify(stats));
   } catch {
     signalerEchecStockage();
   }
   ecouteurs.forEach((fn) => fn());
 }
 
-/** Restaurer uniquement des statistiques validées par lireSauvegarde. */
-export function restaurerStats(nouvelles: StatsReponses): void {
+/** Applique des statistiques en mémoire sans écrire — l'écriture appartient à la
+ *  restauration atomique (storage.restaurerEtatEtStats) ou à restaurerStats. */
+export function appliquerStats(nouvelles: StatsReponses): void {
   stats = nouvelles;
   lectureEnEchec = false; // remplacement explicitement confirmé
-  try { ecrireStatsBrutes(stats); }
-  catch { signalerEchecStockage(); }
   ecouteurs.forEach((fn) => fn());
 }
 
-/** Met à jour la mémoire après une écriture atomique effectuée par storage.ts. */
-export function publierStatsRestaurees(nouvelles: StatsReponses): void {
-  stats = nouvelles;
-  lectureEnEchec = false;
-  ecouteurs.forEach(fn => fn());
+/** Restaurer uniquement des statistiques validées par lireSauvegarde. */
+export function restaurerStats(nouvelles: StatsReponses): void {
+  appliquerStats(nouvelles);
+  try { localStorage.setItem(CLE_STATS, JSON.stringify(stats)); }
+  catch { signalerEchecStockage(); }
 }
 
 export function statsActuelles(): StatsReponses {
@@ -183,7 +183,7 @@ export function messageTuteur(s: StatsReponses): string {
 export function viderStats(): void {
   stats = vierge();
   try {
-    localStorage.removeItem(CLE);
+    localStorage.removeItem(CLE_STATS);
     lectureEnEchec = false;
   } catch {
     lectureEnEchec = true;

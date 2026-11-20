@@ -40,3 +40,7 @@ En parallèle du jalon Auth/PostgREST non exécuté, le service worker borne à 
 ### Phase 3 — File locale (BUG-003, partiel)
 
 Le transport historique conserve un emplacement d’attente par onglet pendant un envoi : les états intermédiaires sont remplacés par le dernier résumé. La suspension efface le résumé en attente pour le compte concerné. Test simulé : A bloqué, B puis C demandés, seuls A et C partent ; variante avec suspension, seul A part. Aucun délai d’envoi historique ajouté ici ; état local mal typé et concurrence inter-onglets restent ouverts.
+
+### Intégration avec `main`
+
+`main` a avancé jusqu’à `ee9baf1` et contient déjà une restauration via journal d’engagement (`bc5870b`). Pour éviter deux formats concurrents, cette PR conserve l’implémentation et les tests de `main` : la preuve de l’enregistrement unique intégré décrite historiquement dans le rapport du 19/11 ne décrit donc pas le code final de la PR. L’import UI conserve la validation unique et le test de borne UTF-8. Les garanties de quota, de rejeu et de concurrence doivent être évaluées sur le mécanisme retenu.

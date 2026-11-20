@@ -1,51 +1,219 @@
-import { afterEach, expect, it, vi } from 'vitest';
+// P0.3 — restauration atomique : progression ET statistiques engagées en une seule écriture.
+// Preuves attendues :
+//  1. un import complet s'engage en une seule écriture (journal) puis s'applique ;
+//  2. quota à l'engagement ou à l'application → anciennes données et état affiché inchangés ;
+//  3. une sauvegarde ancienne sans statistiques conserve les statistiques existantes ;
+//  4. rechargement au milieu de l'opération → le journal est rejoué (complet, jamais à moitié).
+// Données 100 % fictives, localStorage simulé.
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { Etat } from '../../types';
+import { etatDepuisFichier, lireSauvegarde } from '../backup';
+import { noterReponse, statsActuelles, viderStats, CLE_STATS, type StatsReponses } from '../stats';
+import { effacerAlerteStockage, surEchecSauvegarde } from '../echecsStockage';
+import {
+  chargerEtat, sauvegarderEtat, paquetExportComplet, fusionnerProgressionImportee,
+  restaurerEtatEtStats, autoriserRemplacementEtat,
+} from '../storage';
 
-function stockageFictif() {
-  const donnees = new Map<string, string>();
-  const setItem = vi.fn((cle: string, valeur: string) => { donnees.set(cle, valeur); });
-  vi.stubGlobal('localStorage', {
-    getItem: (cle: string) => donnees.get(cle) ?? null,
-    setItem,
-    removeItem: (cle: string) => donnees.delete(cle),
-  });
-  vi.resetModules();
-  return { donnees, setItem };
-}
-afterEach(() => vi.unstubAllGlobals());
+const CLE_ETAT = 'murajih_svt_v1';
+const CLE_JOURNAL = 'murajih_restauration_v1';
 
-it('publie progression et statistiques ensemble, même après redémarrage simulé', async () => {
-  const { setItem } = stockageFictif();
-  const { etatVierge } = await import('../../types');
-  const { restaurerProgression, sauvegarderEtat, chargerEtat, paquetExportComplet } = await import('../storage');
-  const { statsActuelles, noterReponse } = await import('../stats');
-  const initial = { ...etatVierge(), consentementSync: true };
-  const restores = { ...statsActuelles(), justes: 3 };
-  const nouveau = restaurerProgression(initial, { ...etatVierge(), minutesTotales: 80 }, restores)!;
-  expect(setItem).toHaveBeenCalledTimes(1);
-  expect(nouveau.consentementSync).toBe(true);
-  expect(statsActuelles().justes).toBe(3);
-  sauverSansStats();
-  noterReponse('phase', true);
-  vi.resetModules();
-  const disk = await import('../storage');
-  expect(disk.chargerEtat().minutesTotales).toBe(90);
-  expect((await import('../stats')).statsActuelles().justes).toBe(4);
-  expect(JSON.stringify(paquetExportComplet(chargerEtat()))).not.toContain('__statsRestaureesV1');
-  function sauverSansStats() { sauvegarderEtat({ ...nouveau, minutesTotales: 90 }); }
+let store: Record<string, string>;
+let clesBloquees: Set<string>;
+let ecritures: { cle: string; valeur: string }[];
+
+beforeEach(() => {
+  store = {};
+  clesBloquees = new Set();
+  ecritures = [];
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => (k in store ? store[k] : null),
+    setItem: (k: string, v: string) => {
+      if (clesBloquees.has(k)) throw new Error('QuotaExceededError');
+      store[k] = v;
+      ecritures.push({ cle: k, valeur: v });
+    },
+    removeItem: (k: string) => { delete store[k]; },
+  };
+  effacerAlerteStockage();
+  autoriserRemplacementEtat();
+  viderStats(); // remet à zéro le singleton en mémoire + son état de lecture
+});
+afterEach(() => { (globalThis as any).localStorage = undefined; });
+
+const etatMinimal = (): Etat => ({
+  version: 2, progression: {}, jalons: {}, notes: [], carnet: [], journal: [], minutesTotales: 0, revisions: 0,
+  nom: 'x', dateBac: '2027-06-10', seancesComptees: 0, ateliers: {}, consentementSync: false,
+});
+const statsValides = (): StatsReponses => ({
+  justes: 5, fausses: 1,
+  parSource: {
+    phase: { justes: 5, fausses: 1 }, revision: { justes: 0, fausses: 0 }, jalon: { justes: 0, fausses: 0 },
+    atelier: { justes: 0, fausses: 0 }, exercice: { justes: 0, fausses: 0 },
+  },
+  parJour: {},
 });
 
-it('garde les deux anciennes données et la mémoire si le quota bloque le commit', async () => {
-  const { donnees, setItem } = stockageFictif();
-  const { etatVierge } = await import('../../types');
-  const { sauvegarderEtat, restaurerProgression } = await import('../storage');
-  const { statsActuelles, noterReponse } = await import('../stats');
-  const initial = { ...etatVierge(), minutesTotales: 12 };
-  sauvegarderEtat(initial);
-  noterReponse('phase', true);
-  const avant = [...donnees];
-  const stats = statsActuelles();
-  setItem.mockImplementationOnce(() => { throw new DOMException('quota', 'QuotaExceededError'); });
-  expect(restaurerProgression(initial, { ...initial, minutesTotales: 80 }, { ...stats, justes: 3 })).toBeNull();
-  expect([...donnees]).toEqual(avant);
-  expect(statsActuelles()).toBe(stats);
+describe('restauration atomique — engagement en une seule écriture', () => {
+  it('succès : la première écriture engage état ET statistiques, puis application, journal retiré, mémoire alignée', () => {
+    const nouveau: Etat = { ...etatMinimal(), minutesTotales: 42, nom: 'مريم' };
+    const ok = restaurerEtatEtStats(nouveau, statsValides());
+    expect(ok).toBe(true);
+    // Une seule écriture contient les deux valeurs (phase d'engagement).
+    expect(ecritures[0].cle).toBe(CLE_JOURNAL);
+    const engage = JSON.parse(ecritures[0].valeur);
+    expect(engage.etat.minutesTotales).toBe(42);
+    expect(engage.stats.justes).toBe(5);
+    // Application sur les deux clés canoniques, puis retrait du journal.
+    expect(JSON.parse(store[CLE_ETAT]).minutesTotales).toBe(42);
+    expect(JSON.parse(store[CLE_STATS]).justes).toBe(5);
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+    expect(statsActuelles().justes).toBe(5); // mémoire alignée sur le disque
+    expect(chargerEtat().nom).toBe('مريم'); // « redémarrage » : relu depuis le disque
+  });
+
+  it('sauvegarde ancienne sans statistiques : les statistiques existantes sont conservées (clé ET mémoire)', () => {
+    noterReponse('phase', true);
+    noterReponse('exercice', false);
+    const avant = statsActuelles();
+    const lu = lireSauvegarde({ progression: {}, version: 1 });
+    expect(lu?.stats).toBeUndefined();
+    const ok = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 7 }, lu?.stats);
+    expect(ok).toBe(true);
+    expect(statsActuelles()).toEqual(avant); // mémoire : jamais remise à zéro
+    expect(store[CLE_STATS]).toBe(JSON.stringify(avant)); // disque : inchangé
+    expect(JSON.parse(store[CLE_ETAT]).minutesTotales).toBe(7); // la progression, elle, est restaurée
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+  });
+});
+
+describe('restauration atomique — quota (rien ne bouge)', () => {
+  it('quota sur le journal d\'engagement : aucune autre clé touchée, alerte, mémoire inchangée', () => {
+    const ancien = JSON.stringify(etatMinimal());
+    store[CLE_ETAT] = ancien;
+    store[CLE_STATS] = JSON.stringify(statsValides());
+    const avant = statsActuelles();
+    clesBloquees.add(CLE_JOURNAL);
+    const alerte = vi.fn();
+    const stop = surEchecSauvegarde(alerte);
+    const ok = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 99 }, statsValides());
+    expect(ok).toBe(false);
+    expect(alerte).toHaveBeenCalled(); // l'échec n'est jamais silencieux
+    expect(store[CLE_ETAT]).toBe(ancien);
+    expect(store[CLE_STATS]).toBe(JSON.stringify(statsValides()));
+    expect(statsActuelles()).toEqual(avant);
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+    stop();
+  });
+
+  it('quota sur la clé état (phase d\'application) : l\'ancien contenu reste intact, journal retiré', () => {
+    const ancien = JSON.stringify({ ...etatMinimal(), minutesTotales: 13 });
+    store[CLE_ETAT] = ancien;
+    store[CLE_STATS] = JSON.stringify(statsValides());
+    const avant = statsActuelles();
+    clesBloquees.add(CLE_ETAT);
+    const alerte = vi.fn();
+    const stop = surEchecSauvegarde(alerte);
+    const ok = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 99 }, statsValides());
+    expect(ok).toBe(false);
+    expect(alerte).toHaveBeenCalled();
+    expect(store[CLE_ETAT]).toBe(ancien); // ni écrasé, ni corrompu
+    expect(store[CLE_STATS]).toBe(JSON.stringify(statsValides())); // jamais touchée
+    expect(statsActuelles()).toEqual(avant);
+    expect(store[CLE_JOURNAL]).toBeUndefined(); // annulation complète : pas de rejeu surprise
+    stop();
+  });
+
+  it('quota sur la clé statistiques (phase d\'application) : l\'ancien état est remis en place, tout reste cohérent', () => {
+    const ancienEtat = JSON.stringify({ ...etatMinimal(), minutesTotales: 13 });
+    const ancienStats = JSON.stringify(statsValides());
+    store[CLE_ETAT] = ancienEtat;
+    store[CLE_STATS] = ancienStats;
+    const avant = statsActuelles();
+    clesBloquees.add(CLE_STATS);
+    const alerte = vi.fn();
+    const stop = surEchecSauvegarde(alerte);
+    const ok = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 99 }, statsValides());
+    expect(ok).toBe(false);
+    expect(alerte).toHaveBeenCalled();
+    expect(store[CLE_ETAT]).toBe(ancienEtat); // rollback : ancien octet rétabli
+    expect(store[CLE_STATS]).toBe(ancienStats);
+    expect(statsActuelles()).toEqual(avant); // état affiché inchangé
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+    stop();
+  });
+});
+
+describe('restauration atomique — rechargement et protection', () => {
+  it('journal corrompu au chargement : abandonné proprement, ancien état relu, rien de cassé', () => {
+    const ancien = JSON.stringify({ ...etatMinimal(), minutesTotales: 13 });
+    store[CLE_ETAT] = ancien;
+    store[CLE_STATS] = JSON.stringify(statsValides());
+    store[CLE_JOURNAL] = '{JSON cassé';
+    const avant = statsActuelles();
+    const relu = chargerEtat();
+    expect(relu.minutesTotales).toBe(13);
+    expect(store[CLE_ETAT]).toBe(ancien);
+    expect(store[CLE_JOURNAL]).toBeUndefined(); // le journal illisible est retiré, sans crash
+    expect(statsActuelles()).toEqual(avant);
+  });
+
+  it('protection de lecture : conservée après un échec de restauration, levée après un succès', () => {
+    store[CLE_ETAT] = '{JSON cassé';
+    chargerEtat(); // lecture impossible → protection de ré-écriture active
+    clesBloquees.add(CLE_JOURNAL);
+    const refus = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 99 }, statsValides());
+    expect(refus).toBe(false);
+    sauvegarderEtat({ ...etatMinimal(), minutesTotales: 99 });
+    expect(store[CLE_ETAT]).toBe('{JSON cassé'); // toujours protégé : l'ancien n'est pas écrasé
+    clesBloquees.delete(CLE_JOURNAL);
+    const ok = restaurerEtatEtStats({ ...etatMinimal(), minutesTotales: 42 }, statsValides());
+    expect(ok).toBe(true); // l'import validé lève la protection
+    sauvegarderEtat({ ...etatMinimal(), minutesTotales: 43 });
+    expect(JSON.parse(store[CLE_ETAT]).minutesTotales).toBe(43);
+  });
+
+  it('redémarrage après restauration réussie : progression relu à l\'identique, identité et consentement locaux conservés', () => {
+    const courant: Etat = {
+      ...etatMinimal(),
+      compte: { email: 'a@b.c', motDePasse: 'h', wilaya: '16', daira: 'x', creeLe: '2026-11-01' },
+      consentementSync: false,
+    };
+    store[CLE_ETAT] = JSON.stringify(courant);
+    const original: Etat = {
+      ...etatMinimal(),
+      progression: {
+        'd1-u1-l1-expression-genique': { statut: 'terminee', phases: [1, 2, 3], minutes: 12, repetitions: 1, intervalle: 3, facilite: 2.6 },
+      },
+      minutesTotales: 12, nom: 'تلميذ',
+    };
+    const importe = etatDepuisFichier(JSON.parse(JSON.stringify(paquetExportComplet(original))));
+    expect(importe).not.toBeNull();
+    const fusionne = fusionnerProgressionImportee(courant, importe!);
+    const ok = restaurerEtatEtStats(fusionne, statsValides());
+    expect(ok).toBe(true);
+    const relu = chargerEtat(); // « redémarrage »
+    expect(relu.progression).toEqual(original.progression);
+    expect(relu.compte).toEqual(courant.compte); // l'identité vient de l'appareil, pas du fichier
+    expect(relu.consentementSync).toBe(false);
+    expect(statsActuelles().justes).toBe(5);
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+  });
+
+  it('rechargement des modules au milieu de l\'opération : le journal est rejoué (restauration complète)', async () => {
+    const nouveau: Etat = { ...etatMinimal(), minutesTotales: 77, nom: 'بعد إعادة التحميل' };
+    // État après phase d'engagement, avant phase d'application (coupure au milieu).
+    store[CLE_ETAT] = JSON.stringify(etatMinimal());
+    store[CLE_JOURNAL] = JSON.stringify({ etat: nouveau, stats: statsValides() });
+    vi.resetModules(); // « nouvelle session » : modules entièrement rechargés
+    const { chargerEtat: recharger } = await import('../storage');
+    const { statsActuelles: statsFraiches } = await import('../stats');
+    const relu = recharger();
+    expect(relu.minutesTotales).toBe(77);
+    expect(relu.nom).toBe('بعد إعادة التحميل');
+    expect(store[CLE_ETAT]).toBe(JSON.stringify(nouveau));
+    expect(store[CLE_STATS]).toBe(JSON.stringify(statsValides()));
+    expect(statsFraiches().justes).toBe(5); // mémoire fraîche alignée par le rejeu
+    expect(store[CLE_JOURNAL]).toBeUndefined(); // rejoué une seule fois
+  });
 });
