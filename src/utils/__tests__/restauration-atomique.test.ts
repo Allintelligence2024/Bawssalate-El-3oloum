@@ -87,6 +87,28 @@ describe('restauration atomique — engagement en une seule écriture', () => {
   });
 });
 
+it('bloque la sauvegarde automatique tant que le rejeu du journal est incomplet', () => {
+  store[CLE_ETAT] = JSON.stringify(etatMinimal());
+  const journal = JSON.stringify({ etat: { ...etatMinimal(), nom: 'Restauré' }, stats: statsValides() });
+  store[CLE_JOURNAL] = journal;
+  clesBloquees.add(CLE_STATS);
+  const alerte = vi.fn();
+  const stop = surEchecSauvegarde(alerte);
+  try {
+    const lu = chargerEtat();
+    expect(lu.nom).not.toBe('Restauré');
+    const étatSurDisque = store[CLE_ETAT];
+    sauvegarderEtat({ ...lu, nom: 'Ne pas écrire' });
+    expect(store[CLE_ETAT]).toBe(étatSurDisque);
+    expect(store[CLE_JOURNAL]).toBe(journal);
+    expect(alerte).toHaveBeenCalled();
+    clesBloquees.clear();
+    expect(chargerEtat().nom).toBe('Restauré');
+    expect(statsActuelles().justes).toBe(5);
+    expect(store[CLE_JOURNAL]).toBeUndefined();
+  } finally { stop(); }
+});
+
 describe('restauration atomique — quota (rien ne bouge)', () => {
   it('quota sur le journal d\'engagement : aucune autre clé touchée, alerte, mémoire inchangée', () => {
     const ancien = JSON.stringify(etatMinimal());

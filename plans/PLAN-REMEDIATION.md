@@ -54,3 +54,7 @@ Contrôle ciblé des minutes par leçon, du total et de la lecture directe utili
 Vitest `5.1.1` et Vite `8.3.8` remplacent les versions signalées ; types Node 22 déclarés pour la compilation des tests. L’audit complet rapporte zéro vulnérabilité au moment du contrôle et la CI vérifie désormais les dépendances de développement aussi. 211 tests, build et 76 ressources HTTP réussis. Aucun changement d’infrastructure.
 
 La recette hébergée du lien et de PostgREST est **reportée**, sans achat ni changement du forfait. Alternative pour plus tard : lancer Supabase CLI et Docker sur une machine de développement, avec base et boîte de capture locales (Mailpit), et un frontend de test servi sur une origine HTTPS compatible avec le pilote. Ne pas réutiliser les données, clés ou paramètres de production. PGlite reste adapté aux tests SQL séquentiels déjà passés, mais ne remplace pas cette recette. D’ici là, continuer les travaux indépendants et conserver le pilote désactivé ; ne pas autoriser une diffusion de la synchronisation sur ces seules preuves.
+
+### Restauration — reprise interrompue
+
+Si le rejeu du journal échoue après l’écriture de l’état mais avant celle des statistiques, le chargeur signale l’échec et bloque la sauvegarde automatique au lieu de publier une restauration partielle comme réussie. Le journal est conservé pour un nouvel essai. Test avec quota simulé sur les statistiques, puis levée du quota et récupération complète ; 212 tests et build réussis. Cela ne verrouille pas les autres onglets et ne constitue pas une preuve sur appareil physique.

@@ -22,8 +22,8 @@ function minutesValides(valeur: unknown): valeur is number {
 export function chargerEtat(): Etat {
   // Une restauration engagée mais interrompue (rechargement au milieu de l'opération)
   // est rejouée avant toute lecture : l'import est complet ou absent, jamais à moitié.
-  rejouerJournalRestauration();
   try {
+    rejouerJournalRestauration();
     const brut = localStorage.getItem(CLE);
     if (!brut) { lectureEnEchec = false; return etatVierge(); }
     const analyse: unknown = JSON.parse(brut);
@@ -124,7 +124,9 @@ function rejouerJournalRestauration(): void {
     localStorage.removeItem(CLE_RESTAURATION);
     lectureEnEchec = false;
   } catch {
-    // Quota pendant le rejeu : le journal reste, l'état lu restera l'ancien jusqu'au prochain essai.
+    // Les clés peuvent déjà diverger. Le journal reste la source de reprise ;
+    // chargerEtat bloque les sauvegardes automatiques et signale l'échec.
+    throw new Error('reprise de restauration incomplète');
   }
 }
 
