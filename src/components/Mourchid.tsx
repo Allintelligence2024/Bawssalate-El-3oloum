@@ -41,7 +41,7 @@ export default function Mourchid({ onAller, onFermer }: Props) {
           {!branche && !question && (
             <>
               <div className="card flex items-center gap-4 p-5">
-                <img src="/mascotte.png" alt="" className="h-16 w-16 shrink-0 object-contain" />
+                <img src="/mascotte.webp" alt="" className="h-16 w-16 shrink-0 object-contain" />
                 <div>
                   <p className="font-naskh text-lg font-bold leading-snug">اختر ما يشغلك، وسأجيب بما يُفيد يوم الامتحان.</p>
                   <p className="mt-1 text-xs text-mute">أجوبة مكتوبة ومراجَعة، تعمل بلا إنترنت. ليس روبوت محادثة — ولا يدّعي ذلك.</p>
@@ -75,7 +75,7 @@ export default function Mourchid({ onAller, onFermer }: Props) {
           {question && (
             <article className="card p-5">
               <div className="flex items-start gap-3">
-                <img src="/mascotte.png" alt="" className="h-12 w-12 shrink-0 object-contain" />
+                <img src="/mascotte.webp" alt="" className="h-12 w-12 shrink-0 object-contain" />
                 <h2 className="font-naskh text-lg font-bold leading-snug">{question.question}</h2>
               </div>
               <div className="mt-4 space-y-3 text-sm leading-relaxed">

@@ -87,7 +87,7 @@ Le troisième onglet, **البوصلة**, affiche directement **مختبر ال�
   `mutation` reste en ADN (T, pas U) et chaque flèche a un marker dédié (sur arena, `sequence` et
   `graphique` pointaient un marker defined dans un autre SVG → flèche invisible en écran solo).
 - **القبطان مفتاح — la mascotte guide** (nouveau composant `MascotteKunz.tsx`, ports `e73a484` +
-  `41b5695`) : `personnage-pirate.png` (la mascotte de la maison, pas le logo d'arena) avec un mot
+  `41b5695`) : `personnage-pirate.webp` (la mascotte de la maison, pas le logo d'arena) avec un mot
   de méthode dans 7 endroits — l'accueil de منهجية, la liste de الوحدة 1, l'en-tête de chaque
   tamrin (« ما هو الفعل؟ أين الدليل؟ »), مساري, أنا, et l'en-tête de اليوم ; l'écran de démarrage
   gagne le pirate au-dessus du **titre texte « كنز العلوم Lite »** (conservé — convention « le nom
@@ -188,8 +188,8 @@ reprogrammée à **J+1** au lieu de J+3. L'échec n'est pas puni, il est *utilis
 À la fin de **chaque** phase (bouton « انتهيت من هذه المرحلة »), l'écran de célébration s'ouvre :
 
 - **la personnification كنز العلوم (mascotte pirate)** sort et salue : image PNG de la mascotte
-  (`public/personnage-pirate.png`, 500×500, ajoutée au precache du service worker pour fonctionner
-  hors ligne) avec rebond/sourire animés et bulle de encouragement sans culpabilisation ;
+  (`public/personnage-pirate.webp`, détourée, 58 ko au lieu de 1 001 ko, dans le précache de la
+  coquille pour fonctionner hors ligne) avec rebond/sourire animés et bulle de encouragement sans culpabilisation ;
 - **un son d'applaudissements** (`sonApplaudissement()`) : faux-bruit filtré + lardon vainqueur,
   générés en Web Audio — toujours offline, toujours doux ;
 - **des feux d'artifice** sur canvas léger (~5 s puis s'arrêtent, `prefers-reduced-motion` respecté,
@@ -361,8 +361,11 @@ rien ne devienne illisible.
 
 - **React 19 + TypeScript 7 + Vite 8** — SPA léger
 - **Tailwind CSS 4** (plugin `@tailwindcss/vite`) — design RTL mobile-first, palette olive claire
-- **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js` (precache app + 25 leçons,
-  navigation network-first)
+- **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js`. Le précache est **en deux
+  niveaux** : la *coquille* (interface + images, **1,90 Mio**) est toujours téléchargée ; le
+  *contenu lourd* (25 leçons HTML, laboratoire Boussole, 2 PDF, **4,19 Mio**) ne l'est que sur
+  demande explicite, avec son poids annoncé. Le chunk des sujets de bac (≈ 490 ko) reste en ligne
+  et n'entre pas dans le cache.
 - **localStorage** (`src/utils/storage.ts`, clé `murajih_svt_v1`, version 2) — offline-first, aucun
   serveur
 - **Zéro dépendance lourde** : pas de d3, jspdf, framer-motion…
@@ -374,7 +377,7 @@ app-svt-bac/
 ├── index.html                    # lang="ar" dir="rtl"
 ├── public/
 │   ├── manifest.webmanifest      # PWA (nom عربي، rtl، standalone)
-│   ├── sw.js                     # service worker (precache 35 entrées)
+│   ├── sw.js                     # service worker (coquille + contenu, en 2 niveaux)
 │   ├── icon.svg
 │   └── lecons/                   # 25 fichiers HTML de cours interactifs (46 leçons)
 ├── src/
@@ -405,7 +408,7 @@ app-svt-bac/
 │       ├── Exercices.tsx          # ⭐ تدريبات : choix QCM/ورشات الخرائط الذهنية/تمارين المنهجية (3 icônes) + 49 axes verrouillés + journées de 10
 │       ├── Boussole.tsx           # 🧭 المختبر embarqué + aide contextuelle
 │       ├── Methodologie.tsx       # ateliers de méthodologie et accès au laboratoire
-│       ├── MascotteKunz.tsx       # القبطان مفتاح — la mascotte guide (personnage-pirate.png, 7 emplacements)
+│       ├── MascotteKunz.tsx       # القبطان مفتاح — la mascotte guide (mascotte.webp, 7 emplacements)
 │       ├── Ana.tsx                # ⭐ أنا : journal + notes + stats complètes + réglage sync
 │       ├── CarteStats.tsx         # compteurs du Mُرشد (versions compacte Aujourdhui / complète Ana)
 │       ├── CarteSync.tsx          # invitation une fois (اليوم) + réglage permanent (أنا)
@@ -574,7 +577,7 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   fix maison (schéma `mutation` en ADN — T, pas U — et markers fléchés dédiés par schéma, invisibles
   sur arena en écran solo) ; nouveau composant **`MascotteKunz.tsx`** (القبطان مفتاح) diffusé dans
   l'accueil منهجية, الوحدة 1, les tamrins, مساري, أنا et l'en-tête de اليوم — sur arena il utilise
-  `/logo.png`, ici **`personnage-pirate.png`** (convention maison) ; l'écran démarrage affiche le
+  une seule image (la mascotte, `mascotte.webp` / `personnage-pirate.webp`) ; l'écran démarrage affiche le
   pirate au-dessus du titre texte conservé (arena remplaçait le titre par une image, ce qui faisait
   disparaître le nom « كنز العلوم Lite » du premier écran) ; `Bac.tsx` (existant encore sur arena)
   ignoré ; retry sans révélation, sons et feedbackTon maison préservés partout.
@@ -770,10 +773,11 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   élève connu ; les lignes anciennes sans jeton restent modifiables (compatibilité), le documenté
   recommande de les laisser vieillir. (5) **réparation de l'affichage** : deux fichiers corrompus en
   mojibake (`CarteStats.tsx`, `EcranDemarrage.tsx`) décodés et restaurés en arabe ; la mascotte
-  officielle (`personnage-pirate.jpg`) est **détourée en canvas** en deux PNG transparents —
-  `personnage-pirate.png` (poster avec titre doré, splash) et `mascotte.png` (personnage seul,
-  avatars de l'app) — tous deux precache par le service worker (`murajih-svt-v2`, avec
-  `/favicon.jpg`) ; la couche XP est réorganisée (BaguetteXp intégrée à l'en-tête, barre fine sous
+  officielle a été **détourée** en deux images transparents, converties en WebP —
+  `personnage-pirate.webp` (poster avec titre doré, splash) et `mascotte.webp` (personnage seul,
+  avatars de l'app) — toutes deux dans le précache de la coquille. `favicon.jpg`, `logo.png` et
+  `personnage-pirate.jpg` ont été supprimés : 1,5 Mo de fichiers jamais servis ou en double.
+  La couche XP est réorganisée (BaguetteXp intégrée à l'en-tête, barre fine sous
   l'en-tête, plus aucun panneau flottant qui chevauche le contenu).
 - **v0.9+** — conversion des 25 leçons au format manuel scolaire (suppression du scaffolding) ;
   exercices « نمط بكالوريا » et « تحليل وثيقة » (reportés).

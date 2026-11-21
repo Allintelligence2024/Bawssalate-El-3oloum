@@ -45,7 +45,7 @@ export function BadgeEditorial({ lecon }: { lecon: LessonGoldSummary }) {
 export function PersonnageKunz({ className = '' }: { className?: string }) {
   return (
     <img
-      src="/mascotte.png"
+      src="/mascotte.webp"
       alt="شخصية بوصلة العلوم"
       width={500}
       height={500}

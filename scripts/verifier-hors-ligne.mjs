@@ -27,10 +27,26 @@ if (!html.includes(`name="kunz-build-id" content="${version}"`)) problemes.push(
 if (!Array.isArray(manifeste.assets) || !manifeste.assets.every((u) => /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u))) {
   problemes.push('manifeste : assets non conformes à la règle du worker');
 }
-const statiquesOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
-  manifeste.statiques.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
-    ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf', '/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u));
-if (!statiquesOk) problemes.push('manifeste : entrées statiques non conformes à la règle du worker');
+// Coquille (statiques) et contenu lourd (contenu) ont chacun leur règle, comme dans sw.js.
+const COQUILLE = ['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'];
+const coquilleOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
+  manifeste.statiques.every((u) => COQUILLE.includes(u));
+if (!coquilleOk) problemes.push('manifeste : entrées de coquille non conformes à la règle du worker');
+const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
+if (!contenu) problemes.push('manifeste : liste « contenu » absente');
+else {
+  const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+    ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
+  if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
+  if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
+}
+for (const champ of ['octetsCoquille', 'octetsContenu', 'octets']) {
+  if (!Number.isFinite(manifeste[champ]) || manifeste[champ] < 0) problemes.push(`manifeste : ${champ} invalide`);
+}
+if (Number.isFinite(manifeste.octetsCoquille) && Number.isFinite(manifeste.octetsContenu) &&
+    Number.isFinite(manifeste.octets) && manifeste.octets < manifeste.octetsCoquille + manifeste.octetsContenu) {
+  problemes.push('manifeste : total inférieur à la somme coquille + contenu');
+}
 const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map((x) => x[1]);
 if (!demarrage.length) problemes.push('index.html : aucun asset de démarrage');
 for (const u of demarrage) if (!manifeste.assets.includes(u)) problemes.push(`asset de démarrage hors manifeste : ${u}`);
@@ -48,7 +64,7 @@ const typeOk = (url, res) => {
   return true;
 };
 
-const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...manifeste.assets];
+const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...(contenu ?? []), ...manifeste.assets];
 let echecs = 0;
 let octets = 0;
 const lignesEchec = [];
@@ -68,11 +84,33 @@ for (const u of cibles) {
 }
 await serveur.close();
 
+// ── 2 bis. Budget de poids : une app « Lite » qui grossit en silence n'est plus « Lite » ──
+// Seuils volontairement atteignables : ils doivent échouer seulement sur une vraie régression,
+// pas sur un build normal — sinon la CI sera désactivée au bout de trois commits.
+const MIO = 1024 * 1024;
+const BUDGET_COQUILLE = 2.5 * MIO;   // interface + assets, ce que tout élève télécharge
+const BUDGET_CONTENU = 5.0 * MIO;    // leçons + laboratoire + PDF, sur demande explicite
+const BUDGET_FICHIER = 300 * 1024;   // aucun fichier de public/ au-delà (hors PDF/labo)
+if (manifeste.octetsCoquille > BUDGET_COQUILLE) {
+  problemes.push(`budget : coquille ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio > ${BUDGET_COQUILLE / MIO} Mio`);
+}
+if (manifeste.octetsContenu > BUDGET_CONTENU) {
+  problemes.push(`budget : contenu ${(manifeste.octetsContenu / MIO).toFixed(2)} Mio > ${BUDGET_CONTENU / MIO} Mio`);
+}
+if (contenu) {
+  for (const u of [...manifeste.statiques, ...contenu]) {
+    if (/\.pdf$/.test(u) || u.startsWith('/boussole/')) continue;
+    const taille = readFileSync(`dist${u}`).byteLength;
+    if (taille > BUDGET_FICHIER) problemes.push(`budget : ${u} pèse ${Math.round(taille / 1024)} ko > ${BUDGET_FICHIER / 1024} ko`);
+  }
+}
+
 // ── 3. Rapport ──
 console.log('── vérification hors-ligne (niveau 1) ──');
 console.log(`version du build      : ${version}`);
 console.log(`assets JS/CSS         : ${manifeste.assets.length} — ${demarrage.length} au démarrage, tous dans le manifeste`);
-console.log(`entrées statiques     : ${manifeste.statiques.length} (leçons HTML + icônes/manifeste)`);
+console.log(`coquille (toujours)   : ${manifeste.statiques.length} entrées — ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio`);
+console.log(`contenu (sur demande) : ${(contenu ?? []).length} entrées — ${(manifeste.octetsContenu / MIO).toFixed(2)} Mio`);
 console.log(`fichiers interrogés   : ${cibles.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);

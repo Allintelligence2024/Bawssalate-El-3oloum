@@ -170,7 +170,7 @@ export default function Exercices({
       <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
         <header className="mb-6 flex items-start gap-3">
           <img
-            src="/mascotte.png"
+            src="/mascotte.webp"
             alt="مستكشف بوصلة العلوم"
             className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
           />

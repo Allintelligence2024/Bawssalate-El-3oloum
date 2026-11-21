@@ -35,6 +35,9 @@ jobs:
       - run: npm run build
       - run: node scripts/verifier-drills.mjs
       - run: node scripts/verifier-hors-ligne.mjs
+      # Smoke test de ce qui est réellement servi : build-id, worker, types, budget de poids.
+      # Comble le trou « vite build passe alors que tsc -b n'a jamais tourné » (Vercel).
+      - run: npm run verifier:deploiement
       - run: npm audit --audit-level=high
       - name: Installer les dépendances du laboratoire
         run: npm ci --no-audit --no-fund
