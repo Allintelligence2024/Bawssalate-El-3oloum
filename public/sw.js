@@ -23,13 +23,25 @@ function typeValide(url, res) {
   return true;
 }
 
+const DELAI_RESSOURCE_MS = 30_000;
+async function avecRessource(url, modeCache, utiliser) {
+  const controle = new AbortController();
+  const delai = setTimeout(() => controle.abort(), DELAI_RESSOURCE_MS);
+  try {
+    const res = await fetch(url, { cache: modeCache, signal: controle.signal });
+    // Le délai reste actif pendant la lecture/écriture du corps, pas seulement des en-têtes.
+    return await utiliser(res);
+  } finally { clearTimeout(delai); }
+}
+
 async function telecharger(cache, url) {
   if (await cache.match(url)) return true;
   try {
-    const res = await fetch(url, { cache: 'no-cache' });
-    if (!res.ok || !typeValide(url, res)) return false;
-    await cache.put(url, res);
-    return true;
+    return await avecRessource(url, 'no-cache', async res => {
+      if (!res.ok || !typeValide(url, res)) return false;
+      await cache.put(url, res);
+      return true;
+    });
   } catch { return false; }
 }
 
@@ -44,17 +56,21 @@ async function manifesteCache(cache) {
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     try {
-      const res = await fetch(MANIFESTE, { cache: 'no-store' });
-      if (!res.ok) throw new Error('manifeste indisponible');
-      const m = await res.clone().json();
-      if (!valideManifeste(m)) throw new Error('version du manifeste incompatible');
-      const index = await fetch(INDEX, { cache: 'no-store' });
-      if (!index.ok || !typeValide(INDEX, index)) throw new Error('interface indisponible');
-      const html = await index.clone().text();
-      if (!html.includes(`name="kunz-build-id" content="${VERSION}"`)) throw new Error('version de l’interface incompatible');
       const cache = await caches.open(CACHE);
-      await cache.put(INDEX, index);
-      await cache.put(MANIFESTE, res);
+      const m = await avecRessource(MANIFESTE, 'no-store', async res => {
+        if (!res.ok) throw new Error('manifeste indisponible');
+        const m = await res.clone().json();
+        if (!valideManifeste(m)) throw new Error('version du manifeste incompatible');
+        await cache.put(MANIFESTE, res);
+        return m;
+      });
+      const html = await avecRessource(INDEX, 'no-store', async index => {
+        if (!index.ok || !typeValide(INDEX, index)) throw new Error('interface indisponible');
+        const html = await index.clone().text();
+        if (!html.includes(`name="kunz-build-id" content="${VERSION}"`)) throw new Error('version de l’interface incompatible');
+        await cache.put(INDEX, index);
+        return html;
+      });
       const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map(x => x[1]);
       if (!demarrage.length || demarrage.some(u => !m.assets.includes(u))) throw new Error('assets de démarrage incompatibles');
       for (const url of demarrage) if (!await telecharger(cache, url)) throw new Error('asset de démarrage indisponible');

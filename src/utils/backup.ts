@@ -13,9 +13,17 @@ const court = z.string().max(300);
 const date = z.string().max(100);
 const nombre = z.number().finite().min(0).max(1000000000);
 const entier = nombre.int();
-const dictionnaire = <T extends z.ZodTypeAny>(schema: T) =>
-  z.record(court, schema).refine((v) => Object.keys(v).length <= 5000);
-const liste = <T extends z.ZodTypeAny>(schema: T) => z.array(schema).max(5000);
+const MAX_COLLECTION = 5000;
+// Ne pas parcourir les valeurs d'un dictionnaire déjà hors limites.
+const dictionnaireBorne = z.custom<Record<string, unknown>>((v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+  let n = 0;
+  for (const cle in v) if (Object.hasOwn(v, cle) && ++n > MAX_COLLECTION) return false;
+  return true;
+});
+const dictionnaire = <T extends z.ZodTypeAny>(schema: T) => dictionnaireBorne.pipe(z.record(court, schema));
+const listeBornee = z.custom<unknown[]>((v) => Array.isArray(v) && v.length <= MAX_COLLECTION);
+const liste = <T extends z.ZodTypeAny>(schema: T) => listeBornee.pipe(z.array(schema));
 const progression = z.object({
   statut: z.enum(['vierge', 'en_cours', 'terminee']),
   phases: liste(z.number().int().min(1).max(6)),
@@ -91,5 +99,9 @@ export function lireSauvegarde(brut: unknown): SauvegardeLue | null {
 export function etatDepuisFichier(brut: unknown): Etat | null {
   const lu = lireSauvegarde(brut);
   if (!lu) return null;
+  return normaliserSauvegarde(lu);
+}
+
+export function normaliserSauvegarde(lu: SauvegardeLue): Etat {
   return { ...etatDepuisBrut(lu.etat), consentementSync: false, consentementSyncDecideLe: undefined };
 }

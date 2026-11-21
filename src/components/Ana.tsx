@@ -6,7 +6,7 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import type { Etat, NoteCarnet, FauteCarnet, Objectif, TailleTexte } from '../types';
 import { EtatIllisible, paquetExportComplet, RestaurationEnAttente } from '../utils/storage';
-import { lireSauvegarde, etatDepuisFichier, TAILLE_MAX_SAUVEGARDE } from '../utils/backup';
+import { lireSauvegarde, normaliserSauvegarde, TAILLE_MAX_SAUVEGARDE } from '../utils/backup';
 import { CLE_CARNET_BOUSSOLE, CarnetBoussoleIllisible, type CarnetBoussole } from '../utils/carnetBoussole';
 import { StatsIllisibles, type StatsReponses } from '../utils/stats';
 import { itemsFaits } from '../utils/moteur';
@@ -199,8 +199,7 @@ export default function Ana({
       if (version !== versionImport.current) return;
       const brut: unknown = JSON.parse(contenu);
       const lu = lireSauvegarde(brut);
-      const etat = etatDepuisFichier(brut);
-      if (!etat || !lu) {
+      if (!lu) {
         setErreurImport('هذا الملف ليس نسخة احتياطية من التطبيق.');
         return;
       }
@@ -219,7 +218,7 @@ export default function Ana({
       // Une confirmation navigateur bloquante peut retarder la mise à jour de
       // localStorage dans cet onglet. Une confirmation React laisse l'événement
       // de stockage circuler pendant que la personne décide.
-      setImportEnAttente({ etat, stats: lu.stats, carnetBoussole: lu.carnetBoussole,
+      setImportEnAttente({ etat: normaliserSauvegarde(lu), stats: lu.stats, carnetBoussole: lu.carnetBoussole,
         carnetAvantConfirmation, avertissementCarnet, avertissementStats });
     } catch {
       if (version === versionImport.current) setErreurImport('لم أستطع قراءة الملف أو التخزين — تحقّق منهما وجرّب من جديد.');

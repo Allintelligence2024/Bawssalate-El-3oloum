@@ -36,61 +36,35 @@ create index if not exists eleves_maj_idx on public.eleves (maj desc);
 create index if not exists eleves_xp_idx  on public.eleves (xp desc);
 create index if not exists eleves_wilaya_idx on public.eleves (wilaya);
 
--- ───────────── أمان الصفوف (RLS) ─────────────
--- التطبيق (المفتاح anon العام) يستطيع الكتابة فقط، ولا يرى أي تلميذ آخر.
--- المالك وحده (service_role عبر Studio) يقرأ كل شيء.
---
--- Jeton d'écriture : chaque élève génère un jeton aléatoire à la création du compte.
--- Il est stocké dans la colonne `jeton` de SA ligne et envoyé en en-tête `x-kunz-jeton`.
--- La policy UPDATE l'exige : quiconque possède l'URL + la clé publique peut insérer
--- ses propres lignes, mais ne peut plus ÉCRASER la fiche d'un élève déjà connu — il
--- faudrait connaître son jeton. Les lignes anciennes sans jeton restent modifiables
--- (compatibilité avec les installations existantes) : elles se verrouillent au
--- prochain snapshot qui remplit la colonne.
+-- Pas d'exception pour les anciennes lignes : récupération hors de l'API anonyme.
+-- Format compatible avec nouveauJeton() ; le format ne prouve ni l'entropie ni l'identité.
+create or replace function public.eleves_jeton_autorise(jeton text)
+returns boolean language sql stable security invoker set search_path = pg_catalog
+as $$
+  select coalesce(
+    jeton <> repeat('0', 32)
+    and jeton ~ '^([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+    and jeton = (nullif(current_setting('request.headers', true), '')::json ->> 'x-kunz-jeton'),
+    false
+  );
+$$;
 
 alter table public.eleves enable row level security;
-
--- Migration : la colonne jeton peut être ajoutée à une table existante
 alter table public.eleves add column if not exists jeton text;
 
-drop policy if exists "ecriture_app" on public.eleves;
-create policy "ecriture_app" on public.eleves
-  for insert to anon with check (true);
+-- Restrictive : une autre policy permissive ne peut pas contourner ce garde-fou pour anon.
+drop policy if exists eleves_jeton_obligatoire on public.eleves;
+create policy eleves_jeton_obligatoire on public.eleves as restrictive
+  for all to anon using (public.eleves_jeton_autorise(jeton))
+  with check (public.eleves_jeton_autorise(jeton));
 
-drop policy if exists "maj_app" on public.eleves;
-create policy "maj_app" on public.eleves
-  for update to anon
-  using (
-    jeton is null
-    or jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
-  )
-  with check (
-    jeton is null
-    or jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
-  );
-
--- Suppression à la demande (P0.8) : l'élève peut effacer SA ligne depuis l'écran « الخصوصية »
--- de l'application. Exige le jeton en en-tête ; une ligne sans jeton (ancienne installation)
--- ne peut pas être supprimée par l'application — elle se verrouille au prochain snapshot.
-drop policy if exists "suppression_app" on public.eleves;
-create policy "suppression_app" on public.eleves
-  for delete to anon
-  using (
-    jeton is not null
-    and jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
-  );
-
--- Lecture restreinte (correctif P-1.7, preuve : plans/preuves/confidentialite-serveur.md) :
--- avec RLS, la policy DELETE ne voit que les lignes VISIBLES pour anon ; sans aucune policy
--- SELECT, anon ne voit rien et le DELETE de l'application (sync.ts:195) ne matche jamais
--- (testé en direct : 0 ligne supprimée au bon jeton). Cette lecture est verrouillée par le
--- jeton : l'élève ne lit QUE sa propre ligne, et seulement en envoyant son jeton.
-drop policy if exists "lecture_proprietaire" on public.eleves;
-create policy "lecture_proprietaire" on public.eleves
-  for select to anon
-  using (
-    jeton is not null
-    and jeton = coalesce(current_setting('request.headers', true)::json ->> 'x-kunz-jeton', '')
-  );
-
--- ملاحظة: بدون الجيتون لا تُقرأ ولا تُعدَّل ولا تُحذف أي سطر — القراءة مرفوضة تلقائيًّا.
+-- Les accès anonymes sont autorisés uniquement sous le garde-fou restrictif ci-dessus.
+-- L'INSERT ne vérifie toujours pas la possession de l'adresse : pas de diffusion en l'état.
+drop policy if exists ecriture_app on public.eleves;
+create policy ecriture_app on public.eleves for insert to anon with check (true);
+drop policy if exists maj_app on public.eleves;
+create policy maj_app on public.eleves for update to anon using (true) with check (true);
+drop policy if exists suppression_app on public.eleves;
+create policy suppression_app on public.eleves for delete to anon using (true);
+drop policy if exists lecture_proprietaire on public.eleves;
+create policy lecture_proprietaire on public.eleves for select to anon using (true);
