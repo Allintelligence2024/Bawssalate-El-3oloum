@@ -2,8 +2,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import { etatDepuisFichier, lireSauvegarde } from '../backup';
-import { noterReponse, statsActuelles, restaurerStats } from '../stats';
+import { noterReponse, statsActuelles, restaurerStats, viderStats } from '../stats';
 import { effacerAlerteStockage } from '../echecsStockage';
+import { memoriserValeur, reinitialiserEtatPerime } from '../coherenceStockage';
 import {
   chargerEtat,
   sauvegarderEtat,
@@ -17,17 +18,24 @@ import {
   autoriserRemplacementEtat,
 } from '../storage';
 
-// Mock localStorage global avant chaque test
+// Simuler les clés distinctes et le null retourné par le vrai localStorage.
 let stored = '';
+let autres: Record<string, string> = {};
 beforeEach(() => {
+  stored = '';
+  autres = {};
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => k === 'murajih_svt_v1' ? (stored || null) : (autres[k] ?? null),
+    setItem: (k: string, v: string) => { if (k === 'murajih_svt_v1') stored = v; else autres[k] = v; },
+    removeItem: (k: string) => { if (k === 'murajih_svt_v1') stored = ''; else delete autres[k]; },
+  };
+  // Chaque test démarre un nouveau navigateur simulé, sans références de l'ancien.
+  reinitialiserEtatPerime();
+  memoriserValeur('murajih_svt_v1', null);
+  memoriserValeur('kunz_stats_v1', null);
+  viderStats();
   effacerAlerteStockage();
   autoriserRemplacementEtat();
-  (globalThis as any).localStorage = {
-    getItem: (k: string) => (k === 'murajih_svt_v1' ? stored : null),
-    setItem: (k: string, v: string) => { stored = v; },
-    removeItem: (k: string) => { if (k === 'murajih_svt_v1') stored = ''; },
-  };
-  stored = '';
 });
 
 afterEach(() => {
@@ -84,8 +92,9 @@ describe('storage — chargeur/sauveur', () => {
       nom: 'x', dateBac: '2027-06-10', seancesComptees: 0, ateliers: {}, consentementSync: false,
     };
     (globalThis as any).localStorage.setItem('murajih_svt_v1', JSON.stringify(etat));
-    viderStockage();
-    expect((globalThis as any).localStorage.getItem('murajih_svt_v1')).toBe('');
+    chargerEtat(); // l'onglet a bien lu la donnée qu'il va supprimer
+    viderStockage(null);
+    expect((globalThis as any).localStorage.getItem('murajih_svt_v1')).toBeNull();
   });
 
   it('minutesStockees lit les minutes du leçon', () => {
@@ -132,7 +141,7 @@ describe('protection après échec de lecture', () => {
     const ecouteur = vi.fn();
     const stop = surEchecSauvegarde(ecouteur);
     (globalThis as any).localStorage.removeItem = () => { throw new Error('refus'); };
-    viderStockage();
+    viderStockage(null);
     expect(ecouteur).toHaveBeenCalled();
     stop();
   });

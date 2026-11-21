@@ -1,12 +1,6 @@
-// منهجية حل التمرين — المفتاح: فعل ← دليل ← جواب ← فحص.
-// Portée depuis la branche arena (commits 4bc29e2 « méthode clé » + 48afe8b « 10 تمارين
-// تركيب البروتين »), branchée sur les conventions de l'app : أخضر للصواب / أحمر للخطأ avec
-// sonJuste/sonFaux، إعادة المحاولة بلا كشف الجواب (l'erreur n'est révélée qu'après le bon
-// choix)، بلا نسبة مئوية وبلا لوم، والأرقام لاتينية. Corrections du port : état `sourceExo`
-// (collision d'index avec methodes), feedback rouge au faux, schémas #8 et n°6, positions
-// variées de la bonne réponse.
-
-import { useState, type ReactNode } from 'react';
+// Ateliers de méthodologie. Le laboratoire Boussole est l’entrée ; les exercices gardent leur propre état.
+import { useState, useRef, type ReactNode } from 'react';
+import Boussole, { AideBoussole } from './Boussole';
 import { IcoRetour } from './Icones';
 import { sonFaux, sonJuste } from '../utils/son';
 import { nb } from '../utils/dates';
@@ -15,8 +9,8 @@ import type { Qualite } from '../utils/srs';
 
 interface Props {
   onFermer: () => void;
-  /** Écran d'ouverture : accueil (onglet منهجية) ou niveaux (3e porte تمارين dans تدريبات). */
-  modeInitial?: 'accueil' | 'niveaux';
+  /** Écran d'ouverture : laboratoire (onglet البوصلة) ou niveaux (3e porte تمارين dans تدريبات). */
+  modeInitial?: 'boussole' | 'niveaux';
   /** المرشد الموسّع (P3.5) */
   onOuvrirMourchid?: () => void;
   /** Bataille de كفاءة : enregistre la réussite d'un exercice dans la file SM-2 (audit). */
@@ -39,15 +33,7 @@ interface Props {
   }) => void;
 }
 
-type Ecran = 'accueil' | 'cle' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat' | 'diagrammes';
-
-// المفتاح — أربع حركات قبل أن أكتب.
-const cle: [string, string, string][] = [
-  ['فعل', 'أقرأ التعليمة كاملة وأحدد ما يجب أن أنتج.', 'لا أجيب عن سؤال آخر لمجرد أنني أعرف معلومات عنه.'],
-  ['دليل', 'أختار المعطيات النافعة: قيم، تغيرات، مقارنة، شاهد وشروط.', 'كل معطى مختار يجب أن يخدم الاستدلال، وإلا أحذفه.'],
-  ['جواب', 'أكتب المنتج المطلوب مباشرة، مع علاقة إذا اقتضت التعليمة.', 'الجملة النهائية يجب أن تجيب عن السؤال وحده.'],
-  ['فحص', 'أراجع الفعل والدليل والجواب قبل إنهاء الإجابة.', 'إذا فشل الفحص أرجع إلى التعليمة، لا إلى الحفظ العشوائي.'],
-];
+type Ecran = 'boussole' | 'accueil' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat' | 'diagrammes';
 
 // العمليات الثلاث التي تبني جوابًا علميًا.
 const operations: [string, string, string][] = [
@@ -1320,7 +1306,7 @@ function SchemaUnite1({ type, className = 'h-44 w-full' }: { type: ExerciceUnite
 
 export default function Methodologie({
   onFermer,
-  modeInitial = 'accueil',
+  modeInitial = 'boussole',
   onOuvrirMourchid,
   onResultatKafaa,
   onCarnetFaute,
@@ -1360,10 +1346,11 @@ export default function Methodologie({
   /** Blank courant dans le slot actif du محرّر — mode « canevas à blancs » (cloze). */
   const [blancRedaction, setBlancRedaction] = useState(0);
   // سلّم المساعدة (audit) : barreaux ouverts (0-3), erreurs validées sur l'exo courant,
-  // surimpression du المفتاح sans perte de l'état de l'exercice.
+  // laboratoire en surimpression sans perte de l'état de l'exercice.
   const [barreaux, setBarreaux] = useState(0);
   const [fauxExo, setFauxExo] = useState(0);
-  const [cleOuverte, setCleOuverte] = useState(false);
+  const ouvrirAide = useRef<HTMLButtonElement>(null);
+  const [aideBoussole, setAideBoussole] = useState(false);
   // استقصاء · وثيقتان (exos 2-3 du Bac) : enquête en 4 خطوات, une par exercice.
   const [enqueteId, setEnqueteId] = useState(0);
   const [etapeEnq, setEtapeEnq] = useState(0);
@@ -1442,7 +1429,7 @@ export default function Methodologie({
     setJusteExo(false);
     setBarreaux(0);
     setFauxExo(0);
-    setCleOuverte(false);
+    setAideBoussole(false);
   }
 
   function choisirExerciceUnite1(i: number): void {
@@ -1477,7 +1464,7 @@ export default function Methodologie({
     setJusteExo(false);
     setBarreaux(0);
     setFauxExo(0);
-    setCleOuverte(false);
+    setAideBoussole(false);
   }
 
   /** سجلّ الأخطاء الذرّية (v0.8) : chaque erreur d'exercice de منهجية est enregistrée avec son
@@ -1856,11 +1843,15 @@ export default function Methodologie({
   const clauseAutopsieRevelee = COPIE_AUTOPSIE.clauses.find((c) => c.id === autopsieRevele);
   const nbFautesAutopsie = COPIE_AUTOPSIE.clauses.filter((c) => c.fautive).length;
 
+  if (ecran === 'boussole') {
+    return <Boussole onAteliers={() => { setEcran('accueil'); window.scrollTo(0, 0); }} />;
+  }
+
   return (
-    <div className="min-h-dvh bg-cream px-4 pb-10 pt-5" dir="rtl">
+    <div className={`min-h-dvh bg-cream px-4 pt-5 ${modeInitial === 'boussole' ? 'pb-28' : 'pb-10'}`} dir="rtl">
       <header className="mx-auto flex max-w-3xl items-center gap-3">
         <button
-          onClick={onFermer}
+          onClick={modeInitial === 'boussole' ? () => setEcran('boussole') : onFermer}
           aria-label="رجوع"
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-paper text-mute"
         >
@@ -1873,55 +1864,18 @@ export default function Methodologie({
           <h1 className="font-naskh truncate text-xl font-bold">منهجية حل التمرين</h1>
         </div>
         <span className="rounded-full bg-sage px-2.5 py-1 text-[11px] font-bold text-forest-deep">
-          المفتاح
+          تدريب
         </span>
       </header>
 
       <main className="mx-auto mt-5 max-w-3xl">
         {ecran === 'accueil' && (
           <section className="space-y-4">
-            <MascotteKunz message="مرحبًا أيها المستكشف! لا تبحث عن الجواب مباشرة؛ ابحث أولًا عن الدليل الذي يفتح لك كنز الوثيقة." />
-            <div className="card overflow-hidden">
-              <div className="bg-gradient-to-l from-forest to-forest-deep p-6 text-paper">
-                <p className="text-4xl">🔑</p>
-                <h2 className="font-naskh mt-3 text-2xl font-bold">فعل ← دليل ← جواب ← فحص</h2>
-                <p className="mt-2 text-sm leading-relaxed text-paper/80">
-                  لا تحفظ الإجابة. تعلّم كيف تبنيها من التعليمة والوثيقة.
-                </p>
-                <button
-                  onClick={() => setEcran('cle')}
-                  className="btn mt-5 w-full bg-paper text-forest-deep hover:bg-sage"
-                >
-                  شرح المفتاح خطوة بخطوة
-                </button>
-              </div>
-            </div>
-
             <div className="card p-5">
-              <p className="eyebrow">النواة</p>
-              <h2 className="font-naskh mt-1 text-xl font-bold">أربع حركات قبل أن تكتب</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {cle.map(([title, text], i) => (
-                  <button
-                    key={title}
-                    onClick={() => setEcran('cle')}
-                    className="rounded-2xl border border-line bg-paper p-4 text-right hover:border-forest"
-                  >
-                    <span className="flex items-center gap-2">
-                      <b className="grid h-7 w-7 place-items-center rounded-full bg-forest text-xs text-paper">
-                        {i + 1}
-                      </b>
-                      <b className="text-sm text-forest">{title}</b>
-                    </span>
-                    <span className="mt-2 block text-xs leading-relaxed text-mute">{text}</span>
-                  </button>
-                ))}
-              </div>
-              <button onClick={startDiagnostic} className="btn btn-ghost mt-4 w-full">
-                ابدأ التشخيص · 3 دقائق
-              </button>
+              <p className="eyebrow">تمارين إضافية</p>
+              <h2 className="font-naskh mt-1 text-xl font-bold">أيّ مهارة أريد أن أتدرّب عليها؟</h2>
+              <button onClick={startDiagnostic} className="btn btn-ghost mt-4 w-full">أجرّب التشخيص</button>
             </div>
-
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => setEcran('operations')}
@@ -2003,35 +1957,9 @@ export default function Methodologie({
           </section>
         )}
 
-        {ecran === 'cle' && (
-          <section className="card p-5">
-            <p className="eyebrow">المفتاح · حلقة التحكم</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold">قبل أن أكتب، أعرف ماذا أُنتج</h2>
-            <div className="mt-5 space-y-3">
-              {cle.map(([title, text, conseil], i) => (
-                <article key={title} className="rounded-2xl border border-line bg-paper p-4">
-                  <div className="flex items-center gap-2">
-                    <span className="grid h-8 w-8 place-items-center rounded-full bg-forest text-xs font-bold text-paper">
-                      {i + 1}
-                    </span>
-                    <h3 className="text-base font-bold text-forest">{title}</h3>
-                  </div>
-                  <p className="mt-2 text-sm font-bold leading-relaxed">{text}</p>
-                  <p className="mt-1 rounded-xl bg-sage-soft p-2 text-xs leading-relaxed text-forest-deep">
-                    علامة الأمان: {conseil}
-                  </p>
-                </article>
-              ))}
-            </div>
-            <button onClick={() => setEcran('operations')} className="btn btn-primary mt-5 w-full">
-              التالي: العمليات الثلاث
-            </button>
-          </section>
-        )}
-
         {ecran === 'operations' && (
           <section className="card p-5">
-            <p className="eyebrow">المفتاح · أصف / أفسّر / أحكم</p>
+            <p className="eyebrow">قراءة الدليل · أصف / أفسّر / أحكم</p>
             <h2 className="font-naskh mt-2 text-2xl font-bold">ثلاث عمليات قابلة للدمج</h2>
             <div className="mt-4 space-y-2">
               {operations.map(([title, question, language], i) => (
@@ -2236,7 +2164,7 @@ export default function Methodologie({
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold">
                   <span className="rounded-full bg-paper/15 px-3 py-1">10 تمارين</span>
                   <span className="rounded-full bg-paper/15 px-3 py-1">مخطط لكل تمرين</span>
-                  <span className="rounded-full bg-paper/15 px-3 py-1">المفتاح</span>
+                  <span className="rounded-full bg-paper/15 px-3 py-1">أقرأ السند</span>
                 </div>
               </div>
             </div>
@@ -2402,8 +2330,8 @@ export default function Methodologie({
                   <div className="rounded-2xl border border-gold-soft bg-gold-soft/40 p-4">
                     <p className="text-[11px] font-bold text-forest-deep">تلميح 3 · القاعدة العامة</p>
                     <p className="mt-1 text-sm leading-relaxed text-forest-deep">{aide[2]}</p>
-                    <button onClick={() => setCleOuverte(true)} className="btn btn-ghost mt-3 w-full">
-                      راجع المفتاح · فعل ← دليل ← جواب ← فحص
+                    <button ref={ouvrirAide} onClick={() => setAideBoussole(true)} className="btn btn-ghost mt-3 w-full">
+                      أفتح البوصلة وأعود إلى تمريني
                     </button>
                   </div>
                 )}
@@ -2476,30 +2404,7 @@ export default function Methodologie({
           </section>
         )}
 
-        {/* المفتاح en surimpression — l'exercice reste ouvert derrière (audit : ne jamais perdre l'état). */}
-        {cleOuverte && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-forest-deep/60 p-4 sm:items-center">
-            <div className="w-full max-w-md rounded-3xl bg-paper p-6">
-              <p className="eyebrow">المفتاح · أربع حركات</p>
-              <div className="mt-3 space-y-3">
-                {cle.map(([t, q], i) => (
-                  <div key={t} className="flex items-start gap-3">
-                    <b className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-forest text-xs text-paper">
-                      {i + 1}
-                    </b>
-                    <div className="min-w-0">
-                      <b className="text-sm text-forest">{t}</b>
-                      <p className="mt-0.5 text-xs leading-relaxed text-mute">{q}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => setCleOuverte(false)} className="btn btn-primary mt-5 w-full">
-                عد إلى التمرين
-              </button>
-            </div>
-          </div>
-        )}
+        {aideBoussole && <AideBoussole document={exoU1.document} verbe={exoU1.verbe} onFermer={() => { setAideBoussole(false); requestAnimationFrame(() => ouvrirAide.current?.focus({ preventScroll: true })); }} />}
 
         {ecran === 'redaction' && redactionSource === 'enquete' && (
           <section className="card p-6">
@@ -2782,7 +2687,7 @@ export default function Methodologie({
             <MascotteKunz
               compact
               tone="gold"
-              message={`لا تفسّر قبل أن تصف؛ رتّب خطوات «${methodes[methode][0]}» بالترتيب الذي يعلّمه المفتاح.`}
+              message={`لا تفسّر قبل أن تصف؛ رتّب خطوات «${methodes[methode][0]}» بالترتيب المناسب لهذا المسعى.`}
             />
             <div className="mt-4 rounded-2xl border border-line bg-paper p-4">
               <p className="text-[11px] font-bold text-forest">السند · تمرين هذا المسار</p>

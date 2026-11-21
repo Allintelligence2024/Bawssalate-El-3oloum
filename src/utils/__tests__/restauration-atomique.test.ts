@@ -3,16 +3,17 @@
 //  1. un import complet s'engage en une seule écriture (journal) puis s'applique ;
 //  2. quota à l'engagement ou à l'application → anciennes données et état affiché inchangés ;
 //  3. une sauvegarde ancienne sans statistiques conserve les statistiques existantes ;
-//  4. rechargement au milieu de l'opération → le journal est rejoué (complet, jamais à moitié).
-// Données 100 % fictives, localStorage simulé.
+//  4. rechargement au milieu de l'opération → le journal est rejoué ou le chargement est bloqué.
+// Données 100 % fictives, localStorage simulé ; ne démontre pas l'atomicité entre onglets.
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import { etatDepuisFichier, lireSauvegarde } from '../backup';
 import { noterReponse, statsActuelles, viderStats, CLE_STATS, type StatsReponses } from '../stats';
 import { effacerAlerteStockage, surEchecSauvegarde } from '../echecsStockage';
+import { memoriserValeur, reinitialiserEtatPerime } from '../coherenceStockage';
 import {
-  chargerEtat, sauvegarderEtat, paquetExportComplet, fusionnerProgressionImportee,
-  restaurerEtatEtStats, autoriserRemplacementEtat,
+  abandonnerJournalRestauration, chargerEtat, sauvegarderEtat, paquetExportComplet, fusionnerProgressionImportee,
+  restaurationBloqueeAuChargement, restaurerEtatEtStats, autoriserRemplacementEtat,
 } from '../storage';
 
 const CLE_ETAT = 'murajih_svt_v1';
@@ -35,11 +36,21 @@ beforeEach(() => {
     },
     removeItem: (k: string) => { delete store[k]; },
   };
+  // Nouveau navigateur fictif : ne pas conserver les références du test précédent.
+  reinitialiserEtatPerime();
+  memoriserValeur(CLE_ETAT, null);
+  memoriserValeur(CLE_STATS, null);
   effacerAlerteStockage();
   autoriserRemplacementEtat();
   viderStats(); // remet à zéro le singleton en mémoire + son état de lecture
 });
 afterEach(() => { (globalThis as any).localStorage = undefined; });
+
+// Les valeurs installées comme données initiales ont été lues avant l'opération testée.
+function memoriserFixtures() {
+  memoriserValeur(CLE_ETAT, store[CLE_ETAT] ?? null);
+  memoriserValeur(CLE_STATS, store[CLE_STATS] ?? null);
+}
 
 const etatMinimal = (): Etat => ({
   version: 2, progression: {}, jalons: {}, notes: [], carnet: [], journal: [], minutesTotales: 0, revisions: 0,
@@ -93,6 +104,7 @@ describe('restauration atomique — quota (rien ne bouge)', () => {
     store[CLE_ETAT] = ancien;
     store[CLE_STATS] = JSON.stringify(statsValides());
     const avant = statsActuelles();
+    memoriserFixtures();
     clesBloquees.add(CLE_JOURNAL);
     const alerte = vi.fn();
     const stop = surEchecSauvegarde(alerte);
@@ -111,6 +123,7 @@ describe('restauration atomique — quota (rien ne bouge)', () => {
     store[CLE_ETAT] = ancien;
     store[CLE_STATS] = JSON.stringify(statsValides());
     const avant = statsActuelles();
+    memoriserFixtures();
     clesBloquees.add(CLE_ETAT);
     const alerte = vi.fn();
     const stop = surEchecSauvegarde(alerte);
@@ -130,6 +143,7 @@ describe('restauration atomique — quota (rien ne bouge)', () => {
     store[CLE_ETAT] = ancienEtat;
     store[CLE_STATS] = ancienStats;
     const avant = statsActuelles();
+    memoriserFixtures();
     clesBloquees.add(CLE_STATS);
     const alerte = vi.fn();
     const stop = surEchecSauvegarde(alerte);
@@ -145,17 +159,56 @@ describe('restauration atomique — quota (rien ne bouge)', () => {
 });
 
 describe('restauration atomique — rechargement et protection', () => {
-  it('journal corrompu au chargement : abandonné proprement, ancien état relu, rien de cassé', () => {
+  it('journal corrompu au chargement : conservé et signalé, état potentiellement partiel protégé', () => {
     const ancien = JSON.stringify({ ...etatMinimal(), minutesTotales: 13 });
     store[CLE_ETAT] = ancien;
     store[CLE_STATS] = JSON.stringify(statsValides());
     store[CLE_JOURNAL] = '{JSON cassé';
     const avant = statsActuelles();
+    const alerte = vi.fn();
+    const stop = surEchecSauvegarde(alerte);
     const relu = chargerEtat();
-    expect(relu.minutesTotales).toBe(13);
+    expect(relu.minutesTotales).not.toBe(13); // ne pas présenter une restauration partielle comme complète
+    sauvegarderEtat({ ...etatMinimal(), minutesTotales: 99 });
     expect(store[CLE_ETAT]).toBe(ancien);
-    expect(store[CLE_JOURNAL]).toBeUndefined(); // le journal illisible est retiré, sans crash
+    expect(store[CLE_JOURNAL]).toBe('{JSON cassé');
     expect(statsActuelles()).toEqual(avant);
+    expect(restaurationBloqueeAuChargement()).toBe(true);
+    expect(alerte).toHaveBeenCalled();
+    // L'abandon n'intervient qu'après une décision explicite dans l'interface.
+    expect(abandonnerJournalRestauration()).toBe(true);
+    expect(chargerEtat().minutesTotales).toBe(13);
+    expect(restaurationBloqueeAuChargement()).toBe(false);
+    stop();
+  });
+
+  it('refuse sans supprimer un journal vide, futur ou aux statistiques invalides', () => {
+    const ancien = JSON.stringify({ ...etatMinimal(), minutesTotales: 13 });
+    store[CLE_ETAT] = ancien;
+    for (const journal of [
+      '',
+      JSON.stringify({ etat: { ...etatMinimal(), version: 99 }, stats: statsValides() }),
+      JSON.stringify({ etat: etatMinimal(), stats: { justes: 'invalide' } }),
+      JSON.stringify({ etat: etatMinimal(), carnetBoussole: { version: 2 } }),
+      JSON.stringify({ etat: etatMinimal(), nouveauteVersionFuture: { aPreserver: true } }),
+      JSON.stringify({ etat: { ...etatMinimal(), compte: { email: [] } }, stats: statsValides() }),
+    ]) {
+      store[CLE_JOURNAL] = journal;
+      expect(chargerEtat().minutesTotales).not.toBe(13);
+      expect(store[CLE_ETAT]).toBe(ancien);
+      expect(store[CLE_JOURNAL]).toBe(journal);
+    }
+  });
+
+  it('ne traite pas un état présent mais vide comme une absence de données', () => {
+    store[CLE_ETAT] = '';
+    const alerte = vi.fn();
+    const stop = surEchecSauvegarde(alerte);
+    chargerEtat();
+    sauvegarderEtat({ ...etatMinimal(), nom: 'ne pas écraser' });
+    expect(store[CLE_ETAT]).toBe('');
+    expect(alerte).toHaveBeenCalled();
+    stop();
   });
 
   it('protection de lecture : conservée après un échec de restauration, levée après un succès', () => {
@@ -180,6 +233,7 @@ describe('restauration atomique — rechargement et protection', () => {
       consentementSync: false,
     };
     store[CLE_ETAT] = JSON.stringify(courant);
+    chargerEtat(); // état courant lu avant l'export et l'import
     const original: Etat = {
       ...etatMinimal(),
       progression: {

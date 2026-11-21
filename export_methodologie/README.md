@@ -9,7 +9,8 @@ Ce dossier regroupe l'intégralité du domaine et des modules de **méthodologie
 
 ### 1. `components/` (Composants React / Interface utilisateur)
 - **`Methodologie.tsx`** : L'écran principal de la méthodologie.
-  - La « Clé » en 4 temps (*فعل ← دليل ← جواب ← فحص*).
+  - Le laboratoire **البوصلة** (même origine). Inclure `components/Boussole.tsx` et copier `public/boussole/` depuis la racine du dépôt. La porte «تمارين المنهجية الأخرى» conserve les ateliers. L'aide de l'unité 1 mène à un exemple de protéines, sans donner la solution de l'exercice.
+  - Les repères فعل ← دليل ← جواب ← فحص et des critères de relecture facultatifs sont dans le laboratoire, sans score automatique. Son carnet local et ses limites de confidentialité sont décrits dans `modules/boussole/README.md` ; l'intégration aux sauvegardes de l'app dépend aussi de `src/utils/carnetBoussole.ts`, `storage.ts` et `backup.ts`, non inclus dans cet export de composants.
   - Les 3 opérations scientifiques fondamentales (*أصف, أفسّر, أحكم*).
   - Le répertoire des verbes opératoires (*حلل, فسر, قارن, استنتج, استدل, صادق, ركب*).
   - 10 exercices interactifs sur l'Unité 1 avec schémas SVG interactifs (`SchemaUnite1`).

@@ -21,7 +21,7 @@ export default function CarteHorsLigne() {
     <section className="card mt-5 p-5">
       <p className="eyebrow">العمل دون إنترنت</p>
       <p className="mt-2 text-xs leading-relaxed text-mute">
-        نزّل ملفات الدروس والواجهة وأعد المحاولة عند انقطاع الشبكة. الفيديو والملفات الخارجية ليست ضمن هذا التنزيل.
+        نزّل الدروس والواجهة ومختبر البوصلة وورقتَي الطباعة وأعد المحاولة عند انقطاع الشبكة. الفيديو والملفات الخارجية ليست ضمن هذا التنزيل.
         {taille !== null && ` الحجم الكامل التقريبي على الجهاز ${taille} ميغابايت؛ استهلاك الإنترنت قد يختلف.`}
       </p>
       <p role="status" className="mt-2 text-sm font-bold text-forest-deep">

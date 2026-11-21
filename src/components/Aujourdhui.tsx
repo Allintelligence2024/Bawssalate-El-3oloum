@@ -362,7 +362,7 @@ export default function Aujourdhui({
             onClick={onOuvrirMethodologie}
             className="mt-2 w-full text-center text-xs font-black text-forest"
           >
-            أتدرّب على التمرين في تبويب المنهجية ←
+            أفتح البوصلة لأتدرّب على قراءة الدليل ←
           </button>
           <p className="mt-2 text-center text-[11px] text-mute">
             دقيقتان، لا أكثر. الاسترجاع القصير يثبّت الإجراء في الذاكرة — بلا نسبة مئوية وبلا عدوّ.

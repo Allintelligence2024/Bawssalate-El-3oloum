@@ -341,7 +341,7 @@ export default function Exercices({
             </span>
             <h2 className="font-naskh mt-3 text-lg font-bold">تمارين المنهجية</h2>
             <p className="mt-1 text-sm leading-relaxed text-mute">
-              المفتاح فعل ← دليل ← جواب ← فحص و{nb(4)} مستويات: القدوة، التمرين الموجه، المستقل،
+              أربط المطلوب بالدليل في {nb(4)} مستويات: القدوة، التمرين الموجه، المستقل،
               تشخيص الخطأ.
             </p>
             <span className="mt-3 inline-block text-sm font-bold text-forest transition-transform group-hover:translate-x-1">
