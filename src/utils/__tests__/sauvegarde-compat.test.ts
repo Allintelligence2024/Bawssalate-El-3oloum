@@ -51,6 +51,26 @@ const statsValides = (): StatsReponses => ({
 });
 
 describe('P0.3 — matrice de compatibilité des fichiers', () => {
+  it('accepte 5 000 entrées et rejette la suivante avant de lire les valeurs', () => {
+    const drills: Record<string, true> = Object.fromEntries(Array.from({ length: 5000 }, (_, i) => [`d${i}`, true as const]));
+    const fichier = { version: 3, progression: {}, drills };
+    expect(Object.keys(lireSauvegarde(fichier)?.etat.drills ?? {})).toHaveLength(5000);
+    const lireValeur = vi.fn(() => true);
+    Object.defineProperty(drills, 'd0', { enumerable: true, get: lireValeur });
+    drills.supplementaire = true;
+    expect(lireSauvegarde(fichier)).toBeNull();
+    expect(lireValeur).not.toHaveBeenCalled();
+  });
+
+  it('rejette les listes hors limites avant de lire le premier élément', () => {
+    const journal = Array<string>(5001).fill('2026-11-19');
+    const lireJour = vi.fn(() => '2026-11-19');
+    Object.defineProperty(journal, '0', { get: lireJour });
+    expect(lireSauvegarde({ progression: {}, journal })).toBeNull();
+    expect(lireJour).not.toHaveBeenCalled();
+    expect(lireSauvegarde({ progression: {}, journal: Array<string>(5000).fill('2026-11-19') })?.etat.journal).toHaveLength(5000);
+  });
+
   it('enveloppe v1, v2, v3 acceptées', () => {
     for (const version of [1, 2, 3]) {
       const lu = etatDepuisFichier({ application: 'أ', version, exporteLe: '2026-11-17', etat: { progression: {} } });

@@ -1,8 +1,8 @@
 // بطاقة المزامنة — إعداد دائم في «أنا». تختفي تمامًا إذا لم تُفعَّل المزامنة (لا مفاتيح Supabase).
 // المزامنة متوقّفة حتى يوافق التلميذ صراحةً (P0.2/P0.8)؛ هذه البطاقة تعرض الحالة وقائمة ما يُرسَل حرفيًّا.
 
-import { useState } from 'react';
-import { consentementEtat, syncActive, jetonUtilisable, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
+import { useState, useSyncExternalStore } from 'react';
+import { abonnerEtatEnvoi, etatEnvoi, envoyerSnapshot, consentementEtat, syncActive, jetonUtilisable, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
 import type { Etat } from '../types';
 
 interface Props {
@@ -35,6 +35,7 @@ export function ListeDonneesSync({ compact = false }: { compact?: boolean }) {
 // الإعداد الدائم — يُظهر الحالة الحالية ويزرّ التبديل.
 export function ReglageSync({ etat, onChoix }: Props) {
   const [details, setDetails] = useState(false);
+  const envoi = useSyncExternalStore(abonnerEtatEnvoi, () => etatEnvoi(etat.compte?.email), () => 'en_attente' as const);
   if (!syncActive()) return null;
   const c = consentementEtat(etat);
   const jetonSain = jetonUtilisable(etat.compte?.jeton);
@@ -46,6 +47,12 @@ export function ReglageSync({ etat, onChoix }: Props) {
           ? 'يُرسَل ملخّص تقدّمك دوريًّا في الخلفية عند توفّر الإنترنت. تُحفَظ كل بياناتك على هاتفك أولًا.'
           : 'لن يُرسَل شيء أبدًا. تقدّمك يبقى على هاتفك وحدك — وهذا حقّك كاملًا.'}
       </p>
+      {c === 'oui' && jetonSain && <div className="mt-3 text-xs">
+        <p role="status">{{ en_attente: 'بانتظار أول تأكيد للإرسال.', envoi: 'جارٍ إرسال الملخّص…',
+          confirme: 'أكّد الخادم آخر إرسال.', erreur: 'لم يؤكّد الخادم الإرسال. لم يتغيّر تقدّمك في التطبيق.',
+          hors_ligne: 'لا اتصال بالإنترنت. تقدّمك يبقى على الجهاز.' }[envoi]}</p>
+        {(envoi === 'erreur' || envoi === 'hors_ligne') && <button type="button" className="btn btn-ghost mt-2" onClick={() => void envoyerSnapshot(etat)}>أعد محاولة الإرسال</button>}
+      </div>}
       <button
         type="button"
         onClick={() => setDetails((v) => !v)}

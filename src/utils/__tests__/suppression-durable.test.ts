@@ -6,10 +6,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import type { Etat } from '../../types';
-import { envoyerSnapshot, supprimerSnapshotServeur, reprendreSync } from '../sync';
+import { envoyerSnapshot, supprimerSnapshotServeur, reprendreSync, suspendreSync, etatEnvoi } from '../sync';
 
 const sbMocks = vi.hoisted(() => ({
-  upsert: vi.fn(async () => ({ error: null })),
+  upsert: vi.fn(async (_payload: unknown): Promise<{ error: null | { message: string } }> => ({ error: null })),
   createClient: vi.fn(),
   select: vi.fn(async (): Promise<{ data: unknown[]; error: null }> => ({ data: [{ email: 'test@example.com' }], error: null })),
 }));
@@ -47,6 +47,51 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+});
+
+describe('état visible de synchronisation', () => {
+  it('ne confirme qu’un envoi accepté et permet un nouvel essai identique après un refus', async () => {
+    sbMocks.upsert.mockResolvedValueOnce({ error: { message: 'refus fictif' } });
+    expect(etatEnvoi(compte.email)).toBe('en_attente');
+    await envoyerSnapshot(etatSync(20));
+    expect(etatEnvoi(compte.email)).toBe('erreur');
+    await envoyerSnapshot(etatSync(20));
+    expect(etatEnvoi(compte.email)).toBe('confirme');
+    vi.setSystemTime(new Date('2026-11-16T10:12:00Z'));
+    await envoyerSnapshot(etatSync(20));
+    expect(sbMocks.upsert).toHaveBeenCalledTimes(2);
+    expect(sbMocks.upsert.mock.calls[1][0]).toMatchObject({ jeton: compte.jeton });
+    expect(sbMocks.upsert.mock.calls[1][0]).not.toHaveProperty('charge_utile.jeton');
+  });
+
+  it('coalesce les mises à jour pendant un envoi et abandonne celles suspendues', async () => {
+    for (const suspendre of [false, true]) {
+      reprendreSync(compte.email);
+      sbMocks.upsert.mockClear();
+      let terminer!: (r: { error: null }) => void;
+      sbMocks.upsert.mockImplementationOnce(() => new Promise(r => { terminer = r; }));
+      const premier = envoyerSnapshot(etatSync(10));
+      await vi.advanceTimersByTimeAsync(0);
+      await envoyerSnapshot(etatSync(20));
+      await envoyerSnapshot(etatSync(30));
+      if (suspendre) suspendreSync(compte.email);
+      terminer({ error: null });
+      await premier;
+      expect(sbMocks.upsert.mock.calls.map(([p]) => (p as { minutes_totales: number }).minutes_totales))
+        .toEqual(suspendre ? [10] : [10, 30]);
+    }
+  });
+
+  it('signale le mode hors ligne et ne part pas si la suspension précède la requête', async () => {
+    vi.stubGlobal('navigator', { onLine: false });
+    await envoyerSnapshot(etatSync(20));
+    expect(etatEnvoi(compte.email)).toBe('hors_ligne');
+    vi.stubGlobal('navigator', { onLine: true });
+    const attente = envoyerSnapshot(etatSync(20));
+    suspendreSync(compte.email);
+    await attente;
+    expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
 });
 
 describe('P0.2 — suppression durable (onglets, réseau, réactivation)', () => {
