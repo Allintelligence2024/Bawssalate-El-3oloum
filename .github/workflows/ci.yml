@@ -29,7 +29,19 @@ jobs:
           sha256sum --check /tmp/boussole-html.sha256
           npm run verifier:inventaire-boussole
       - name: Installer Chromium pour les tests locaux
-        run: npx playwright install --with-deps chromium
+        run: |
+          if npx playwright install --with-deps chromium > /tmp/boussole-chromium-install.log 2>&1; then
+            cat /tmp/boussole-chromium-install.log
+          else
+            cat /tmp/boussole-chromium-install.log
+            node -e '
+              const fs = require("fs");
+              const lignes = fs.readFileSync("/tmp/boussole-chromium-install.log", "utf8").trim().split("\n").slice(-15);
+              const message = lignes.join("\n").replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+              console.log("::error title=Installation Chromium::" + message);
+            '
+            exit 1
+          fi
         working-directory: modules/boussole
       - name: Tester le laboratoire autonome
         run: npm test
