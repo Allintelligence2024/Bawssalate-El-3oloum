@@ -4,9 +4,15 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
-import { chargerEtat, sauvegarderEtat, surEchecSauvegarde, viderStockage, fusionnerProgressionImportee, restaurerEtatEtStats } from './utils/storage';
+import {
+  abandonnerJournalRestauration, chargerEtat, CLE_ETAT, fusionnerProgressionImportee,
+  restaurationBloqueeAuChargement, restaurerEtatEtStats, sauvegarderEtat,
+  suspendreEcrituresLocalement, surEchecSauvegarde, surEtatPerime, verifierLectureEtat, viderStockage,
+} from './utils/storage';
+import { verifierCoherence } from './utils/coherenceStockage';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
-import type { StatsReponses } from './utils/stats';
+import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
+import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
 import { ajouterJours, aujourdhui } from './utils/dates';
 import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
@@ -54,7 +60,7 @@ import type { Compte } from './types';
 import {
 
   IcoCarnet,
-  IcoCle,
+  IcoBoussole,
   IcoDumbbell,
   IcoLune,
   IcoRoute,
@@ -86,7 +92,7 @@ type Mode =
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
   { id: 'aujourdhui', label: 'اليوم', icone: IcoSoleil },
   { id: 'masari', label: 'مساري', icone: IcoRoute },
-  { id: 'methodo', label: 'منهجية', icone: IcoCle },
+  { id: 'methodo', label: 'البوصلة', icone: IcoBoussole },
   { id: 'exercices', label: 'تدريبات', icone: IcoDumbbell },
   { id: 'ana', label: 'أنا', icone: IcoCarnet },
 ];
@@ -162,7 +168,7 @@ function AlerteStockage({ visible, pret, onBackup, onFermer }: { visible: boolea
     <div role="alert" className="fixed inset-x-0 top-0 z-[120] border-b border-line bg-cream shadow-md">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
         <p className="text-sm leading-relaxed text-ink-soft">
-          ⚠️ تعذّر قراءة بياناتك أو حفظها على هذا الجهاز. قد لا تُحفَظ التغييرات، وقد تكون البيانات السابقة غير ظاهرة. تحقّق من التخزين ثم أعد فتح التطبيق؛ لا تمسح بياناته قبل التأكّد. التصدير يشمل البيانات الظاهرة فقط.
+          ⚠️ تعذّر قراءة بياناتك أو حفظها أو حذفها على هذا الجهاز. قد تكون العملية غير مكتملة والبيانات السابقة غير ظاهرة. تحقّق من التخزين قبل إعادة المحاولة. قد يتعذّر التصدير إذا لم يُقرأ التقدّم أو دفتر البوصلة أو الإحصاءات.
         </p>
         <div className="flex shrink-0 items-center gap-2">
           {pret && <button type="button" onClick={onBackup} className="btn btn-primary px-4 py-1.5 text-xs">النسخة الاحتياطية</button>}
@@ -173,8 +179,93 @@ function AlerteStockage({ visible, pret, onBackup, onFermer }: { visible: boolea
   );
 }
 
+function EcranReprise({ cause, onCopier }: { cause: 'locale' | 'autre'; onCopier: () => void }) {
+  const [confirmer, setConfirmer] = useState(false);
+  const [erreur, setErreur] = useState(false);
+  const titre = useRef<HTMLHeadingElement>(null);
+  const dialogue = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const el = dialogue.current;
+    if (el && !el.open) el.showModal();
+    titre.current?.focus();
+    return () => { if (el?.open) el.close(); };
+  }, []);
+  return (
+    <dialog ref={dialogue} onCancel={(e) => e.preventDefault()} aria-labelledby="reprise-titre"
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto border-0 bg-cream p-0 backdrop:bg-black/60">
+    <main dir="rtl" className="grid min-h-dvh place-items-center px-4 py-8">
+      <section className="card w-full max-w-xl p-5 sm:p-7">
+        <h1 id="reprise-titre" ref={titre} tabIndex={-1} className="font-naskh text-2xl font-bold">
+          توقّف هذا التبويب لحماية بياناتك
+        </h1>
+        <p role="alert" className="mt-3 text-sm leading-relaxed">
+          {cause === 'locale'
+            ? 'تعذّر إكمال استعادة سابقة أو قراءة سجلّها. أوقفنا الكتابة حتى لا نعرض بيانات قد تكون ناقصة. أغلق التبويبات الأخرى، تحقّق من مساحة التخزين ثم أعد فتح التطبيق. لا تمسح بيانات الموقع قبل حفظ ما تحتاجه.'
+            : 'تغيّرت البيانات أو بدأ استيرادها أو مسحها في تبويب آخر. أوقفنا الكتابة هنا حتى لا نعيد حفظ نسخة قديمة. أغلق التبويبات الأخرى ثم أعد فتح التطبيق.'}
+        </p>
+        {cause === 'autre' && (
+          <p className="mt-3 text-sm leading-relaxed">
+            إن كان لديك نصّ غير محفوظ، انسخه أو نزّله قبل إعادة الفتح. لن تُحفَظ تغييرات التطبيق في هذا التبويب.
+          </p>
+        )}
+        <button type="button" onClick={() => window.location.reload()} className="btn btn-primary mt-4 w-full">
+          أعيد فتح التطبيق
+        </button>
+        {cause === 'autre' && (
+          <button type="button" onClick={onCopier} className="btn btn-ghost mt-2 w-full text-sm">
+            أعود لنسخ مسوّدتي المؤقّتة
+          </button>
+        )}
+        {cause === 'locale' && (
+          <div className="mt-5 border-t border-line pt-4">
+            {!confirmer ? (
+              <button type="button" onClick={() => setConfirmer(true)} className="btn btn-ghost w-full text-sm">
+                الاستعادة لا تعمل؟ خيارات متقدّمة
+              </button>
+            ) : (
+              <div>
+                <p className="text-sm leading-relaxed">
+                  التخلّي يحذف سجلّ الاستعادة فقط، وقد يترك البيانات الحالية غير مكتملة. أغلق التبويبات الأخرى واحتفظ بملفّ النسخة الاحتياطية؛ قد تحتاج إلى استيراده من جديد.
+                </p>
+                {erreur && <p role="alert" className="mt-2 text-sm font-bold text-clay">تعذّر حذف السجلّ. تحقّق من التخزين وأعد المحاولة.</p>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => {
+                    if (abandonnerJournalRestauration()) window.location.reload();
+                    else setErreur(true);
+                  }} className="btn bg-clay text-paper">نعم، أتخلّى عن الاستعادة</button>
+                  <button type="button" onClick={() => { setConfirmer(false); setErreur(false); }} className="btn btn-ghost">تراجع</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    </main>
+    </dialog>
+  );
+}
+
+function BandeauReprise({ onOuvrir }: { onOuvrir: () => void }) {
+  return (
+    <aside role="alert" dir="rtl" className="fixed inset-x-0 top-0 z-[120] border-b border-line bg-cream px-4 py-2 shadow-md">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
+        <p className="text-sm leading-relaxed">
+          هذا التبويب متوقّف عن الحفظ. انسخ أو نزّل نصّك المؤقّت قبل مغادرة صفحته، ثم أعد فتح التطبيق؛ لا تتابع العمل هنا.
+        </p>
+        <button type="button" onClick={onOuvrir} className="btn btn-primary px-4 py-1.5 text-xs">خيارات إعادة الفتح</button>
+      </div>
+    </aside>
+  );
+}
+
 export default function App() {
   const [etat, setEtat] = useState<Etat>(() => chargerEtat());
+  const [blocageRestauration, setBlocageRestauration] = useState<'locale' | 'autre' | null>(
+    () => restaurationBloqueeAuChargement() ? 'locale' : null,
+  );
+  const blocageRef = useRef(blocageRestauration);
+  blocageRef.current = blocageRestauration;
+  const [repriseVisible, setRepriseVisible] = useState(true);
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
   // P-1.4 (D4): échec d'écriture localStorage → bandeau visible (perte silencieuse interdite)
   const [stockageDefaillant, setStockageDefaillant] = useState(false);
@@ -288,21 +379,73 @@ export default function App() {
   // P-1.4: كل فشل كتابة في التخزين يرفع البانر — يُخفى يدويًّا، ويُعاد عند الفشل التالي
   useEffect(() => surEchecSauvegarde(() => setStockageDefaillant(true)), []);
 
+  // Une comparaison synchrone peut aussi détecter le conflit avant la réception
+  // de « storage ». Le signal est mémorisé même avant l'abonnement React.
+  useEffect(() => surEtatPerime(() => {
+    if (blocageRef.current === 'locale') return;
+    blocageRef.current = 'autre';
+    setRepriseVisible(true);
+    setBlocageRestauration('autre');
+  }), []);
+
+  // Toute modification du profil ou des statistiques par un autre onglet peut
+  // rendre notre copie périmée, même sans import. La geler plutôt que l'écraser.
+  useEffect(() => {
+    const change = (event: StorageEvent) => {
+      try { if (event.storageArea !== localStorage) return; } catch { return; }
+      const restauration = event.key === CLE_RESTAURATION && event.newValue !== null;
+      const donnees = event.key === null || event.key === CLE_ETAT || event.key === CLE_STATS;
+      if ((!restauration && !donnees) || blocageRef.current === 'locale') return;
+      suspendreEcrituresLocalement();
+    };
+    window.addEventListener('storage', change);
+    return () => window.removeEventListener('storage', change);
+  }, []);
+
   // ───────────── المزامنة الاختيارية (صامتة، offline-first) ─────────────
 
   const etatRef = useRef(etat);
   etatRef.current = etat;
 
+  function stockageCourant(): boolean {
+    try {
+      if (restaurationEnAttente()) {
+        suspendreEcrituresLocalement();
+        return false;
+      }
+      if (!verifierCoherence()) return false;
+      verifierLectureEtat();
+      return true;
+    } catch {
+      signalerEchecStockage();
+      return false;
+    }
+  }
+
+  function stockageCourantPourSync(): boolean {
+    if (!stockageCourant()) return false;
+    try {
+      statsPourExport(); // ne pas envoyer des compteurs de secours après lecture impossible
+      return true;
+    } catch {
+      signalerEchecStockage();
+      return false;
+    }
+  }
+
   useEffect(() => {
-    if (!syncActive()) return;
+    if (!syncActive() || blocageRestauration) return;
+    const envoyerSiCourant = () => {
+      if (!blocageRef.current && stockageCourantPourSync()) void envoyerSnapshot(etatRef.current);
+    };
     // بعد كل تغيير: انتظر 6 ثوانٍ ثم أرسل (تفادي الإرسال المتكرر)
-    const delai = setTimeout(() => void envoyerSnapshot(etatRef.current), 6000);
+    const delai = setTimeout(envoyerSiCourant, 6000);
     // عند تصغير التطبيق أو تبديل التبويب: أرسل فورًا
     const onVisibilite = () => {
-      if (document.visibilityState === 'hidden') void envoyerSnapshot(etatRef.current);
+      if (document.visibilityState === 'hidden') envoyerSiCourant();
     };
     // عند عودة الشبكة: أرسل ما تجمّع
-    const onLigne = () => void envoyerSnapshot(etatRef.current);
+    const onLigne = envoyerSiCourant;
     document.addEventListener('visibilitychange', onVisibilite);
     window.addEventListener('online', onLigne);
     return () => {
@@ -310,7 +453,7 @@ export default function App() {
       document.removeEventListener('visibilitychange', onVisibilite);
       window.removeEventListener('online', onLigne);
     };
-  }, [etat]);
+  }, [etat, blocageRestauration]);
 
   // ───────────── فتح بنود الطريق ─────────────
 
@@ -498,11 +641,15 @@ export default function App() {
   }
 
   function onConsentementSync(ok: boolean): void {
+    // Même si cet onglet est périmé, cesser immédiatement ses nouveaux envois.
+    if (!ok) suspendreSync(etatRef.current.compte?.email);
+    // Une statistique illisible bloque l'envoi, pas la décision de consentement
+    // lorsque la progression elle-même reste lisible et cohérente.
+    if (blocageRef.current || !stockageCourant()) return;
     if (ok) reprendreSync(etatRef.current.compte?.email);
-    else suspendreSync(etatRef.current.compte?.email);
     const decide = { consentementSync: ok, consentementSyncDecideLe: new Date().toISOString() };
     setEtat((prev) => ({ ...prev, ...decide }));
-    if (ok) void envoyerSnapshot({ ...etatRef.current, ...decide });
+    if (ok && stockageCourantPourSync()) void envoyerSnapshot({ ...etatRef.current, ...decide });
   }
 
   // ───────────── الملاحظات والهوية ─────────────
@@ -511,21 +658,32 @@ export default function App() {
     setEtat((prev) => ({ ...prev, notes: prev.notes.filter((n) => n.id !== id) }));
   }
 
-  function onReinitialiser(): void {
-    viderStockage();
+  function onReinitialiser(carnetAvantConfirmation: string | null): boolean {
+    if (blocageRef.current) return false;
+    if (!viderStockage(carnetAvantConfirmation)) return false; // Une suppression partielle n'est pas annoncée comme réussie.
+    fermerSession();
+    setSession(false);
     setEtat(chargerEtat());
     setMode(null);
     setOnglet('aujourdhui');
+    return true;
   }
 
-  // استيراد نسخة احتياطية كاملة (من أنا) — l'écriture est portée par restaurerEtatEtStats
-  function onRestaurerEtat(nouveau: Etat, stats?: StatsReponses): void {
-    // L'identité, la session et le consentement appartiennent à l'appareil courant.
+  // استيراد نسخة احتياطية كاملة (من أنا) — identité et consentement restent locaux.
+  function onRestaurerEtat(nouveau: Etat, stats?: StatsReponses, carnetBoussole?: CarnetBoussole | null, carnetAvantConfirmation?: string | null): void {
+    if (blocageRef.current) return;
     const fusionne = fusionnerProgressionImportee(etatRef.current, nouveau);
-    // Écriture atomique : progression ET statistiques engagées ensemble. Si le quota
-    // refuse, rien n'est appliqué — les anciennes données et l'état affiché restent
-    // inchangés et le bandeau d'alerte est déjà signalé.
-    if (!restaurerEtatEtStats(fusionne, stats)) return;
+    if (!restaurerEtatEtStats(fusionne, stats, carnetBoussole, carnetAvantConfirmation)) {
+      let repriseNecessaire = true;
+      try { repriseNecessaire = restaurationEnAttente(); } catch { /* stockage non vérifiable */ }
+      if (repriseNecessaire) {
+        blocageRef.current = 'locale';
+        suspendreEcrituresLocalement();
+        setRepriseVisible(true);
+        setBlocageRestauration('locale');
+      }
+      return;
+    }
     setEtat(fusionne);
     setMode(null);
     setOnglet('ana');
@@ -544,11 +702,21 @@ export default function App() {
 
   // ───────────── الأوضاع كاملة الشاشة ─────────────
 
+  // Garder l'écran courant monté derrière la reprise : le laboratoire peut
+  // contenir une saisie temporaire que l'élève doit pouvoir copier ou télécharger.
+  const reprise = blocageRestauration && (repriseVisible
+    ? <EcranReprise cause={blocageRestauration} onCopier={() => setRepriseVisible(false)} />
+    : <BandeauReprise onOuvrir={() => setRepriseVisible(true)} />);
+  const ecranInerte = Boolean(blocageRestauration && repriseVisible);
+
   if (mode) {
     // كل الشاشات أدناه كسولة التحميل (P3.6): Suspense واحد يغلّفها جميعًا
     return <>
-      <AlerteStockage visible={stockageDefaillant} pret={false} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
-      <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>
+      {reprise}
+      <div inert={ecranInerte} aria-hidden={ecranInerte}>
+        <AlerteStockage visible={stockageDefaillant && !blocageRestauration} pret={false} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
+        <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>
+      </div>
     </>;
   }
 
@@ -850,9 +1018,10 @@ export default function App() {
   // لا تبويبات ولا شارة قبل اكتمال شاشة الإقلاع وفتح حساب
   const pret = inscrit && !demarrage;
 
-  return (
-    <div className="min-h-dvh">
-      <AlerteStockage visible={stockageDefaillant} pret={pret} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
+  return <>
+    {reprise}
+    <div className="min-h-dvh" inert={ecranInerte} aria-hidden={ecranInerte}>
+      <AlerteStockage visible={stockageDefaillant && !blocageRestauration} pret={pret} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
       {demarrage && <EcranDemarrage onTerminer={fermerDemarrage} />}
       {!demarrage && (
         <>
@@ -861,7 +1030,7 @@ export default function App() {
             <div className="mx-auto flex h-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-primary/25">
-                  🧭
+                  <span className="h-7 w-7"><IcoBoussole /></span>
                 </div>
                 <div className="hidden min-w-0 sm:block">
                   <h1 className="app-brand truncate tracking-tight leading-none">بوصلة العلوم</h1>
@@ -870,7 +1039,7 @@ export default function App() {
               </div>
               <div className="flex items-center gap-2">
                 {/* شارة XP — مصدر وحيد للمستوى (popup منسدل، لا يغطي المحتوى) */}
-                <BaguetteXp etat={etat} onDeconnexion={onDeconnexion} />
+                {pret && <BaguetteXp etat={etat} onDeconnexion={onDeconnexion} />}
                 <button
                   type="button"
                   onClick={basculerTheme}
@@ -1020,10 +1189,10 @@ export default function App() {
       )}
       </div>
 
-          {/* شريط التنقّل السفلي الحديث */}
-          <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface shadow-[0_-10px_40px_-16px_rgba(0,0,0,0.1)]">
+          {/* لا نُظهر تبويبات غير قابلة للاستعمال أو لشارات حساب قبل الدخول. */}
+          {pret && <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface shadow-[0_-10px_40px_-16px_rgba(0,0,0,0.1)]">
             <div className="mx-auto max-w-5xl">
-              <div className="flex h-16 items-center justify-between px-6">
+              <div className="flex h-16 items-center justify-between px-1 sm:px-6">
                 {ONGLETS.map((o) => {
                   const Ico = o.icone;
                   const actif = o.id === onglet;
@@ -1031,7 +1200,7 @@ export default function App() {
                     <button
                       key={o.id}
                       onClick={() => setOnglet(o.id)}
-                      className="flex flex-1 flex-col items-center gap-1 px-4 py-2"
+                      className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2 sm:px-4"
                       aria-current={actif ? 'page' : undefined}
                     >
                       <span className={`relative h-9 w-9 rounded-2xl flex items-center justify-center transition-[transform,background-color,box-shadow] duration-300 ${
@@ -1052,9 +1221,9 @@ export default function App() {
                 })}
               </div>
             </div>
-          </nav>
+          </nav>}
         </>
       )}
     </div>
-  );
+  </>;
 }

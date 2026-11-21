@@ -1,0 +1,13 @@
+{
+  "site": "https://bawssalate-el-3oloum.vercel.app",
+  "build": "a435d0b009ed3da45573",
+  "checks": [
+    "Lecture anonyme sans compte ni page Drive ; deux enregistrements de ج3 et interprétation affichés.",
+    "Téléchargement volontaire strictement identique au laboratoire servi.",
+    "Profil fictif local créé par le formulaire normal, aucun envoi de synchronisation ; vrai onglet البوصلة de production, interaction sans changer de site.",
+    "Ateliers complémentaires accessibles ; ancien écran de la clé absent."
+  ],
+  "hashHTML": "4b4baa0cfee613ae5bf719731b7d0c8d073348e0cc84cee34e844c2eba1cf32e",
+  "errors": [],
+  "blockedRequests": []
+}

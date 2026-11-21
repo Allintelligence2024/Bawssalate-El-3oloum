@@ -128,3 +128,17 @@ describe('service worker — simulation', () => {
     expect(await e.demande('/ouverture.mp4', 'cors', true)).toBeUndefined();
   });
 });
+
+describe('ressources de la Boussole dans le cache de la classe', () => {
+  it('valide le type PDF, reprend le téléchargement puis sert la copie intégrale hors ligne (même avec Range)', async () => {
+    const e = environnement();
+    e.manifest.statiques.push('/boussole/index.html', '/boussole/memo.pdf', '/boussole/cahier-bac-2022.pdf');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/boussole/index.html', 'labo', 'text/html'); e.put('/boussole/memo.pdf', '<html>non</html>', 'text/html'); e.put('/boussole/cahier-bac-2022.pdf', '%PDF-cahier', 'application/pdf');
+    await e.lifecycle('install'); expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(1);
+    e.put('/boussole/memo.pdf','%PDF-memo','application/pdf'); expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    e.setOnline(false); expect(await (await e.demande('/boussole/index.html','navigate'))!.text()).toBe('labo');
+    expect(await (await e.demande('/boussole/memo.pdf','cors',true))!.text()).toBe('%PDF-memo');
+    expect(await e.demande('/boussole/inconnu.pdf')).toBeUndefined();
+  });
+});

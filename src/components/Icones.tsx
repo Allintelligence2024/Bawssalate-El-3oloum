@@ -59,16 +59,13 @@ export function IcoDiplome() {
   );
 }
 
-// مفتاح — أيقونة تبويب «منهجية» (clé Miftah)
-export function IcoCle() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-full w-full" aria-hidden>
-      <circle cx="8" cy="16" r="4" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M11 13 20 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M14.5 9.5 16.5 11.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M17.5 6.5 19.5 8.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
+// بوصلة — مدخل المختبر داخل التطبيق
+export function IcoBoussole() {
+  return <svg viewBox="0 0 24 24" fill="none" className="h-full w-full" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M17.2 6.8 14 14 6.8 17.2 10 10z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    <path d="m17.2 6.8-5.3 5.3L10 10Z" fill="currentColor" />
+  </svg>;
 }
 
 export function IcoCible() {

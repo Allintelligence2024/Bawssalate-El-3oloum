@@ -29,7 +29,7 @@ if (!Array.isArray(manifeste.assets) || !manifeste.assets.every((u) => /^\/asset
 }
 const statiquesOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
   manifeste.statiques.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
-    ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u));
+    ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf', '/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u));
 if (!statiquesOk) problemes.push('manifeste : entrées statiques non conformes à la règle du worker');
 const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map((x) => x[1]);
 if (!demarrage.length) problemes.push('index.html : aucun asset de démarrage');
@@ -41,6 +41,7 @@ const BASE = `http://127.0.0.1:${serveur.httpServer.address().port}`;
 
 const typeOk = (url, res) => {
   const t = (res.headers.get('content-type') || '').toLowerCase();
+  if (url.endsWith('.pdf')) return t.includes('application/pdf');
   if (url.endsWith('.js')) return t.includes('javascript');
   if (url.endsWith('.css')) return t.includes('text/css');
   if (url.endsWith('.html') || url === '/') return t.includes('text/html');

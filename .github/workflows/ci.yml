@@ -6,7 +6,8 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 ne prend pas en charge Ubuntu 26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,3 +20,48 @@ jobs:
       - run: node scripts/verifier-drills.mjs
       - run: node scripts/verifier-hors-ligne.mjs
       - run: npm audit --audit-level=high
+      - name: Installer les dépendances du laboratoire
+        run: npm ci --no-audit --no-fund
+        working-directory: modules/boussole
+      - name: Vérifier et reconstruire le HTML autonome
+        run: |
+          sha256sum public/boussole/index.html > /tmp/boussole-html.sha256
+          npm --prefix modules/boussole run typecheck
+          npm --prefix modules/boussole run build
+          sha256sum --check /tmp/boussole-html.sha256
+          npm run verifier:inventaire-boussole
+      - name: Installer Chromium pour les tests locaux
+        run: |
+          if npx playwright install --with-deps chromium > /tmp/boussole-chromium-install.log 2>&1; then
+            cat /tmp/boussole-chromium-install.log
+          else
+            cat /tmp/boussole-chromium-install.log
+            node -e '
+              const fs = require("fs");
+              const lignes = fs.readFileSync("/tmp/boussole-chromium-install.log", "utf8").trim().split("\n").slice(-15);
+              const message = lignes.join("\n").replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+              console.log("::error title=Installation Chromium::" + message);
+            '
+            exit 1
+          fi
+        working-directory: modules/boussole
+      - name: Tester le laboratoire autonome
+        run: npm test
+        working-directory: modules/boussole
+      - name: Tester l'intégration sur le build local
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4182 --strictPort > /tmp/boussole-preview.log 2>&1 &
+          serveur=$!
+          trap 'kill "$serveur" 2>/dev/null || true' EXIT
+          node -e '
+            async function attendre() {
+              for (let i = 0; i < 60; i++) {
+                try { if ((await fetch("http://127.0.0.1:4182/")).ok) return; } catch {}
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+              throw new Error("Le serveur local n’a pas démarré.");
+            }
+            attendre().catch(e => { console.error(e); process.exitCode = 1; });
+          '
+          cd modules/boussole
+          APP_URL=http://127.0.0.1:4182 npm run test:integration

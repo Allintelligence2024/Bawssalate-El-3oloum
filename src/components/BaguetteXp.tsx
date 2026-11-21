@@ -124,16 +124,21 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
           </ul>
 
           {onDeconnexion && (
-            <button
-              type="button"
-              onClick={() => {
-                setOuvert(false);
-                onDeconnexion();
-              }}
-              className="btn btn-ghost mt-4 w-full text-sm"
-            >
-              تسجيل الخروج
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setOuvert(false);
+                  onDeconnexion();
+                }}
+                className="btn btn-ghost mt-4 w-full text-sm"
+              >
+                تسجيل الخروج
+              </button>
+              <p className="mt-2 text-xs leading-relaxed text-mute">
+                الخروج لا يمسح مسوّدات البوصلة. امسحها من «دفتر التجربة» أو بإعادة الضبط في «أنا» قبل تسليم جهاز مشترك.
+              </p>
+            </>
           )}
         </div>
       )}

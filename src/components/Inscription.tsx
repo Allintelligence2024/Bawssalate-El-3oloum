@@ -60,9 +60,14 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
         return annoncer('لا يمكن التحقّق من كلمة مرور هذا الحساب القديم. يمكنك حذف الحساب المحلي مع إبقاء تقدّمك وإنشاء حساب جديد؛ هذا لا يستعيد رمز الخادم.');
       }
       const bon = await verifierMdp(mdp, compte.motDePasse);
+      if (!bon) {
+        setOccupe(false);
+        return annoncer(messageCompte('mdp', { mdp: true }));
+      }
+      // Migrer l'ancien repli uniquement après vérification du mot de passe.
+      const motDePasse = compte.motDePasse.length === 16 ? await hacher(mdp) : compte.motDePasse;
       setOccupe(false);
-      if (!bon) return annoncer(messageCompte('mdp', { mdp: true }));
-      onValide(compte);
+      onValide({ ...compte, motDePasse });
       return;
     }
 
@@ -275,7 +280,7 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
                   نسيت كلمة المرور؟ احذف الحساب وابدأ من جديد
                 </button>
               ) : (
-                <div><p className="mb-2 text-xs">يُحذف الحساب المحلي فقط ويظلّ التقدّم. لا يحذف هذا بيانات الخادم ولا يستعيد رمزها.</p><div className="flex gap-2">
+                <div><p className="mb-2 text-xs">يُحذف الحساب المحلي فقط ويظلّ التقدّم ومسوّدات مختبر البوصلة في هذا المتصفّح. لا يحذف هذا بيانات الخادم ولا يستعيد رمزها.</p><div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -300,7 +305,7 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
         </form>
 
         <p className="mt-5 text-center text-[11px] leading-relaxed text-sage/75">
-          كلمة المرور تبقى على جهازك. عند الموافقة على المزامنة يُرسَل البريد والولاية وملخّص التقدّم.
+          كلمة المرور لا تُرسَل. الحساب لا يشفّر البيانات المحفوظة ولا يحميها من مستخدم للجهاز. عند الموافقة على المزامنة يُرسَل البريد والولاية وملخّص التقدّم.
         </p>
       </div>
     </div>

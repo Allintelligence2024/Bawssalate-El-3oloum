@@ -4,17 +4,19 @@ const VERSION = '__KUNZ_BUILD_ID__';
 const CACHE = `kunz-hors-ligne-${VERSION}`;
 const MANIFESTE = '/precache-manifest.json';
 const INDEX = '/index.html';
+const BOUSSOLE = ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'];
 
 function valideManifeste(m) {
   return m && m.version === VERSION && Array.isArray(m.assets) && m.assets.length > 0 &&
     m.assets.every(u => typeof u === 'string' && /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u)) &&
     Array.isArray(m.statiques) && m.statiques.length > 0 &&
-    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u))) &&
+    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u) || ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u))) &&
     Number.isFinite(m.octets) && m.octets >= 0;
 }
 
 function typeValide(url, res) {
   const type = (res.headers.get('content-type') || '').toLowerCase();
+  if (url.endsWith('.pdf')) return type.includes('application/pdf');
   if (url.endsWith('.js')) return type.includes('javascript');
   if (url.endsWith('.css')) return type.includes('text/css');
   if (url.endsWith('.html') || url === '/') return type.includes('text/html');
@@ -132,16 +134,24 @@ self.addEventListener('message', event => {
 
 self.addEventListener('fetch', event => {
   const { request } = event;
-  if (request.method !== 'GET' || request.headers.has('range')) return;
+  if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  // Certains lecteurs PDF demandent une plage. Un 200 intégral déjà vérifié est aussi
+  // une réponse valide ; jamais de 206 partiel dans le cache des fiches.
+  if (request.headers.has('range')) {
+    if (BOUSSOLE.includes(url.pathname) && url.pathname.endsWith('.pdf')) {
+      event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(r => r || fetch(request)));
+    }
+    return;
+  }
   if (request.mode === 'navigate' && (url.pathname === '/' || url.pathname === INDEX)) {
     event.respondWith(caches.open(CACHE).then(cache => cache.match(INDEX)).then(res => res || fetch(request)));
     return;
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
   if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
-      !['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(url.pathname)) return;
+      !BOUSSOLE.includes(url.pathname) && !['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

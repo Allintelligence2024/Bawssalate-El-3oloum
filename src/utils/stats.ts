@@ -3,6 +3,8 @@
 
 import { useSyncExternalStore } from 'react';
 import { signalerEchecStockage } from './echecsStockage';
+import { restaurationEnAttente } from './carnetBoussole';
+import { memoriserValeur, verifierCoherence } from './coherenceStockage';
 import { ajouterJours, aujourdhui, nb } from './dates';
 
 export type SourceReponse = 'phase' | 'revision' | 'jalon' | 'atelier' | 'exercice';
@@ -49,7 +51,10 @@ function vierge(): StatsReponses {
 function lire(): StatsReponses {
   try {
     const brut = localStorage.getItem(CLE_STATS);
-    if (!brut) return vierge();
+    // Même une valeur corrompue est mémorisée : une suppression ou restauration
+    // explicite ne doit pas écraser une nouvelle valeur apparue entre-temps.
+    memoriserValeur(CLE_STATS, brut);
+    if (brut === null) return vierge();
     const a = JSON.parse(brut) as Partial<StatsReponses>;
     if (!a || typeof a !== 'object' || Array.isArray(a)) throw new Error('statistiques invalides');
     const compteurValide = (c: unknown): boolean => {
@@ -105,7 +110,16 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
   };
   try {
     if (lectureEnEchec) throw new Error('lecture précédente impossible');
-    localStorage.setItem(CLE_STATS, JSON.stringify(stats));
+    if (restaurationEnAttente()) {
+      // Les compteurs visibles peuvent être périmés après un rejeu. Attendre un
+      // nouveau chargement plutôt que les écrire sur une restauration engagée.
+      lectureEnEchec = true;
+      throw new Error('restauration en attente');
+    }
+    if (!verifierCoherence()) throw new Error('copie locale périmée');
+    const brut = JSON.stringify(stats);
+    localStorage.setItem(CLE_STATS, brut);
+    memoriserValeur(CLE_STATS, brut);
   } catch {
     signalerEchecStockage();
   }
@@ -113,21 +127,41 @@ export function noterReponse(source: SourceReponse, juste: boolean): void {
 }
 
 /** Applique des statistiques en mémoire sans écrire — l'écriture appartient à la
- *  restauration atomique (storage.restaurerEtatEtStats) ou à restaurerStats. */
+ *  restauration journalisée (storage.restaurerEtatEtStats) ou à restaurerStats. */
 export function appliquerStats(nouvelles: StatsReponses): void {
   stats = nouvelles;
   lectureEnEchec = false; // remplacement explicitement confirmé
   ecouteurs.forEach((fn) => fn());
 }
 
+/** Un autre onglet peut avoir remplacé ces statistiques : attendre un rechargement. */
+export function suspendreEcritureStats(): void { lectureEnEchec = true; }
+
 /** Restaurer uniquement des statistiques validées par lireSauvegarde. */
 export function restaurerStats(nouvelles: StatsReponses): void {
-  appliquerStats(nouvelles);
-  try { localStorage.setItem(CLE_STATS, JSON.stringify(stats)); }
-  catch { signalerEchecStockage(); }
+  try {
+    if (restaurationEnAttente()) {
+      lectureEnEchec = true;
+      throw new Error('restauration en attente');
+    }
+    if (!verifierCoherence()) throw new Error('copie locale périmée');
+    appliquerStats(nouvelles); // reste visible si l'écriture échoue (avec avertissement)
+    const brut = JSON.stringify(nouvelles);
+    localStorage.setItem(CLE_STATS, brut);
+    memoriserValeur(CLE_STATS, brut);
+  } catch {
+    signalerEchecStockage();
+  }
 }
 
 export function statsActuelles(): StatsReponses {
+  return stats;
+}
+
+/** Des compteurs de secours après lecture impossible ne sont pas une sauvegarde complète. */
+export class StatsIllisibles extends Error {}
+export function statsPourExport(): StatsReponses {
+  if (lectureEnEchec) throw new StatsIllisibles('Les statistiques locales ne peuvent pas être lues.');
   return stats;
 }
 
@@ -180,14 +214,18 @@ export function messageTuteur(s: StatsReponses): string {
 }
 
 // «إعادة الضبط» تمسح الإحصاء مع كل شيء
-export function viderStats(): void {
-  stats = vierge();
+export function viderStats(): boolean {
   try {
+    if (!verifierCoherence()) throw new Error('copie locale périmée');
     localStorage.removeItem(CLE_STATS);
+    memoriserValeur(CLE_STATS, null);
+    stats = vierge();
     lectureEnEchec = false;
+    ecouteurs.forEach((fn) => fn());
+    return true;
   } catch {
     lectureEnEchec = true;
     signalerEchecStockage();
+    return false;
   }
-  ecouteurs.forEach((fn) => fn());
 }

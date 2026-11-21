@@ -114,7 +114,8 @@ export interface FauteCarnet {
 }
 
 // حساب التلميذ — يُحفظ في المتصفح فقط (لا خادم، لا تتبّع).
-// motDePasse = نص مجزّأ بـ SHA-256 مع ملح «kunz» — لا يُخزَّن نصًّا صريحًا.
+// motDePasse = SHA-256 مع بادئة ثابتة «kunz::» (وقد يكون تنسيقًا قديمًا قبل الدخول).
+// الحساب لا يشفّر بيانات المتصفّح ولا يمثّل تحققًا من ملكية البريد.
 // jeton = عشوائي، يُولَّد عند الإنشاء، يُرسَل في رأس «x-kunz-jeton» ليصرّح policy
 // UPDATE في Supabase بتعديل سطر التلميذ فقط (انظر supabase/schema.sql).
 export interface Compte {

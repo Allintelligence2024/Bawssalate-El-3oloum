@@ -7,7 +7,10 @@ describe('protection des statistiques illisibles', () => {
   it('ne remplace pas les données présentes après une erreur de lecture', async () => {
     const setItem = vi.fn();
     vi.stubGlobal('window', {});
-    vi.stubGlobal('localStorage', { getItem: () => { throw Error('refus'); }, setItem });
+    vi.stubGlobal('localStorage', { getItem: (key: string) => {
+      if (key === 'kunz_stats_v1') throw Error('refus');
+      return null; // journal de restauration vérifiable et absent
+    }, setItem });
     const { noterReponse, restaurerStats, statsActuelles } = await import('../stats');
     const { surEchecSauvegarde } = await import('../echecsStockage');
     const alerte = vi.fn();
@@ -27,5 +30,14 @@ describe('protection des statistiques illisibles', () => {
     const { noterReponse } = await import('../stats');
     noterReponse('phase', false);
     expect(setItem).not.toHaveBeenCalled();
+  });
+
+  it.each(['{"justes":"non"}', ''])('refuse l’export si les statistiques présentes sont illisibles : %s', async (invalide) => {
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('localStorage', { getItem: (key: string) => key === 'kunz_stats_v1' ? invalide : null });
+    const { paquetExportComplet } = await import('../storage');
+    const { StatsIllisibles } = await import('../stats');
+    const { etatVierge } = await import('../../types');
+    expect(() => paquetExportComplet(etatVierge())).toThrow(StatsIllisibles);
   });
 });
