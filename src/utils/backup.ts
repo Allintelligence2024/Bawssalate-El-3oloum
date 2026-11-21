@@ -3,7 +3,10 @@
 import { z } from 'zod';
 import type { Etat } from '../types';
 import type { StatsReponses } from './stats';
-import { etatDepuisBrut } from './storage';
+import { validerCarnetBoussole, type CarnetBoussole } from './carnetBoussole';
+import { etatDepuisBrut } from './etat';
+
+export const TAILLE_MAX_SAUVEGARDE = 5 * 1024 * 1024;
 
 const texte = z.string().max(10000);
 const court = z.string().max(300);
@@ -51,7 +54,12 @@ const statsSchema = z.object({
   parJour: dictionnaire(compteurs),
 });
 
-export interface SauvegardeLue { etat: Partial<Etat>; stats?: StatsReponses }
+export interface SauvegardeLue {
+  etat: Partial<Etat>;
+  stats?: StatsReponses;
+  // Absent = ancien fichier, garder le carnet local ; null = aucun carnet à restaurer.
+  carnetBoussole?: CarnetBoussole | null;
+}
 
 /** Formats plats et enveloppés v1/v2/v3 ; un fichier invalide ne modifie rien. */
 export function lireSauvegarde(brut: unknown): SauvegardeLue | null {
@@ -68,7 +76,15 @@ export function lireSauvegarde(brut: unknown): SauvegardeLue | null {
   if (!resultat.success) return null;
   const stats = wrapper.stats === undefined ? undefined : statsSchema.safeParse(wrapper.stats);
   if (stats && !stats.success) return null;
-  return { etat: resultat.data as Partial<Etat>, stats: stats?.data as StatsReponses | undefined };
+  const presenceCarnet = Object.prototype.hasOwnProperty.call(wrapper, 'carnetBoussole');
+  const carnetBoussole = wrapper.carnetBoussole === null ? null : validerCarnetBoussole(wrapper.carnetBoussole);
+  // Un carnet présent mais invalide invalide tout le fichier avant toute écriture.
+  if (presenceCarnet && wrapper.carnetBoussole !== null && !carnetBoussole) return null;
+  return {
+    etat: resultat.data as Partial<Etat>,
+    stats: stats?.data as StatsReponses | undefined,
+    ...(presenceCarnet ? { carnetBoussole } : {}),
+  };
 }
 
 /** Normalise uniquement après validation ; aucun compte ou consentement n'est importé. */

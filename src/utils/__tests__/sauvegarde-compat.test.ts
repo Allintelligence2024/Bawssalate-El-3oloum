@@ -8,8 +8,9 @@ import type { Etat } from '../../types';
 import { etatDepuisFichier, lireSauvegarde } from '../backup';
 import { noterReponse, statsActuelles, restaurerStats, viderStats, type StatsReponses } from '../stats';
 import { effacerAlerteStockage, surEchecSauvegarde } from '../echecsStockage';
+import { memoriserValeur, reinitialiserEtatPerime } from '../coherenceStockage';
 import {
-  chargerEtat, sauvegarderEtat, paquetExportComplet, fusionnerProgressionImportee, autoriserRemplacementEtat,
+  chargerEtat, sauvegarderEtat, paquetExportComplet, EtatIllisible, fusionnerProgressionImportee, autoriserRemplacementEtat,
 } from '../storage';
 
 // localStorage multi-clés avec clés dont l'écriture peut être bloquée (quota simulé).
@@ -26,6 +27,10 @@ beforeEach(() => {
     },
     removeItem: (k: string) => { delete store[k]; },
   };
+  // Nouveau navigateur fictif : ne pas conserver les références du test précédent.
+  reinitialiserEtatPerime();
+  memoriserValeur('murajih_svt_v1', null);
+  memoriserValeur('kunz_stats_v1', null);
   effacerAlerteStockage();
   autoriserRemplacementEtat();
   viderStats(); // remet à zéro le singleton en mémoire + son état de lecture
@@ -81,12 +86,23 @@ describe('P0.3 — matrice de compatibilité des fichiers', () => {
     expect(etatDepuisFichier({ progression: {}, stats: { justes: -1 } })).toBeNull();
     expect(statsActuelles()).toEqual(avant);
   });
+
+  it('respecte les bornes de collections après la mise à jour du validateur', () => {
+    const note = { id: 'n', kind: 'note', texte: 'texte', ts: '2026-01-01' };
+    expect(lireSauvegarde({ version: 3, etat: { progression: {}, notes: Array(5000).fill(note) } })).not.toBeNull();
+    expect(lireSauvegarde({ version: 3, etat: { progression: {}, notes: Array(5001).fill(note) } })).toBeNull();
+    const progression = Object.fromEntries(Array.from({ length: 5001 }, (_, i) => [`l${i}`, {
+      statut: 'vierge', phases: [], minutes: 0, repetitions: 0, intervalle: 0, facilite: 2.5,
+    }]));
+    expect(lireSauvegarde({ version: 3, etat: { progression } })).toBeNull();
+  });
 });
 
 describe('P0.3 — tests de panne (quota, JSON corrompu, écriture partielle)', () => {
   it('quota plein sur l\'état : alerte + ancien contenu intact (rien de corrompu)', () => {
     const ancien = JSON.stringify(etatMinimal());
     store['murajih_svt_v1'] = ancien;
+    chargerEtat(); // le quota est testé après lecture de cette valeur
     clesBloquees.add('murajih_svt_v1');
     const alerte = vi.fn();
     const stop = surEchecSauvegarde(alerte);
@@ -96,17 +112,15 @@ describe('P0.3 — tests de panne (quota, JSON corrompu, écriture partielle)', 
     stop();
   });
 
-  it('JSON local corrompu : export possible depuis la mémoire, sans écraser l\'original', () => {
+  it('JSON local corrompu : refuse un export complet trompeur sans écraser l\'original', () => {
     store['murajih_svt_v1'] = '{JSON cassé';
-    const etat = chargerEtat(); // vierge + protection active
+    const etat = chargerEtat(); // vierge temporaire + protection active
     expect(etat.progression).toEqual({});
-    const paquet = paquetExportComplet(etat);
-    const reimporte = etatDepuisFichier(JSON.parse(JSON.stringify(paquet)));
-    expect(reimporte).not.toBeNull(); // l'élève peut exporter ce qui est accessible en mémoire
-    expect(store['murajih_svt_v1']).toBe('{JSON cassé'); // l'export n'écrit rien
+    expect(() => paquetExportComplet(etat)).toThrow(EtatIllisible);
+    expect(store['murajih_svt_v1']).toBe('{JSON cassé');
     sauvegarderEtat(etat); // toujours protégé
     expect(store['murajih_svt_v1']).toBe('{JSON cassé');
-    autoriserRemplacementEtat(); // remplacement confirmé (import validé / réinitialisation)
+    autoriserRemplacementEtat(); // remplacement explicite
     sauvegarderEtat(etat);
     expect(JSON.parse(store['murajih_svt_v1']).progression).toEqual({});
   });
@@ -130,6 +144,7 @@ describe('P0.3 — tests de panne (quota, JSON corrompu, écriture partielle)', 
   it('écriture partielle B : l\'état échoue, les statistiques réussissent — l\'ancien état reste valide', () => {
     const ancien = JSON.stringify(etatMinimal());
     store['murajih_svt_v1'] = ancien;
+    chargerEtat();
     clesBloquees.add('murajih_svt_v1');
     const alerte = vi.fn();
     const stop = surEchecSauvegarde(alerte);

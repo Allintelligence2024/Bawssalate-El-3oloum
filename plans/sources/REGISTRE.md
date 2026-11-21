@@ -1,5 +1,7 @@
 # Registre des sujets de Bac — P0.1 (état réel, 16/11/2026, 2e lecture)
 
+> **Mise à jour 21/11/2026, branche de travail uniquement :** l'intégration du laboratoire ajoute à nouveau des figures et un cahier adapté du Bac 2022 dans `modules/boussole/` et `public/boussole/`. Cela ne constitue ni une autorisation ni une décision de publication. Aucune autorisation de reproduction de ces nouveaux usages n'a été établie ici ; arbitrage et relecture exigés avant toute diffusion (voir A-021 dans `plans/relecture/REGISTRE-ARBITRAGES.md`). L'[inventaire détaillé de Boussole](INVENTAIRE-BOUSSOLE-2026-11-21.md) recense chaque fichier et les textes à relire, sans préjuger des droits. L'affirmation historique ci-dessous selon laquelle aucun écran ne référence des documents officiels décrit l'état du 16/11, pas celui de cette branche.
+
 > **Statut global : AUCUN de ces fichiers n'est publiable dans l'app.** Source non officielle (sites de
 > partage dzexams.com / ency-education.com d'après les métadonnées PDF — ce sont des copies d'épreuves ONEC,
 > mais obtenues sans autorisation), **droits de reproduction non clarifiés**, et 15 fichiers sur 32 sont des

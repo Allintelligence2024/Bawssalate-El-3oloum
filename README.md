@@ -36,25 +36,19 @@ marcher.
 |---|---|
 | **اليوم** | L'écran d'accueil. Une seule carte : la *prochaine action* (Next Best Action), le rythme de la semaine, la position par rapport à la classe, les statistiques du Mُرشد. |
 | **مساري** | Le chemin complet : 11 unités verrouillées séquentiellement, chacune se terminant par un **جسر** (pont-jalon). |
-| **منهجية** | La rubrique du but : **منهجية حل التمرين** — la **méthode-clé « فعل ← دليل ← جواب ← فحص »** (accueil 🔑, écran des 4 حركات avec علامات الأمان, les 3 عمليات **أصف · أفسّر · أحكم**), **تشخيص** de 3 QCM (erreur → message doux + vert/rouge + son, la bonne réponse jamais révélée), **دليل أفعال التعليمة** (les 11 verbes officiels), **6 مسارات المنهجية**, les **4 مستويات التدريب** et un **تمرين تطبيقي**. Zéro pourcentage, chiffres latins, messages non culpabilisants. Icône de l'onglet : la clé (مفتاح). |
+| **البوصلة** | Le laboratoire de lecture des documents et de rédaction du Bac. Les autres ateliers de méthodologie restent accessibles dans l’onglet et depuis تدريبات. |
 | **تدريبات** | Le banc d'entraînement : 620 items (500 QCM + 120 définitions converties en QCM 4 options) répartis sur 49 axes du programme officiel. **Même verrouillage linéaire que مساري** : les axes d'une unité ne s'ouvrent qu'une fois le جسر de l'unité précédente franchi. À l'entrée : **trois portes (icônes) — أسئلة QCM, ورشات الخرائط الذهنية** (les 4 ateliers) **et تمارين المنهجية** (ouvre `Methodologie` directement sur les 4 مستويات de تدريب, fermeture → retour à تدريبات). |
 | **أنا** | Le journal, les notes, les statistiques, le bouton de réinitialisation. |
 
-### 🧭 La rubrique منهجية (`Methodologie.tsx`)
+### 🧭 La rubrique البوصلة (`Boussole.tsx`, `Methodologie.tsx`)
 
-La 5ᵉ rubrique, **remplaçante de l'ancien onglet البكالوريا** — portée depuis la branche arena
-(`arena/7a3f2e84-kunz-el-ouloum-lite`, commits `5b3fe47` → `6a51bd7` puis `4bc29e2` « appliquer la
-méthode clé ») et branchée sur les conventions de l'app : sons `sonJuste()`/`sonFaux()`, vert/rouge,
-**la bonne réponse jamais révélée avant le bon choix**, chiffres latins, zéro %, zéro
-culpabilisation.
+Le troisième onglet, **البوصلة**, affiche directement **مختبر الفضول** dans l’application. Les anciens écrans Miftah sont remplacés ; le repère **فعل ← دليل ← جواب ← فحص** reste explicité dans le laboratoire. Des listes de relecture facultatives précèdent les modèles, sans score ni blocage du travail sur papier. Dans les exercices de l'unité 1, l'aide ouvre un exemple de protéines en rappelant qu'il ne résout pas l'exercice ; la réponse et le focus sont conservés au retour. Le laboratoire autonome `/boussole/index.html` reste accessible sans compte. Voir [le module](modules/boussole/README.md).
 
-- **Accueil 🔑 — la méthode-clé « فعل ← دليل ← جواب ← فحص »** : hero dégradé (« لا تحفظ الإجابة »)
-  dont le bouton ouvre d'abord **شرح المفتاح خطوة بخطوة** — l'élève comprend la méthode avant de
-  pratiquer ; carte **النواة** (les 4 mouvements numérotés → المفتاح) + porte **ابدأ التشخيص** ;
-  2 portes (**أصف · أفسّر · أحكم** / **أفعال التعليمة**) ; bouton doré **مستويات التدريب الأربعة**.
-  Badge « المفتاح » dans l'en-tête.
-- **المفتاح (4 حركات)** : فعل → دليل → جواب → فحص, chacun avec son texte et son **علامة الأمان**
-  (le garde-fou), puis enchaînement vers العمليات.
+**Données et limites.** Les brouillons du laboratoire courant sont inclus dans la sauvegarde JSON et dans la réinitialisation locales ; une ancienne sauvegarde sans ce champ ne les remplace pas. Ils ne sont pas liés au compte, restent lisibles sur un navigateur partagé et ne sont pas effacés par la déconnexion. Un export complet est refusé si la progression, le carnet ou les statistiques nécessaires sont illisibles. La sauvegarde et la réinitialisation n'incluent ni les carnets des anciens laboratoires autonomes, ni les fichiers téléchargés ou données serveur. Fermer les autres onglets avant d'importer ou d'effacer : les contrôles optimistes signalent certains conflits et préservent les brouillons temporaires, mais ne garantissent pas l'atomicité ni la fusion des modifications concurrentes. Le laboratoire ne produit ni score ni mise à jour de `kafaa`/SM-2. Une publication des extraits et PDF intégrés exige une **décision sur les droits** et une **relecture scientifique** ; elles ne sont pas établies par les tests. Voir l'[inventaire des ressources](plans/sources/INVENTAIRE-BOUSSOLE-2026-11-21.md) et le [protocole QA](plans/QA-BOUSSOLE-2026-11-21.md).
+
+**Compte local : limite de sécurité.** Le compte ne chiffre pas les données du navigateur, ne protège pas les notes ou brouillons d'un autre utilisateur du même appareil et ne prouve pas la possession de l'adresse e-mail. Le hachage historique utilise SHA-256 avec un préfixe fixe, sans sel individuel ni dérivation lente : il n'offre pas une protection robuste contre les tentatives hors ligne. Ne pas réutiliser un mot de passe important. La compatibilité des anciens comptes est maintenue avec ou sans WebCrypto ; les anciens hachages de repli sont convertis après connexion réussie. Une évolution du stockage des mots de passe exige un modèle de menace et une migration étudiés, sans présenter ce compte comme une authentification serveur.
+
+**Ateliers conservés** derrière «تمارين المنهجية الأخرى» :
 - **العمليات الثلاث** : أصف / أفسّر / أحكم (question + لغة مفيدة + مثال combiné), sélection active.
 - **تشخيص (3 QCM)** : erreur → rouge + `sonFaux()` + message doux (« خذ وقتك، لا عجلة ») et
   **on réessaie sans afficher la réponse** ; succès → `sonJuste()`, score compté **au premier
@@ -67,9 +61,9 @@ culpabilisation.
   chacun ouvre les مسارات ; rappel non culpabilisant « لا تنتقل إلى المستوى التالي لمجرد أنك قرأت
   الطريقة ».
 - **3ᵉ porte depuis تدريبات** : la carte « تمارين المنهجية » (`IcoTamrin`) ouvre le composant en
-  `modeInitial="niveaux"` (nouvelle prop optionnelle `'accueil' | 'niveaux'`) via le mode
+  `modeInitial="niveaux"` (par défaut : `'boussole'`) via le mode
   `methodoExos` d'`App.tsx` ; la fermeture (`setMode(null)`) **retourne à تدريبات** — l'onglet
-  منهجية, lui, continue d'ouvrir l'accueil 🔑.
+  البوصلة, lui, ouvre le laboratoire.
 - **الوحدة 1 · تركيب البروتين** : écran dédié (bouton « الوحدة 1 · تركيب البروتين · 10 تمارين » au
   bas des مستويات) avec **10 exercices interactifs** (مثّل, قارن, فسّر, حلّل, استنتج, استخرج,
   علّل, ركّب…) construits sur la clé فعل ← دليل ← جواب ← فحص, chacun avec **un schéma SVG** aux
@@ -386,7 +380,7 @@ app-svt-bac/
 ├── src/
 │   ├── main.tsx                  # racine + enregistrement du SW
 │   ├── index.css                 # Tailwind + base RTL
-│   ├── App.tsx                   # 5 onglets : اليوم / مساري / منهجية / تدريبات / أنا
+│   ├── App.tsx                   # 5 onglets : اليوم / مساري / البوصلة / تدريبات / أنا
 │   ├── types.ts                  # État (jalons, notes, journal, séances, bonus, drills)
 │   ├── data/
 │   │   ├── lessonGoldSummaries.ts # 58 résumés d'or (source de vérité du contenu)
@@ -409,7 +403,8 @@ app-svt-bac/
 │       ├── Aujourdhui.tsx         # ⭐ اليوم : NBA + rythme + position classe + stats + invitation sync
 │       ├── Masari.tsx             # ⭐ مساري : chemin verrouillé
 │       ├── Exercices.tsx          # ⭐ تدريبات : choix QCM/ورشات الخرائط الذهنية/تمارين المنهجية (3 icônes) + 49 axes verrouillés + journées de 10
-│       ├── Methodologie.tsx       # ⭐ منهجية : المفتاح فعل←دليل←جواب←فحص + تشخيص 3 QCM + 11 verbes + 6 مسارات + 4 niveaux + تمرين + الوحدة 1 (10 exercices, schémas SVG, وثيقة تفاعلية A/B/C/D)
+│       ├── Boussole.tsx           # 🧭 المختبر embarqué + aide contextuelle
+│       ├── Methodologie.tsx       # ateliers de méthodologie et accès au laboratoire
 │       ├── MascotteKunz.tsx       # القبطان مفتاح — la mascotte guide (personnage-pirate.png, 7 emplacements)
 │       ├── Ana.tsx                # ⭐ أنا : journal + notes + stats complètes + réglage sync
 │       ├── CarteStats.tsx         # compteurs du Mُرشد (versions compacte Aujourdhui / complète Ana)
@@ -486,7 +481,9 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
 - Convention d'IDs non uniforme (`phaseN_chapitres_X_Y` vs `dN-uM-lK-*`) — fonctionnel, mais à
   normaliser si vous éditez le fichier à la main.
 
-## 🗺️ Roadmap
+## 🗺️ Roadmap historique
+
+Les entrées ci-dessous décrivent les versions au moment de leur création, pas nécessairement le comportement actuel. En particulier, la synchronisation n'est plus activée par défaut : elle requiert une configuration et un consentement explicite.
 
 - **v0.1** — protocole 6 phases + file SM-2 + suivi offline.
 - **v0.2** — rubrique الدروس : 46 cours interactifs reliés à la méthode.

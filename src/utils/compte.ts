@@ -1,6 +1,8 @@
 // الحساب المحلي — بريد إلكتروني وكلمة مرور وولاية ودائرة، داخل المتصفح فقط.
 // لا خادم، لا إرسال، لا تتبّع: كل شيء في localStorage تحت مفتاح التطبيق نفسه.
 
+import { sha256 } from '@noble/hashes/sha256';
+
 const CLE_SESSION = 'kunz_session_v1';
 
 export const MIN_MDP = 6;
@@ -13,22 +15,25 @@ export function normaliserEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/** تجزئة SHA-256 مع ملح — تُستبدل بالتجزئة المحلية إذا كان التشفير معطّلًا. */
+/** SHA-256 reste identique avec ou sans WebCrypto. Le préfixe historique est
+ *  fixe : ce compte local ne chiffre pas les données et n'est pas une protection
+ *  contre une personne ayant accès au stockage du navigateur. */
 export async function hacher(texte: string): Promise<string> {
-  const sale = `kunz::${texte}`;
+  const octets = new TextEncoder().encode(`kunz::${texte}`);
   try {
     const subtle = globalThis.crypto?.subtle;
     if (subtle) {
-      const octets = await subtle.digest('SHA-256', new TextEncoder().encode(sale));
-      return [...new Uint8Array(octets)].map((b) => b.toString(16).padStart(2, '0')).join('');
+      const resultat = await subtle.digest('SHA-256', octets);
+      return [...new Uint8Array(resultat)].map((b) => b.toString(16).padStart(2, '0')).join('');
     }
   } catch {
-    /* بيئة بلا WebCrypto → نكمل بالتجزئة المحلية */
+    /* Repli SHA-256 compatible lorsque WebCrypto manque ou échoue. */
   }
-  return hacherLocalement(sale);
+  return [...sha256(octets)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-function hacherLocalement(s: string): string {
+/** Uniquement pour authentifier les comptes créés par l'ancien repli non-SHA. */
+function ancienHachage(s: string): string {
   let a = 0x811c9dc5;
   let b = 0x1b873593;
   for (let i = 0; i < s.length; i++) {
@@ -41,7 +46,12 @@ function hacherLocalement(s: string): string {
 }
 
 export async function verifierMdp(motDePasse: string, hashAttendu: string): Promise<boolean> {
-  return (await hacher(motDePasse)) === hashAttendu;
+  if (typeof hashAttendu !== 'string') return false;
+  // Les anciens repli et SHA-256 n'ont pas la même longueur. Ne jamais accepter
+  // arbitrairement un format inconnu et ne plus créer de nouveaux comptes faibles.
+  if (/^[0-9a-f]{16}$/.test(hashAttendu)) return ancienHachage(`kunz::${motDePasse}`) === hashAttendu;
+  if (/^[0-9a-f]{64}$/.test(hashAttendu)) return (await hacher(motDePasse)) === hashAttendu;
+  return false;
 }
 
 /** Jeton d'écriture aléatoire — stores in the compte, sent as `x-kunz-jeton` header.
