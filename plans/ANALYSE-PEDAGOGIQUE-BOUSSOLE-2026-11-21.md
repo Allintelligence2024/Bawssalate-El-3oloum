@@ -1,6 +1,6 @@
 # Analyse pédagogique — nouvelle Boussole
 
-**Périmètre :** livraison « Boussole Lite — remplacement de Miftah » et son intégration locale sur la branche de travail, 21 novembre 2026. Cette analyse distingue le fonctionnement observé, les hypothèses pédagogiques et les vérifications humaines encore nécessaires. Elle ne constitue ni une validation scientifique des contenus ni une preuve d'efficacité auprès des élèves.
+**Périmètre :** livraison « Boussole Lite — remplacement de Miftah » et son intégration sur la branche de travail, 21 novembre 2026. Cette analyse distingue le fonctionnement observé, les hypothèses pédagogiques et les vérifications humaines encore nécessaires. Elle ne constitue ni une validation scientifique des contenus ni une preuve d'efficacité auprès des élèves.
 
 ## 1. Avis en une phrase
 
@@ -82,7 +82,7 @@ Pour un débutant, commencer par l'enzyme, une seule lecture avec condition et u
 - **Suivi :** aucune activité du laboratoire n'alimente `kafaa`, SM-2 ou les statistiques. Les anciens ateliers gardent leurs propres mécanismes. Aucune maîtrise, réussite ou révision future ne doit être déduite de l'ouverture d'une comparaison ou du cochage d'un critère.
 - **Persistance :** les brouillons du laboratoire courant sont inclus dans l'export et l'effacement généraux, pas les états d'exploration en cours ; ils ne sont pas rattachés au compte. Déconnexion, copies téléchargées et anciens carnets autonomes ne sont pas effacés par la réinitialisation. Un brouillon non sauvegardé reste temporaire : en cas de conflit détecté, il peut être téléchargé avant rechargement, mais les modifications concurrentes ne sont pas fusionnées. Les comparaisons avant écriture et suppression sont optimistes, sans garantie d'atomicité. Fermer les autres onglets avant une opération sensible. Les limites sont expliquées dans l'interface et `modules/boussole/README.md`.
 - **Accessibilité :** navigation au clavier et plusieurs tailles ont été exercées automatiquement ; cela ne remplace pas des essais avec lecteur d'écran, des mesures manuelles de contraste et des tests sur appareils réels.
-- **Droits et exactitude :** les extraits et le cahier adapté reproduisent ou transforment des supports attribués au Bac 2022. La réserve du registre des sources subsiste ; A-009 autorisait précédemment des éléments de correction reformulés mais pas ces nouvelles figures. L'[inventaire détaillé](sources/INVENTAIRE-BOUSSOLE-2026-11-21.md) facilite leur identification sans établir les droits. Décision écrite sur les droits et relecture SVT sont des préalables à toute diffusion.
+- **Droits et exactitude :** les extraits et le cahier adapté reproduisent ou transforment des supports attribués au Bac 2022. La réserve du registre des sources subsiste ; A-009 autorisait précédemment des éléments de correction reformulés mais pas ces nouvelles figures. L'[inventaire détaillé](sources/INVENTAIRE-BOUSSOLE-2026-11-21.md) facilite leur identification sans établir les droits. Une décision écrite sur les droits et une relecture SVT restent à obtenir malgré la publication technique de la branche.
 
 ## 7. Comment vérifier si cela aide vraiment ?
 
@@ -92,4 +92,4 @@ Deux correcteurs peuvent apprécier indépendamment, avec une petite grille comm
 
 ## 8. Décision recommandée
 
-Conserver cette intégration comme **prototype local à faire relire**, pas comme preuve d'une méthode validée pour l'ensemble du Bac. Priorités : arbitrer les droits et la science, éprouver la confidentialité sur appareils partagés, puis tester le transfert avec de vraies copies avant d'élargir progressivement les thèmes. Voir le [plan d'amélioration](PLAN-BOUSSOLE-2026-11-21.md).
+Considérer cette intégration comme **prototype à faire relire**, pas comme preuve d'une méthode validée pour l'ensemble du Bac. La branche a été publiée et un aperçu créé après accord de l'utilisateur, sans que cela valide les droits ou la science. Priorités : arbitrer ces points, éprouver la confidentialité sur appareils partagés, puis tester le transfert avec de vraies copies avant d'élargir progressivement les thèmes. Voir le [plan d'amélioration](PLAN-BOUSSOLE-2026-11-21.md).

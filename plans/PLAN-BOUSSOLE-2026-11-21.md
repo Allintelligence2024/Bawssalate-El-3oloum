@@ -1,18 +1,18 @@
 # Plan d'amélioration — Boussole et usages Bac
 
-**21 novembre 2026 — plan de travail, poursuivi localement à la demande.** Aucun déploiement n'est réalisé ni autorisé par ce document. Les délais ci-dessous sont des ordres de grandeur à confirmer avec les personnes concernées, pas des engagements. Les décisions et validations externes restent ouvertes.
+**21 novembre 2026 — plan de travail.** Après information sur les risques, l'utilisateur a autorisé le push public, la PR et la fusion, y compris les déploiements automatiques éventuels. Un aperçu Vercel a été créé ; une fusion dans `main` peut déclencher la production. Ce document ne valide ni les droits ni les contenus. Les délais ci-dessous sont indicatifs et les validations externes restent ouvertes.
 
 ## 1. Objectif et critères de réussite
 
 Permettre à un élève de passer d'une consigne et de données à une **réponse personnelle soutenue par des preuves**, puis de vérifier ce qu'il a écrit et de réutiliser la démarche sur un document nouveau. La réussite ne se mesure pas au seul nombre de clics, à l'affichage d'un modèle ou à une note produite automatiquement.
 
-**Porte avant toute diffusion :** décision écrite sur les droits de chaque extrait et PDF, relecture scientifique/pédagogique documentée, tests de confidentialité et d'accessibilité sur appareils pertinents, et décision explicite du responsable produit. La branche actuelle est un prototype local ; le fait qu'un fichier ait déjà été accessible en ligne n'établit pas ses droits.
+**Portes de validation non closes :** décision écrite sur les droits de chaque extrait et PDF, relecture scientifique/pédagogique documentée, tests de confidentialité et d'accessibilité sur appareils pertinents, et décision du responsable produit sur ces points. Le module reste un prototype non validé ; la branche a été publiée dans un dépôt public et un aperçu Vercel a été créé. Ni cette publication technique ni l'accord pour les déploiements éventuels n'établissent les droits.
 
 ## 2. Déjà fait dans cette branche — ne pas refaire dans le plan
 
 | Correction | État | Limite conservée |
 |---|---|---|
-| Entrée Boussole et accès aux anciens ateliers | Intégré localement ; l'aide de l'unité 1 ouvre un exemple voisin sur les protéines et rend le focus à l'exercice. | Ce n'est pas une aide calculée à partir de chaque erreur, ni une couverture de toutes les unités. |
+| Entrée Boussole et accès aux anciens ateliers | Intégré dans la branche ; l'aide de l'unité 1 ouvre un exemple voisin sur les protéines et rend le focus à l'exercice. | Ce n'est pas une aide calculée à partir de chaque erreur, ni une couverture de toutes les unités. |
 | Repère et relecture | Quatre mouvements explicités ; critères facultatifs pour les pages immunité, protéines et réponse Bac. Comparaison toujours possible sur papier. | Aucun jugement automatisé du texte, aucune preuve de maîtrise. |
 | Sauvegarde/réinitialisation | Carnet courant inclus dans le JSON, restauration validée et journalisée, suppression lors de la remise à zéro, protection des journaux illisibles et des onglets périmés. Un brouillon temporaire peut être téléchargé avant rechargement. Anciennes sauvegardes sans champ conservées. | Stockage non lié au compte, fichiers téléchargés et carnets des versions plus anciennes hors périmètre ; les protections ne fusionnent pas toutes les opérations concurrentes ni les anciennes versions. Fermer les autres onglets. |
 | Compte local | Compatibilité des hachages anciens avec ou sans WebCrypto ; migration de l'ancien repli après connexion vérifiée. Avertissement : le compte ne chiffre pas les données. | Le SHA-256 historique a un préfixe fixe et n'est pas une dérivation lente ; il ne constitue ni un chiffrement ni une authentification serveur. |
@@ -23,7 +23,7 @@ Permettre à un élève de passer d'une consigne et de données à une **répons
 - **Inventaire préparé** : [28 fichiers avec empreintes et familles de droits](sources/INVENTAIRE-BOUSSOLE-2026-11-21.md), plus les consignes et modèles à relire. L'inventaire et son contrôle technique n'établissent aucun accord ; titulaire, décision écrite, relecteur et décision produit restent à obtenir pour chaque usage concerné.
 - **Protection locale renforcée** : comparaison de l'état et des statistiques avant les opérations sensibles et les nouveaux envois sync, même avant réception de `storage` ; l'import et la remise à zéro comparent le carnet vu avant leur confirmation. Le laboratoire refuse une suppression sur une copie périmée et conserve un brouillon temporaire si le chargement demandé échoue. La confirmation d'import ne bloque plus le traitement du navigateur. Régressions Chromium et tests unitaires sur notifications différées. Ce n'est ni un verrou, ni une transaction, ni une garantie contre les écritures simultanées ou les anciennes versions.
 - **Sauvegarde et sync honnêtes** : l'export complet et les nouveaux envois sync refusent les états ou statistiques de secours illisibles ; l'export refuse aussi un carnet illisible. Le retrait de consentement reste enregistrable quand l'état est lisible, même si les statistiques ne le sont pas. Les textes temporaires ne sont pas pour autant automatiquement sauvegardés.
-- **QA préparée, non clôturée** : [protocole, résultats locaux et matrice](QA-BOUSSOLE-2026-11-21.md), avec procédures pour les anciens carnets et scénarios d'accessibilité. Les confirmations d'import/reset ont un focus initial et un retour après annulation ; une FAQ expose son état aux technologies d'assistance. Le workflow CI prévoit désormais les suites du laboratoire et d'intégration, mais n'a pas été exécuté à distance. Les lignes Android, iOS, Firefox, lecteurs d'écran et appareils réels ne sont pas réalisées ni signées.
+- **QA préparée, non clôturée** : [protocole, résultats locaux et matrice](QA-BOUSSOLE-2026-11-21.md), avec procédures pour les anciens carnets et scénarios d'accessibilité. Les confirmations d'import/reset ont un focus initial et un retour après annulation ; une FAQ expose son état aux technologies d'assistance. Les premières exécutions CI distantes ont révélé une incompatibilité Chromium/Ubuntu 26.04 ; le workflow est fixé sur Ubuntu 24.04. Vérifier les contrôles du commit courant. Les lignes Android, iOS, Firefox, lecteurs d'écran et appareils réels ne sont pas réalisées ni signées.
 
 Détails reproductibles et limites : `modules/boussole/README.md` et `plans/ANALYSE-PEDAGOGIQUE-BOUSSOLE-2026-11-21.md`.
 
@@ -31,7 +31,7 @@ Détails reproductibles et limites : `modules/boussole/README.md` et `plans/ANAL
 
 | Priorité / responsable proposé | Travail futur | Livrable et critère d'acceptation | Dépendances / estimation indicative |
 |---|---|---|---|
-| **P0 · produit + droits** | Inventaire descriptif préparé ; identifier les titulaires, demander une décision de reproduction ou produire un remplacement original autorisé. | Compléter le registre par ressource : source confirmée, titulaire, usage, autorisation écrite ou remplacement, décision datée. **Aucune diffusion** d'une ressource au statut inconnu. | A-021 ; attente externe potentiellement longue, sans délai garanti. |
+| **P0 · produit + droits** | Inventaire descriptif préparé ; identifier les titulaires, demander une décision de reproduction ou produire un remplacement original autorisé. | Compléter le registre par ressource : source confirmée, titulaire, usage, autorisation écrite ou remplacement, décision datée. Arbitrer la diffusion déjà engagée des ressources au statut inconnu. | A-021 ; attente externe potentiellement longue, sans délai garanti. |
 | **P0 · enseignant SVT Bac** | Relire source par source les traces, figures, unités, conditions, liens preuve–conclusion, modèles, liste de relecture et cahier. | Relecteur nommé et date ; anomalies, corrections et validation tracées ; sujets reconstitués distingués des documents d'origine. Deuxième regard conseillé sur les points ambigus. | Accès licite à l'épreuve et à la correction ; 2–5 jours de travail indicatifs, à calibrer. |
 | **P0 · dév + QA** | Protocole préparé ; tester confidentialité et sauvegardes sur navigateurs et appareils réels, y compris onglets anciens, stockage refusé/saturé, reset et fichiers externes. Décider le sort des carnets historiques. | Matrice signée : aucune promesse de suppression ou de sauvegarde au-delà de ce qui a réellement été vérifié ; procédure claire pour sauvegarder puis effacer les anciens stockages. | Les tests simulés actuels ne remplacent pas l'appareil ; environ 2–4 jours. |
 | **P0 · accessibilité + terrain** | Vérifier lecteur d'écran arabe, ordre du focus, contraste, zoom, mode clavier, cibles tactiles, impression, Android et iOS. | Scénarios critiques réussis sans blocage ; contrastes mesurés manuellement quand le scan est incomplet ; écarts et solutions documentés. | 2–5 jours plus disponibilité des appareils et testeurs. |
@@ -65,12 +65,12 @@ Pour chaque nouveau cas : fiche de source et droits, consigne précise, données
 
 ## 5. Séquence de décision
 
-1. **Bloquer la diffusion** des ressources litigieuses ; obtenir une autorisation par usage ou remplacer les supports et faire relire les remplacements. A-009 n'est pas une autorisation pour les figures ajoutées.
+1. **Arbitrer la diffusion déjà engagée** des ressources litigieuses, désormais présentes dans le dépôt public ; obtenir une autorisation par usage ou remplacer les supports et faire relire les remplacements. A-009 n'est pas une autorisation pour les figures ajoutées.
 2. **Relire le prototype** et corriger les anomalies de science, d'arabe et de consignes. La présence d'un test vert ne vaut pas validation scientifique.
 3. **Sécuriser les conditions d'usage** : appareils partagés, anciens carnets, copies JSON en clair, essais matériels et accessibilité.
 4. **Mener un petit pilote**, observer l'autonomie et la qualité de preuves sur des documents inédits ; ne pas conclure à une efficacité généralisable sur un échantillon de faisabilité.
 5. **Décider ensuite** d'un premier lot d'unités supplémentaires et du besoin réel d'un suivi ; ne jamais inférer la maîtrise à partir de l'ouverture du modèle.
-6. **Demander une autorisation explicite avant tout déploiement** ; publier seulement les éléments ayant franchi les portes de droits, relecture et QA.
+6. Pour les déploiements ultérieurs, **demander une autorisation explicite** et vérifier les portes de droits, relecture et QA ; l'accord donné pour le push et la fusion de cette branche ne constitue pas leur validation.
 
 ## 6. Points à trancher par le responsable
 

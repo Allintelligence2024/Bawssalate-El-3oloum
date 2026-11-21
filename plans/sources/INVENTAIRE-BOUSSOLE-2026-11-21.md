@@ -1,6 +1,6 @@
 # Inventaire P0 — ressources du laboratoire Boussole
 
-**État au 21 novembre 2026 · branche locale uniquement · aucune autorisation de diffusion déduite de cet inventaire.** Chaque ressource et chaque usage ci-dessous restent à arbitrer. Un nom d'auteur, un titulaire, un accord et un relecteur ne sont pas inventés : ils sont à renseigner avec leurs preuves. Les statuts antérieurs du registre général ne valent pas automatiquement pour cette livraison.
+**État au 21 novembre 2026 · branche publiée sur un dépôt public et aperçu Vercel créé · aucune autorisation de reproduction déduite de cet inventaire.** Après information sur les réserves, l'utilisateur a autorisé le push et la fusion, y compris les déploiements automatiques éventuels ; cela ne confirme pas les droits. Chaque ressource et chaque usage ci-dessous restent à arbitrer. Un nom d'auteur, un titulaire, un accord et un relecteur ne sont pas inventés : ils sont à renseigner avec leurs preuves. Les statuts antérieurs du registre général ne valent pas automatiquement pour cette livraison.
 
 ## Portée et règle de décision
 

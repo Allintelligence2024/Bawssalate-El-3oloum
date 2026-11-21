@@ -27,7 +27,7 @@ Le 21 novembre 2026, sur Linux x86_64 avec Node 22.22.3 et npm 10.9.8 :
 - Racine : `npm test` — **245 tests Vitest et 5 tests Node réussis** ; build et vérification des exercices réussis. Les erreurs réseau affichées par certains tests sont des simulations attendues.
 - Module : typecheck et reconstruction reproductible du HTML (`sha256:99c0031c39ba494da6e8ef0dc7fddf66ccf10115f26ed4c986e48541fa167553`), puis logique, stockage et 24 contrôles/4 scans sur 5 tailles réussis dans Chromium 141 sans interface.
 - Intégration : 11 parcours sur build local, scénarios de reprise et de compte réussis ; contrôle hors ligne niveau 1 : **85 fichiers** servis, aucune incohérence ou erreur HTTP détectée. Les tailles 320/390/1024 px sont des fenêtres simulées, pas des appareils réels.
-- Audits npm racine et module : aucune vulnérabilité signalée lors du contrôle. Le workflow CI a été préparé et sa syntaxe vérifiée localement, mais **aucune exécution distante n'est constatée**.
+- Audits npm racine et module : aucune vulnérabilité signalée lors du contrôle. Les premières exécutions de la CI distante ont échoué à l'installation de Chromium : Playwright 1.56.1 ne prend pas en charge Ubuntu 26.04 (`ubuntu-latest`). Le workflow est désormais fixé sur Ubuntu 24.04 ; consulter les contrôles GitHub Actions du commit courant pour connaître le résultat de la relance.
 
 La commande et les dépendances de test sont décrites dans `modules/boussole/README.md`. Les résultats ci-dessus sont des observations locales à la date indiquée, pas une validation du contenu ou de ses droits.
 
@@ -77,4 +77,4 @@ Consigner aussi les échecs, versions, écarts de comportement et correctifs ; r
 
 ## 5. Critère de clôture
 
-Un responsable QA rassemble la matrice renseignée et signée, les écarts, leurs correctifs et les essais de non-régression. Une validation d'accessibilité nécessite des essais humains et des résultats mesurés ; une validation de confidentialité requiert aussi la vérification des flux réels de l'environnement cible. **Ni cette fiche ni des tests verts ne valident les droits ou la science.** Ces deux portes, puis la décision produit et l'autorisation explicite de déploiement, restent distinctes.
+Un responsable QA rassemble la matrice renseignée et signée, les écarts, leurs correctifs et les essais de non-régression. Une validation d'accessibilité nécessite des essais humains et des résultats mesurés ; une validation de confidentialité requiert aussi la vérification des flux réels de l'environnement cible. **Ni cette fiche ni des tests verts ne valident les droits ou la science.** L'accord donné pour le push, la fusion et les déploiements automatiques éventuels ne vaut pas validation de ces portes.
