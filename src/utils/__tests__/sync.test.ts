@@ -252,4 +252,22 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
     expect(sbMocks.upsert).not.toHaveBeenCalled();
   });
 
+  it('construireSnapshot n’inclut jamais aucun texte libre (notes, carnet, mot de passe) et aligne VERSION_APP', () => {
+    const snap = construireSnapshot({
+      ...base(),
+      compte,
+      notes: [{ id: 'n1', uniteId: 'u1', lessonId: 'l1', texte: 'SECRET_NOTE_ELEVE', kind: 'note', ts: '2026-11-21' }],
+      carnet: [{ id: 'c1', ts: '2026-11-21', contexte: 'u1', enonce: 'Q', donne: 'SECRET_BROUILLON_LIBRE', diagnostic: 'D' }],
+      consentementSync: true,
+      consentementSyncDecideLe: '2026-11-21T00:00:00Z',
+    });
+    expect(snap).not.toBeNull();
+    const serialise = JSON.stringify(snap);
+    expect(serialise).not.toContain('SECRET_NOTE_ELEVE');
+    expect(serialise).not.toContain('SECRET_BROUILLON_LIBRE');
+    expect(serialise).not.toContain('hachage');
+    expect(snap!.notes_nombre).toBe(1);
+    expect(snap!.app_version).toBe('0.9.3');
+  });
+
 });

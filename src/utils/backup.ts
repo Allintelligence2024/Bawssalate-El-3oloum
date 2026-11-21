@@ -28,21 +28,32 @@ const progression = z.object({
 const note = z.object({ id: court, kind: z.enum(['note', 'question']), texte, ts: date, lessonId: court.optional(), uniteId: court.optional() });
 const faute = z.object({ id: court, ts: date, contexte: texte, enonce: texte, donne: texte, diagnostic: texte });
 const carte = z.object({ verbe: court, exercice: texte, erreur: texte, repetitions: entier, intervalle: entier, facilite: nombre, prochaineRevision: date.optional(), fragile: z.boolean().optional() });
+const drillRecord = z.union([
+  z.literal(true),
+  z.object({
+    done: z.literal(true),
+    errors: entier,
+    attempts: entier,
+    lastSeen: date,
+    nextReview: date.optional(),
+  }),
+]);
 const etatSchema = z.object({
   version: entier.optional(), progression: dictionnaire(progression),
   jalons: dictionnaire(z.object({ fait: z.boolean(), synthese: texte.optional(), ts: date.optional() })).optional(),
   notes: liste(note).optional(), carnet: liste(faute).optional(), journal: liste(date).optional(),
   minutesTotales: nombre.optional(), revisions: entier.optional(), nom: court.optional(), dateBac: date.optional(),
   seancesJour: date.optional(), seancesComptees: entier.optional(), bonusJour: date.optional(),
-  drills: dictionnaire(z.literal(true)).optional(), ateliers: dictionnaire(z.object({ fait: z.boolean(), ts: date })).optional(),
+  drills: dictionnaire(drillRecord).optional(), ateliers: dictionnaire(z.object({ fait: z.boolean(), ts: date })).optional(),
   kafaa: dictionnaire(carte).optional(), kafaaHebdo: z.object({ debut: date, n: entier }).optional(),
+  boussoleEventsSeen: z.array(court).max(500).optional(),
   revueCroisee: z.object({ semaine: date, lessonIds: liste(court), faiteLe: date.optional() }).optional(),
   defi: z.object({ semaine: date, type: z.enum(['drills', 'croisee', 'examen']), choisiLe: date, baseDrills: entier }).optional(),
   defisAccomplis: liste(date).optional(), objectif: z.union([z.literal(10), z.literal(14), z.literal(18)]).optional(),
   modeIntensif: z.enum(['auto', 'on', 'off']).optional(), tailleTexte: z.enum(['s', 'm', 'l']).optional(),
   diagnostic: z.object({ date, parUnite: dictionnaire(z.object({ justes: entier, total: entier })) }).optional(),
   diagnosticDecideLe: date.optional(), favoris: liste(court).optional(), examensBlancs: liste(date).optional(),
-  examens: liste(z.object({ date, secondes: entier, chrono: z.boolean(), qcm: entier, directs: entier, erreursEnquete: entier, unitesFaibles: liste(entier) })).optional(),
+  examens: liste(z.object({ date, secondes: entier, chrono: z.boolean(), qcm: entier, directs: entier, erreursEnquete: entier, unitesFaibles: liste(entier), enqueteId: court.optional() })).optional(),
   rappel: z.object({ actif: z.boolean(), heure: court }).optional(),
   flashcards: dictionnaire(z.object({ boite: z.union([z.literal(1), z.literal(2), z.literal(3)]), prochaine: date, vues: entier })).optional(),
   schemas: dictionnaire(z.literal(true)).optional(),

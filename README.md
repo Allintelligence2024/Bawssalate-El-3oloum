@@ -780,4 +780,12 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
 
 ---
 
+## 📄 Licence & droits des contenus
+
+- **Code source** : sous licence **MIT** (voir [`LICENSE`](LICENSE)).
+- **Contenus pédagogiques originaux** (leçons, QCM, drills, synthèses, ateliers méthodologiques) : sous licence **CC BY-NC-SA 4.0** sauf mention contraire.
+- **Extraits d’annales et supports tiers** (Baccalauréat algérien / ONEC, figures adaptées de `public/boussole/`) : soumis aux droits de leurs titulaires respectifs — voir [`plans/DECISION-DROITS-CONTENUS.md`](plans/DECISION-DROITS-CONTENUS.md) et [`plans/sources/REGISTRE.md`](plans/sources/REGISTRE.md). Les 81 Mo de PDF d’annales `dzexams` ont été retirés du dépôt public.
+
+---
+
 بوصلة العلوم Lite — مراجعة موفّقة. التكرار يبني الذاكرة، لا الحفظ المتكرّر. 🧬
