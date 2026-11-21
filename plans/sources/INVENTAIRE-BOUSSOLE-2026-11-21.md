@@ -54,7 +54,7 @@ Empreintes SHA-256 complètes calculées sur les fichiers présents. Pour les do
 | `modules/boussole/assets/trace-42.png` | `bef86766276e0b465651e743d553821eefd51846f6f272219c4acb02c9e766ce` | BAC-2 |
 | `modules/boussole/assets/trace-43.png` | `8664fae8e91b00dcbd6f594abcf2995760e5f18f4bf8d0b6a74ac2f3bc50b63c` | BAC-2 |
 | `public/boussole/cahier-bac-2022.pdf` | `642ec5543541329cc00c4a7cf807b0b8bfc677e7722152c89dcbbc58fc4f63c2` | CAHIER |
-| `public/boussole/index.html` | `99c0031c39ba494da6e8ef0dc7fddf66ccf10115f26ed4c986e48541fa167553` | HTML |
+| `public/boussole/index.html` | `f5bfd2ff55db886d2aa5fb454fc3f0ce1fca2148c6838fc05e41e5ce41c1b19e` | HTML |
 | `public/boussole/memo.pdf` | `103f042f2d5800490ee55bb06c3dcc9e09c94fe18c5fda649c074d666d4234f8` | MÉMO |
 
 <!-- BOUSSOLE-INVENTAIRE-FIN -->

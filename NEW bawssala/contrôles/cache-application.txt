@@ -1,9 +1,0 @@
-── vérification hors-ligne (niveau 1) ──
-version du build      : 7a7d4a9fcb227dde93f5
-assets JS/CSS         : 43 — 4 au démarrage, tous dans le manifeste
-entrées statiques     : 32 (leçons HTML + icônes/manifeste)
-fichiers interrogés   : 78 — 8347008 octets non compressés vus par HTTP
-manifeste (déclaré)   : 8340072 octets non compressés
-problèmes de cohérence: 0
-échecs HTTP/type      : 0
-RÉSULTAT : OK — tout le contenu annoncé par le worker est servi réellement par le build.

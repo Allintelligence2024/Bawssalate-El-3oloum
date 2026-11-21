@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Atlas, AtlasHeader } from "./Atlas";
-import { freshSession, labFromHash, examine, interpret } from "./explore";
+import { freshSession, labFromHash, examine, interpret, files } from "./explore";
 import type { Lab } from "./explore";
+import { emitBoussoleAttempt, LAB_META } from "./bridge";
 import { Protein, ProteinPrint } from "./Preuves";
 import { Warm } from "./Warm";
 import { Solo, SoloPrint } from "./Solo";
@@ -343,7 +344,22 @@ function App() {
               id={lab}
               state={track[lab]}
               onRead={(c) => setTrack((v) => examine(v, lab, c))}
-              onThink={(i) => setTrack((v) => interpret(v, lab, i))}
+              onThink={(i) => {
+                setTrack((v) => interpret(v, lab, i));
+                const dossier = files[lab];
+                const meta = LAB_META[lab];
+                const reussi = i === dossier.supported;
+                emitBoussoleAttempt({
+                  exerciseId: `boussole:${lab}`,
+                  unitId: meta.unitId,
+                  verbe: meta.verbe,
+                  titre: `${dossier.label} · ${dossier.title[0]} ${dossier.title[1]}`,
+                  reussi,
+                  prompt: dossier.prompt,
+                  choix: dossier.thoughts[i],
+                  erreurTag: reussi ? undefined : dossier.revise,
+                });
+              }}
             />
           ) : page === "protein-doc" ? (
             <Protein />

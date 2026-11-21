@@ -15,6 +15,22 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Vérifier l'absence de fichiers suivis > 10 Mo
+        run: |
+          node -e '
+            const { execSync } = require("node:child_process");
+            const { statSync } = require("node:fs");
+            const fichiers = execSync("git ls-files", { encoding: "utf8" }).trim().split("\n").filter(Boolean);
+            const tropGros = fichiers.filter((f) => {
+              try { return statSync(f).size > 10 * 1024 * 1024; } catch { return false; }
+            });
+            if (tropGros.length) {
+              console.error("Fichiers suivis dépassant 10 Mo :", tropGros);
+              process.exit(1);
+            }
+          '
+      - name: Vérification TypeScript
+        run: npx tsc --noEmit
       - run: npm test
       - run: npm run build
       - run: node scripts/verifier-drills.mjs
@@ -30,6 +46,11 @@ jobs:
           npm --prefix modules/boussole run build
           sha256sum --check /tmp/boussole-html.sha256
           npm run verifier:inventaire-boussole
+      - name: Mettre en cache les navigateurs Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('modules/boussole/package-lock.json') }}
       - name: Installer Chromium pour les tests locaux
         run: |
           if npx playwright install --with-deps chromium > /tmp/boussole-chromium-install.log 2>&1; then

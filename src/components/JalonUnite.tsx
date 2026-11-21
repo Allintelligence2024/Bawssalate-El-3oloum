@@ -7,18 +7,21 @@ import { leconLaPlusFragile, uniteTerminee } from '../utils/moteur';
 import { titreLecon } from '../data/programme';
 import { qcmPourLecon } from '../utils/qcm';
 import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
+import { MICRO_EPREUVES_UNITE } from '../data/enquetesBac';
 import { nb, formatJourAr } from '../utils/dates';
 import type { Etat } from '../types';
 import { ChoixUnique, Morceau, OptionsMcq } from './Communs';
-import { IcoRetour, IcoVerifie } from './Icones';
+import BadgeRelecture from './BadgeRelecture';
+import { IcoRetour } from './Icones';
 
 const TXT_LOCKED_TITLE = 'الجسر مقفل';
 const TXT_LOCKED_MSG = 'أنجز كل دروس الوحدة {n} أولًا، ثم يُفتح الجسر.';
 const TXT_CLOSE = 'إغلاق';
 const TXT_BRIDGE_LABEL = 'الجسر · الوحدة {n}';
-const TXT_STEP = 'الخطوة {n} من 3';
+const TXT_STEP = 'الخطوة {n} من {total}';
 const TXT_UNIT_QUESTION = 'سؤال الوحدة';
 const TXT_GATE_INSTRUCTION = 'بوّابة الجسر: اختر الجواب التركيبي الصحيح — من ذاكرتك وحدك، لا درس مفتوح. إن أخطأت أعد المحاولة حتى تصيب.';
+const TXT_NEXT_DOC = 'التالي: قراءة سند قصير';
 const TXT_NEXT_TRAPS = 'التالي: مواجهة الفخّين';
 const TXT_OFFICIAL_TRAPS = 'الفخّان الرسميان للوحدة';
 const TXT_TRAP_LABEL = 'فخّ {n}';
@@ -52,8 +55,11 @@ export default function JalonUnite({
   onFermer,
 }: Props) {
   const u = UNITE_PAR_ID[uniteId];
-  const [etape, setEtape] = useState<1 | 2 | 3>(1);
+  const microDoc = MICRO_EPREUVES_UNITE[uniteId];
+  const totalEtapes = microDoc ? 4 : 3;
+  const [etape, setEtape] = useState<1 | 2 | 3 | 4>(1);
   const [qcmFait, setQcmFait] = useState(false);
+  const [docFait, setDocFait] = useState(false);
   const [evite, setEvite] = useState<'oui' | 'non' | null>(null);
   const [gardeesVues, setGardeesVues] = useState<Record<string, boolean>>({});
 
@@ -122,7 +128,7 @@ return (
           </span>
         </div>
         <div className="mt-3 flex justify-center gap-1.5">
-          {[1, 2, 3].map((k) => (
+          {Array.from({ length: totalEtapes }, (_, idx) => idx + 1).map((k) => (
             <span
               key={k}
               className={getEtapeClass(k)}
@@ -132,7 +138,7 @@ return (
       </header>
 
       <main className="card flex-1 p-5">
-        <p className="eyebrow">{TXT_STEP.replace('{n}', nb(etape))}</p>
+        <p className="eyebrow">{TXT_STEP.replace('{n}', nb(etape)).replace('{total}', nb(totalEtapes))}</p>
 
         {etape === 1 && (
           <div className="mt-4 space-y-3">
@@ -156,12 +162,37 @@ return (
               disabled={!qcmFait}
               className="btn btn-primary w-full"
             >
+              {microDoc ? TXT_NEXT_DOC : TXT_NEXT_TRAPS}
+            </button>
+          </div>
+        )}
+
+        {microDoc && etape === 2 && (
+          <div className="mt-4 space-y-3">
+            <div className="rounded-2xl border border-line bg-paper p-4">
+              <p className="text-[11px] font-bold text-forest">
+                {microDoc.titre} · الفعل «{microDoc.verbe}»
+              </p>
+              <p className="mt-1.5 text-sm leading-relaxed">{microDoc.extrait}</p>
+            </div>
+            <BadgeRelecture review={microDoc.review} />
+            <ChoixUnique
+              qcm={microDoc.qcm}
+              fait={docFait}
+              onValide={() => setDocFait(true)}
+              source="jalon"
+            />
+            <button
+              onClick={() => setEtape(3)}
+              disabled={!docFait}
+              className="btn btn-primary w-full"
+            >
               {TXT_NEXT_TRAPS}
             </button>
           </div>
         )}
 
-        {etape === 2 && (
+        {etape === (microDoc ? 3 : 2) && (
           <div className="mt-4 space-y-3">
             <p className="text-xs font-bold text-ink-soft">{TXT_OFFICIAL_TRAPS}</p>
             {u.piegesAr.map((piege, i) => (
@@ -189,14 +220,14 @@ return (
               </Morceau>
             )}
             {evite && (
-              <button onClick={() => setEtape(3)} className="btn btn-primary w-full">
+              <button onClick={() => setEtape(microDoc ? 4 : 3)} className="btn btn-primary w-full">
                 {TXT_NEXT_FINAL}
               </button>
             )}
           </div>
         )}
 
-        {etape === 3 && (
+        {etape === (microDoc ? 4 : 3) && (
           <div className="mt-4 space-y-4">
             <div className="rounded-2xl border border-line bg-cream/60 p-4">
               <p className="text-[11px] font-bold text-mute">{TXT_SYNTHESIS_QUESTION}</p>

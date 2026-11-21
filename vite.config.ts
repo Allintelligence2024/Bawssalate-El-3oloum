@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
+
 // PWA يدوية: public/manifest.webmanifest + public/sw.js + src/utils/pwa.ts
 // لا vite-plugin-pwa (تفادي تعارض الإصدارات)، لا d3/jspdf/motion (تطبيق خفيف 100%).
 
@@ -41,6 +43,9 @@ function precacheManifest(): Plugin {
 }
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [react(), tailwindcss(), precacheManifest()],
   server: { host: true, port: 3000, allowedHosts: true },
   build: {

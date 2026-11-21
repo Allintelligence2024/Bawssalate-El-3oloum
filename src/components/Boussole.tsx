@@ -1,9 +1,18 @@
 import { useEffect, useRef } from "react";
+import type { BoussoleAttemptEvent } from "../types/boussoleBridge";
+import { useBoussoleBridge } from "../hooks/useBoussoleBridge";
 
 /** Le même document embarqué dans l'app, consultable et imprimable sans réseau externe. */
 const LABO = "/boussole/index.html";
-function Laboratoire({ hash = '' }: { hash?: '#explore-protein' | '' }) {
+function Laboratoire({
+  hash = '',
+  onBoussoleEvent,
+}: {
+  hash?: '#explore-protein' | '';
+  onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
+}) {
   const cadre = useRef<HTMLIFrameElement>(null);
+  useBoussoleBridge(cadre, onBoussoleEvent);
   // Respecte le réglage de lecture de l'application dans le document indépendant.
   function taille() {
     const doc = cadre.current?.contentDocument;
@@ -31,7 +40,13 @@ function Laboratoire({ hash = '' }: { hash?: '#explore-protein' | '' }) {
     />
   );
 }
-export default function Boussole({ onAteliers }: { onAteliers: () => void }) {
+export default function Boussole({
+  onAteliers,
+  onBoussoleEvent,
+}: {
+  onAteliers: () => void;
+  onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
+}) {
   return (
     <section
       dir="rtl"
@@ -39,7 +54,7 @@ export default function Boussole({ onAteliers }: { onAteliers: () => void }) {
       data-module="boussole"
       className="fixed inset-x-0 bottom-16 top-[4.25rem] z-10 flex flex-col bg-paper"
     >
-      <Laboratoire />
+      <Laboratoire onBoussoleEvent={onBoussoleEvent} />
       <div className="flex min-h-11 shrink-0 items-center justify-between gap-2 border-t border-line bg-surface px-3 text-xs text-ink-soft">
         <span>البوصلة · داخل التطبيق</span>
         <button
@@ -55,10 +70,16 @@ export default function Boussole({ onAteliers }: { onAteliers: () => void }) {
 }
 /** Le vrai laboratoire remplace aussi l'ancienne aide. L'exercice reste monté et la
  * fermeture native du dialogue rend le focus au bouton déclencheur. */
-export function AideBoussole({ onFermer, document, verbe }: {
+export function AideBoussole({
+  onFermer,
+  document,
+  verbe,
+  onBoussoleEvent,
+}: {
   onFermer: () => void;
   document: string;
   verbe: string;
+  onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
 }) {
   const d = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -95,7 +116,7 @@ export function AideBoussole({ onFermer, document, verbe }: {
           <p><b>تمرينك:</b> {document} · الفعل «{verbe}»</p>
           <p>المثال التالي من تركيب البروتين، وليس حلّ تمرينك. لاحظ الدليل ثم ارجع وطبّق الفعل على سندك.</p>
         </div>
-        <Laboratoire hash="#explore-protein" />
+        <Laboratoire hash="#explore-protein" onBoussoleEvent={onBoussoleEvent} />
       </div>
     </dialog>
   );

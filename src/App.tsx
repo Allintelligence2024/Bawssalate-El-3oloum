@@ -23,6 +23,9 @@ import type { SituationSynthese } from './data/syntheses';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
+import type { BoussoleAttemptEvent } from './types/boussoleBridge';
+import { appliquerEvenementBoussole, demoterProgressionDepuisKafaa } from './utils/boussoleAdapter';
+import { enregistrerDrillReussi } from './utils/drills';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -557,12 +560,15 @@ export default function App() {
 
   // ───────────── التدريبات ─────────────
 
-  function onItemReussi(id: string): void {
-    setEtat((prev) =>
-      prev.drills?.[id]
-        ? prev
-        : { ...prev, drills: { ...(prev.drills ?? {}), [id]: true } }
-    );
+  function onItemReussi(id: string, erreurs = 0): void {
+    setEtat((prev) => ({
+      ...prev,
+      drills: enregistrerDrillReussi(prev.drills, id, erreurs),
+    }));
+  }
+
+  function onBoussoleEvent(evt: BoussoleAttemptEvent): void {
+    setEtat((prev) => appliquerEvenementBoussole(prev, evt));
   }
 
   // ───────────── بطاقات الكفاءة (منهجية) — même SM-2 que les leçons ─────────────
@@ -600,13 +606,21 @@ export default function App() {
       }
       const debut = debutSemaine(aujourdhui());
       const hebdo = prev.kafaaHebdo?.debut === debut ? prev.kafaaHebdo.n : 0;
-      return {
+      const suivant: Etat = {
         ...prev,
         kafaa: { ...(prev.kafaa ?? {}), [key]: maj },
         // Seule une REVUE (écran اليوم) consomme le quota hebdomadaire (≤ 2) ;
         // une réussite d'exercice programme la carte sans l'épuiser.
         ...(estRevue ? { kafaaHebdo: { debut, n: hebdo + 1 } } : {}),
       };
+      // Lot 5B — rétrogradation croisée douce : si une carte de méthodologie échoue,
+      // les leçons terminées de l'unité associée deviennent fragiles (intervalle / 2).
+      if (qualite < 3) {
+        const matchUnite = /\b(u(?:1[01]|[1-9]))\b/i.exec(key);
+        const uniteCible = matchUnite ? matchUnite[1].toLowerCase() : key.startsWith('methodo') ? 'u1' : undefined;
+        if (uniteCible) return demoterProgressionDepuisKafaa(suivant, uniteCible, auj);
+      }
+      return suivant;
     });
   }
 
@@ -738,6 +752,7 @@ export default function App() {
             onFermer={() => setMode(null)}
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
+            onBoussoleEvent={onBoussoleEvent}
           />
         </Suspense>
       );
@@ -1158,6 +1173,7 @@ export default function App() {
             onCarnetFaute={onCarnetFaute}
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
             onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
+            onBoussoleEvent={onBoussoleEvent}
           />
         </Suspense>
       )}
