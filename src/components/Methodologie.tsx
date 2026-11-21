@@ -713,7 +713,7 @@ export default function Methodologie({
                 className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
               >
                 <span className="flex items-center gap-3">
-                  <img src="/mascotte.png" alt="" className="h-10 w-10 shrink-0 object-contain" />
+                  <img src="/mascotte.webp" alt="" className="h-10 w-10 shrink-0 object-contain" />
                   <span>
                     <b className="text-sm text-forest">اسأل المُرشد</b>
                     <span className="mt-1 block text-xs text-mute">

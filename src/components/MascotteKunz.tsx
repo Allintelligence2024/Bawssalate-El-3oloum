@@ -27,7 +27,7 @@ export default function MascotteKunz({ message, compact = false, tone = 'forest'
         style={{ insetInlineStart: '0.25rem' }}
       />
       <img
-        src="/mascotte.png"
+        src="/mascotte.webp"
         alt="مستكشف بوصلة العلوم"
         className={`${
           compact ? 'h-14 w-14' : 'h-20 w-20'
