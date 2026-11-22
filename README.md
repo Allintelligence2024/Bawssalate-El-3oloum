@@ -373,7 +373,7 @@ rien ne devienne illisible.
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
 | Fichiers de tests | **51** |
-| Coquille hors ligne (téléchargée d'office) | **1.90 Mio** (4 entrées) |
+| Coquille hors ligne (téléchargée d'office) | **1.91 Mio** (4 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
 <!-- METRICS:END -->
@@ -386,7 +386,7 @@ concrètes :
 
 - **mise à jour immédiate** — un correctif de contenu est en ligne dès le déploiement, sans
   validation de store (crucial quand un corrigé doit être rectifié en pleine période de révision) ;
-- **poids** — l'APK embarque un WebView et pèse plusieurs fois la coquille de 1,90 Mio ;
+- **poids** — l'APK embarque un WebView et pèse plusieurs fois la coquille de 1,91 Mio ;
 - **aucun compte développeur** — pas de frais ni de politique de contenu à tenir.
 
 Le dossier `android/` (coque Capacitor `com.bousala.ouloum`) existe à titre **expérimental** :
@@ -399,7 +399,7 @@ Ne pas le présenter comme un canal de diffusion.
 - **React 19 + TypeScript 7 + Vite 8** — SPA léger
 - **Tailwind CSS 4** (plugin `@tailwindcss/vite`) — design RTL mobile-first, palette olive claire
 - **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js`. Le précache est **en deux
-  niveaux** : la *coquille* (interface + images, **1,90 Mio**) est toujours téléchargée ; le
+  niveaux** : la *coquille* (interface + images, **1,91 Mio**) est toujours téléchargée ; le
   *contenu lourd* (25 leçons HTML, laboratoire Boussole, 2 PDF, **4,19 Mio**) ne l'est que sur
   demande explicite, avec son poids annoncé. Le chunk des sujets de bac (≈ 490 ko) reste en ligne
   et n'entre pas dans le cache.
