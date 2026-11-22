@@ -372,7 +372,7 @@ rien ne devienne illisible.
 | Sujets avec éléments de réponse | **28** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
-| Fichiers de tests | **49** |
+| Fichiers de tests | **50** |
 | Coquille hors ligne (téléchargée d'office) | **1.90 Mio** (4 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
