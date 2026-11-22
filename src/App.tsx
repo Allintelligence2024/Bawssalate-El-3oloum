@@ -773,6 +773,26 @@ export default function App() {
       return (
         <SujetsOfficiels
           onFermer={() => setMode(null)}
+          maitriseSujets={etat.maitriseSujets}
+          brouillonsSujets={etat.brouillonsSujets}
+          onEvaluerConsigne={(sujetId, cle, niveau) =>
+            setEtat((prev) => ({
+              ...prev,
+              maitriseSujets: {
+                ...prev.maitriseSujets,
+                [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
+              },
+            }))
+          }
+          onBrouillonConsigne={(sujetId, cle, texte) =>
+            setEtat((prev) => ({
+              ...prev,
+              brouillonsSujets: {
+                ...prev.brouillonsSujets,
+                [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
+              },
+            }))
+          }
           onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
           onOuvrirSynthese={(s: SituationSynthese) =>
             setMode({

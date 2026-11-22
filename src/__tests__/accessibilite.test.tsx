@@ -117,3 +117,29 @@ describe('accessibilité des écrans (axe-core)', () => {
     expect(HORS_PERIMETRE.size).toBe(5);
   });
 });
+
+describe('entraîneur Bac — accessibilité (§10.3)', () => {
+  it('l’écran d’entraînement du sujet 2023-1 ne produit aucune violation', async () => {
+    const { default: EntraineurSujet } = await import('../components/EntraineurSujet');
+    const { SUJETS_OFFICIELS } = await import('../data/sujetsOfficiels');
+    const sujet = SUJETS_OFFICIELS.find((s) => s.id === '2023-1')!;
+    const zone = await rendre(
+      <EntraineurSujet
+        sujet={sujet}
+        evaluations={{}}
+        brouillons={{}}
+        onEvaluer={() => {}}
+        onBrouillon={() => {}}
+        onFermer={() => {}}
+      />,
+    );
+    const violations = await analyser(zone);
+    expect(violations, JSON.stringify(violations)).toEqual([]);
+    // Chaque consigne doit avoir son champ de rédaction, accessible par un libellé.
+    const zones = zone.querySelectorAll('textarea');
+    expect(zones.length).toBeGreaterThan(0);
+    for (const t of zones) {
+      expect(t.closest('label'), 'textarea hors de tout <label> : illisible au lecteur d’écran').not.toBeNull();
+    }
+  });
+});

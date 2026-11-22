@@ -7,6 +7,8 @@ import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
 import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
 import { figuresDe } from '../data/figuresSujets';
 import FigureSujet from './FigureSujet';
+import EntraineurSujet from './EntraineurSujet';
+import { estEntrainable, type NiveauMaitrise } from '../utils/entrainement';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
@@ -15,6 +17,11 @@ interface Props {
   onOuvrirSynthese: (s: SituationSynthese) => void;
   onOuvrirRecherche: (q: string) => void;
   onFermer: () => void;
+  /** §10.3 — évaluations et brouillons du mode entraîneur, persistés par l'appelant. */
+  maitriseSujets?: Record<string, Record<string, NiveauMaitrise>>;
+  brouillonsSujets?: Record<string, Record<string, string>>;
+  onEvaluerConsigne?: (sujetId: string, cle: string, niveau: NiveauMaitrise) => void;
+  onBrouillonConsigne?: (sujetId: string, cle: string, texte: string) => void;
 }
 
 /** ما يتوقّعه المصحّح من كلّ فعل — صياغة قصيرة، لا نسبة ولا سلّم */
@@ -46,15 +53,32 @@ function titreUnite(id: string): string {
   return u ? `الوحدة ${nb(u.numero)} — ${u.titre}` : id;
 }
 
-function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
+function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
+  const [enModeEntrainement, setEnModeEntrainement] = useState(false);
   const corrige = corrigeDe(sujet.id);
   const figures = figuresDe(sujet.id);
   const exerciceCorrige = (numero: number) => corrige?.exercices.find((x) => x.numero === numero);
   const partieCorrigee = (numero: number, i: number): PartieCorrigee | undefined => exerciceCorrige(numero)?.parties[i];
   return (
     <div className="space-y-3">
+      {enModeEntrainement && onEvaluerConsigne && onBrouillonConsigne ? (
+        <EntraineurSujet
+          sujet={sujet}
+          evaluations={maitriseSujets?.[sujet.id] ?? {}}
+          brouillons={brouillonsSujets?.[sujet.id] ?? {}}
+          onEvaluer={(cle, niveau) => onEvaluerConsigne(sujet.id, cle, niveau)}
+          onBrouillon={(cle, texte) => onBrouillonConsigne(sujet.id, cle, texte)}
+          onFermer={() => setEnModeEntrainement(false)}
+        />
+      ) : (
+      <>
+      {estEntrainable(sujet.id) && onEvaluerConsigne && (
+        <button type="button" onClick={() => setEnModeEntrainement(true)} className="btn-gold w-full px-3 py-2 text-sm">
+          تدرّب على هذا الموضوع خطوة بخطوة ←
+        </button>
+      )}
       <p className="flex flex-wrap items-center gap-2 text-[11px] leading-relaxed text-mute">
         <span className="chip text-[11px]" title="درجة أمانة النقل">أمانة النقل ({fideliteDe(sujet)}): {LIBELLE_FIDELITE[fideliteDe(sujet)]}</span>
         {sujet.notes && <span>{sujet.notes}</span>}
@@ -158,11 +182,13 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
           </div>
         </section>
       ))}
+      </>
+      )}
     </div>
   );
 }
 
-export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer }: Props) {
+export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
   const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
@@ -203,7 +229,17 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
             نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
             معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لكلّ موضوع عناصر إجابة مختصرة (معاد صياغتها من التصحيح الرسمي) تظهر عند الطلب.
           </p>
-          {sujet ? <Sujet sujet={sujet} onOuvrirSynthese={onOuvrirSynthese} onOuvrirRecherche={onOuvrirRecherche} /> : <p className="text-sm text-mute">لا موضوع.</p>}
+          {sujet ? (
+            <Sujet
+              sujet={sujet}
+              onOuvrirSynthese={onOuvrirSynthese}
+              onOuvrirRecherche={onOuvrirRecherche}
+              maitriseSujets={maitriseSujets}
+              brouillonsSujets={brouillonsSujets}
+              onEvaluerConsigne={onEvaluerConsigne}
+              onBrouillonConsigne={onBrouillonConsigne}
+            />
+          ) : <p className="text-sm text-mute">لا موضوع.</p>}
 
           <section className="card p-4">
             <p className="eyebrow">ما يتكرّر في {nb(SUJETS_OFFICIELS.length)} مواضيع مهيكلة</p>

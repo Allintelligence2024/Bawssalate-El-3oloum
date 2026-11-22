@@ -102,6 +102,43 @@ for (const i of items) {
   squelettes[k] = (squelettes[k] ?? 0) + 1;
 }
 
+// ── Gabarits tautologiques (Plan V2 §10.2) ──────────────────────────────────
+// Mesure de départ, 22/11/2026 : 340 items sur 700 (49 %) partagent 6 amorces,
+// explication médiane 66 caractères, 500 items sous 110 caractères.
+// La cible du plan est ≤ 15 occurrences par amorce ; on ne peut pas y arriver d'un
+// coup sur 700 items. On applique donc le seuil en **alerte** (mesuré, chiffré,
+// publié en CI) et le seuil d'explication en **alerte** aussi, pour rendre la dette
+// visible à chaque exécution au lieu de la laisser invisible.
+const SEUIL_AMORCE = 15;
+const SEUIL_EXPLICATION = 110;
+
+const amorces = {};
+for (const i of items) {
+  const a = i.q.split(/\s+/).slice(0, 4).join(' ');
+  amorces[a] = (amorces[a] ?? 0) + 1;
+}
+const amorcesEnTrop = Object.entries(amorces).filter(([, n]) => n > SEUIL_AMORCE).sort((a, b) => b[1] - a[1]);
+for (const [a, n] of amorcesEnTrop) {
+  تنبيهات.push(`amorce répétée ${n}× (plafond ${SEUIL_AMORCE}): « ${a} »`);
+}
+
+// Explication trop courte, ou qui se contente de recopier l'option correcte.
+const courtes = [];
+const recopies = [];
+for (const i of items) {
+  if (i.e.length < SEUIL_EXPLICATION) courtes.push(i.id);
+  // Recopie = l'explication contient la réponse (normalisée) sans rien ajouter de plus.
+  const norm = (x) => x.replace(/[\u064B-\u0652]/g, '').replace(/[إأآا]/g, 'ا').replace(/\s+/g, ' ').trim();
+  const reponse = norm(i.o[0]);
+  if (reponse.length >= 8 && norm(i.e) === reponse) recopies.push(i.id);
+}
+if (courtes.length) {
+  تنبيهات.push(`${courtes.length} explication(s) < ${SEUIL_EXPLICATION} caractères (dette §10.2) : ${courtes.slice(0, 12).join(', ')}${courtes.length > 12 ? ' …' : ''}`);
+}
+if (recopies.length) {
+  problemes.push(`${recopies.length} explication(s) recopient simplement l'option correcte : ${recopies.slice(0, 12).join(', ')}`);
+}
+
 console.log(`عناصر: ${items.length} · تعريفات: ${items.filter((i) => i.def).length} · مستوى 3: ${items.filter((i) => i.n === 3).length} · مشاكل: ${problemes.length + problemesLignes.length} · تنبيهات: ${تنبيهات.length}`);
 for (const p of problemesLignes) console.log('- ' + p);
 for (const p of problemes.slice(0, 40)) console.log('- ' + p);
@@ -110,6 +147,7 @@ if (تنبيهات.length) {
   for (const t of تنبيهات.slice(0, 40)) console.log('- ' + t);
   if (تنبيهات.length > 40) console.log(`… و${تنبيهات.length - 40} أخرى`);
 }
+console.log(`\nحالة جودة الصياغة (§10.2): ${items.filter((i) => i.e.length < SEUIL_EXPLICATION).length}/${items.length} تفسيرًا أقلّ من ${SEUIL_EXPLICATION} حرفًا · ${amorcesEnTrop.length} صيغة استهلالية فوق ${SEUIL_AMORCE} تكرارًا`);
 console.log('\nأكثر الصيغ (5 كلمات):');
 for (const [k, v] of Object.entries(squelettes).sort((a, b) => b[1] - a[1]).slice(0, 25)) {
   console.log(`${v} × ${k}`);
