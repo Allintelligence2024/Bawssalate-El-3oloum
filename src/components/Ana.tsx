@@ -25,6 +25,8 @@ import CarteBadges from './CarteBadges';
 import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
 import CarteHorsLigne from './CarteHorsLigne';
+import CarteMesurePilote from './CarteMesurePilote';
+import CarteProfilCompetences from './CarteProfilCompetences';
 
 interface ImportEnAttente {
   etat: Etat;
@@ -56,6 +58,10 @@ interface Props {
   onRappel: (r: { actif: boolean; heure: string }) => void;
   onAllerExercices: () => void;
   onOuvrirConfidentialite: () => void;
+  /** §11 — évaluations de l'entraîneur, pour le profil C1–C8. */
+  evaluationsEntraineur?: Record<string, Record<string, 0 | 1 | 2>>;
+  /** Ouvre l'onglet des exercices (là où vivent les sujets officiels). */
+  onOuvrirEntraineur: () => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -146,6 +152,8 @@ export default function Ana({
   onRappel,
   onAllerExercices,
   onOuvrirConfidentialite,
+  evaluationsEntraineur,
+  onOuvrirEntraineur,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const carnetAvantEffacement = useRef<string | null>(null);
@@ -571,6 +579,10 @@ export default function Ana({
       </section>
 
       <CarteHorsLigne />
+
+      <CarteProfilCompetences evaluations={evaluationsEntraineur} onOuvrirEntraineur={onOuvrirEntraineur} />
+
+      <CarteMesurePilote />
 
       {/* النسخة الاحتياطية — export/import complet de l'état (v0.9.1) */}
       <section className="card mt-5 p-5">

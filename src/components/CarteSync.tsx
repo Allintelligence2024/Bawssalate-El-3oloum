@@ -42,6 +42,13 @@ export function ReglageSync({ etat, onChoix }: Props) {
   return (
     <section className="card mt-5 p-5">
       <p className="eyebrow">المزامنة مع المطوّر</p>
+      {/* BUG-001 : le compte local n'est PAS une identité vérifiée. Le dire ici évite qu'un
+          élève croie que son adresse e-mail a été confirmée. Le pilote d'identité vérifiée
+          (identiteSync.ts) existe mais reste éteint par défaut (VITE_VERIFICATION_SYNC). */}
+      <p className="mt-1 rounded-lg bg-cream px-2.5 py-1.5 text-[11px] leading-relaxed text-ink-soft">
+        هذا الحساب محليّ: رمز الاستئناف يحفظ تقدّمك، ولا يُثبت أنّك صاحب البريد الإلكتروني.
+        لا يُرسَل شيء إلا بموافقتك الصريحة، ويمكنك حذف السجلّ من الخادم في أيّ وقت.
+      </p>
       <p className="mt-2 text-xs leading-relaxed text-mute">
         {!jetonSain ? 'المزامنة غير متاحة: رمز الحساب غير متوفّر أو غير آمن. تقدّمك يبقى على جهازك؛ تواصل مع المطوّر بشأن بيانات الخادم.' : c === 'oui'
           ? 'يُرسَل ملخّص تقدّمك دوريًّا في الخلفية عند توفّر الإنترنت. تُحفَظ كل بياناتك على هاتفك أولًا.'

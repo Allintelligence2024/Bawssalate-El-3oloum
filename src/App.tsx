@@ -10,6 +10,7 @@ import {
   suspendreEcrituresLocalement, surEchecSauvegarde, surEtatPerime, verifierLectureEtat, viderStockage,
 } from './utils/storage';
 import { verifierCoherence } from './utils/coherenceStockage';
+import { consignerCompteur } from './utils/telemetrie';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
@@ -773,6 +774,26 @@ export default function App() {
       return (
         <SujetsOfficiels
           onFermer={() => setMode(null)}
+          maitriseSujets={etat.maitriseSujets}
+          brouillonsSujets={etat.brouillonsSujets}
+          onEvaluerConsigne={(sujetId, cle, niveau) =>
+            setEtat((prev) => ({
+              ...prev,
+              maitriseSujets: {
+                ...prev.maitriseSujets,
+                [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
+              },
+            }))
+          }
+          onBrouillonConsigne={(sujetId, cle, texte) =>
+            setEtat((prev) => ({
+              ...prev,
+              brouillonsSujets: {
+                ...prev.brouillonsSujets,
+                [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
+              },
+            }))
+          }
           onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
           onOuvrirSynthese={(s: SituationSynthese) =>
             setMode({
@@ -1191,7 +1212,12 @@ export default function App() {
           onDeconnexion={onDeconnexion}
           onConsentementSync={onConsentementSync}
           onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
-          onModeIntensif={(modeIntensif) => setEtat((prev) => ({ ...prev, modeIntensif }))}
+          onModeIntensif={(modeIntensif) => {
+            setEtat((prev) => ({ ...prev, modeIntensif }));
+            // §12.1 — on mesure l'USAGE du mode intensif, pas le choix lui-même :
+            // compter chaque clic sur « متوقّف » fausserait la lecture.
+            if (modeIntensif !== 'off') consignerCompteur('modeIntensif');
+          }}
           onTailleTexte={(tailleTexte) => setEtat((prev) => ({ ...prev, tailleTexte }))}
           onOuvrirDiagnostic={() => setAfficheDiagnostic(true)}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
@@ -1200,6 +1226,8 @@ export default function App() {
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
           onAllerExercices={() => setOnglet('exercices')}
           onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
+          evaluationsEntraineur={etat.maitriseSujets}
+          onOuvrirEntraineur={() => setOnglet('exercices')}
         />
         </Suspense>
       )}

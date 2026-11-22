@@ -115,7 +115,8 @@ describe('sync — confidentialité (P0.2/P0.8)', () => {
 // est prouvée en comptant les appels, pas seulement en lisant le code.
 
 const sbMocks = vi.hoisted(() => ({
-  upsert: vi.fn(async (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({ error: null })),
+  /** Le vrai client PostgREST reçoit le payload puis `.abortSignal()` (timeout borné, BUG-007). */
+  upsert: vi.fn(async (_payload: Record<string, unknown>, _options?: Record<string, unknown>, _signal?: AbortSignal) => ({ error: null })),
   createClient: vi.fn(),
   select: vi.fn(async () => ({ data: [{ email: 'test@example.com' }], error: null })),
 }));
@@ -144,7 +145,9 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
     sbMocks.createClient.mockClear();
     sbMocks.createClient.mockImplementation(() => ({
       from: () => ({
-        upsert: sbMocks.upsert,
+        upsert: (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({
+          abortSignal: (signal: AbortSignal) => sbMocks.upsert(payload, options, signal),
+        }),
         delete: () => ({ eq: () => ({ select: sbMocks.select }) }),
       }),
     }));

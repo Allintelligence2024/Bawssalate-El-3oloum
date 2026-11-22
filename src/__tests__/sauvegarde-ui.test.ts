@@ -17,7 +17,7 @@ function props(etat = etatVierge()) {
   return { etat, onEffacerCarnet: rien, onNom: rien, onDateBac: rien, onSupprimerNote: rien,
     onReinitialiser: reinitialiser, onRestaurer: restaurer, onConsentementSync: rien, onObjectif: rien, onModeIntensif: rien,
     onTailleTexte: rien, onOuvrirDiagnostic: rien, onOuvrirLecon: rien, onDemarrerRevision: rien, onBasculerFavori: rien,
-    onRappel: rien, onAllerExercices: rien, onOuvrirConfidentialite: rien };
+    onRappel: rien, onAllerExercices: rien, onOuvrirConfidentialite: rien, onOuvrirEntraineur: rien };
 }
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

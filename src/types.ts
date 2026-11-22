@@ -177,6 +177,10 @@ export interface Etat {
   consentementSyncDecideLe?: string;
   /** هدف العلامة (P2.2): 10+ / 14+ / 18+ — يضبط الحصّة اليومية المقترحة وسقف مراجعات الكفاءة. غيابه = 14. */
   objectif?: Objectif;
+  /** §10.3 — وضع المتدرّب: تقييم ذاتي لكلّ تعليمة (0/1/2). مفتاح: e{exercice}p{partie}c{consigne}. */
+  maitriseSujets?: Record<string, Record<string, 0 | 1 | 2>>;
+  /** §10.3 — مسوّدات التلميذ لكلّ تعليمة (تبقى على الجهاز، لا تُرسَل أبدًا). */
+  brouillonsSujets?: Record<string, Record<string, string>>;
   /** المراجعة المكثّفة (P2.3): 'auto' (تلقائيًّا عند ≤ 60 يومًا من البكالوريا) · 'on' · 'off'. غيابه = auto. */
   modeIntensif?: 'auto' | 'on' | 'off';
   /** حجم الخط (P3.3): s / m / l. غيابه = m. */

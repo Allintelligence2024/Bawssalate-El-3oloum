@@ -357,12 +357,49 @@ rien ne devienne illisible.
 
 ---
 
+## 📊 Chiffres (générés depuis le code)
+
+<!-- METRICS:START -->
+
+<!-- Bloc généré par `node scripts/sync-metrics.mjs`. Ne pas modifier à la main. -->
+
+| Métrique | Valeur |
+| --- | --- |
+| Unités du programme | **11** |
+| Leçons référencées | **56** |
+| Résumés dorés | **58** (relus : 0) |
+| Sujets officiels structurés | **28** |
+| Sujets avec éléments de réponse | **28** |
+| Axes de drills | **49** |
+| Items de drills | **700** (4 fichiers) |
+| Fichiers de tests | **54** |
+| Coquille hors ligne (téléchargée d'office) | **2.38 Mio** (4 entrées) |
+| Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
+
+<!-- METRICS:END -->
+
+## 📱 Canal de diffusion : PWA installable (et non Play Store)
+
+Le canal officiel est la **PWA installable** : `manifest.webmanifest` + service worker, ajout à
+l'écran d'accueil depuis le navigateur. C'est le seul canal supporté, pour trois raisons
+concrètes :
+
+- **mise à jour immédiate** — un correctif de contenu est en ligne dès le déploiement, sans
+  validation de store (crucial quand un corrigé doit être rectifié en pleine période de révision) ;
+- **poids** — l'APK embarque un WebView et pèse plusieurs fois la coquille de 1,91 Mio ;
+- **aucun compte développeur** — pas de frais ni de politique de contenu à tenir.
+
+Le dossier `android/` (coque Capacitor `com.bousala.ouloum`) existe à titre **expérimental** :
+il sert à tester sur émulateur. **Il n'est pas publiable en l'état** — signature, icônes de
+store, politique de confidentialité Play et mise à jour différentielle ne sont pas traités.
+Ne pas le présenter comme un canal de diffusion.
+
 ## 🏗️ Stack
 
 - **React 19 + TypeScript 7 + Vite 8** — SPA léger
 - **Tailwind CSS 4** (plugin `@tailwindcss/vite`) — design RTL mobile-first, palette olive claire
 - **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js`. Le précache est **en deux
-  niveaux** : la *coquille* (interface + images, **1,90 Mio**) est toujours téléchargée ; le
+  niveaux** : la *coquille* (interface + images, **1,91 Mio**) est toujours téléchargée ; le
   *contenu lourd* (25 leçons HTML, laboratoire Boussole, 2 PDF, **4,19 Mio**) ne l'est que sur
   demande explicite, avec son poids annoncé. Le chunk des sujets de bac (≈ 490 ko) reste en ligne
   et n'entre pas dans le cache.
@@ -483,6 +520,22 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
 - **`bacSentenceFrameAr` manquant** sur la première leçon (le cadre P6 s'affiche vide).
 - Convention d'IDs non uniforme (`phaseN_chapitres_X_Y` vs `dN-uM-lK-*`) — fonctionnel, mais à
   normaliser si vous éditez le fichier à la main.
+
+## 🧪 Entraîneur et simulation d'épreuve (Phases 10–12 du plan V2)
+
+- **Entraîneur** (`EntraineurSujet.tsx`) : sur les 28 sujets corrigés, l'élève lit le verbe,
+  rédige dans un champ local, puis s'auto-évalue **0 / 1 / 2**. Le résultat est qualitatif
+  (هشّ / في الطريق / متين) — **aucune note sur 20 n'est jamais calculée ni affichée**.
+- **Simulation 270 min** (`SimulationEpreuve.tsx`, `src/utils/simulation.ts`) : temps réparti
+  au prorata des **barèmes réels** (5/7/8, pas trois tiers égaux), 15 min de relecture
+  réservées, chrono qui **ne se bloque pas** à zéro. La synthèse parle de minutes et
+  d'exercices terminés, jamais de niveau en SVT.
+- **Moteur `bridge.ts`** : 8 compétences C1–C8, confiance pondérée par le nombre de preuves
+  (1 preuve → ×0,75), tri qui met devant les compétences **mesurées** les plus faibles (une
+  compétence jamais travaillée ne passe plus avant une faiblesse réelle). Un accès au Bac
+  reste toujours possible : la couverture est une **recommandation**, jamais un verrou.
+- **Mesure d'impact** (`src/utils/telemetrie.ts`, `plans/MESURE-IMPACT-PILOTE.md`) : compteurs
+  100 % locaux, aucun réseau, export JSON anonyme à la seule initiative de l'élève.
 
 ## 🗺️ Roadmap historique
 
