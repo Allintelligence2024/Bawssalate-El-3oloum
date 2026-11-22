@@ -130,8 +130,34 @@ if (!motif.test(readme)) {
 
 const nouveau = readme.replace(motif, bloc);
 
+/**
+ * Les poids dépendent de `dist/`, qui n'existe pas dans un job de test lancé avant `build`.
+ * Comparer ces lignes reviendrait à faire échouer la CI selon l'ordre des étapes, pas selon
+ * la vérité du README. On les neutralise des deux côtés quand le build est absent — et on le
+ * dit dans la sortie, pour ne pas laisser croire qu'ils ont été vérifiés.
+ */
+// Les deux formes possibles : mesurée, ou « non mesuré » quand dist/ est absent.
+const LIGNE_POIDS = /^\| ((Coquille|Contenu) hors ligne|Poids hors ligne)/;
+function sansPoids(texte) {
+  return texte.split('\n').filter((l) => !LIGNE_POIDS.test(l)).join('\n');
+}
+
 if (process.argv.includes('--check')) {
-  if (nouveau !== readme) {
+  if (!poids) {
+    console.log('dist/ absent : les lignes de poids ne sont pas comparées (lancer npm run build pour les vérifier).');
+    const avantSansPoids = sansPoids(readme.match(motif)[0]);
+    const apresSansPoids = sansPoids(bloc);
+    if (avantSansPoids !== apresSansPoids) {
+      console.error('Le bloc de métriques du README est périmé (hors poids).');
+      console.error('Lancer : node scripts/sync-metrics.mjs');
+      process.exit(1);
+    }
+    console.log('README à jour : aucune dérive de métriques (poids non comparés).');
+    process.exit(0);
+  }
+  if (!poids) {
+    // déjà traité ci-dessus
+  } else if (nouveau !== readme) {
     console.error('Le bloc de métriques du README est périmé.');
     console.error('Lancer : node scripts/sync-metrics.mjs');
     // On montre le diff pour que la correction soit évidente.
