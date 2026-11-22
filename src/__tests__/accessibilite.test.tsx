@@ -143,3 +143,38 @@ describe('entraîneur Bac — accessibilité (§10.3)', () => {
     }
   });
 });
+
+describe('simulation d’épreuve — accessibilité (§10.4)', () => {
+  it('la préparation et la salle d’épreuve ne produisent aucune violation', async () => {
+    const { default: SimulationEpreuve } = await import('../components/SimulationEpreuve');
+    const { SUJETS_OFFICIELS } = await import('../data/sujetsOfficiels');
+    const sujet = SUJETS_OFFICIELS.find((s) => s.id === '2023-1')!;
+    const zone = await rendre(
+      <SimulationEpreuve
+        sujet={sujet}
+        evaluations={{}}
+        brouillons={{}}
+        onEvaluer={() => {}}
+        onBrouillon={() => {}}
+        onFermer={() => {}}
+      />,
+    );
+    expect(await analyser(zone)).toEqual([]);
+
+    // Lancer la simulation : chaque consigne doit exposer un champ libellé, et le choix
+    // d'auto-évaluation doit être un bouton avec aria-pressed (pas un contrôle muet).
+    const lancer = [...zone.querySelectorAll('button')].find((b) => b.textContent?.includes('ابدأ المحاكاة'));
+    expect(lancer, 'bouton de lancement introuvable').toBeDefined();
+    await act(async () => lancer!.click());
+
+    const violations = await analyser(zone);
+    expect(violations, JSON.stringify(violations)).toEqual([]);
+    const zones = zone.querySelectorAll('textarea');
+    expect(zones.length).toBeGreaterThan(0);
+    for (const t of zones) {
+      expect(t.closest('label'), 'textarea hors de tout <label> : illisible au lecteur d’écran').not.toBeNull();
+    }
+    const presses = zone.querySelectorAll('button[aria-pressed]');
+    expect(presses.length).toBeGreaterThan(0);
+  });
+});

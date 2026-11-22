@@ -13,6 +13,7 @@ import {
   construireGrille, calculerResultat, cleConsigne, priorites, statutQualitatif,
   type NiveauMaitrise,
 } from '../utils/entrainement';
+import SimulationEpreuve from './SimulationEpreuve';
 import { nb } from '../utils/dates';
 
 interface Props {
@@ -44,13 +45,33 @@ export default function EntraineurSujet({ sujet, evaluations, brouillons, onEval
   const [aide, setAide] = useState<string | null>(null);
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [corrigeVisible, setCorrigeVisible] = useState<string | null>(null);
+  // Simulation d'épreuve (§10.4) : même sujet, même grille 0/1/2, mais sous contrainte de temps.
+  const [simulation, setSimulation] = useState(false);
   const reprises = priorites(grille, evaluations);
+
+  if (simulation) {
+    return (
+      <SimulationEpreuve
+        sujet={sujet}
+        evaluations={evaluations}
+        brouillons={brouillons}
+        onEvaluer={onEvaluer}
+        onBrouillon={onBrouillon}
+        onFermer={() => setSimulation(false)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="eyebrow">وضع المتدرّب — خطوة بخطوة</p>
-        <button type="button" onClick={onFermer} className="chip text-xs font-bold">عودة إلى القراءة</button>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setSimulation(true)} className="chip text-xs font-bold">
+            محاكاة بالوقت (270 د)
+          </button>
+          <button type="button" onClick={onFermer} className="chip text-xs font-bold">عودة إلى القراءة</button>
+        </div>
       </div>
 
       <p className="rounded-xl border border-gold/40 bg-gold-soft/30 px-3 py-2 text-[11px] leading-relaxed text-forest-deep">
