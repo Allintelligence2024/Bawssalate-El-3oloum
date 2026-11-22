@@ -65,6 +65,12 @@ const etatSchema = z.object({
   rappel: z.object({ actif: z.boolean(), heure: court }).optional(),
   flashcards: dictionnaire(z.object({ boite: z.union([z.literal(1), z.literal(2), z.literal(3)]), prochaine: date, vues: entier })).optional(),
   schemas: dictionnaire(z.literal(true)).optional(),
+  // §10.3 — travail de l'entraîneur (auto-évaluations 0/1/2 et brouillons rédigés).
+  // Sans ces deux champs, zod les supprimait silencieusement à l'import : une sauvegarde
+  // « complète » rendait l'élève devant un entraîneur vide. Un niveau hors {0,1,2} est
+  // refusé plutôt que ramené à 0 — une valeur inventée fausserait sa grille.
+  maitriseSujets: dictionnaire(dictionnaire(z.union([z.literal(0), z.literal(1), z.literal(2)]))).optional(),
+  brouillonsSujets: dictionnaire(dictionnaire(texte)).optional(),
 });
 const compteurs = z.object({ justes: entier, fausses: entier });
 const statsSchema = z.object({

@@ -7,7 +7,7 @@ import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
 import { DIAGNOSTICS, PROTOCOLE, minutesCumulees, type PhaseProtocole } from '../data/protocole';
 import { UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, questionLecon } from '../data/leconsPassives';
-import { consignerPhase } from '../utils/telemetrie';
+import { consignerCompteur, consignerPhase } from '../utils/telemetrie';
 import { ajouterJours, aujourdhui, nb, formatJourAr, minutesNb } from '../utils/dates';
 import { premiereRevision } from '../utils/srs';
 import { noterReponse } from '../utils/stats';
@@ -149,11 +149,30 @@ export default function ProtocoleRunner({
   // synthèse, l'élève confronte 4 représentations erronées fréquentes sanctionnées au Bac.
   const [piegesFaits, setPiegesFaits] = useState(false);
 
-  // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية — تُحذف عند إنجازها كي لا تُحتسب مرّتين.
+  // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية، وجلسة واحدة لكل فتح.
+  //
+  // Deux corrections par rapport au premier jet :
+  //   1. la clé est propre à la LEÇON (`leçon:phase`) — sinon une phase abandonnée dans une
+  //      leçon restait « ouverte » indéfiniment et le temps mesuré enflait ;
+  //   2. l'entrée n'est consignée qu'une fois par ouverture: ouvrir l'écran puis le fermer
+  //      ne doit pas fabriquer une session fantôme de 0 s.
+  // Le nettoyage au démontage enregistre la sortie SANS avoir terminé : c'est exactement ce
+  // que mesure l'indicateur d'abandon, qui sinon restait toujours à zéro.
   useEffect(() => {
-    const cle = `kunz_debut_p${phase.id}`;
-    if (!sessionStorage.getItem(cle)) sessionStorage.setItem(cle, String(Date.now()));
-  }, [phase.id]);
+    // Rouvrir une phase DÉJÀ terminée n'est pas une session de travail : la compter
+    // gonflerait les entrées et fabriquerait un abandon à la sortie.
+    if (faites.includes(phase.id)) return;
+    const cle = `kunz_debut_${lessonId}_p${phase.id}`;
+    if (sessionStorage.getItem(cle)) return;
+    sessionStorage.setItem(cle, String(Date.now()));
+    consignerPhase('entree', phase.id);
+    return () => {
+      const depart = Number(sessionStorage.getItem(cle));
+      if (!depart || !Number.isFinite(depart)) return;
+      sessionStorage.removeItem(cle);
+      consignerPhase('sortie', phase.id, (Date.now() - depart) / 1000, false);
+    };
+  }, [lessonId, phase.id]);
 
   // متى فُتحت الجلسة (لحساب الدقائق عند الإنهاء)
   const [minutesDepart] = useState(() => progression?.minutes ?? 0);
@@ -257,13 +276,17 @@ export default function ProtocoleRunner({
     const base = progressionBase(progression);
     const reponses = { ...base.reponses };
 
-    // جلسة واحدة فقط إذا أنجزت المرحلة هذه المرة (وإلّا يُحتسب الوقت مرّتين).
+    // Phase menée à son terme : on clôt la session ouverte en « terminée ». Sans ça, le
+    // démontage qui suit consignerait un abandon pour une phase pourtant finie.
+    // `closed` est nécessaire : à cause du rendu en mode strict, le nettoyage d'un effet
+    // peut déjà avoir supprimé le départ.
     if (!faites.includes(phase.id)) {
-      const cle = `kunz_debut_p${phase.id}`;
+      const cle = `kunz_debut_${lessonId}_p${phase.id}`;
       const depart = Number(sessionStorage.getItem(cle));
-      const duree = Number.isFinite(depart) && depart > 0 ? (Date.now() - depart) / 1000 : phase.dureeMin * 60;
+      const duree = depart && Number.isFinite(depart) && depart > 0
+        ? (Date.now() - depart) / 1000
+        : phase.dureeMin * 60;
       sessionStorage.removeItem(cle);
-      consignerPhase('entree', phase.id);
       consignerPhase('sortie', phase.id, duree, true);
     }
 
@@ -643,6 +666,7 @@ export default function ProtocoleRunner({
                     if (!ok) {
                       const e = echecs + 1;
                       setEchecs(e);
+                      if (e === 2) consignerCompteur('blocagesPortes');
                       if (e >= 2) setEchecMax(true);
                     }
                   }}
@@ -841,6 +865,7 @@ export default function ProtocoleRunner({
                       if (!ok) {
                         const e = echecs + 1;
                         setEchecs(e);
+                        if (e === 2) consignerCompteur('blocagesPortes');
                         if (e >= 2) setEchecMax(true);
                       }
                     }}
@@ -949,7 +974,12 @@ export default function ProtocoleRunner({
           <ValveAide
             restant={aides}
             indice={phase.indiceAr}
-            onUtiliser={() => setAides((a) => a - 1)}
+            onUtiliser={() => {
+              setAides((a) => a - 1);
+              // §12.1 — compter les demandes d'indice : seul signal fiable de « je bloque
+              // ici » qui ne demande rien à l'élève.
+              consignerCompteur('indicesMurshid');
+            }}
           />
         </div>
       </main>

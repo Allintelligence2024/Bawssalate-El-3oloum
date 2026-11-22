@@ -35,11 +35,19 @@ const LIBELLE_ALERTE = {
 
 export default function SimulationEpreuve({ sujet, evaluations, brouillons, onEvaluer, onBrouillon, onFermer }: Props) {
   const grille = useMemo(() => construireGrille(sujet), [sujet]);
-  const allocations = useMemo(() => allouerTemps(sujet), [sujet]);
   const [dureeChoisie, setDureeChoisie] = useState(DUREE_BAC_MIN);
+  // Les temps conseillés suivent la durée choisie : une simulation de 90 min avec des
+  // repères « 270 min » afficherait des objectifs inatteignables dès la première minute.
+  const allocations = useMemo(() => allouerTemps(sujet, dureeChoisie), [sujet, dureeChoisie]);
   const [lancee, setLancee] = useState(false);
   const [restant, setRestant] = useState(DUREE_BAC_MIN * 60);
   const [enPause, setEnPause] = useState(false);
+  // Échéance absolue (ms). On ne décrémente PAS un compteur à chaque tick : les navigateurs
+  // brident les minuteurs d'un onglet en arrière-plan (1 tick/minute, voire moins), et sur
+  // 270 min l'horloge dériverait de plusieurs dizaines de minutes. On recalcule à partir de
+  // l'heure réelle, donc le temps reste juste même après un changement d'onglet.
+  const echeance = useRef<number>(0);
+  const restantAuLancement = useRef<number>(DUREE_BAC_MIN * 60);
   const [termine, setTermine] = useState(false);
   const [exerciceCourant, setExerciceCourant] = useState(1);
   const [relectureFaite, setRelectureFaite] = useState(false);
@@ -52,8 +60,15 @@ export default function SimulationEpreuve({ sujet, evaluations, brouillons, onEv
 
   useEffect(() => {
     if (!lancee || enPause || termine) return;
-    const id = setInterval(() => setRestant((s) => s - 1), 1000);
-    return () => clearInterval(id);
+    const recalculer = () => setRestant(Math.round((echeance.current - Date.now()) / 1000));
+    recalculer();
+    const id = setInterval(recalculer, 1000);
+    // Un retour d'onglet rattrape immédiatement l'écart au lieu d'attendre le tick suivant.
+    document.addEventListener('visibilitychange', recalculer);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', recalculer);
+    };
   }, [lancee, enPause, termine]);
 
   // Cumul du temps passé sur l'exercice quitté (pas de calcul « au jugé »).
@@ -127,7 +142,13 @@ export default function SimulationEpreuve({ sujet, evaluations, brouillons, onEv
         </div>
         <button
           type="button"
-          onClick={() => { setRestant(dureeChoisie * 60); entreeExercice.current = Date.now(); setLancee(true); }}
+          onClick={() => {
+            restantAuLancement.current = dureeChoisie * 60;
+            echeance.current = Date.now() + dureeChoisie * 60_000;
+            setRestant(dureeChoisie * 60);
+            entreeExercice.current = Date.now();
+            setLancee(true);
+          }}
           className="btn-gold w-full px-3 py-2 text-sm"
         >
           ابدأ المحاكاة
@@ -169,10 +190,27 @@ export default function SimulationEpreuve({ sujet, evaluations, brouillons, onEv
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className={`text-sm ${LIBELLE_ALERTE[al]}`} aria-live="off">
             ⏱️ {al === 'depasse' ? 'الوقت المسموح انقضى — تواصل على مسؤوليتك: ' : 'المتبقّي: '}
-            {formatDuree(Math.abs(restant))}
+            {al === 'depasse' && '+'}
+            {formatDuree(al === 'depasse' ? -restant : restant)}
           </p>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setEnPause((v) => !v)} className="chip text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                // Mise en pause : on fige le restant à l'instant du clic. Reprise : on
+                // redonne une échéance à partir de ce restant figé. Le temps de pause
+                // n'est donc jamais décompté, quel qu'ait été le bridage du navigateur.
+                if (!enPause) {
+                  restantAuLancement.current = Math.round((echeance.current - Date.now()) / 1000);
+                  setRestant(restantAuLancement.current);
+                  setEnPause(true);
+                } else {
+                  echeance.current = Date.now() + restantAuLancement.current * 1000;
+                  setEnPause(false);
+                }
+              }}
+              className="chip text-xs font-bold"
+            >
               {enPause ? 'استئناف' : 'إيقاف مؤقّت'}
             </button>
             <button type="button" onClick={conclure} className="chip text-xs font-bold">أنهِ المحاكاة</button>

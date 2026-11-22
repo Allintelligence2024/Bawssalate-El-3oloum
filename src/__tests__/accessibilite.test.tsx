@@ -178,3 +178,27 @@ describe('simulation d’épreuve — accessibilité (§10.4)', () => {
     expect(presses.length).toBeGreaterThan(0);
   });
 });
+
+describe('profil de compétences — accessibilité (§11)', () => {
+  it('les deux états (vide et rempli) ne produisent aucune violation', async () => {
+    const { default: CarteProfilCompetences } = await import('../components/CarteProfilCompetences');
+    const vide = await rendre(<CarteProfilCompetences evaluations={{}} onOuvrirEntraineur={() => {}} />);
+    expect(await analyser(vide)).toEqual([]);
+    await act(async () => racine?.unmount());
+    hote?.remove();
+
+    // État rempli : une évaluation suffit à faire apparaître le classement et ses raisons.
+    const { SUJETS_OFFICIELS } = await import('../data/sujetsOfficiels');
+    const { construireGrille, cleConsigne } = await import('../utils/entrainement');
+    const sujet = SUJETS_OFFICIELS.find((s) => s.id === '2023-1')!;
+    const cle = cleConsigne(construireGrille(sujet).consignes[0]);
+    const rempli = await rendre(
+      <CarteProfilCompetences
+        evaluations={{ [sujet.id]: { [cle]: 1 } }}
+        onOuvrirEntraineur={() => {}}
+      />,
+    );
+    const violations = await analyser(rempli);
+    expect(violations, JSON.stringify(violations)).toEqual([]);
+  });
+});
