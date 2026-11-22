@@ -3,7 +3,8 @@
 // cohérence HTML ↔ manifeste ↔ worker (mêmes règles que l'install du worker dans sw.js).
 // S'exécuter APRÈS `npm run build`. Le niveau 2 (appareil réel, mode avion) n'est jamais
 // remplacé par ce script : cf. plans/preuves/hors-ligne.md §2.
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { preview } from 'vite';
 
 
@@ -90,7 +91,9 @@ await serveur.close();
 const MIO = 1024 * 1024;
 const BUDGET_COQUILLE = 2.5 * MIO;   // interface + assets, ce que tout élève télécharge
 const BUDGET_CONTENU = 5.0 * MIO;    // leçons + laboratoire + PDF, sur demande explicite
-const BUDGET_FICHIER = 300 * 1024;   // aucun fichier de public/ au-delà (hors PDF/labo)
+// Plan V2 §8.2 : une image de public/ au-delà de 150 ko est un accident, pas un choix.
+// (Les anciens PNG faisaient 600 ko et 1 Mo : c'est exactement ce que ce seuil interdit.)
+const BUDGET_FICHIER = 150 * 1024;
 if (manifeste.octetsCoquille > BUDGET_COQUILLE) {
   problemes.push(`budget : coquille ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio > ${BUDGET_COQUILLE / MIO} Mio`);
 }
@@ -103,6 +106,23 @@ if (contenu) {
     const taille = readFileSync(`dist${u}`).byteLength;
     if (taille > BUDGET_FICHIER) problemes.push(`budget : ${u} pèse ${Math.round(taille / 1024)} ko > ${BUDGET_FICHIER / 1024} ko`);
   }
+}
+// Plan V2 §8.2 : `public/` entier est concerné, pas seulement ce qui entre en cache.
+// Une image oubliée dans public/ finit toujours par se retrouver dans un précache un jour.
+{
+  const lourds = [];
+  const parcourir = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const chemin = join(dir, e.name);
+      if (e.isDirectory()) { parcourir(chemin); continue; }
+      if (/\.(pdf|mp4)$/i.test(e.name)) continue; // vidéo et PDF : exclus par le plan
+      if (chemin.includes('/boussole/')) continue;
+      const taille = statSync(chemin).size;
+      if (taille > BUDGET_FICHIER) lourds.push(`${chemin.replace('public/', '/')} (${Math.round(taille / 1024)} ko)`);
+    }
+  };
+  parcourir('public');
+  for (const f of lourds) problemes.push(`budget : ${f} > ${BUDGET_FICHIER / 1024} ko — convertir ou redimensionner`);
 }
 
 // ── 3. Rapport ──

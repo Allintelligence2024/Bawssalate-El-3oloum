@@ -44,6 +44,20 @@ jobs:
       # Smoke test de ce qui est réellement servi : build-id, worker, types, budget de poids.
       # Comble le trou « vite build passe alors que tsc -b n'a jamais tourné » (Vercel).
       - run: npm run verifier:deploiement
+      # 9.2 — le README ne peut plus mentir sur ses chiffres.
+      - run: npm run verifier:metriques
+      # 7.3.3 — parité RLS. Sans SUPABASE_DB_URL, le script sort en 2 et le dit :
+      # il ne prétend jamais avoir vérifié une base qu'il n'a pas interrogée.
+      - name: Parité RLS (si SUPABASE_DB_URL fourni)
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            npm run verifier:parite-rls
+          else
+            echo "SUPABASE_DB_URL absent : parité NON vérifiée (témoin figé seulement)."
+            node scripts/verifier-parite-rls.mjs --fichier supabase/tests/fixtures/parite-rls-2026-11-22.json
+          fi
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       - run: npm audit --audit-level=high
       - name: Installer les dépendances du laboratoire
         run: npm ci --no-audit --no-fund

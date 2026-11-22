@@ -11,7 +11,9 @@
     "test": "vitest run && node --test scripts/verifier-inventaire-boussole.test.mjs",
     "verifier:inventaire-boussole": "node scripts/verifier-inventaire-boussole.mjs",
     "verifier:deploiement": "node scripts/verifier-deploiement.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "verifier:metriques": "node scripts/sync-metrics.mjs --check",
+    "verifier:parite-rls": "node scripts/verifier-parite-rls.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.0",

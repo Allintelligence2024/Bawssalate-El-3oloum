@@ -357,6 +357,27 @@ rien ne devienne illisible.
 
 ---
 
+## 📊 Chiffres (générés depuis le code)
+
+<!-- METRICS:START -->
+
+<!-- Bloc généré par `node scripts/sync-metrics.mjs`. Ne pas modifier à la main. -->
+
+| Métrique | Valeur |
+| --- | --- |
+| Unités du programme | **11** |
+| Leçons référencées | **56** |
+| Résumés dorés | **58** (relus : 0) |
+| Sujets officiels structurés | **28** |
+| Sujets avec éléments de réponse | **28** |
+| Axes de drills | **49** |
+| Items de drills | **700** (4 fichiers) |
+| Fichiers de tests | **48** |
+| Coquille hors ligne (téléchargée d'office) | **1.90 Mio** (4 entrées) |
+| Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
+
+<!-- METRICS:END -->
+
 ## 🏗️ Stack
 
 - **React 19 + TypeScript 7 + Vite 8** — SPA léger

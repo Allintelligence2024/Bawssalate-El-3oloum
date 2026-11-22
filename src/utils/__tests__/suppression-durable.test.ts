@@ -9,7 +9,9 @@ import type { Etat } from '../../types';
 import { envoyerSnapshot, supprimerSnapshotServeur, reprendreSync, suspendreSync, etatEnvoi } from '../sync';
 
 const sbMocks = vi.hoisted(() => ({
-  upsert: vi.fn(async (_payload: unknown): Promise<{ error: null | { message: string } }> => ({ error: null })),
+  /** Payloads successifs (le client réel les reçoit avant `.abortSignal()`). */
+  payloads: [] as unknown[],
+  upsert: vi.fn(async (_signal?: AbortSignal): Promise<{ error: null | { message: string } }> => ({ error: null })),
   createClient: vi.fn(),
   select: vi.fn(async (): Promise<{ data: unknown[]; error: null }> => ({ data: [{ email: 'test@example.com' }], error: null })),
 }));
@@ -39,7 +41,14 @@ beforeEach(() => {
   sbMocks.upsert.mockResolvedValue({ error: null });
   sbMocks.createClient.mockClear();
   sbMocks.createClient.mockImplementation(() => ({
-    from: () => ({ upsert: sbMocks.upsert, delete: () => ({ eq: () => ({ select: sbMocks.select }) }) }),
+    from: () => ({
+      // `.abortSignal()` fait partie du client PostgREST réel (timeout borné, BUG-007).
+      upsert: (payload: unknown) => {
+        sbMocks.payloads.push(payload);
+        return { abortSignal: (signal: AbortSignal) => sbMocks.upsert(signal) };
+      },
+      delete: () => ({ eq: () => ({ select: sbMocks.select }) }),
+    }),
   }));
 });
 
@@ -60,14 +69,15 @@ describe('état visible de synchronisation', () => {
     vi.setSystemTime(new Date('2026-11-16T10:12:00Z'));
     await envoyerSnapshot(etatSync(20));
     expect(sbMocks.upsert).toHaveBeenCalledTimes(2);
-    expect(sbMocks.upsert.mock.calls[1][0]).toMatchObject({ jeton: compte.jeton });
-    expect(sbMocks.upsert.mock.calls[1][0]).not.toHaveProperty('charge_utile.jeton');
+    expect(sbMocks.payloads.at(-1)).toMatchObject({ jeton: compte.jeton });
+    expect(sbMocks.payloads.at(-1)).not.toHaveProperty('charge_utile.jeton');
   });
 
   it('coalesce les mises à jour pendant un envoi et abandonne celles suspendues', async () => {
     for (const suspendre of [false, true]) {
       reprendreSync(compte.email);
       sbMocks.upsert.mockClear();
+      sbMocks.payloads.length = 0;
       let terminer!: (r: { error: null }) => void;
       sbMocks.upsert.mockImplementationOnce(() => new Promise(r => { terminer = r; }));
       const premier = envoyerSnapshot(etatSync(10));
@@ -77,7 +87,7 @@ describe('état visible de synchronisation', () => {
       if (suspendre) suspendreSync(compte.email);
       terminer({ error: null });
       await premier;
-      expect(sbMocks.upsert.mock.calls.map(([p]) => (p as { minutes_totales: number }).minutes_totales))
+      expect(sbMocks.payloads.map((p) => (p as { minutes_totales: number }).minutes_totales))
         .toEqual(suspendre ? [10] : [10, 30]);
     }
   });
