@@ -521,6 +521,22 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
 - Convention d'IDs non uniforme (`phaseN_chapitres_X_Y` vs `dN-uM-lK-*`) — fonctionnel, mais à
   normaliser si vous éditez le fichier à la main.
 
+## 🧪 Entraîneur et simulation d'épreuve (Phases 10–12 du plan V2)
+
+- **Entraîneur** (`EntraineurSujet.tsx`) : sur les 28 sujets corrigés, l'élève lit le verbe,
+  rédige dans un champ local, puis s'auto-évalue **0 / 1 / 2**. Le résultat est qualitatif
+  (هشّ / في الطريق / متين) — **aucune note sur 20 n'est jamais calculée ni affichée**.
+- **Simulation 270 min** (`SimulationEpreuve.tsx`, `src/utils/simulation.ts`) : temps réparti
+  au prorata des **barèmes réels** (5/7/8, pas trois tiers égaux), 15 min de relecture
+  réservées, chrono qui **ne se bloque pas** à zéro. La synthèse parle de minutes et
+  d'exercices terminés, jamais de niveau en SVT.
+- **Moteur `bridge.ts`** : 8 compétences C1–C8, confiance pondérée par le nombre de preuves
+  (1 preuve → ×0,75), tri qui met devant les compétences **mesurées** les plus faibles (une
+  compétence jamais travaillée ne passe plus avant une faiblesse réelle). Un accès au Bac
+  reste toujours possible : la couverture est une **recommandation**, jamais un verrou.
+- **Mesure d'impact** (`src/utils/telemetrie.ts`, `plans/MESURE-IMPACT-PILOTE.md`) : compteurs
+  100 % locaux, aucun réseau, export JSON anonyme à la seule initiative de l'élève.
+
 ## 🗺️ Roadmap historique
 
 Les entrées ci-dessous décrivent les versions au moment de leur création, pas nécessairement le comportement actuel. En particulier, la synchronisation n'est plus activée par défaut : elle requiert une configuration et un consentement explicite.
