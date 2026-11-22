@@ -53,7 +53,7 @@ function normaliserArabe(s) {
     .replace(/[أإآ]/g, 'ا')
     .replace(/ة/g, 'ه')
     .replace(/ى/g, 'ي')
-    .replace(/[.,،؛;:«»()\[\]"'!?؟ـ\-–—]/g, ' ')
+    .replace(/[.,،؛;:«»()\]"'!?؟ـ–—-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }

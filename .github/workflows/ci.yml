@@ -31,6 +31,12 @@ jobs:
           '
       - name: Vérification TypeScript
         run: npx tsc --noEmit
+      # Lint JavaScript uniquement (voir eslint.config.mjs) : TypeScript 7 n'est pas
+      # supporté par typescript-eslint, les .ts restent couverts par tsc + les tests.
+      # Décision de sprint : NON bloquant — on l'affiche sans bloquer la fusion.
+      - name: Lint (non bloquant)
+        run: npm run lint
+        continue-on-error: true
       - run: npm test
       - run: npm run build
       - run: node scripts/verifier-drills.mjs
