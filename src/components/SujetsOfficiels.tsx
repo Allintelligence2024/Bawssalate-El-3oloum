@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { ANNEES_STRUCTUREES, LIBELLE_FIDELITE, SUJETS_OFFICIELS, fideliteDe, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
 import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
 import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
+import { figuresDe } from '../data/figuresSujets';
+import FigureSujet from './FigureSujet';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
@@ -48,6 +50,7 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const corrige = corrigeDe(sujet.id);
+  const figures = figuresDe(sujet.id);
   const exerciceCorrige = (numero: number) => corrige?.exercices.find((x) => x.numero === numero);
   const partieCorrigee = (numero: number, i: number): PartieCorrigee | undefined => exerciceCorrige(numero)?.parties[i];
   return (
@@ -69,6 +72,18 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
           </p>
         </div>
       )}
+      {figures.length > 0 && (
+        <section className="card p-4">
+          <p className="eyebrow">الوثائق</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-mute">
+            رسوم أصلية أُعيد إنشاؤها لهذا التطبيق من القيم الواردة في التصحيح النموذجي، لا صور من ورقة الامتحان.
+            اقرأ الوثيقة قبل التعليمة: هي نصف الإجابة.
+          </p>
+          <div className="mt-3 space-y-3">
+            {figures.map((f) => <FigureSujet key={f.cle} figure={f} />)}
+          </div>
+        </section>
+      )}
       {sujet.exercices.map((e) => (
         <section key={e.numero} className="card p-4">
           <div className="flex items-baseline justify-between gap-3">
@@ -86,7 +101,11 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
             {e.parties.map((p, i) => (
               <div key={i} className="rounded-xl border border-line bg-paper p-3">
                 {p.titre && <p className="eyebrow">{p.titre}</p>}
-                {p.contexte && <p className="mt-1 text-xs leading-relaxed text-ink-soft">السند (غير معروض هنا): {p.contexte}</p>}
+                {p.contexte && (
+                  <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                    {figures.length > 0 ? 'السند (انظر الوثائق أعلاه): ' : 'السند (غير معروض هنا): '}{p.contexte}
+                  </p>
+                )}
                 <ol className="mt-2 space-y-2">
                   {p.consignes.map((c, j) => (
                     <li key={j} className="text-sm leading-relaxed">
