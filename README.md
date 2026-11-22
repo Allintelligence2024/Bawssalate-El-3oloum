@@ -372,11 +372,27 @@ rien ne devienne illisible.
 | Sujets avec éléments de réponse | **28** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
-| Fichiers de tests | **50** |
+| Fichiers de tests | **51** |
 | Coquille hors ligne (téléchargée d'office) | **1.90 Mio** (4 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
 <!-- METRICS:END -->
+
+## 📱 Canal de diffusion : PWA installable (et non Play Store)
+
+Le canal officiel est la **PWA installable** : `manifest.webmanifest` + service worker, ajout à
+l'écran d'accueil depuis le navigateur. C'est le seul canal supporté, pour trois raisons
+concrètes :
+
+- **mise à jour immédiate** — un correctif de contenu est en ligne dès le déploiement, sans
+  validation de store (crucial quand un corrigé doit être rectifié en pleine période de révision) ;
+- **poids** — l'APK embarque un WebView et pèse plusieurs fois la coquille de 1,90 Mio ;
+- **aucun compte développeur** — pas de frais ni de politique de contenu à tenir.
+
+Le dossier `android/` (coque Capacitor `com.bousala.ouloum`) existe à titre **expérimental** :
+il sert à tester sur émulateur. **Il n'est pas publiable en l'état** — signature, icônes de
+store, politique de confidentialité Play et mise à jour différentielle ne sont pas traités.
+Ne pas le présenter comme un canal de diffusion.
 
 ## 🏗️ Stack
 

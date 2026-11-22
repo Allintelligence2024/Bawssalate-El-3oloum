@@ -25,6 +25,7 @@ import CarteBadges from './CarteBadges';
 import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
 import CarteHorsLigne from './CarteHorsLigne';
+import CarteMesurePilote from './CarteMesurePilote';
 
 interface ImportEnAttente {
   etat: Etat;
@@ -571,6 +572,8 @@ export default function Ana({
       </section>
 
       <CarteHorsLigne />
+
+      <CarteMesurePilote />
 
       {/* النسخة الاحتياطية — export/import complet de l'état (v0.9.1) */}
       <section className="card mt-5 p-5">

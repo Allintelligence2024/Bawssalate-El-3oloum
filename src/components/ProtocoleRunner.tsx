@@ -7,6 +7,7 @@ import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
 import { DIAGNOSTICS, PROTOCOLE, minutesCumulees, type PhaseProtocole } from '../data/protocole';
 import { UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, questionLecon } from '../data/leconsPassives';
+import { consignerPhase } from '../utils/telemetrie';
 import { ajouterJours, aujourdhui, nb, formatJourAr, minutesNb } from '../utils/dates';
 import { premiereRevision } from '../utils/srs';
 import { noterReponse } from '../utils/stats';
@@ -148,6 +149,12 @@ export default function ProtocoleRunner({
   // synthèse, l'élève confronte 4 représentations erronées fréquentes sanctionnées au Bac.
   const [piegesFaits, setPiegesFaits] = useState(false);
 
+  // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية — تُحذف عند إنجازها كي لا تُحتسب مرّتين.
+  useEffect(() => {
+    const cle = `kunz_debut_p${phase.id}`;
+    if (!sessionStorage.getItem(cle)) sessionStorage.setItem(cle, String(Date.now()));
+  }, [phase.id]);
+
   // متى فُتحت الجلسة (لحساب الدقائق عند الإنهاء)
   const [minutesDepart] = useState(() => progression?.minutes ?? 0);
   // تصحيح D5: الدقائق تُجمع فوق ما حُسب فعلًا (minutesDepart) فحسب — إذن
@@ -249,6 +256,16 @@ export default function ProtocoleRunner({
   function phaseSuivante(): void {
     const base = progressionBase(progression);
     const reponses = { ...base.reponses };
+
+    // جلسة واحدة فقط إذا أنجزت المرحلة هذه المرة (وإلّا يُحتسب الوقت مرّتين).
+    if (!faites.includes(phase.id)) {
+      const cle = `kunz_debut_p${phase.id}`;
+      const depart = Number(sessionStorage.getItem(cle));
+      const duree = Number.isFinite(depart) && depart > 0 ? (Date.now() - depart) / 1000 : phase.dureeMin * 60;
+      sessionStorage.removeItem(cle);
+      consignerPhase('entree', phase.id);
+      consignerPhase('sortie', phase.id, duree, true);
+    }
 
     const maj: ProgressionLecon = {
       ...base,
