@@ -11,6 +11,11 @@ __pycache__/
 .env.local
 .env.production
 
+# Certificats de test QA (clés privées — régénérer via New-SelfSignedCertificate)
+*.pfx
+*.pem
+*.key
+
 # Fichiers PDF d'annales tiers retirés du dépôt public (81 Mo — droits ONEC/dzexams)
 plans/sources/sujets/
 dist-relecture-svt/
