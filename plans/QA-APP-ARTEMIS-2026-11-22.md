@@ -97,13 +97,13 @@ Fichiers : `plans/QA-APP-ARTEMIS-2026-11-22-web-local-final.md` / `-web-https-fi
 
 Fichiers : `plans/QA-APP-ARTEMIS-2026-11-22-android-final.md`, `-android-extras.md`, `-android-qcm.md`, `-android-cdp.md`.
 
-> **Note libellés** : le 3ᵉ onglet Android s'appelle **`منهجية`** (et non `البوصلة` comme sur web). Les 5 onglets Android sont : `اليوم`, `مساري`, `منهجية`, `تدريبات`, `أنا`.
+> **Note libellés (corrigé le 23/11)** : le premier run Android avait été fait avec un APK **périmé** (3ᵉ onglet `منهجية`, laboratoire absent). Après reconstruction, l'APK aligné affiche les mêmes libellés que le web : `اليوم`, `مساري`, **`البوصلة`**, `تدريبات`, `أنا`. Voir §4bis.
 
 | Onglet | Contenu vérifié | Boutons |
 |---|---|---|
 | `اليوم` | header XP/streak, حصّة اليوم, tâches | ✅ 2 clics |
 | `مساري` | الطريق, 3 مجالات / 11 unité / 58 درس, unités + جسر | ✅ 2 clics |
-| `منهجية` | « تدريب البكالوريا — منهجية حل التمرين », المفتاح فعل←دليل←جواب←فحص, 4 حركات | ✅ **21 boutons** |
+| `البوصلة` (ex-`منهجية` dans l'APK périmé) | « بوصلة العلوم \| مختبر الفضول » — iframe `/boussole/index.html`, barre « البوصلة · داخل التطبيق » + lien « تمارين المنهجية الأخرى » ; contenu du laboratoire rendu (scripts exécutés) | ✅ onglet + iframe + contenu |
 | `تدريبات` | أسئلة QCM, الامتحان التجريبي, البطاقات, مخطّطات للتسمية, التركيب الحرّ, ورشات الخرائط الذهنية | ✅ |
 | `أنا` | هويتي, حسابي, تصدير/استيراد, مسح بيانات, خصوصية | ✅ 2 clics |
 
@@ -116,6 +116,26 @@ Fichiers : `plans/QA-APP-ARTEMIS-2026-11-22-android-final.md`, `-android-extras.
 | QCM — axe choisi + réponses | ✅ **12** | « ADN، الجين والشفرة الوراثية (0/11) », ronde 1/10 |
 | Service worker | ✅ | cible CDP `service_worker https://localhost/sw.js` présente (WebView prod-like) |
 | Erreurs JS (`window.__qaErrors`) | ✅ 0 | — |
+
+### 4bis. Correction post-merge — intégration de la méthode Boussole dans Android (23/11)
+
+**Demande :** « why the bawssala methode is not in the android version it should be integrated ».
+
+**Cause racine :** aucun défaut de code. L'APK installé (`21/11/2026 08:31`) était **antérieur** au commit `b5888e8` (« Intégrer le laboratoire Boussole et sécuriser les sauvegardes », `21/11 10:44 UTC`). Le laboratoire existait dans `public/boussole/index.html` (1 205 136 octets) mais n'était ni dans `dist/` ni dans `android/app/src/main/assets/public/`. Le code source affichait déjà `البوصلة` (`src/App.tsx:99`) tandis que l'ancien APK affichait `منهجية`.
+
+**Actions :** `git checkout main && git pull` (merge PR #11 `73cea27`) → `npm ci` (315 paquets, 0 vulnérabilité) → `npm run build` (`dist/boussole/index.html` = 1 206 472 octets) → `npx cap sync android` → `.\gradlew.bat assembleDebug` → `adb install -r` → `adb shell pm clear` (purge du cache du service worker de l'ancienne version, sinon l'ancien shell était rejoué) → relance + re-forward CDP.
+
+**Vérification (9/9 ✅)** — script `android-boussole-verify.mjs`, preuve `plans/QA-APP-ARTEMIS-2026-11-22-android-boussole.md`, capture `plans/screenshots/android-boussole-integrated.png` :
+
+| Contrôle | Résultat |
+|---|---|
+| 5 onglets aux libellés neufs (`البوصلة` présent) | ✅ |
+| Onglet `البوصلة` cliquable | ✅ |
+| iframe `[data-boussole="labo"]` présente, `src=/boussole/index.html` | ✅ |
+| Titre du document = `بوصلة العلوم \| مختبر الفضول` | ✅ |
+| Script du laboratoire exécuté (1 script, pas de message « activer les scripts ») | ✅ |
+| Barre « داخل التطبيق » + lien « تمارين المنهجية الأخرى » | ✅ |
+| 0 erreur JS | ✅ |
 
 ---
 
@@ -141,7 +161,7 @@ Fichier : `plans/QA-APP-ARTEMIS-2026-11-22-offline-prod.md`.
 | # | Sévérité | Observation | Cible | Statut |
 |---|---|---|---|---|
 | 1 | 🔴 Critique | `@noble/hashes` absent de `node_modules` → app web 500 | Web dev | 🟢 **Réparé** (`npm install`) |
-| 2 | 🟡 Mineur | Onglet `البوصلة` (web) : contenu très réduit (« البوصلة · داخل التطبيق / تمارين المنهجية الأخرى », 1 bouton) — semble être un écran de renvoi plutôt qu'un contenu riche | Web | À confirmer côté produit (voulu ?) |
+| 2 | 🟡 Mineur | Onglet `البوصلة` (web) : contenu très réduit (« البوصلة · داخل التطبيق / تمارين المنهجية الأخرى », 1 bouton) — semble être un écran de renvoi plutôt qu'un contenu riche | Web | 🟢 **Résolu côté Android après rebuild** (§4bis) : le laboratoire est bien rendu dans l'iframe. Le run web initial utilisait le même build périmé ; à rejouer sur 3000/8443 pour confirmation formelle. |
 | 3 | 🟡 Mineur | Proxy HTTPS 8443 : le WebSocket HMR de Vite (`wss://…/?token=…`) ne passe pas le proxy (handshake timeout) | HTTPS | Artefact de l'environnement de test (proxy sans upgrade WS) — **pas un bug app** |
 | 4 | ⚪ Info | Cartes de `تدريبات` : le balayage automatisé ne clique qu'une carte par passe (reset navigation) ; chaque carte majeure (QCM, examen, mind map) est couverte en section dédiée | Web/Android | Limitation du harnais, pas de l'app |
 | 5 | ⚪ Info | Examen blanc : une seule réponse capturée dans la boucle auto (structure par parties / sous-questions) ; écran et questions validés | Web/Android | Couverture partielle du scoring |
@@ -157,11 +177,11 @@ Fichier : `plans/QA-APP-ARTEMIS-2026-11-22-offline-prod.md`.
 - **Rapports détaillés** (`plans/`) :
   - `QA-APP-ARTEMIS-2026-11-22-web-local-final.md` / `.json`
   - `QA-APP-ARTEMIS-2026-11-22-web-https-final.md` / `.json`
-  - `QA-APP-ARTEMIS-2026-11-22-android-final.md`, `-android-extras.md`, `-android-qcm.md`, `-android-cdp.md`, `-android-details.json`
+  - `QA-APP-ARTEMIS-2026-11-22-android-final.md`, `-android-extras.md`, `-android-qcm.md`, `-android-cdp.md`, `-android-details.json`, `-android-boussole.md` (intégration post-merge)
   - `QA-APP-ARTEMIS-2026-11-22-offline-prod.md`
   - historiques : `-web-results.md`, `-web-continuation.md`, `-web-full.md`, `-logcat.txt`
-- **Captures** (`plans/screenshots/`) : `local-final-*.png`, `https-final-*.png`, `android-done-*.png`, `android-extra-*.png`, `android-qcm.png`, `offline-prod-home.png`, `offline-prod-reload.png`, + historiques web/Android.
-- **Scripts de test** (racine) : `artemis-web-final.mjs`, `artemis-offline.mjs`, `android-qcm.mjs`, `android-cdp-extras.mjs`, `android-cdp-final.mjs`, `android-cdp-state.mjs`/`state2.mjs`, `https-proxy-8443.mjs`, `serve-dist.mjs`.
+- **Captures** (`plans/screenshots/`) : `local-final-*.png`, `https-final-*.png`, `android-done-*.png`, `android-extra-*.png`, `android-qcm.png`, `android-boussole-integrated.png`, `offline-prod-home.png`, `offline-prod-reload.png`, + historiques web/Android.
+- **Scripts de test** (racine) : `artemis-web-final.mjs`, `artemis-offline.mjs`, `android-qcm.mjs`, `android-boussole-verify.mjs`, `android-cdp-extras.mjs`, `android-cdp-final.mjs`, `android-cdp-state.mjs`/`state2.mjs`, `https-proxy-8443.mjs`, `serve-dist.mjs`.
 
 ---
 
@@ -177,9 +197,9 @@ Fichier : `plans/QA-APP-ARTEMIS-2026-11-22-offline-prod.md`.
 
 ## 9. Métriques de session (AGENTS.md §5)
 
-- **Objectif atteint ?** Oui — les 3 cibles lancées et testées exhaustivement (5 onglets + boutons + QCM + examen + mind map + export/import + hors-ligne), rapport final rédigé.
+- **Objectif atteint ?** Oui — les 3 cibles lancées et testées exhaustivement (5 onglets + boutons + QCM + examen + mind map + export/import + hors-ligne), rapport final rédigé, PR #11 mergée, puis anomalie Android « méthode Boussole absente » diagnostiquée (build périmé) et corrigée par rebuild + réinstallation (9/9 contrôles verts).
 - **Taux de succès outils** : élevé ; échecs initiaux de navigation dus à l'état persistant / splash, tous résolus par itération sur le harnais.
 - **Corrections utilisateur** : 0 (relances « continue »).
 - **Auto-score qualité** : 4/5 (couverture fonctionnelle complète ; scoring examen partiel, balayage cartes perfectible).
 
-*Rapport généré par Artemis (Playwright web + CDP Android). Tous les scripts/rapports restent non commités dans l'espace de travail.*
+*Rapport généré par Artemis (Playwright web + CDP Android). Scripts/rapports de la campagne initiale commités et poussés via PR #11 (merge `73cea27`) ; la correction Android et ses preuves sont commitées sur `main`.*
