@@ -1,12 +1,18 @@
 // Simulation du worker : aucune affirmation de compatibilité navigateur/appareil.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 type Handler = (event: any) => void;
 function environnement() {
   const version = 'test';
-  const manifest = { version, assets: ['/assets/main.js', '/assets/suite.js', '/assets/main.css'], statiques: ['/icon.svg', '/lecons/l1.html'], octets: 5000 };
+  const manifest = {
+    version,
+    assets: ['/assets/main.js', '/assets/suite.js', '/assets/main.css'],
+    statiques: ['/icon.svg'],
+    contenu: ['/lecons/l1.html'],
+    octets: 5000, octetsCoquille: 4000, octetsContenu: 1000,
+  };
   const urls = new Map<string, Response>();
   const put = (url: string, body: string, type: string) => urls.set(url, new Response(body, { status: 200, headers: { 'content-type': type } }));
   put('/precache-manifest.json', JSON.stringify(manifest), 'application/json');
@@ -33,15 +39,22 @@ function environnement() {
   const handlers: Record<string, Handler> = {};
   const self = { location: { origin: 'https://app.test' }, clients: { claim: async () => {} }, addEventListener: (nom: string, cb: Handler) => { handlers[nom] = cb; } };
   let online = true, enVol = 0, maxEnVol = 0;
-  const fetch = async (url: any) => {
+  let bloquee: string | undefined;
+  const demandes: string[] = [];
+  const fetch = async (url: any, options?: RequestInit) => {
+    demandes.push(key(url));
     enVol++; maxEnVol = Math.max(maxEnVol, enVol);
-    await Promise.resolve();
-    enVol--;
+    try {
+      if (bloquee === key(url)) await new Promise((_, reject) => {
+        options?.signal?.addEventListener('abort', () => reject(new Error('délai')), { once: true });
+      });
+      await Promise.resolve();
+    } finally { enVol--; }
     const response = urls.get(key(url));
     if (!online) throw new Error('offline');
     return response?.clone() ?? new Response('missing', { status: 404 });
   };
-  vm.runInNewContext(readFileSync('public/sw.js', 'utf8').replaceAll('__KUNZ_BUILD_ID__', version), { self, caches, fetch, URL, Response, Promise, Number, Error });
+  vm.runInNewContext(readFileSync('public/sw.js', 'utf8').replaceAll('__KUNZ_BUILD_ID__', version), { self, caches, fetch, URL, Response, Promise, Number, Error, AbortController, setTimeout, clearTimeout });
   async function lifecycle(nom: string) {
     let promise: Promise<void> | undefined;
     handlers[nom]({ waitUntil: (p: Promise<void>) => { promise = p; } });
@@ -58,7 +71,7 @@ function environnement() {
     handlers.fetch({ request: { url: `https://app.test${path}`, method: 'GET', mode, headers: { has: () => range } }, respondWith: (p: Promise<Response>) => { promise = p; } });
     return promise;
   }
-  return { manifest, urls, put, cachesData, lifecycle, message, demande, setOnline: (v: boolean) => { online = v; }, maxEnVol: () => maxEnVol };
+  return { demandes, bloquer: (url?: string) => { bloquee = url; }, manifest, urls, put, cachesData, lifecycle, message, demande, setOnline: (v: boolean) => { online = v; }, maxEnVol: () => maxEnVol };
 }
 
 describe('service worker — simulation', () => {
@@ -74,11 +87,19 @@ describe('service worker — simulation', () => {
   it('compte les ressources manquantes et reprend seulement celles-ci', async () => {
     const e = environnement();
     await e.lifecycle('install');
-    expect((await e.message('ETAT_HORS_LIGNE')).manquants).toBe(3);
+    // Coquille : 5 entrées. `install` ne télécharge que les assets cités dans le HTML de
+    // démarrage, donc `suite.js` et `icon.svg` manquent encore — 2 manquants. Le contenu
+    // lourd (`l1.html`) n'est volontairement pas compté à ce niveau.
+    expect((await e.message('ETAT_HORS_LIGNE')).manquants).toBe(2);
+    expect((await e.message('ETAT_HORS_LIGNE')).octets).toBe(4000);
+    // La reprise ne retélécharge que ce qui manque : `suite.js` (404) et `icon.svg`.
     e.urls.delete('/assets/suite.js');
     expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(1);
+    // Un téléchargement de contenu inclut la coquille : rien ne manque plus côté contenu.
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(1);
     e.put('/assets/suite.js', 'suite', 'text/javascript');
-    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect((await e.message('ETAT_HORS_LIGNE')).manquants).toBe(0);
     expect(e.maxEnVol()).toBeLessThanOrEqual(3);
     e.setOnline(false);
     expect(await (await e.demande('/lecons/l1.html', 'navigate'))!.text()).toBe('leçon');
@@ -86,6 +107,22 @@ describe('service worker — simulation', () => {
     const manque = await e.demande('/lecons/absente.html', 'navigate');
     expect(manque!.status).toBe(503);
     expect(await manque!.text()).not.toContain('kunz-build-id');
+  });
+  it('annule une ressource bloquée puis reprend sans retélécharger celles déjà présentes', async () => {
+    vi.useFakeTimers();
+    try {
+      const e = environnement();
+      await e.lifecycle('install');
+      e.bloquer('/assets/suite.js');
+      const essai = e.message('TELECHARGER_HORS_LIGNE');
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect((await essai).manquants).toBe(1);
+      expect(vi.getTimerCount()).toBe(0);
+      e.bloquer();
+      e.demandes.length = 0;
+      expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+      expect(e.demandes).toEqual(['/assets/suite.js']);
+    } finally { vi.useRealTimers(); }
   });
   it('ne compte pas une réponse HTML 200 à la place d’un module', async () => {
     const e = environnement();
@@ -109,11 +146,16 @@ describe('service worker — simulation', () => {
 describe('ressources de la Boussole dans le cache de la classe', () => {
   it('valide le type PDF, reprend le téléchargement puis sert la copie intégrale hors ligne (même avec Range)', async () => {
     const e = environnement();
-    e.manifest.statiques.push('/boussole/index.html', '/boussole/memo.pdf', '/boussole/cahier-bac-2022.pdf');
+    e.manifest.contenu.push('/boussole/index.html', '/boussole/memo.pdf', '/boussole/cahier-bac-2022.pdf');
     e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
     e.put('/boussole/index.html', 'labo', 'text/html'); e.put('/boussole/memo.pdf', '<html>non</html>', 'text/html'); e.put('/boussole/cahier-bac-2022.pdf', '%PDF-cahier', 'application/pdf');
-    await e.lifecycle('install'); expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(1);
-    e.put('/boussole/memo.pdf','%PDF-memo','application/pdf'); expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    await e.lifecycle('install');
+    // La coquille seule ne télécharge aucun contenu lourd.
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/boussole/cahier-bac-2022.pdf');
+    // Le contenu complet, oui — et il reprend après le PDF au mauvais type.
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(1);
+    e.put('/boussole/memo.pdf','%PDF-memo','application/pdf'); expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
     e.setOnline(false); expect(await (await e.demande('/boussole/index.html','navigate'))!.text()).toBe('labo');
     expect(await (await e.demande('/boussole/memo.pdf','cors',true))!.text()).toBe('%PDF-memo');
     expect(await e.demande('/boussole/inconnu.pdf')).toBeUndefined();

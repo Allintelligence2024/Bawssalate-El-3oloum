@@ -1,8 +1,8 @@
 // بطاقة المزامنة — إعداد دائم في «أنا». تختفي تمامًا إذا لم تُفعَّل المزامنة (لا مفاتيح Supabase).
 // المزامنة متوقّفة حتى يوافق التلميذ صراحةً (P0.2/P0.8)؛ هذه البطاقة تعرض الحالة وقائمة ما يُرسَل حرفيًّا.
 
-import { useState } from 'react';
-import { consentementEtat, syncActive, jetonUtilisable, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
+import { useState, useSyncExternalStore } from 'react';
+import { abonnerEtatEnvoi, etatEnvoi, envoyerSnapshot, consentementEtat, syncActive, jetonUtilisable, DONNEES_ENVOYEES, DONNEES_JAMAIS_ENVOYEES } from '../utils/sync';
 import type { Etat } from '../types';
 
 interface Props {
@@ -35,17 +35,31 @@ export function ListeDonneesSync({ compact = false }: { compact?: boolean }) {
 // الإعداد الدائم — يُظهر الحالة الحالية ويزرّ التبديل.
 export function ReglageSync({ etat, onChoix }: Props) {
   const [details, setDetails] = useState(false);
+  const envoi = useSyncExternalStore(abonnerEtatEnvoi, () => etatEnvoi(etat.compte?.email), () => 'en_attente' as const);
   if (!syncActive()) return null;
   const c = consentementEtat(etat);
   const jetonSain = jetonUtilisable(etat.compte?.jeton);
   return (
     <section className="card mt-5 p-5">
       <p className="eyebrow">المزامنة مع المطوّر</p>
+      {/* BUG-001 : le compte local n'est PAS une identité vérifiée. Le dire ici évite qu'un
+          élève croie que son adresse e-mail a été confirmée. Le pilote d'identité vérifiée
+          (identiteSync.ts) existe mais reste éteint par défaut (VITE_VERIFICATION_SYNC). */}
+      <p className="mt-1 rounded-lg bg-cream px-2.5 py-1.5 text-[11px] leading-relaxed text-ink-soft">
+        هذا الحساب محليّ: رمز الاستئناف يحفظ تقدّمك، ولا يُثبت أنّك صاحب البريد الإلكتروني.
+        لا يُرسَل شيء إلا بموافقتك الصريحة، ويمكنك حذف السجلّ من الخادم في أيّ وقت.
+      </p>
       <p className="mt-2 text-xs leading-relaxed text-mute">
         {!jetonSain ? 'المزامنة غير متاحة: رمز الحساب غير متوفّر أو غير آمن. تقدّمك يبقى على جهازك؛ تواصل مع المطوّر بشأن بيانات الخادم.' : c === 'oui'
           ? 'يُرسَل ملخّص تقدّمك دوريًّا في الخلفية عند توفّر الإنترنت. تُحفَظ كل بياناتك على هاتفك أولًا.'
           : 'لن يُرسَل شيء أبدًا. تقدّمك يبقى على هاتفك وحدك — وهذا حقّك كاملًا.'}
       </p>
+      {c === 'oui' && jetonSain && <div className="mt-3 text-xs">
+        <p role="status">{{ en_attente: 'بانتظار أول تأكيد للإرسال.', envoi: 'جارٍ إرسال الملخّص…',
+          confirme: 'أكّد الخادم آخر إرسال.', erreur: 'لم يؤكّد الخادم الإرسال. لم يتغيّر تقدّمك في التطبيق.',
+          hors_ligne: 'لا اتصال بالإنترنت. تقدّمك يبقى على الجهاز.' }[envoi]}</p>
+        {(envoi === 'erreur' || envoi === 'hors_ligne') && <button type="button" className="btn btn-ghost mt-2" onClick={() => void envoyerSnapshot(etat)}>أعد محاولة الإرسال</button>}
+      </div>}
       <button
         type="button"
         onClick={() => setDetails((v) => !v)}

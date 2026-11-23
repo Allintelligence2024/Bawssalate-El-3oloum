@@ -6,12 +6,19 @@ const MANIFESTE = '/precache-manifest.json';
 const INDEX = '/index.html';
 const BOUSSOLE = ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'];
 
+const COQUILLE = ['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'];
+const contenuValide = u => typeof u === 'string' &&
+  (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));
+const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
+
+/** `statiques` = coquille (toujours téléchargée). `contenu` = lourd (sur demande explicite). */
 function valideManifeste(m) {
   return m && m.version === VERSION && Array.isArray(m.assets) && m.assets.length > 0 &&
     m.assets.every(u => typeof u === 'string' && /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u)) &&
-    Array.isArray(m.statiques) && m.statiques.length > 0 &&
-    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u) || ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u))) &&
-    Number.isFinite(m.octets) && m.octets >= 0;
+    Array.isArray(m.statiques) && m.statiques.length > 0 && m.statiques.every(coquilleValide) &&
+    Array.isArray(m.contenu) && m.contenu.every(contenuValide) &&
+    Number.isFinite(m.octetsCoquille) && m.octetsCoquille >= 0 &&
+    Number.isFinite(m.octetsContenu) && m.octetsContenu >= 0;
 }
 
 function typeValide(url, res) {
@@ -23,13 +30,25 @@ function typeValide(url, res) {
   return true;
 }
 
+const DELAI_RESSOURCE_MS = 30_000;
+async function avecRessource(url, modeCache, utiliser) {
+  const controle = new AbortController();
+  const delai = setTimeout(() => controle.abort(), DELAI_RESSOURCE_MS);
+  try {
+    const res = await fetch(url, { cache: modeCache, signal: controle.signal });
+    // Le délai reste actif pendant la lecture/écriture du corps, pas seulement des en-têtes.
+    return await utiliser(res);
+  } finally { clearTimeout(delai); }
+}
+
 async function telecharger(cache, url) {
   if (await cache.match(url)) return true;
   try {
-    const res = await fetch(url, { cache: 'no-cache' });
-    if (!res.ok || !typeValide(url, res)) return false;
-    await cache.put(url, res);
-    return true;
+    return await avecRessource(url, 'no-cache', async res => {
+      if (!res.ok || !typeValide(url, res)) return false;
+      await cache.put(url, res);
+      return true;
+    });
   } catch { return false; }
 }
 
@@ -44,17 +63,21 @@ async function manifesteCache(cache) {
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     try {
-      const res = await fetch(MANIFESTE, { cache: 'no-store' });
-      if (!res.ok) throw new Error('manifeste indisponible');
-      const m = await res.clone().json();
-      if (!valideManifeste(m)) throw new Error('version du manifeste incompatible');
-      const index = await fetch(INDEX, { cache: 'no-store' });
-      if (!index.ok || !typeValide(INDEX, index)) throw new Error('interface indisponible');
-      const html = await index.clone().text();
-      if (!html.includes(`name="kunz-build-id" content="${VERSION}"`)) throw new Error('version de l’interface incompatible');
       const cache = await caches.open(CACHE);
-      await cache.put(INDEX, index);
-      await cache.put(MANIFESTE, res);
+      const m = await avecRessource(MANIFESTE, 'no-store', async res => {
+        if (!res.ok) throw new Error('manifeste indisponible');
+        const m = await res.clone().json();
+        if (!valideManifeste(m)) throw new Error('version du manifeste incompatible');
+        await cache.put(MANIFESTE, res);
+        return m;
+      });
+      const html = await avecRessource(INDEX, 'no-store', async index => {
+        if (!index.ok || !typeValide(INDEX, index)) throw new Error('interface indisponible');
+        const html = await index.clone().text();
+        if (!html.includes(`name="kunz-build-id" content="${VERSION}"`)) throw new Error('version de l’interface incompatible');
+        await cache.put(INDEX, index);
+        return html;
+      });
       const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map(x => x[1]);
       if (!demarrage.length || demarrage.some(u => !m.assets.includes(u))) throw new Error('assets de démarrage incompatibles');
       for (const url of demarrage) if (!await telecharger(cache, url)) throw new Error('asset de démarrage indisponible');
@@ -76,16 +99,21 @@ self.addEventListener('activate', event => {
   })());
 });
 
-async function verifier(cache, m) {
-  const urls = [INDEX, ...m.statiques, ...m.assets];
+async function verifier(cache, m, avecContenu) {
+  const base = [INDEX, ...m.statiques, ...m.assets];
+  const urls = avecContenu ? [...base, ...m.contenu] : base;
   let manquants = 0;
   for (const url of urls) if (!await cache.match(url)) manquants++;
-  return { version: VERSION, total: urls.length, manquants, octets: m.octets };
+  return {
+    version: VERSION, total: urls.length, manquants,
+    octets: m.octetsCoquille + (avecContenu ? m.octetsContenu : 0),
+    octetsCoquille: m.octetsCoquille, octetsContenu: m.octetsContenu,
+  };
 }
 
 let telechargement = null;
-async function remplir(cache, m) {
-  const urls = [...m.statiques, ...m.assets];
+async function remplir(cache, m, avecContenu) {
+  const urls = [...m.statiques, ...m.assets, ...(avecContenu ? m.contenu : [])];
   let suivant = 0;
   async function ouvrier() {
     while (suivant < urls.length) {
@@ -99,17 +127,18 @@ async function remplir(cache, m) {
 
 self.addEventListener('message', event => {
   const port = event.ports && event.ports[0];
-  if (!port || !['ETAT_HORS_LIGNE', 'TELECHARGER_HORS_LIGNE'].includes(event.data?.type)) return;
+  if (!port || !['ETAT_HORS_LIGNE', 'TELECHARGER_HORS_LIGNE', 'TELECHARGER_CONTENU'].includes(event.data?.type)) return;
   event.waitUntil((async () => {
     try {
       const cache = await caches.open(CACHE);
       const m = await manifesteCache(cache);
       if (!m) throw new Error('manifeste absent ou invalide');
-      if (event.data.type === 'TELECHARGER_HORS_LIGNE') {
-        if (!telechargement) telechargement = remplir(cache, m).finally(() => { telechargement = null; });
+      const avecContenu = event.data.type === 'TELECHARGER_CONTENU';
+      if (event.data.type !== 'ETAT_HORS_LIGNE') {
+        if (!telechargement) telechargement = remplir(cache, m, avecContenu).finally(() => { telechargement = null; });
         await telechargement;
       }
-      port.postMessage({ ok: true, ...await verifier(cache, m) });
+      port.postMessage({ ok: true, ...await verifier(cache, m, avecContenu) });
     } catch {
       port.postMessage({ ok: false, version: VERSION });
     }
@@ -135,7 +164,7 @@ self.addEventListener('fetch', event => {
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
   if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
-      !BOUSSOLE.includes(url.pathname) && !['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(url.pathname)) return;
+      !BOUSSOLE.includes(url.pathname) && !['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'].includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

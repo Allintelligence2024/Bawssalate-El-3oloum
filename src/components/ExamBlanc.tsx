@@ -14,6 +14,8 @@ import { chargerDomaine, composerJoueur } from '../utils/drills';
 import { nb, formatChrono } from '../utils/dates';
 import { sonFaux, sonJuste } from '../utils/son';
 import type { Qualite } from '../utils/srs';
+import { choisirEnqueteExamBlanc, type EnqueteBac } from '../data/enquetesBac';
+import BadgeRelecture from './BadgeRelecture';
 import { IcoRetour } from './Icones';
 
 interface Props {
@@ -21,7 +23,7 @@ interface Props {
   onFermer: () => void;
   /** يُستدعى مرّة عند بلوغ شاشة الحصيلة — لمتابعة «موضوع واحد في الأسبوع» */
   onTermine?: (bilan: BilanExamen) => void;
-  onItemReussi: (id: string) => void;
+  onItemReussi: (id: string, erreurs?: number) => void;
   onResultatKafaa: (
     key: string,
     qualite: Qualite,
@@ -42,99 +44,6 @@ const ETAPES_ENQUETE = [
 const GRILLE_BAREME = ['سند', 'تحليل', 'ربط', 'استنتاج'];
 
 const REFAIRE = 'ليس الجواب الصحيح — أعد المحاولة. خذ وقتك، لا عجلة.';
-
-// ───────────── التمرين الثاني · استقصاء «من أين يأتي الأكسجين؟» (التركيب الضوئي) ─────────────
-// وثيقتان من البرنامج (Hill 1937 و Ruben و Kamen 1941) بصياغة استكشافية:
-// الإجابة الصحيحة دائمًا في options[0]، والدوران ينقلها عند العرض.
-type EtapeEnquete = {
-  question: string;
-  options: [string, string, string];
-  cible: Record<number, string>;
-  succes: string;
-};
-
-const ENQUETE: {
-  titre: string;
-  situation: string;
-  question: string;
-  doc1: { titre: string; contenu: string };
-  doc2: { titre: string; contenu: string };
-  etapes: EtapeEnquete[];
-  conclusion: string;
-  erreur: string;
-} = {
-  titre: 'من أين يأتي الأكسجين؟',
-  situation: 'استقصاء حول مصدر الأكسجين المنطلق أثناء التركيب الضوئي.',
-  question: 'قارن بين الوثيقتين ثم استنتج مصدر الأكسجين المنطلق أثناء التركيب الضوئي.',
-  doc1: {
-    titre: 'الوثيقة 1 · تجربة Hill (1937)',
-    contenu:
-      'كلوروبلاستات معزولة في وسط يحتوي الماء ومستقبلًا صناعيًا للإلكترونات. في الضوء تنطلق فقاعات غاز من الكلوروبلاستات. في الظلام، أو عند غياب الماء، لا ينطلق أي غاز.',
-  },
-  doc2: {
-    titre: 'الوثيقة 2 · تجربة Ruben و Kamen (1941)',
-    contenu:
-      'تُزوَّد طحالب خضراء بماء مُوسَّم بالنظير الثقيل المستقر للأكسجين (H₂¹⁸O) وبثاني أكسيد كربون عادي: يكشف مطياف الكتلة أن الأكسجين المنطلق غني بـ ¹⁸O. في تجربة مقابلة، يُوسَّم ثاني أكسيد الكربون (C¹⁸O₂) ويُستعمل ماء عادي: الأكسجين المنطلق لا يحتوي ¹⁸O.',
-  },
-  etapes: [
-    {
-      question: 'ما المعلومة التي تستخرجها من الوثيقة 1؟',
-      options: [
-        'أستخرج أن انطلاق الغاز من الكلوروبلاستات يتم في الضوء مع وجود الماء، ويتوقف في الظلام أو عند غياب الماء.',
-        'أستنتج أن الغاز المنطلق هو ثاني أكسيد الكربون لأن التفاعل يحتاج الضوء.',
-        'أستخرج أن الكلوروبلاستات تستهلك الغاز في الظلام بدل أن تطلقه.',
-      ],
-      cible: {
-        1: 'خطوة الاستخراج تنقل ما تُظهره الوثيقة فقط. الوثيقة 1 لم تُحدِّد نوع الغاز — لا تستبق التحليل.',
-        2: 'أعد قراءة الوثيقة 1: في الظلام لا ينطلق غاز أصلًا، فمن أين أتيت بأنه يُستهلك؟ انقل الملاحظة كما هي.',
-      },
-      succes: 'أحسنت: الاستخراج نقل شروط الانطلاق (الضوء والماء) كما هي قبل أي حكم.',
-    },
-    {
-      question: 'ما المعلومة التي تستخرجها من الوثيقة 2؟',
-      options: [
-        'أستخرج أن الأكسجين المنطلق يحمل الوسم ¹⁸O فقط حين يكون الماء هو المُوسَّم، لا حين يكون ثاني أكسيد الكربون هو المُوسَّم.',
-        'أستخرج أن ثاني أكسيد الكربون المُوسَّم يتحول كله إلى أكسجين مُوسَّم.',
-        'أستنتج أن النظير ¹⁸O مادة تبطئ التركيب الضوئي.',
-      ],
-      cible: {
-        1: 'قارن النتيجتين في الوثيقة 2: مع الماء المُوسَّم خرج الوسم في الأكسجين، ومع ثاني أكسيد الكربون المُوسَّم لم يخرج. انقل الفرق بدقة.',
-        2: 'الوثيقة 2 تكشف وجود ¹⁸O في الغاز المنطلق فحسب؛ أين ذُكر أي تباطؤ؟ انقل المعطى ولا تضف إليه.',
-      },
-      succes: 'ممتاز: قراءة دقيقة للنتيجتين المتقابلتين — الوسم ¹⁸O يتبع الماء لا ثاني أكسيد الكربون.',
-    },
-    {
-      question: 'ما العلاقة بين الوثيقتين؟',
-      options: [
-        'الوثيقتان متكاملتان: الأولى تُثبت أن انطلاق الغاز يحتاج الضوء والماء، والثانية تحدِّد مصدر ذرات ذلك الغاز (الماء).',
-        'الوثيقتان متناقضتان: الأولى تتحدث عن غاز والثانية عن نظائر.',
-        'لا علاقة بين الوثيقتين؛ كل واحدة تجربة مستقلة بلا رابط.',
-      ],
-      cible: {
-        1: 'ليس تناقضًا. ماذا تقيس كل وثيقة؟ الأولى شروط الانطلاق والثانية مصدر ذرات الأكسجين — أين يلتقيان؟',
-        2: 'اربط بين احتياج الانطلاق للماء (الوثيقة 1) وتتبُّع ذرات أكسجين الماء المُوسَّمة في الغاز المنطلق (الوثيقة 2) — أين الرابط؟',
-      },
-      succes: 'أحسنت: منجَز الأولى (شرط الانطلاق) ومنجَز الثانية (مصدر الذرات) يتكاملان.',
-    },
-    {
-      question: 'ما الاستنتاج المبرَّر؟',
-      options: [
-        'أستنتج أن الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء، لأنه ينطلق في الضوء مع وجود الماء، ولأن الوسم ¹⁸O لا يظهر في الغاز إلا حين يكون الماء هو المُوسَّم.',
-        'أستنتج أن الأكسجين مصدره ثاني أكسيد الكربون لأنه يدخل في التفاعل.',
-        'أستنتج أن الأكسجين مصدره الكلوروفيل لأنه يمتص الضوء.',
-      ],
-      cible: {
-        1: 'الوثيقة 2 تفصل في هذا: مع ثاني أكسيد الكربون المُوسَّم لم يظهر ¹⁸O في الأكسجين المنطلق — فكيف يكون هو المصدر؟',
-        2: 'الكلوروفيل يمتص الضوء لكنه لا يطلق ذراته كغاز. أين تظهر ذرات الكلوروفيل في الوثيقتين؟',
-      },
-      succes: 'خلاصة مبرَّرة: شروط الانطلاق (الوثيقة 1) + مصدر الذرات (الوثيقة 2) = الماء.',
-    },
-  ],
-  conclusion:
-    'إذن، الأكسجين المنطلق أثناء التركيب الضوئي مصدره الماء: ينطلق في الضوء مع وجود الماء (تجربة Hill)، ويُتتبَّع نظير الأكسجين المستقر ¹⁸O من الماء إلى الغاز المنطلق (تجربة Ruben و Kamen)، بينما لا تظهر ذرات أكسجين ثاني أكسيد الكربون في هذا الغاز.',
-  erreur:
-    'الخلط بين مصدر الأكسجين المنطلق ومصدر الكتلة العضوية، أو القفز إلى الاستنتاج قبل استخراج معطى الوثيقتين.',
-};
 
 /** دوران حتمي لخيارات السؤال: الجواب الصحيح لا يبقى دومًا في الموضع نفسه. */
 function rotation(nbOptions: number, decalage: number): number[] {
@@ -181,7 +90,8 @@ export default function ExamBlanc({
     return () => clearInterval(id);
   }, [chronoEnMarche]);
 
-  // État pour l'enquête
+  // État pour l'enquête dynamique (Lot 5C)
+  const [enquete, setEnquete] = useState<EnqueteBac>(() => choisirEnqueteExamBlanc(etat));
   const [enqFaux, setEnqFaux] = useState(0);
   const [unitesFaibles, setUnitesFaibles] = useState<number[]>([]);
   const [kafaaEnvoyee, setKafaaEnvoyee] = useState(false);
@@ -208,6 +118,7 @@ export default function ExamBlanc({
       ...choisirItems(d3, reussis, 2),
     ];
     setFileQcm(file);
+    setEnquete(choisirEnqueteExamBlanc(etat));
     setQIndex(0);
     setQChoix(null);
     setQTentatives(0);
@@ -250,7 +161,7 @@ export default function ExamBlanc({
     const bonneAffichee = ordre.indexOf(0);
     if (qChoix === bonneAffichee) {
       sonJuste();
-      onItemReussi(item.id);
+      onItemReussi(item.id, qTentatives);
       if (qTentatives === 0) setQDirects(qDirects + 1);
       setQRepondu(true);
       setMessage(null);
@@ -273,7 +184,7 @@ export default function ExamBlanc({
 
   function validerEtape(): void {
     if (rep === null || etapeFaite) return;
-    const e = ENQUETE.etapes[etape];
+    const e = enquete.etapes[etape];
     const decalage = (etape * 2 + (enqFaux % 3) + 1) % 3;
     const ordre = rotation(3, decalage);
     const bonneAffichee = ordre.indexOf(0);
@@ -297,14 +208,14 @@ export default function ExamBlanc({
   }
 
   function etapeSuivante(): void {
-    if (etape + 1 >= ENQUETE.etapes.length) {
+    if (etape + 1 >= enquete.etapes.length) {
       if (!kafaaEnvoyee) {
         setKafaaEnvoyee(true);
         const avecErreur = qFaux > 0 || enqFaux > 0;
-        onResultatKafaa('examenBlanc', avecErreur ? 3 : 5, {
-          verbe: 'حلَّل ثم استنتج',
-          exercice: 'الامتحان التجريبي · استغلال وثيقتين',
-          erreur: ENQUETE.erreur,
+        onResultatKafaa(`enquete:${enquete.unitId}:${enquete.id}`, avecErreur ? 2 : 5, {
+          verbe: enquete.verbe,
+          exercice: `الامتحان التجريبي · ${enquete.titre}`,
+          erreur: enquete.erreur,
         });
       }
       setEcran('bilan');
@@ -317,6 +228,7 @@ export default function ExamBlanc({
         directs: qDirects,
         erreursEnquete: enqFaux,
         unitesFaibles: [...unitesFaibles].sort((a, b) => a - b),
+        enqueteId: enquete.id,
       });
       return;
     }
@@ -372,7 +284,7 @@ export default function ExamBlanc({
               <div className="rounded-2xl border border-line bg-paper p-4">
                 <p className="font-bold">التمرين الثاني · استغلال وثيقتين</p>
                 <p className="mt-1 text-sm text-mute">
-                  استقصاء موجَّه في {nb(ENQUETE.etapes.length)} مراحل: سند ثم تحليل ثم ربط ثم
+                  استقصاء موجَّه في {nb(enquete.etapes.length)} مراحل: سند ثم تحليل ثم ربط ثم
                   استنتاج. تُرقَّع درجة البارم أمامك كلما تقدَّمت.
                 </p>
               </div>
@@ -472,7 +384,7 @@ export default function ExamBlanc({
   }
 
   if (ecran === 'partie2') {
-    const e = ENQUETE.etapes[etape];
+    const e = enquete.etapes[etape];
     const decalage = (etape * 2 + (enqFaux % 3) + 1) % 3;
     const ordre = rotation(3, decalage);
     const barreaux = [0, 1, 2, 3].map((k) => k < etape || (k === etape && etapeFaite));
@@ -487,17 +399,20 @@ export default function ExamBlanc({
           </button>
           <p className="eyebrow">التمرين الثاني · استغلال وثيقتين</p>
           {badgeChrono}
-          <h2 className="font-naskh mt-2 text-2xl font-bold">{ENQUETE.titre}</h2>
-          <p className="mt-2 text-sm text-mute">{ENQUETE.situation}</p>
+          <h2 className="font-naskh mt-2 text-2xl font-bold">{enquete.titre}</h2>
+          <p className="mt-2 text-sm text-mute">{enquete.situation}</p>
+          <div className="mt-3">
+            <BadgeRelecture review={enquete.review} source={enquete.sourceBac} />
+          </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-line bg-paper p-4">
-              <p className="text-xs font-bold text-mute">{ENQUETE.doc1.titre}</p>
-              <p className="mt-2 text-sm leading-relaxed">{ENQUETE.doc1.contenu}</p>
+              <p className="text-xs font-bold text-mute">{enquete.doc1.titre}</p>
+              <p className="mt-2 text-sm leading-relaxed">{enquete.doc1.contenu}</p>
             </div>
             <div className="rounded-2xl border border-line bg-paper p-4">
-              <p className="text-xs font-bold text-mute">{ENQUETE.doc2.titre}</p>
-              <p className="mt-2 text-sm leading-relaxed">{ENQUETE.doc2.contenu}</p>
+              <p className="text-xs font-bold text-mute">{enquete.doc2.titre}</p>
+              <p className="mt-2 text-sm leading-relaxed">{enquete.doc2.contenu}</p>
             </div>
           </div>
 
@@ -520,7 +435,7 @@ export default function ExamBlanc({
 
           <section className="card mt-6 p-6">
             <p className="text-sm text-mute">
-              المرحلة {nb(etape + 1)} من {nb(ENQUETE.etapes.length)} · {ETAPES_ENQUETE[etape]}
+              المرحلة {nb(etape + 1)} من {nb(enquete.etapes.length)} · {ETAPES_ENQUETE[etape]}
             </p>
             <h3 className="font-naskh mt-2 text-lg font-bold leading-relaxed">{e.question}</h3>
             <div className="mt-4 grid gap-2" role="radiogroup" aria-label="خيارات المرحلة">
@@ -563,7 +478,7 @@ export default function ExamBlanc({
             )}
             {etapeFaite && (
               <button onClick={etapeSuivante} className="btn btn-primary mt-5 w-full">
-                {etape + 1 >= ENQUETE.etapes.length ? 'إنهاء الامتحان ←' : 'المرحلة التالية ←'}
+                {etape + 1 >= enquete.etapes.length ? 'إنهاء الامتحان ←' : 'المرحلة التالية ←'}
               </button>
             )}
           </section>

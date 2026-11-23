@@ -60,6 +60,25 @@ export interface ProgressionLecon {
   acquisIntensifLe?: string;
 }
 
+export interface ReviewMetadata {
+  reviewed: boolean;
+  reviewer?: string;
+  role?: string;
+  date?: string;
+  version?: string;
+}
+
+/** سجلّ عنصر تدريب: متوافق رجعيًا مع `true` ويقبل بيانات الأخطاء والمحاولات (Lot 5B). */
+export type DrillRecord =
+  | true
+  | {
+      done: true;
+      errors: number;
+      attempts: number;
+      lastSeen: string;
+      nextReview?: string;
+    };
+
 export interface BilanExamen {
   date: string; // ISO complet
   secondes: number;
@@ -68,6 +87,7 @@ export interface BilanExamen {
   directs: number; // المُجابة من أول محاولة
   erreursEnquete: number; // أخطاء الجزء الثاني (استغلال الوثائق)
   unitesFaibles: number[]; // أرقام الوحدات التي وقع فيها خطأ في الجزء الأول
+  enqueteId?: string; // معرّف استقصاء الجزء الثاني (src/data/enquetesBac.ts)
 }
 
 // بطاقة كفاءة المنهجية — مراجعة قصيرة programmée par la même SM-2 des leçons.
@@ -142,10 +162,12 @@ export interface Etat {
   seancesJour?: string; // تاريخ آخر حصّة جديدة
   seancesComptees: number; // عدد الحصص الجديدة في seancesJour
   bonusJour?: string; // تاريخ استعمال الحصّة الإضافية
-  drills?: Record<string, true>; // عناصر التدريبات المُجاب عنها correctly (المعرّف → true)
+  drills?: Record<string, DrillRecord>; // عناصر التدريبات المُجاب عنها correctly (true أو سجلّ مفصّل)
   ateliers?: Record<string, { fait: boolean; ts: string }>;
-  kafaa?: Record<string, CarteKafaa>; // بطاقات كفاءة المنهجية (مفتاح: methodo{index})
+  kafaa?: Record<string, CarteKafaa>; // بطاقات كفاءة المنهجية (مفتاح: methodo{index} أو boussole:*)
   kafaaHebdo?: { debut: string; n: number }; // مراجعات الكفاءة هذا الأسبوع (الأحد → samedi): ≤ 2
+  /** معرّفات أحداث جسر البوصلة المُعالَجة (تمنع التكرار، سقف 500) */
+  boussoleEventsSeen?: string[];
   revueCroisee?: { semaine: string; lessonIds: string[]; faiteLe?: string }; // المراجعة المتقاطعة الأسبوعية (P2.4) — درس/مجال، مرّة في الأسبوع
   defi?: { semaine: string; type: 'drills' | 'croisee' | 'examen'; choisiLe: string; baseDrills: number }; // تحدّي الأسبوع المختار (P3.2)
   defisAccomplis?: string[]; // أسابيع التحدّيات المُنجزة (ISO بداية الأسبوع) — للشارة فقط
@@ -155,6 +177,10 @@ export interface Etat {
   consentementSyncDecideLe?: string;
   /** هدف العلامة (P2.2): 10+ / 14+ / 18+ — يضبط الحصّة اليومية المقترحة وسقف مراجعات الكفاءة. غيابه = 14. */
   objectif?: Objectif;
+  /** §10.3 — وضع المتدرّب: تقييم ذاتي لكلّ تعليمة (0/1/2). مفتاح: e{exercice}p{partie}c{consigne}. */
+  maitriseSujets?: Record<string, Record<string, 0 | 1 | 2>>;
+  /** §10.3 — مسوّدات التلميذ لكلّ تعليمة (تبقى على الجهاز، لا تُرسَل أبدًا). */
+  brouillonsSujets?: Record<string, Record<string, string>>;
   /** المراجعة المكثّفة (P2.3): 'auto' (تلقائيًّا عند ≤ 60 يومًا من البكالوريا) · 'on' · 'off'. غيابه = auto. */
   modeIntensif?: 'auto' | 'on' | 'off';
   /** حجم الخط (P3.3): s / m / l. غيابه = m. */

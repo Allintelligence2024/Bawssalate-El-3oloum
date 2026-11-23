@@ -13,9 +13,17 @@ const court = z.string().max(300);
 const date = z.string().max(100);
 const nombre = z.number().finite().min(0).max(1000000000);
 const entier = nombre.int();
-const dictionnaire = <T extends z.ZodTypeAny>(schema: T) =>
-  z.record(court, schema).refine((v) => Object.keys(v).length <= 5000);
-const liste = <T extends z.ZodTypeAny>(schema: T) => z.array(schema).max(5000);
+const MAX_COLLECTION = 5000;
+// Ne pas parcourir les valeurs d'un dictionnaire déjà hors limites.
+const dictionnaireBorne = z.custom<Record<string, unknown>>((v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+  let n = 0;
+  for (const cle in v) if (Object.hasOwn(v, cle) && ++n > MAX_COLLECTION) return false;
+  return true;
+});
+const dictionnaire = <T extends z.ZodTypeAny>(schema: T) => dictionnaireBorne.pipe(z.record(court, schema));
+const listeBornee = z.custom<unknown[]>((v) => Array.isArray(v) && v.length <= MAX_COLLECTION);
+const liste = <T extends z.ZodTypeAny>(schema: T) => listeBornee.pipe(z.array(schema));
 const progression = z.object({
   statut: z.enum(['vierge', 'en_cours', 'terminee']),
   phases: liste(z.number().int().min(1).max(6)),
@@ -28,24 +36,41 @@ const progression = z.object({
 const note = z.object({ id: court, kind: z.enum(['note', 'question']), texte, ts: date, lessonId: court.optional(), uniteId: court.optional() });
 const faute = z.object({ id: court, ts: date, contexte: texte, enonce: texte, donne: texte, diagnostic: texte });
 const carte = z.object({ verbe: court, exercice: texte, erreur: texte, repetitions: entier, intervalle: entier, facilite: nombre, prochaineRevision: date.optional(), fragile: z.boolean().optional() });
+const drillRecord = z.union([
+  z.literal(true),
+  z.object({
+    done: z.literal(true),
+    errors: entier,
+    attempts: entier,
+    lastSeen: date,
+    nextReview: date.optional(),
+  }),
+]);
 const etatSchema = z.object({
   version: entier.optional(), progression: dictionnaire(progression),
   jalons: dictionnaire(z.object({ fait: z.boolean(), synthese: texte.optional(), ts: date.optional() })).optional(),
   notes: liste(note).optional(), carnet: liste(faute).optional(), journal: liste(date).optional(),
   minutesTotales: nombre.optional(), revisions: entier.optional(), nom: court.optional(), dateBac: date.optional(),
   seancesJour: date.optional(), seancesComptees: entier.optional(), bonusJour: date.optional(),
-  drills: dictionnaire(z.literal(true)).optional(), ateliers: dictionnaire(z.object({ fait: z.boolean(), ts: date })).optional(),
+  drills: dictionnaire(drillRecord).optional(), ateliers: dictionnaire(z.object({ fait: z.boolean(), ts: date })).optional(),
   kafaa: dictionnaire(carte).optional(), kafaaHebdo: z.object({ debut: date, n: entier }).optional(),
+  boussoleEventsSeen: z.array(court).max(500).optional(),
   revueCroisee: z.object({ semaine: date, lessonIds: liste(court), faiteLe: date.optional() }).optional(),
   defi: z.object({ semaine: date, type: z.enum(['drills', 'croisee', 'examen']), choisiLe: date, baseDrills: entier }).optional(),
   defisAccomplis: liste(date).optional(), objectif: z.union([z.literal(10), z.literal(14), z.literal(18)]).optional(),
   modeIntensif: z.enum(['auto', 'on', 'off']).optional(), tailleTexte: z.enum(['s', 'm', 'l']).optional(),
   diagnostic: z.object({ date, parUnite: dictionnaire(z.object({ justes: entier, total: entier })) }).optional(),
   diagnosticDecideLe: date.optional(), favoris: liste(court).optional(), examensBlancs: liste(date).optional(),
-  examens: liste(z.object({ date, secondes: entier, chrono: z.boolean(), qcm: entier, directs: entier, erreursEnquete: entier, unitesFaibles: liste(entier) })).optional(),
+  examens: liste(z.object({ date, secondes: entier, chrono: z.boolean(), qcm: entier, directs: entier, erreursEnquete: entier, unitesFaibles: liste(entier), enqueteId: court.optional() })).optional(),
   rappel: z.object({ actif: z.boolean(), heure: court }).optional(),
   flashcards: dictionnaire(z.object({ boite: z.union([z.literal(1), z.literal(2), z.literal(3)]), prochaine: date, vues: entier })).optional(),
   schemas: dictionnaire(z.literal(true)).optional(),
+  // §10.3 — travail de l'entraîneur (auto-évaluations 0/1/2 et brouillons rédigés).
+  // Sans ces deux champs, zod les supprimait silencieusement à l'import : une sauvegarde
+  // « complète » rendait l'élève devant un entraîneur vide. Un niveau hors {0,1,2} est
+  // refusé plutôt que ramené à 0 — une valeur inventée fausserait sa grille.
+  maitriseSujets: dictionnaire(dictionnaire(z.union([z.literal(0), z.literal(1), z.literal(2)]))).optional(),
+  brouillonsSujets: dictionnaire(dictionnaire(texte)).optional(),
 });
 const compteurs = z.object({ justes: entier, fausses: entier });
 const statsSchema = z.object({
@@ -91,5 +116,9 @@ export function lireSauvegarde(brut: unknown): SauvegardeLue | null {
 export function etatDepuisFichier(brut: unknown): Etat | null {
   const lu = lireSauvegarde(brut);
   if (!lu) return null;
+  return normaliserSauvegarde(lu);
+}
+
+export function normaliserSauvegarde(lu: SauvegardeLue): Etat {
   return { ...etatDepuisBrut(lu.etat), consentementSync: false, consentementSyncDecideLe: undefined };
 }

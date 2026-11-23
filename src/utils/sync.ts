@@ -6,7 +6,7 @@ import type { Etat } from '../types';
 import { xpDe, niveauDe } from './xp';
 import { statsActuelles } from './stats';
 
-export const VERSION_APP = '0.9.0';
+export const VERSION_APP = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.3';
 
 function getSupabaseConfig() {
   return {
@@ -104,9 +104,22 @@ export function construireSnapshot(etat: Etat): Snapshot | null {
 
 // ───────────── العميل (يُحمّل عند أول إرسال فقط — لا يثقل حزمة التطبيق الأساسية) ─────────────
 
+/** Délai maximal d'un envoi. Au-delà, on rend la main à l'élève : mieux vaut un état
+ *  « erreur » affiché honnêtement qu'une application qui semble figée dans un couloir. */
+export const DELAI_ENVOI_MS = 8_000;
+
+/** Signal d'annulation à délai fixe. Isolé pour être testable avec un délai court
+ *  (AbortSignal.timeout utilise une horloge interne que les faux timers ne pilotent pas). */
+export function signalDelai(ms: number = DELAI_ENVOI_MS): AbortSignal {
+  return AbortSignal.timeout(ms);
+}
+
 let client: import('@supabase/supabase-js').SupabaseClient | null = null;
 let jetonClient = '';
 let enCours: Promise<void> | null = null;
+/** Dernier état local pas encore remis au serveur. Un seul slot : on veut le PLUS RÉCENT,
+ *  pas une file de tous les états intermédiaires (le serveur ne garde que l'écrasement final). */
+let enAttente: Snapshot | null = null;
 const comptesSuspendus = new Set<string>();
 const suppressionsEnCours = new Set<string>();
 /** Les anciens jetons déterministes ou issus du repli faible ne sont pas sûrs. */
@@ -114,10 +127,39 @@ export function jetonUtilisable(jeton?: string): boolean {
   return Boolean(jeton && !/^0{32}$/.test(jeton) && !jeton.startsWith('j-'));
 }
 /** Arrête les nouveaux envois dans cet onglet ; les requêtes déjà parties peuvent continuer. */
-export function suspendreSync(email?: string): void { if (email) comptesSuspendus.add(email); }
+export function suspendreSync(email?: string): void {
+  if (!email) return;
+  comptesSuspendus.add(email);
+  if (enAttente?.email === email) enAttente = null;
+}
 /** Un nouveau consentement explicite est nécessaire pour reprendre. */
-export function reprendreSync(email?: string): void { if (email && !suppressionsEnCours.has(email)) comptesSuspendus.delete(email); }
+export function reprendreSync(email?: string): void {
+  if (!email || suppressionsEnCours.has(email)) return;
+  comptesSuspendus.delete(email);
+  dernierEnvoye = '';
+  publierEtatEnvoi(email, 'en_attente');
+}
 let dernierEnvoye = '';
+export type EtatEnvoi = 'en_attente' | 'envoi' | 'confirme' | 'erreur' | 'hors_ligne';
+/** Compteur local (aucun envoi) des envois interrompus par le délai de 8 s. */
+let derniersDelaisDepasses = 0;
+export function delaisDepasses(): number {
+  return derniersDelaisDepasses;
+}
+const etatsEnvoi = new Map<string, EtatEnvoi>();
+const observateursEnvoi = new Set<() => void>();
+export function etatEnvoi(email?: string): EtatEnvoi {
+  return (email && etatsEnvoi.get(email)) || 'en_attente';
+}
+export function abonnerEtatEnvoi(fn: () => void): () => void {
+  observateursEnvoi.add(fn);
+  return () => { observateursEnvoi.delete(fn); };
+}
+function publierEtatEnvoi(email: string, etat: EtatEnvoi): void {
+  if (comptesSuspendus.has(email)) return;
+  etatsEnvoi.set(email, etat);
+  for (const fn of observateursEnvoi) fn();
+}
 
 async function clientSupabase(jeton: string) {
   if (!syncActive()) return null;
@@ -135,20 +177,30 @@ async function clientSupabase(jeton: string) {
   return client;
 }
 
-// إرسال صامت: أي خطأ يُبتلع — التطبيق لا يعتمد على نجاحها أبدًا.
+// La progression locale ne dépend jamais du réseau.
 export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (!syncActive()) return;
   if (!etat.compte || !jetonUtilisable(etat.compte.jeton) || comptesSuspendus.has(etat.compte.email) || !consentementExplicite(etat)) return;
-  if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(etat.compte.email, 'hors_ligne'); return; }
   const snap = construireSnapshot(etat);
   if (!snap) return;
-  const json = JSON.stringify(snap);
-  if (json === dernierEnvoye) return; // لا شيء تغيّر منذ آخر إرسال
-  if (enCours) return; // لا إرسالان متزامنان
+  // Coalescence (BUG-003) : si un envoi est en cours, on mémorise le dernier état produit.
+  // Il sera envoyé dès la fin du précédent — jamais abandonné, même si l'écran a changé dix fois.
+  if (enCours) { enAttente = snap; return; }
+  await envoyerResume(snap);
+}
+
+async function envoyerResume(snap: Snapshot): Promise<void> {
+  const { maj: _maj, jeton: _jeton, ...chargeUtile } = snap;
+  const json = JSON.stringify([snap.jeton, chargeUtile]);
+  if (json === dernierEnvoye) { publierEtatEnvoi(snap.email, 'confirme'); return; }
   const travail = Promise.resolve().then(async () => {
   try {
     const sb = await clientSupabase(snap.jeton);
-    if (!sb) return;
+    if (!sb || comptesSuspendus.has(snap.email)) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(snap.email, 'hors_ligne'); return; }
+    publierEtatEnvoi(snap.email, 'envoi');
+    // Timeout borné (BUG-007) : `abortSignal` annule la requête réseau, pas seulement l'attente.
     const { error } = await sb.from('eleves').upsert(
       {
         email: snap.email,
@@ -175,21 +227,35 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
         notes_nombre: snap.notes_nombre,
         app_version: snap.app_version,
         maj: snap.maj,
-        charge_utile: snap as unknown as Record<string, unknown>,
+        charge_utile: { ...chargeUtile, maj: snap.maj },
       },
       { onConflict: 'email' },
-    );
+    ).abortSignal(signalDelai());
     if (!error) {
       dernierEnvoye = json;
-    } else {
-      console.warn('[sync] فشل الإرسال:', error.message);
-    }
+      publierEtatEnvoi(snap.email, 'confirme');
+    } else publierEtatEnvoi(snap.email, 'erreur');
   } catch (e) {
-    console.warn('[sync] استثناء:', e);
+    // Un dépassement de délai n'est pas une erreur serveur : l'élève doit voir « hors ligne »
+    // ou « erreur » selon ce qu'on sait, jamais un silence. On garde 'erreur' (état déjà testé)
+    // et on distingue le délai pour la télémétrie locale.
+    if (e instanceof Error && e.name === 'TimeoutError') derniersDelaisDepasses++;
+    publierEtatEnvoi(snap.email, 'erreur');
   }
   });
   enCours = travail;
-  try { await travail; } finally { if (enCours === travail) enCours = null; }
+  try {
+    await travail;
+  } finally {
+    // La file est vidée quoi qu'il arrive : succès, erreur, timeout, exception. Un état
+    // produit pendant l'envoi ne doit jamais disparaître parce que l'envoi a échoué.
+    if (enCours === travail) {
+      enCours = null;
+      const suivant = enAttente;
+      enAttente = null;
+      if (suivant && !comptesSuspendus.has(suivant.email)) await envoyerResume(suivant);
+    }
+  }
 }
 
 /** حذف سجلّ التلميذ من الخادم (P0.8) — يتطلّب حسابًا وجيتونه (سياسة DELETE في supabase/schema.sql).
@@ -209,14 +275,12 @@ export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSupp
     if (!sb) return 'sync_inactive';
     const { data, error } = await sb.from('eleves').delete().eq('email', etat.compte.email).select('email');
     if (error) {
-      console.warn('[sync] فشل الحذف:', error.message);
       return 'erreur';
     }
     if (!data || data.length !== 1) return 'indetermine'; // RLS ou ligne absente : impossible de distinguer
     dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
     return 'supprime';
-  } catch (e) {
-    console.warn('[sync] استثناء الحذف:', e);
+  } catch {
     return 'erreur';
   } finally {
     suppressionsEnCours.delete(etat.compte.email);

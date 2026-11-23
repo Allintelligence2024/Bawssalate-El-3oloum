@@ -2,6 +2,37 @@
 // كل جزء يغطي مجالًا من البرنامج؛ `ITEMS` تصفّ البنك نفسه (صحيح دائمًا في o[0]).
 
 import type { ItemDrill } from '../data/drills/types';
+import type { DrillRecord } from '../types';
+import { ajouterJours, aujourdhui } from './dates';
+
+/** Indique si un drill a déjà été réussi (format historique `true` ou objet enrichi). */
+export function estDrillFait(rec?: DrillRecord): boolean {
+  return rec === true || (typeof rec === 'object' && rec !== null && rec.done === true);
+}
+
+/** Retourne le nombre d'erreurs cumulées pour un drill (0 pour le format historique `true`). */
+export function erreursDrill(rec?: DrillRecord): number {
+  return typeof rec === 'object' && rec !== null ? rec.errors : 0;
+}
+
+/** Enregistre la réussite d'un drill en conservant la rétrocompatibilité et en planifiant une revue courte si erreur. */
+export function enregistrerDrillReussi(
+  drills: Record<string, DrillRecord> | undefined,
+  id: string,
+  erreursSession = 0,
+  auj: string = aujourdhui(),
+): Record<string, DrillRecord> {
+  const courant = drills?.[id];
+  const prevErrors = typeof courant === 'object' && courant !== null ? courant.errors : 0;
+  const prevAttempts = typeof courant === 'object' && courant !== null ? courant.attempts : courant === true ? 1 : 0;
+  const errors = prevErrors + Math.max(0, Math.floor(erreursSession));
+  const attempts = prevAttempts + 1;
+  const nextReview = ajouterJours(auj, erreursSession > 0 ? 1 : 3);
+  return {
+    ...(drills ?? {}),
+    [id]: { done: true, errors, attempts, lastSeen: auj, nextReview },
+  };
+}
 
 export type NumeroDomaine = 1 | 2 | 3;
 
@@ -34,13 +65,26 @@ export async function chargerDomaineDeUnite(u: number): Promise<ItemDrill[]> {
   return chargerDomaine(domaineDeUnite(u));
 }
 
-// بناء جولة: العناصر غير المُجابة أولًا، ثم الباقي، بلا تكرار داخل الجولة.
-export function composerJoueur(tous: ItemDrill[], dejaFait: Set<string>, taille: number, niveauMax?: 1 | 2 | 3): ItemDrill[] {
-  let pool = tous.filter((i) => !dejaFait.has(i.id));
-  if (niveauMax) {
-    pool = pool.filter((i) => i.n <= niveauMax);
+// بناء جولة: العناصر غير المُجابة أولًا، ثم العناصر المستحقّة للمراجعة/ذات الأخطاء، ثم الباقي.
+export function composerJoueur(
+  tous: ItemDrill[],
+  dejaFait: Set<string>,
+  taille: number,
+  niveauMax?: 1 | 2 | 3,
+  drillsMap?: Record<string, DrillRecord>,
+  auj: string = aujourdhui(),
+): ItemDrill[] {
+  const eligibles = niveauMax ? tous.filter((i) => i.n <= niveauMax) : tous;
+  let pool = eligibles.filter((i) => !dejaFait.has(i.id));
+  if (pool.length === 0 && drillsMap) {
+    const aRevoir = eligibles.filter((i) => {
+      const rec = drillsMap[i.id];
+      if (!rec || rec === true) return false;
+      return rec.errors > 0 || (rec.nextReview !== undefined && rec.nextReview <= auj);
+    });
+    if (aRevoir.length > 0) pool = aRevoir;
   }
-  const base = pool.length > 0 ? pool : tous.filter((i) => !niveauMax || i.n <= niveauMax);
+  const base = pool.length > 0 ? pool : eligibles;
   const melange = [...base];
   for (let i = melange.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

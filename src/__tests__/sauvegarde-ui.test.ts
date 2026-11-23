@@ -17,7 +17,7 @@ function props(etat = etatVierge()) {
   return { etat, onEffacerCarnet: rien, onNom: rien, onDateBac: rien, onSupprimerNote: rien,
     onReinitialiser: reinitialiser, onRestaurer: restaurer, onConsentementSync: rien, onObjectif: rien, onModeIntensif: rien,
     onTailleTexte: rien, onOuvrirDiagnostic: rien, onOuvrirLecon: rien, onDemarrerRevision: rien, onBasculerFavori: rien,
-    onRappel: rien, onAllerExercices: rien, onOuvrirConfidentialite: rien };
+    onRappel: rien, onAllerExercices: rien, onOuvrirConfidentialite: rien, onOuvrirEntraineur: rien };
 }
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -47,6 +47,22 @@ describe('restauration dans l’interface', () => {
     expect(zone.textContent).toContain('هذا الملف ليس نسخة احتياطية');
     await charger('{}', 5 * 1024 * 1024 + 1);
     expect(restaurer).not.toHaveBeenCalled();
+    expect(zone.textContent).toContain('الملف أكبر');
+  });
+  it('accepte exactement 5 Mio de notes synthétiques UTF-8 et refuse un octet de plus', async () => {
+    const encode = new TextEncoder();
+    const limite = 5 * 1024 * 1024;
+    const notes = Array.from({ length: 1250 }, (_, i) => ({
+      id: String(i), kind: 'note', texte: 'مراجعة الدرس '.repeat(145), ts: '2026-11-19',
+    }));
+    const base = JSON.stringify({ version: 3, progression: {}, notes });
+    const contenu = base + ' '.repeat(limite - encode.encode(base).length);
+    await charger(contenu, encode.encode(contenu).length);
+    await cliquer('نعم، استورد النسخة');
+    expect(restaurer).toHaveBeenCalledTimes(1);
+    expect(restaurer.mock.calls[0][0].notes).toEqual(notes);
+    await charger(contenu + ' ', encode.encode(contenu + ' ').length);
+    expect(restaurer).toHaveBeenCalledTimes(1);
     expect(zone.textContent).toContain('الملف أكبر');
   });
   it('demande une confirmation non bloquante et ignore compte et consentement du fichier', async () => {

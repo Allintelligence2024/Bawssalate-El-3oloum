@@ -100,16 +100,16 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
       <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
         {/* الهوية */}
         <div className="mb-6 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold-soft/80">
-            بوصلة العلوم
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-gold-soft/80">
+            بوصلة العلوم · ملفّ محلي على هذا الجهاز
           </p>
           <h1 className="font-naskh mt-1.5 text-4xl font-black text-paper">
             {vue === 'creation' ? 'أنشئ حسابك' : 'سجّل الدخول'}
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-sage/90">
             {vue === 'creation'
-              ? 'بريد واحد وكلمة مرور، ثم ولايتك ودائرتك — لتبقى مسارك محفوظًا في هذا الجهاز.'
-              : 'أدخل بريدك وكلمة المرور لاستئناف مسارك.'}
+              ? 'ملفّ محلي على هذا الجهاز فقط — لا خادم ولا إرسال تلقائي. المزامنة السحابية اختيارية تمامًا.'
+              : 'أدخل بريدك وكلمة المرور لاستئناف ملفّك المحلي على هذا الجهاز.'}
           </p>
         </div>
 
@@ -305,7 +305,7 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
         </form>
 
         <p className="mt-5 text-center text-[11px] leading-relaxed text-sage/75">
-          كلمة المرور لا تُرسَل. الحساب لا يشفّر البيانات المحفوظة ولا يحميها من مستخدم للجهاز. عند الموافقة على المزامنة يُرسَل البريد والولاية وملخّص التقدّم.
+          ملفّ محلي على هذا الجهاز: كلمة المرور لا تُرسَل، والحساب لا يشفّر البيانات أو المسوّدات التي تبقى ظاهرة لأي مستخدم لهذا المتصفّح. على جهاز مشترك، استعمل «مسح كل بياناتي» من تبويب «أنا» قبل تسليمه.
         </p>
       </div>
     </div>

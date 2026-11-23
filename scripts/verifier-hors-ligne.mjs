@@ -3,19 +3,13 @@
 // cohérence HTML ↔ manifeste ↔ worker (mêmes règles que l'install du worker dans sw.js).
 // S'exécuter APRÈS `npm run build`. Le niveau 2 (appareil réel, mode avion) n'est jamais
 // remplacé par ce script : cf. plans/preuves/hors-ligne.md §2.
-import { readFileSync, existsSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { preview } from 'vite';
 
-const PORT = 4187;
-const BASE = `http://127.0.0.1:${PORT}`;
 
 if (!existsSync('dist/precache-manifest.json')) {
   console.error('ABSENT : dist/precache-manifest.json — lancer « npm run build » d\'abord.');
-  process.exit(1);
-}
-const VITE = 'node_modules/vite/bin/vite.js';
-if (!existsSync(VITE)) {
-  console.error('ABSENT : ' + VITE + ' — lancer « npm install » d\'abord.');
   process.exit(1);
 }
 
@@ -34,32 +28,33 @@ if (!html.includes(`name="kunz-build-id" content="${version}"`)) problemes.push(
 if (!Array.isArray(manifeste.assets) || !manifeste.assets.every((u) => /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u))) {
   problemes.push('manifeste : assets non conformes à la règle du worker');
 }
-const statiquesOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
-  manifeste.statiques.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
-    ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf', '/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u));
-if (!statiquesOk) problemes.push('manifeste : entrées statiques non conformes à la règle du worker');
+// Coquille (statiques) et contenu lourd (contenu) ont chacun leur règle, comme dans sw.js.
+const COQUILLE = ['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'];
+const coquilleOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
+  manifeste.statiques.every((u) => COQUILLE.includes(u));
+if (!coquilleOk) problemes.push('manifeste : entrées de coquille non conformes à la règle du worker');
+const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
+if (!contenu) problemes.push('manifeste : liste « contenu » absente');
+else {
+  const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+    ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
+  if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
+  if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
+}
+for (const champ of ['octetsCoquille', 'octetsContenu', 'octets']) {
+  if (!Number.isFinite(manifeste[champ]) || manifeste[champ] < 0) problemes.push(`manifeste : ${champ} invalide`);
+}
+if (Number.isFinite(manifeste.octetsCoquille) && Number.isFinite(manifeste.octetsContenu) &&
+    Number.isFinite(manifeste.octets) && manifeste.octets < manifeste.octetsCoquille + manifeste.octetsContenu) {
+  problemes.push('manifeste : total inférieur à la somme coquille + contenu');
+}
 const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map((x) => x[1]);
 if (!demarrage.length) problemes.push('index.html : aucun asset de démarrage');
 for (const u of demarrage) if (!manifeste.assets.includes(u)) problemes.push(`asset de démarrage hors manifeste : ${u}`);
 
 // ── 2. Serveur preview + requêtes HTTP réelles ──
-// Lancé directement par node (pas de shell ni de commande propre à un OS) : l'arrêt
-// se fait par l'arrêt normal du processus, sur toutes les plateformes.
-const serveur = spawn(process.execPath, [VITE, 'preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], {
-  stdio: 'ignore',
-});
-const arreterServeur = () => {
-  if (serveur.exitCode === null && serveur.pid) { try { serveur.kill(); } catch { /* déjà arrêté */ } }
-};
-let pret = false;
-for (let i = 0; i < 60 && !pret; i++) {
-  try { const r = await fetch(BASE + '/index.html'); pret = r.ok; } catch { await new Promise((r) => setTimeout(r, 500)); }
-}
-if (!pret) {
-  console.error('ÉCHEC : le serveur preview n\'a pas démarré sur ' + BASE);
-  arreterServeur();
-  process.exit(1);
-}
+const serveur = await preview({ preview: { port: 0, host: '127.0.0.1' } });
+const BASE = `http://127.0.0.1:${serveur.httpServer.address().port}`;
 
 const typeOk = (url, res) => {
   const t = (res.headers.get('content-type') || '').toLowerCase();
@@ -70,7 +65,7 @@ const typeOk = (url, res) => {
   return true;
 };
 
-const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...manifeste.assets];
+const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...(contenu ?? []), ...manifeste.assets];
 let echecs = 0;
 let octets = 0;
 const lignesEchec = [];
@@ -88,13 +83,54 @@ for (const u of cibles) {
     lignesEchec.push(`${u} — ${e.message}`);
   }
 }
-arreterServeur();
+await serveur.close();
+
+// ── 2 bis. Budget de poids : une app « Lite » qui grossit en silence n'est plus « Lite » ──
+// Seuils volontairement atteignables : ils doivent échouer seulement sur une vraie régression,
+// pas sur un build normal — sinon la CI sera désactivée au bout de trois commits.
+const MIO = 1024 * 1024;
+const BUDGET_COQUILLE = 2.5 * MIO;   // interface + assets, ce que tout élève télécharge
+const BUDGET_CONTENU = 5.0 * MIO;    // leçons + laboratoire + PDF, sur demande explicite
+// Plan V2 §8.2 : une image de public/ au-delà de 150 ko est un accident, pas un choix.
+// (Les anciens PNG faisaient 600 ko et 1 Mo : c'est exactement ce que ce seuil interdit.)
+const BUDGET_FICHIER = 150 * 1024;
+if (manifeste.octetsCoquille > BUDGET_COQUILLE) {
+  problemes.push(`budget : coquille ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio > ${BUDGET_COQUILLE / MIO} Mio`);
+}
+if (manifeste.octetsContenu > BUDGET_CONTENU) {
+  problemes.push(`budget : contenu ${(manifeste.octetsContenu / MIO).toFixed(2)} Mio > ${BUDGET_CONTENU / MIO} Mio`);
+}
+if (contenu) {
+  for (const u of [...manifeste.statiques, ...contenu]) {
+    if (/\.pdf$/.test(u) || u.startsWith('/boussole/')) continue;
+    const taille = readFileSync(`dist${u}`).byteLength;
+    if (taille > BUDGET_FICHIER) problemes.push(`budget : ${u} pèse ${Math.round(taille / 1024)} ko > ${BUDGET_FICHIER / 1024} ko`);
+  }
+}
+// Plan V2 §8.2 : `public/` entier est concerné, pas seulement ce qui entre en cache.
+// Une image oubliée dans public/ finit toujours par se retrouver dans un précache un jour.
+{
+  const lourds = [];
+  const parcourir = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const chemin = join(dir, e.name);
+      if (e.isDirectory()) { parcourir(chemin); continue; }
+      if (/\.(pdf|mp4)$/i.test(e.name)) continue; // vidéo et PDF : exclus par le plan
+      if (chemin.includes('/boussole/')) continue;
+      const taille = statSync(chemin).size;
+      if (taille > BUDGET_FICHIER) lourds.push(`${chemin.replace('public/', '/')} (${Math.round(taille / 1024)} ko)`);
+    }
+  };
+  parcourir('public');
+  for (const f of lourds) problemes.push(`budget : ${f} > ${BUDGET_FICHIER / 1024} ko — convertir ou redimensionner`);
+}
 
 // ── 3. Rapport ──
 console.log('── vérification hors-ligne (niveau 1) ──');
 console.log(`version du build      : ${version}`);
 console.log(`assets JS/CSS         : ${manifeste.assets.length} — ${demarrage.length} au démarrage, tous dans le manifeste`);
-console.log(`entrées statiques     : ${manifeste.statiques.length} (leçons HTML + icônes/manifeste)`);
+console.log(`coquille (toujours)   : ${manifeste.statiques.length} entrées — ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio`);
+console.log(`contenu (sur demande) : ${(contenu ?? []).length} entrées — ${(manifeste.octetsContenu / MIO).toFixed(2)} Mio`);
 console.log(`fichiers interrogés   : ${cibles.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);
