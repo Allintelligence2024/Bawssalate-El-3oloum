@@ -10,7 +10,7 @@ const browser = await chromium.launch({ headless: true, args: ['--ignore-certifi
 const page = await browser.newPage();
 page.on('pageerror', e => console.log('PAGEERR:', e.message));
 
-await page.goto('https://127.0.0.1:8443/', { waitUntil: 'networkidle' });
+await page.goto('http://localhost:3000/', { waitUntil: 'networkidle' });
 await page.waitForTimeout(9000);
 
 // Démarrer
