@@ -370,8 +370,43 @@ QA : `tsc` 0 erreur · **46 fichiers / 280 tests** · fiche rendue à l'écran e
 
 ---
 
-## 17. Prochaine étape : GO 5 — صيّاد الفخاخ
+## 17. GO 5 — صيّاد الفخاخ (FAIT, v0.10.4)
 
-1. **GO 5** : chasse aux pièges depuis `UNITES[].piegesAr` (22) + `QCM_LECONS[].pieges` ;
-   2 XP par piège démasqué, +4 au bout de la série, aucune perte.
-2. **GO 6** : finition (re-skin des sections d'أنا, en-tête du shell), PWA, APK, docs.
+| Livrable | Fichier | Détail |
+|---|---|---|
+| Moteur | `src/utils/fakh.ts` (neuf) | `enoncesDeUnite` (QCM → énoncés jugeables), `serieFakh(uniteId, 8)` (4 vraies + 4 pièges, ordre par hachage, stable), `avancementSerie`, `piegesOfficiels`, `unitesJouables`. |
+| Écran | `src/components/Fakh.tsx` (neuf) | 3 phases `choix` → `jeu` → `bilan` : une phrase, deux boutons (فخّ / صحيح), feedback doux + explication de la leçon, aucune perte, aucun rouge. |
+| Données | `src/types.ts` | `fakh?: Record<string, true>`, `fakhSeries?: Record<string, true>` (+ défauts `{}` dans `etatVierge`). |
+| XP | `src/utils/xp.ts` | `VALEURS.fakh = 2`, `VALEURS.fakhSerie = 4`, comptés dans `xpDe`. |
+| Entrées | `App.tsx`, `Bac.tsx`, `BaguetteXp.tsx` | mode `fakh`, carte « صيّاد الفخاخ » dans الباك (badge du nombre de prises), ligne « فخاخ مصطادة » dans la baguette. |
+
+Décisions et écarts :
+
+1. **Aucun énoncé inventé.** Chaque phrase vient d'un QCM (`options[0]` = vraie, 1..3 = pièges de
+   l'auteur), clé stable `fakh:<leçon>:<rappel|synthese>:<i>`. Les **fragments de liste**
+   (« 3 قواعد / AUG », < 12 caractères) sont écartés : hors contexte, ils ne forment pas une
+   affirmation qu'on peut juger. Vérifié unité par unité : les 11 unités servent bien 8 énoncés.
+2. **Ordre par hachage, jamais en alternance.** Un vrai / un faux en alternance rendait le 2ᵉ clic
+   devinable. La série est stable (même clé → même ordre) mais non mécanique.
+3. **Les 21 pièges officiels** (`UNITES[].piegesAr`, les 11 unités) sont servis en fiche de
+   référence dans l'écran de choix, avec le compteur de prises par unité.
+4. **Le bilan ne ment pas** : « سلسلة كاملة بلا غلطة · +4 XP » seulement si 8/8 ; sinon
+   « كمّلت السلسلة · +4 XP » + un mot doux (« اللي فاتك ما يضيعش… »). Les +4 restent acquis :
+   finir la série est déjà un acte, et rien ne se perd.
+5. Deuxième écart de données : l'unité 8 n'a que 2 affirmations vraies dans son QCM, sa série est
+   donc 2 vraies / 6 pièges. Assumé : on ne fabrique pas d'énoncé pour équilibrer.
+
+QA : `tsc` 0 erreur · **47 fichiers / 287 tests** (7 dédiés) · parcours Playwright الباك →
+« اصطد » → 8 jugements → bilan : `etat.fakh` à 8 clés, `fakhSeries = ['u1']`, 0 `pageerror` ;
+captures `plans/captures/etape-5-{bac,choix-unite,jugement,feedback,bilan}.png`.
+
+---
+
+## 18. Prochaine étape : GO 6 — finition
+
+1. **Re-skin des sections d'أنا** restées en classes `card` / `eyebrow` (compte, sauvegarde,
+   réinitialisation, consentement) et **en-tête du shell**.
+2. **PWA** : icônes, `manifest`, écran hors-ligne, mise à jour du service worker.
+3. **APK** : rebuild Capacitor, version 0.10.4, test d'installation.
+4. **Docs** : README (§ versions), ce document, `plans/` — et une passe de cohérence bidi sur les
+   textes qui mélangent chiffres et sigles latins.

@@ -17,6 +17,7 @@ interface Props {
   onOuvrirExamen: () => void;
   onOuvrirMethodo: () => void;
   onOuvrirSchemas: () => void;
+  onOuvrirFakh: () => void;
 }
 
 /** خطوات العمل على موضوع — نفس منطق «صيّاد الفخاخ»: بلا وقت، بلا علامة. */
@@ -49,7 +50,7 @@ function Carte({ titre, sous, mention, action, onClick }: {
   );
 }
 
-export default function Bac({ etat, onOuvrirSujets, onOuvrirExamen, onOuvrirMethodo, onOuvrirSchemas }: Props) {
+export default function Bac({ etat, onOuvrirSujets, onOuvrirExamen, onOuvrirMethodo, onOuvrirSchemas, onOuvrirFakh }: Props) {
   const examens = etat.examens ?? [];
   const verbes = frequenceVerbes().slice(0, 4);
   const unites = Object.entries(frequenceUnites())
@@ -95,6 +96,13 @@ export default function Bac({ etat, onOuvrirSujets, onOuvrirExamen, onOuvrirMeth
           sous="أربع ورشات، تمارين بالوثائق، وسلّم الكفاءات الثمانية."
           action="راجع"
           onClick={onOuvrirMethodo}
+        />
+        <Carte
+          titre="صيّاد الفخاخ"
+          mention={etat.fakh ? `${nb(Object.keys(etat.fakh).length)} مصيدة` : undefined}
+          sous="جملة واحدة في كلّ مرّة: فخّ ولا صحيح؟ كلّ حكم صحيح يزيد نقطتين، والسلسلة الكاملة تزيد أربع نقاط."
+          action="اصطد"
+          onClick={onOuvrirFakh}
         />
         <Carte
           titre="الرسوم والمخطّطات"

@@ -176,6 +176,9 @@ export interface Etat {
   schemas?: Record<string, true>; // مخطّطات التسمية المُنهاة (P1.6)
   // «الباك خطوة بخطوة» (v0.10.1) : تقييم ذاتي لكلّ تعليمة، والقيمة نفسها هي عدد الـXP (3/2/0).
   // المفتاح: `${sujetId}:${numéroExercice}:${partie}:${consigne}`
+  // صيّاد الفخاخ (v0.10.4) : énoncés démasqués (clé `fakh:<leçon>:<type>:<i>`) et séries finies.
+  fakh?: Record<string, true>;
+  fakhSeries?: Record<string, true>;
   bacEtapes?: Record<string, 3 | 2 | 0>;
   bacExercices?: Record<string, true>; // تمارين أُكملت كلّ خطواتها (مفتاح: `${sujetId}:${numéro}`)
 }
@@ -210,6 +213,8 @@ export function etatVierge(): Etat {
     ateliers: {},
     bacEtapes: {},
     bacExercices: {},
+    fakh: {},
+    fakhSeries: {},
     consentementSync: false, // par défaut: pas d'envoi tant que l'élève n'a pas explicitement dit oui (P0.2/P0.8)
   };
 }

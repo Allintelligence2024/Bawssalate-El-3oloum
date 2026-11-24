@@ -6,7 +6,7 @@ import type { Etat } from '../types';
 import { xpDe, niveauDe } from './xp';
 import { statsActuelles } from './stats';
 
-export const VERSION_APP = '0.10.3';
+export const VERSION_APP = '0.10.4';
 
 function getSupabaseConfig() {
   return {

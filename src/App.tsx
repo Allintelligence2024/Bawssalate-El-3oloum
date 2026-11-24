@@ -33,6 +33,7 @@ const Bac = lazy(() => import('./components/Bac'));
 const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
 const Kouest = lazy(() => import('./components/Kouest'));
 const FicheEleve = lazy(() => import('./components/FicheEleve'));
+const Fakh = lazy(() => import('./components/Fakh'));
 import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
@@ -95,6 +96,7 @@ type Mode =
   | { type: 'bacPasAPas'; sujetId: string; exercice: number }
   | { type: 'kouest'; lessonId: string }
   | { type: 'fiche' }
+  | { type: 'fakh'; uniteId?: string }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -806,6 +808,25 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'fakh') {
+      return (
+        <Fakh
+          etat={etat}
+          uniteInitiale={mode.uniteId}
+          onJugement={(cle) =>
+            setEtat((prev) => (prev.fakh?.[cle] ? prev : { ...prev, fakh: { ...(prev.fakh ?? {}), [cle]: true } }))
+          }
+          onSerieFinie={(uniteId) =>
+            setEtat((prev) =>
+              prev.fakhSeries?.[uniteId]
+                ? prev
+                : { ...prev, fakhSeries: { ...(prev.fakhSeries ?? {}), [uniteId]: true } },
+            )
+          }
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
     if (mode.type === 'fiche') {
       return <FicheEleve etat={etat} onFermer={() => setMode(null)} />;
     }
@@ -1217,6 +1238,7 @@ export default function App() {
             onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
             onOuvrirMethodo={() => setOnglet('methodo')}
             onOuvrirSchemas={() => setMode({ type: 'schemas' })}
+            onOuvrirFakh={() => setMode({ type: 'fakh' })}
           />
         </Suspense>
       )}

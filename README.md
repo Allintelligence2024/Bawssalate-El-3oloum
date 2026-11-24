@@ -719,6 +719,20 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.4** — **صيّاد الفخاخ : le chasseur de pièges** (`src/components/Fakh.tsx`,
+  `src/utils/fakh.ts`). Depuis **الباك**, une carte lance une **série de 8 jugements** : une
+  phrase s'affiche, deux boutons — **فخّ** ou **صحيح** —, jamais de note sur 20, jamais de Game
+  Over. Les énoncés ne sont **jamais inventés** : ils sortent des QCM écrits à la main
+  (`options[0]` = affirmation vraie, options 1..3 = pièges de l'auteur), les fragments de liste
+  (« 3 قواعد / AUG ») étant écartés parce qu'hors contexte ils ne se jugent pas. Les **4 XP par
+  série** et les **2 XP par bon jugement** sont écrits une seule fois (clés stables
+  `fakh:<leçon>:<rappel|synthese>:<i>`, séries dans `etat.fakhSeries`). Une erreur ne retire rien :
+  l'explication de la leçon s'affiche, puis « الجملة التالية ». Fin de série : **bilan
+  sans note** (« 4 من 8 حكم صحيح »), mention **« سلسلة كاملة بلا غلطة »** seulement si c'est vrai,
+  message doux sinon, et le rappel que les pièges ratés restent consultables. La fiche de
+  référence du programme (les **21 pièges officiels** de `UNITES[].piegesAr`) est servie dans le
+  même écran. QA : `tsc` 0 erreur · **47 fichiers / 287 tests** (7 dédiés), captures
+  `plans/captures/etape-5-*.png`.
 - **v0.10.3** — **« ملفّي » : la fiche A4 imprimable** (`src/components/FicheEleve.tsx`). Depuis
   **أنا**, une carte ouvre une feuille A4 qui rassemble ce que l'app sait déjà : identité (nom,
   wilaya), niveau et XP, série de jours, compte à rebours du Bac, progression (leçons / جسور /

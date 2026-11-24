@@ -57,6 +57,10 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
       valeur: `${nb(etapesFaites(etat))} خطوة`,
     },
     {
+      label: 'فخاخ مصطادة',
+      valeur: `${nb(Object.keys(etat.fakh ?? {}).length)} × ${nb(VALEURS.fakh)}`,
+    },
+    {
       label: 'تركيز مسجّل',
       valeur: `${nb(Math.floor(etat.minutesTotales / 30))} × ${nb(VALEURS.demiHeure)}`,
     },
