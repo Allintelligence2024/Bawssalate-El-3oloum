@@ -5,6 +5,7 @@ import { CHEMIN, UNITE_PAR_ID, titreItem, titreLecon, uniteDeItem } from '../dat
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
 import { DUREE_TOTALE_MIN } from '../data/protocole';
 import { messageAccueil } from '../utils/diagnostic';
+import { etapesKouest, etapesReussies, leconDeLaQuete } from '../utils/kouest';
 import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteStats from './CarteStats';
 import CarteDefi from './CarteDefi';
@@ -30,6 +31,8 @@ interface Props {
   onDemarrerRevueCroisee?: () => void;
   /** تحدّي الأسبوع (P3.2) */
   onChoisirDefi?: (type: TypeDefi) => void;
+  /** كويست اليوم : la porte d'entrée (3 min) avant la séance complète. */
+  onDemarrerKouest?: (lessonId: string) => void;
 }
 
 export default function Aujourdhui({
@@ -42,6 +45,7 @@ export default function Aujourdhui({
   onOuvrirExamenBlanc,
   onDemarrerRevueCroisee,
   onChoisirDefi,
+  onDemarrerKouest,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = competenceDue(etat);
@@ -57,6 +61,10 @@ export default function Aujourdhui({
   const faits = itemsFaits(etat);
   const plan = planIntensif(etat);
   const quota = quotaDe(etat);
+  // كويست اليوم : la leçon que le moteur propose, et où en est la quête.
+  const leconQuete = onDemarrerKouest ? leconDeLaQuete(etat) : null;
+  const etapesQuete = leconQuete ? etapesKouest(leconQuete) : [];
+  const faitesQuete = leconQuete ? etapesReussies(etat, leconQuete) : 0;
 
   // compte le nombre de leçons échouées (statut = vierge ou en_cours sans revision)
   const leconsEchouees = Object.values(etat.progression).filter(
@@ -122,6 +130,34 @@ export default function Aujourdhui({
           )}
         </div>
       </header>
+
+      {/* كويست اليوم — la porte d'entrée : 3 minutes avant tout le reste */}
+      {leconQuete && onDemarrerKouest && (
+        <section className="carte mb-4">
+          <div className="rangee rangee--entre mb-1">
+            <span className="oeil">كويست اليوم · 3 دقائق</span>
+            <span className="mention mention--or tnum">
+              {nb(faitesQuete)} من {nb(etapesQuete.length)}
+            </span>
+          </div>
+          <p className="carte__titre mt-1">{titreLecon(leconQuete)}</p>
+          <p className="petit doux mt-1">
+            {nb(etapesQuete.length)} أسئلة اختيار من ذاكرتك — بلا كتابة وبلا وقت. بعدها تختار:
+            تكمّل الجلسة الكاملة ولا تكفي بهذا.
+          </p>
+          <button
+            type="button"
+            className="btn btn--primaire mt-3 w-full"
+            onClick={() => onDemarrerKouest(leconQuete)}
+          >
+            {faitesQuete === 0
+              ? 'ابدأ الكويست'
+              : faitesQuete >= etapesQuete.length
+                ? 'أعد الكويست'
+                : 'كمّل الكويست'}
+          </button>
+        </section>
+      )}
 
       {/* المراجعة المكثّفة (P2.3): خطة الأسبوع — تظهر فقط عند تفعيلها */}
       {plan && (

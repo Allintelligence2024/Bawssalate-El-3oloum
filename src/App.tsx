@@ -31,6 +31,7 @@ import Exercices from './components/Exercices';
 const Methodologie = lazy(() => import('./components/Methodologie'));
 const Bac = lazy(() => import('./components/Bac'));
 const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
+const Kouest = lazy(() => import('./components/Kouest'));
 import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
@@ -91,6 +92,7 @@ type Mode =
   | { type: 'choixSynthese' }
   | { type: 'sujets' }
   | { type: 'bacPasAPas'; sujetId: string; exercice: number }
+  | { type: 'kouest'; lessonId: string }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -802,6 +804,21 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'kouest') {
+      return (
+        <Kouest
+          etat={etat}
+          lessonId={mode.lessonId}
+          onBonneReponse={(cle) =>
+            setEtat((prev) =>
+              prev.drills?.[cle] ? prev : { ...prev, drills: { ...(prev.drills ?? {}), [cle]: true } },
+            )
+          }
+          onTerminerSeance={(lessonId) => setMode({ type: 'protocole', lessonId })}
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
     if (mode.type === 'bacPasAPas') {
       const sujet = SUJETS_OFFICIELS.find((x) => x.id === mode.sujetId);
       const exercice = sujet?.exercices.find((e) => e.numero === mode.exercice);
@@ -1169,6 +1186,7 @@ export default function App() {
           onOuvrirMethodologie={() => setOnglet('methodo')}
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
           onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
+          onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;

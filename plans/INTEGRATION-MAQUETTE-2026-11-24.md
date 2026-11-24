@@ -330,11 +330,26 @@ une bonne + une « ما عرفتش ») : `bacEtapes {3, 0}`, `bacExercices` pos�
 
 ---
 
-## 15. Prochaine étape : GO 2 — كويست (la quête du jour, généralisée)
+## 15. GO 2 — كويست اليوم (FAIT, v0.10.2)
 
-1. **GO 2** : une quête de 3 étapes par unité depuis `QCM_LECONS[].rappel / .synthese / .pieges[0]`,
-   la carte « quête du jour » branchée sur `prochaineAction(etat)` + `composerJoueur()`.
-2. Fin de quête → deux portes : « كمّل الجلسة كاملة » (protocole 46 min, intact) ou retour.
-3. **GO 4** : أنا + « ملفّي » + carte A4 imprimable.
-4. **GO 5** : صيّاد الفخاخ (22 `piegesAr` + pièges QCM, 2 XP + 4 au bout).
-5. **GO 6** : finition, PWA, APK, docs.
+| Livrable | Fichier | Détail |
+|---|---|---|
+| Composition de la quête | `src/utils/kouest.ts` (neuf) | `etapesKouest(lessonId)` : `rappel` → `synthese` → `pieges[0]` s'il existe, **rien d'inventé**. Mélange déterministe des options (même clé = même ordre). `contexteKouest` donne leçon + unité. |
+| Runner | `src/components/Kouest.tsx` (neuf) | 3 choix, aucune écriture, aucun chrono. Erreur → message miel + nouvelle tentative ; réussite → explication + étape suivante ; après réussite la bonne réponse est **surlignée** (les boutons désactivés ne l'écrasent plus). |
+| Porte d'entrée | `src/components/Aujourdhui.tsx` | carte « كويست اليوم · 3 دقائق » au-dessus de la carte du jour, branchée sur `leconDeLaQuete(etat)` (= `prochaineAction`) ; libellé *ابدأ / كمّل / أعد* selon l'avancement. |
+| Les deux portes | `Kouest.tsx` + `App.tsx` | « كمّل الجلسة كاملة · 46 دقيقة » ouvre `mode:protocole` **sur la même leçon** (protocole intact) ; « يكفي اليوم » referme. |
+| XP | `etat.drills` (aucun nouveau champ) | 3 XP par étape réussie, clé `kouest:<leçon>:<étape>` ; `etapesReussies` relit l'avancement. |
+| Contrat testé | `src/__tests__/kouest.test.ts` | 6 tests : composition, absence de piège, stabilité du mélange, leçon sans QCM → `[]`, 3 XP/étape, leçon visée = celle du moteur. |
+
+QA : `tsc` 0 erreur · **45 fichiers / 277 tests** · parcours joué dans Chromium (3/3 étapes,
+`drills` = 3 clés `kouest:…`, **9 XP**) puis « كمّل الجلسة كاملة » → protocole ouvert sur la
+même leçon, aucun `pageerror`. Captures : `plans/captures/etape-2-kouest-*.png`.
+
+---
+
+## 16. Prochaine étape : GO 4 — أنا + « ملفّي »
+
+1. **GO 4** : re-skin de `Ana.tsx` (carte identité, kafaa 8 compétences, révisions SRS, sauvegarde)
+   + carte A4 imprimable « ملفّي » + drapeaux depuis `journal`/`rythmeSemaine`.
+2. **GO 5** : صيّاد الفخاخ (22 `piegesAr` + pièges QCM, 2 XP + 4 au bout).
+3. **GO 6** : finition, PWA, APK, docs, `README` de bout en bout.

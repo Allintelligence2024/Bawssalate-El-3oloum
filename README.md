@@ -719,6 +719,14 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.2** — **كويست اليوم : la porte d'entrée** (`src/components/Kouest.tsx`,
+  `src/utils/kouest.ts`). Sur l'onglet **كويست**, une carte propose une quête de **3 minutes**
+  (3 étapes : `rappel` → `synthese` → `piege`) tirée du QCM réel de la leçon que le moteur
+  propose (`prochaineAction`). Options mélangées de façon déterministe ; une erreur ne rougit
+  pas, ne retire rien, et laisse réessayer. Chaque étape réussie vaut **3 XP** (clé stable
+  `kouest:<leçon>:<étape>` dans `etat.drills`, aucun nouveau champ). À la fin, deux portes :
+  **« كمّل الجلسة كاملة · 46 دقيقة »**, qui ouvre le protocole intact sur la même leçon, ou
+  « يكفي اليوم ». Une leçon sans QCM saute la quête au lieu d'inventer des questions.
 - **v0.10.1** — **الباك خطوة بخطوة** (`src/components/BacPasAPas.tsx`, `src/utils/bacPasAPas.ts`) :
   une consigne officielle = une étape. L'élève écrit d'abord (bouton bloqué tant que le champ est
   vide), découvre ensuite les **عناصر الإجابة** du corrigé, puis s'auto-évalue **3 / 2 / 0** — la
