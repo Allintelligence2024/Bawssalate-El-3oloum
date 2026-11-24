@@ -76,9 +76,9 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
           <span className="tnum block max-w-[6.5rem] text-[12px] font-black text-forest-deep">
             {xpTexte(xp)}
           </span>
-          <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-sage/90">
+          <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-mute">
             <span>{jours > 0 ? `🔥 ${joursNb(jours)}` : '🔥 ابدأ اليوم'}</span>
-            <span className="text-[9px] text-sage/70" aria-hidden="true">
+            <span className="text-[9px] text-mute/70" aria-hidden="true">
               {ouvert ? '▲' : '▼'}
             </span>
           </span>
