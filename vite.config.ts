@@ -19,6 +19,7 @@ function precacheManifest(): Plugin {
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f)).sort().map((f) => `/${f}`);
       const statiques = ['boussole/index.html', 'boussole/cahier-bac-2022.pdf', 'boussole/memo.pdf', 'icon.svg', 'manifest.webmanifest', 'mascotte.png', 'personnage-pirate.png',
+        'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-180.png',
         ...readdirSync('public/lecons').filter(f => f.endsWith('.html')).sort().map(f => `lecons/${f}`)];
       const hash = createHash('sha256').update(assets.join('\n'))
         .update(readFileSync('public/sw.js')).update(readFileSync('index.html'));

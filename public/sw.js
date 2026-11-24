@@ -5,12 +5,24 @@ const CACHE = `kunz-hors-ligne-${VERSION}`;
 const MANIFESTE = '/precache-manifest.json';
 const INDEX = '/index.html';
 const BOUSSOLE = ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'];
+// Fichiers publics autorisés au cache hors-ligne (liste blanche — rien d'autre
+// ne peut entrer dans le cache). Les icônes PNG servent au manifeste et à iOS.
+const STATIQUES = [
+  '/icon.svg',
+  '/manifest.webmanifest',
+  '/mascotte.png',
+  '/personnage-pirate.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/maskable-512.png',
+  '/icons/apple-touch-180.png',
+];
 
 function valideManifeste(m) {
   return m && m.version === VERSION && Array.isArray(m.assets) && m.assets.length > 0 &&
     m.assets.every(u => typeof u === 'string' && /^\/assets\/[a-zA-Z0-9_.-]+\.(js|css)$/.test(u)) &&
     Array.isArray(m.statiques) && m.statiques.length > 0 &&
-    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u) || ['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(u))) &&
+    m.statiques.every(u => typeof u === 'string' && (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u) || STATIQUES.includes(u))) &&
     Number.isFinite(m.octets) && m.octets >= 0;
 }
 
@@ -151,7 +163,7 @@ self.addEventListener('fetch', event => {
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
   if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
-      !BOUSSOLE.includes(url.pathname) && !['/icon.svg', '/manifest.webmanifest', '/mascotte.png', '/personnage-pirate.png'].includes(url.pathname)) return;
+      !BOUSSOLE.includes(url.pathname) && !STATIQUES.includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

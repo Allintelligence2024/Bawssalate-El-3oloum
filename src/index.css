@@ -165,36 +165,32 @@ h1, h2 { text-wrap: balance; }
     background: rgba(255, 255, 255, 0.04);
   }
 
+  /* `.card` = la carte historique de l'app ; elle prend la peau de la maquette
+     (même dessin que `.carte` : papier plein, filet 1,5 px, rayon 14 px) pour
+     que les écrans profonds encore écrits avec cette classe s'accordent sans
+     qu'on touche à 212 endroits. Le survol ne soulève plus la carte : le
+     glissement de 2 px faisait « sauter » toute la page au passage de la souris. */
   .card {
-    background: var(--gradient-surface);
-    border: 1px solid var(--color-line);
-    border-radius: 20px;
-    box-shadow:
-      0 4px 20px -6px rgba(0, 0, 0, 0.05),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    background: var(--color-paper);
+    border: 1.5px solid var(--color-line);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(24, 61, 49, 0.05);
     transition:
-      transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-      box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
   .card:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 12px 40px -8px rgba(0, 0, 0, 0.1),
-      0 1px 0 rgba(255, 255, 255, 0.8) inset;
+    box-shadow: 0 4px 14px -6px rgba(24, 61, 49, 0.14);
   }
   [data-theme='dark'] .card {
-    box-shadow:
-      0 4px 20px -6px rgba(0, 0, 0, 0.4),
-      0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
   }
   [data-theme='dark'] .card:hover {
-    box-shadow:
-      0 12px 40px -8px rgba(0, 0, 0, 0.5),
-      0 1px 0 rgba(255, 255, 255, 0.03) inset;
+    box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.55);
   }
 
   .eyebrow {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     /* pas de letter-spacing : l'application est en arabe et l'espacement
        des lettres casse les ligatures (الحروف المتصلة) */

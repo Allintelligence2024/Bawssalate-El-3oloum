@@ -1125,8 +1125,8 @@ export default function App() {
           <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-line bg-surface">
             <div className="mx-auto flex h-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-primary/25">
-                  <span className="h-7 w-7"><IcoBoussole /></span>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-forest-deep/20 bg-forest text-lg font-bold text-paper">
+                  <span className="h-6 w-6"><IcoBoussole /></span>
                 </div>
                 <div className="hidden min-w-0 sm:block">
                   <h1 className="app-brand truncate tracking-tight leading-none">بوصلة العلوم</h1>
@@ -1156,7 +1156,7 @@ export default function App() {
                 </button>
                 {etat.compte && (
                   <div className="flex shrink-0 items-center gap-2 rounded-xl border border-line bg-surface py-1.5 pe-3 ps-2 text-xs font-bold text-ink-soft">
-                    <span className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-white text-[10px] font-bold">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-paper">
                       {etat.compte.email.charAt(0).toUpperCase()}
                     </span>
                     <span className="hidden truncate max-w-[120px] md:inline">{etat.compte.email}</span>

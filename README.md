@@ -719,6 +719,21 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.5** — **GO 6 : la peau partout, l'icône installable, l'Android à jour.**
+  **Peau unifiée** : `.card` (212 usages dans les écrans profonds) prend le dessin de la
+  maquette — papier plein, filet 1,5 px, rayon 14 px — et le survol ne soulève plus la carte
+  (le glissement de 2 px faisait sauter toute la page). `.eyebrow` s'aligne sur `.oeil`. Les
+  écrans hérités (الباك, الرسوم, أتيلية, قويسات…) s'accordent donc sans qu'on touche à 212
+  endroits. **Icônes** : `public/icons/{icon-192,icon-512,maskable-512,apple-touch-180}.png`
+  sont désormais de vrais PNG (Android n'installe pas proprement un SVG seul), déclarés dans le
+  manifeste (`purpose: any` + `maskable`), acceptés par la liste blanche du `sw.js` et embarqués
+  dans le pré-cache ; `scripts/generer-icones.mjs` les régénère depuis `icon.svg` (PWA + mipmaps
+  et écrans de démarrage Android). Thème du manifeste passé au papier (`#fffef8` / `#225342`) :
+  plus d'écran noir au lancement. **Symboles** : les ⚡ 🔥 ▲ ▼ du compteur d'XP et des pastilles
+  d'أنا étaient des carrés vides avec la police arabe → remplacés par des SVG partagés
+  (`Icones.tsx`), et les `chip` sans style d'أنا deviennent des `mention`. **Android** :
+  `versionName 0.10.5`, `versionCode 3`. QA : `tsc` 0 erreur · **48 fichiers / 291 tests**
+  (4 dédiés aux icônes) · captures clair/sombre `plans/captures/etape-6-*.png`.
 - **v0.10.4** — **صيّاد الفخاخ : le chasseur de pièges** (`src/components/Fakh.tsx`,
   `src/utils/fakh.ts`). Depuis **الباك**, une carte lance une **série de 8 jugements** : une
   phrase s'affiche, deux boutons — **فخّ** ou **صحيح** —, jamais de note sur 20, jamais de Game

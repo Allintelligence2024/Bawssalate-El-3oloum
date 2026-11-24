@@ -402,11 +402,40 @@ captures `plans/captures/etape-5-{bac,choix-unite,jugement,feedback,bilan}.png`.
 
 ---
 
-## 18. Prochaine étape : GO 6 — finition
+## 18. GO 6 — finition (FAIT, v0.10.5)
 
-1. **Re-skin des sections d'أنا** restées en classes `card` / `eyebrow` (compte, sauvegarde,
-   réinitialisation, consentement) et **en-tête du shell**.
-2. **PWA** : icônes, `manifest`, écran hors-ligne, mise à jour du service worker.
-3. **APK** : rebuild Capacitor, version 0.10.4, test d'installation.
-4. **Docs** : README (§ versions), ce document, `plans/` — et une passe de cohérence bidi sur les
-   textes qui mélangent chiffres et sigles latins.
+| Chantier | Fichier | Détail |
+|---|---|---|
+| Peau partout | `src/index.css` | `.card` (212 usages) prend le dessin de `.carte` (papier plein, filet 1,5 px, rayon 14 px) ; survol sans translation ; `.eyebrow` à 10,5 px comme `.oeil`. Une seule règle CSS accorde tous les écrans hérités. |
+| En-tête | `src/App.tsx`, `src/components/BaguetteXp.tsx` | logo et avatar en aplat `forest` (plus de dégradé), pastille XP en `gold-soft`/`honey-ink`, icônes SVG. |
+| Symboles | `src/components/Icones.tsx`, `Ana.tsx` | `IcoFlamme`, `IcoEclair`, `IcoChevron` partagés ; ⚡ 🔥 ▲ ▼ (carrés vides hors police emoji) remplacés ; `chip` sans style → `mention`. |
+| Icônes installables | `public/icons/*.png`, `public/manifest.webmanifest`, `index.html` | 192, 512, maskable 512, iOS 180 ; `purpose: any`/`maskable` ; thème papier `#fffef8` / `#225342` ; `<link>` iOS + `mask-icon`. |
+| Hors-ligne | `public/sw.js`, `vite.config.ts` | liste blanche `STATIQUES` (une seule source) qui accepte les nouvelles icônes ; pré-cache mis à jour. |
+| Android | `android/app/build.gradle`, `res/mipmap-*`, `res/drawable-*-*` | `versionName 0.10.5`, `versionCode 3`, lanceur (48→192 px, rond, avant-plan adaptatif 108 dp) et écrans de démarrage régénérés. |
+| Outillage | `scripts/generer-icones.mjs` | régénère toutes les icônes depuis `public/icon.svg` (Chromium), avec repli `@sparticuz/chromium`. |
+
+QA : `tsc` 0 erreur · **48 fichiers / 291 tests** (4 dédiés aux icônes PWA) · captures
+`plans/captures/etape-6-{massari,ana,bac,sombre,sombre-ana,ecran-profond}.png`, 0 `pageerror`,
+clair et sombre.
+
+**Reste à faire sur un poste avec Android Studio** (impossible ici : ni Java ni SDK Android) :
+
+```bash
+npm run build && npx cap sync android && cd android && ./gradlew assembleRelease
+```
+
+Le projet `android/` est à jour (version, icônes, écran de démarrage) : il ne manque que la
+compilation et l'installation sur un téléphone.
+
+---
+
+## 19. État final du plan
+
+Les 7 GO sont livrés (v0.10.0 → v0.10.5). Ce qui reste ouvert, par ordre d'utilité :
+
+1. **Compiler l'APK** sur un poste outillé (commande ci-dessus) et l'essayer sur un vrai téléphone
+   (installabilité, notifications locales, partage du fichier de sauvegarde).
+2. **Écran de démarrage de l'app** (`EcranDemarrage`) : il garde sa mise en page historique —
+   c'était hors périmètre des GO.
+3. **Passe bidi** sur les textes anciens qui mêlent chiffres et sigles latins (`CO₂`, `ARNm`,
+   `0 / 69`) : la règle reste « corriger la donnée, pas ajouter de marques invisibles ».

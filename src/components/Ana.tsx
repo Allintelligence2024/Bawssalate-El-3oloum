@@ -15,6 +15,7 @@ import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
 import { WILAYA_PAR_CODE } from '../data/wilayas';
 import { CHEMIN } from '../data/programme';
 import { Morceau } from './Communs';
+import { IcoFlamme } from './Icones';
 import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
 import ReglagesParcours from './ReglagesParcours';
@@ -312,11 +313,14 @@ export default function Ana({
               </p>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="chip text-[11px] font-bold text-forest-deep">{niveau.nom}</span>
-            <span className="chip text-[11px] font-bold text-forest-deep">{xpTexte(xp)}</span>
-            <span className="chip text-[11px] font-bold text-forest-deep">
-              🔥 {joursNb(jours)}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="mention mention--vert">{niveau.nom}</span>
+            <span className="mention">{xpTexte(xp)}</span>
+            <span className="mention mention--or">
+              <span className="h-3 w-3 text-honey-ink" aria-hidden="true">
+                <IcoFlamme />
+              </span>
+              {joursNb(jours)}
             </span>
           </div>
           {onDeconnexion && (
