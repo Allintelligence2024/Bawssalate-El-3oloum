@@ -12,6 +12,7 @@ export const VALEURS = {
   atelier: 150, // ورشة منجزة
   drill: 3, // عنصر تدريب جيب عنه correctly
   demiHeure: 10, // كل نصف ساعة تركيز مسجّلة
+  bacExercice: 6, // exercice du Bac terminé pas à pas (les étapes valent déjà 3/2/0)
 } as const;
 
 export const PALIERS: { seuil: number; nom: string }[] = [
@@ -32,6 +33,9 @@ export function xpDe(etat: Etat): number {
   xp += Object.values(etat.ateliers ?? {}).filter((a) => a.fait).length * VALEURS.atelier;
   xp += Object.keys(etat.drills ?? {}).length * VALEURS.drill;
   xp += Math.floor(etat.minutesTotales / 30) * VALEURS.demiHeure;
+  // الباك خطوة بخطوة : كلّ تعليمة قُيّمت ذاتيًّا تغلّي 3 أو 2 أو 0، والتمرين الكامل +6.
+  xp += Object.values(etat.bacEtapes ?? {}).reduce<number>((somme, q) => somme + q, 0);
+  xp += Object.keys(etat.bacExercices ?? {}).length * VALEURS.bacExercice;
   return xp;
 }
 

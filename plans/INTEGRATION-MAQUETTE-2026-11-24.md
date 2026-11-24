@@ -313,14 +313,28 @@ verrouillées.
 
 ---
 
-## 14. Prochaine étape : GO 3 — le الباك pas-à-pas (ou GO 2 — كويست)
+## 14. GO 3 — الباك خطوة بخطوة (FAIT, v0.10.1)
 
-1. **GO 3** : lire un sujet `exercices[].parties[].consignes[]` comme une suite d'étapes
-   (1 consigne = 1 étape), réponse écrite puis comparaison avec `corriges/`, XP 3/2/0 + 6.
-2. **GO 2** : généraliser la quête aux 11 unités depuis `QCM_LECONS[].rappel/.synthese/.pieges`.
+| Livrable | Fichier | Détail |
+|---|---|---|
+| Passage structure → étapes | `src/utils/bacPasAPas.ts` (neuf) | `etapesDe(sujet, exercice)` aplatit `parties[].consignes[]` et rattache à chaque consigne son `attendu` / `documents` / `points` depuis `corriges/`. Clé stable `sujet:exercice:partie:consigne`. |
+| Runner | `src/components/BacPasAPas.tsx` (neuf) | Écrire → comparer → s'auto-évaluer (3/2/0). Un bouton bloqué « اكتب أوّلًا » tant que la réponse est vide : impossible de lire la solution avant d'avoir tenté. |
+| XP | `src/utils/xp.ts`, `src/types.ts` | `etat.bacEtapes` (la qualité **est** l'XP) + `etat.bacExercices` (+6 par exercice). `etatVierge`, export, import et sync suivent sans migration. |
+| Entrées | `Bac.tsx`, `SujetsOfficiels.tsx`, `BaguetteXp.tsx` | carte الباك → sujets → « خطوة بخطوة · N خطوات » par exercice ; le détail d'XP liste « خطوات الباك ». |
+| Erreur douce | `BacPasAPas.tsx` | « ما عرفتش » = 0 XP + une carte au carnet d'erreurs (jamais de rouge, jamais de perte). |
+| Contrat testé | `src/__tests__/bac-pas-a-pas.test.ts` | 4 tests : ordre et unicité des étapes, rattachement du corrigé, 3/2/0 + 6, et « qualité 0 ne retire rien ». |
+
+QA : `tsc` 0 erreur · **44 fichiers / 271 tests** · parcours réel joué dans Chromium (2 étapes,
+une bonne + une « ما عرفتش ») : `bacEtapes {3, 0}`, `bacExercices` posé, `carnet` +1, aucun
+`pageerror`. Captures : `plans/captures/etape-3-bac-*.png`.
+
+---
+
+## 15. Prochaine étape : GO 2 — كويست (la quête du jour, généralisée)
+
+1. **GO 2** : une quête de 3 étapes par unité depuis `QCM_LECONS[].rappel / .synthese / .pieges[0]`,
+   la carte « quête du jour » branchée sur `prochaineAction(etat)` + `composerJoueur()`.
+2. Fin de quête → deux portes : « كمّل الجلسة كاملة » (protocole 46 min, intact) ou retour.
 3. **GO 4** : أنا + « ملفّي » + carte A4 imprimable.
 4. **GO 5** : صيّاد الفخاخ (22 `piegesAr` + pièges QCM, 2 XP + 4 au bout).
 5. **GO 6** : finition, PWA, APK, docs.
-
-Le protocole 46 min reste branché tel quel ; il sera exposé en fin de quête au GO 2
-(« كمّل الجلسة كاملة »).

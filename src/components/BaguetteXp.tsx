@@ -6,6 +6,7 @@ import type { Etat } from '../types';
 import { nb, joursNb } from '../utils/dates';
 import { WILAYA_PAR_CODE } from '../data/wilayas';
 import { VALEURS, joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
+import { etapesFaites } from '../utils/bacPasAPas';
 
 interface Props {
   etat: Etat;
@@ -51,6 +52,10 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
     { label: 'جسور مكتوبة', valeur: `${nb(jalons)} × ${nb(VALEURS.jalon)}` },
     { label: 'ورشات منجزة', valeur: `${nb(ateliers)} × ${nb(VALEURS.atelier)}` },
     { label: 'تدريبات مُجابة', valeur: `${nb(drills)} × ${nb(VALEURS.drill)}` },
+    {
+      label: 'خطوات الباك',
+      valeur: `${nb(etapesFaites(etat))} خطوة`,
+    },
     {
       label: 'تركيز مسجّل',
       valeur: `${nb(Math.floor(etat.minutesTotales / 30))} × ${nb(VALEURS.demiHeure)}`,

@@ -719,6 +719,14 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.1** — **الباك خطوة بخطوة** (`src/components/BacPasAPas.tsx`, `src/utils/bacPasAPas.ts`) :
+  une consigne officielle = une étape. L'élève écrit d'abord (bouton bloqué tant que le champ est
+  vide), découvre ensuite les **عناصر الإجابة** du corrigé, puis s'auto-évalue **3 / 2 / 0** — la
+  qualité vaut exactement l'XP gagné, et l'exercice fini donne **+6**. « ما عرفتش » n'ajoute aucune
+  punition : elle crée une carte dans le carnet d'erreurs. Aucune note sur 20, aucun chrono, aucun
+  rouge. Les étapes vivent dans `etat.bacEtapes` (clé `sujet:exercice:partie:consigne`) et les
+  exercices finis dans `etat.bacExercices` ; `xpDe` les compte, la sauvegarde et la sync suivent
+  sans changement de schéma. Entrée : **الباك → موضوع كامل → « خطوة بخطوة · N خطوات »**.
 - **v0.10.0** — **peau neuve : quatre portes** (intégration de la maquette `maquettes/super-bawssala`,
   architecture A). (1) **Palette** alignée sur la maquette (encre `#183d31`, primaire `#225342`, fond
   `#f6f6ee`, miel `#b07d22` ; texte miel `#79531f` pour rester à 6,8:1) + thème sombre.

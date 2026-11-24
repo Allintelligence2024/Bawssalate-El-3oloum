@@ -20,6 +20,7 @@ import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { SituationSynthese } from './data/syntheses';
+import { SUJETS_OFFICIELS } from './data/sujetsOfficiels';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
@@ -29,6 +30,7 @@ import Exercices from './components/Exercices';
 // Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
 const Bac = lazy(() => import('./components/Bac'));
+const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
 import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
@@ -88,6 +90,7 @@ type Mode =
   | { type: 'schemas' }
   | { type: 'choixSynthese' }
   | { type: 'sujets' }
+  | { type: 'bacPasAPas'; sujetId: string; exercice: number }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -783,6 +786,7 @@ export default function App() {
         <SujetsOfficiels
           onFermer={() => setMode(null)}
           onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
+          onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
           onOuvrirSynthese={(s: SituationSynthese) =>
             setMode({
               type: 'synthese',
@@ -795,6 +799,31 @@ export default function App() {
               retour: { type: 'sujets' },
             })
           }
+        />
+      );
+    }
+    if (mode.type === 'bacPasAPas') {
+      const sujet = SUJETS_OFFICIELS.find((x) => x.id === mode.sujetId);
+      const exercice = sujet?.exercices.find((e) => e.numero === mode.exercice);
+      if (!sujet || !exercice) {
+        setMode(null);
+        return null;
+      }
+      return (
+        <BacPasAPas
+          etat={etat}
+          sujet={sujet}
+          exercice={exercice}
+          onEtape={(cle, qualite) =>
+            setEtat((prev) => ({ ...prev, bacEtapes: { ...(prev.bacEtapes ?? {}), [cle]: qualite } }))
+          }
+          onTermine={(cle) =>
+            setEtat((prev) =>
+              prev.bacExercices?.[cle] ? prev : { ...prev, bacExercices: { ...(prev.bacExercices ?? {}), [cle]: true } },
+            )
+          }
+          onCarnetFaute={onCarnetFaute}
+          onFermer={() => setMode(null)}
         />
       );
     }

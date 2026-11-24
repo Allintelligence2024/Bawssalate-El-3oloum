@@ -6,6 +6,7 @@
 
 import type { Etat } from '../types';
 import { ANNEES_STRUCTUREES, SUJETS_OFFICIELS, frequenceVerbes, frequenceUnites } from '../data/sujetsOfficiels';
+import { etapesFaites } from '../utils/bacPasAPas';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { VERSION_APP } from '../utils/sync';
@@ -55,6 +56,7 @@ export default function Bac({ etat, onOuvrirSujets, onOuvrirExamen, onOuvrirMeth
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([id, n]) => ({ titre: UNITES.find((u) => u.id === id)?.titre ?? id, n }));
+  const etapesBac = etapesFaites(etat);
   const anneeMax = ANNEES_STRUCTUREES[0];
   const anneeMin = ANNEES_STRUCTUREES[ANNEES_STRUCTUREES.length - 1];
 
@@ -71,9 +73,13 @@ export default function Bac({ etat, onOuvrirSujets, onOuvrirExamen, onOuvrirMeth
 
       <section className="mb-5 flex flex-col gap-2">
         <Carte
-          titre="موضوع كامل"
+          titre="موضوع كامل، خطوة بخطوة"
           mention={nb(SUJETS_OFFICIELS.length)}
-          sous="التمارين، السلّم، والتعليمات بأفعالها — مع عناصر الإجابة مخفيّة."
+          sous={
+            etapesBac > 0
+              ? `${nb(etapesBac)} خطوة تقيّمت. اختار موضوعًا، وافتح أيّ تمرين خطوة بخطوة: تكتب، تقارن، وتقيّم روحك.`
+              : "اختار موضوعًا، وافتح أيّ تمرين خطوة بخطوة: تكتب جوابك، تقارن بعناصر الإجابة، وتقيّم روحك — بلا وقت وبلا علامة."
+          }
           action="افتح"
           onClick={onOuvrirSujets}
         />

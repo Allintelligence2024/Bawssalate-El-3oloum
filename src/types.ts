@@ -174,6 +174,10 @@ export interface Etat {
   /** البطاقات (flashcards): صندوق لايتنر لكل بطاقة — مستقلّة عن SM-2 الدروس. */
   flashcards?: Record<string, { boite: 1 | 2 | 3; prochaine: string; vues: number }>;
   schemas?: Record<string, true>; // مخطّطات التسمية المُنهاة (P1.6)
+  // «الباك خطوة بخطوة» (v0.10.1) : تقييم ذاتي لكلّ تعليمة، والقيمة نفسها هي عدد الـXP (3/2/0).
+  // المفتاح: `${sujetId}:${numéroExercice}:${partie}:${consigne}`
+  bacEtapes?: Record<string, 3 | 2 | 0>;
+  bacExercices?: Record<string, true>; // تمارين أُكملت كلّ خطواتها (مفتاح: `${sujetId}:${numéro}`)
 }
 
 export type Objectif = 10 | 14 | 18;
@@ -204,6 +208,8 @@ export function etatVierge(): Etat {
     dateBac: calendrierPour(aujourdhuiIso()).bac,
     seancesComptees: 0,
     ateliers: {},
+    bacEtapes: {},
+    bacExercices: {},
     consentementSync: false, // par défaut: pas d'envoi tant que l'élève n'a pas explicitement dit oui (P0.2/P0.8)
   };
 }

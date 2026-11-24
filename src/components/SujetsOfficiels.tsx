@@ -13,6 +13,8 @@ interface Props {
   onOuvrirSynthese: (s: SituationSynthese) => void;
   onOuvrirRecherche: (q: string) => void;
   onFermer: () => void;
+  /** Ouvre le même exercice en mode « une consigne = une étape ». */
+  onOuvrirPasAPas?: (sujetId: string, exercice: number) => void;
 }
 
 /** ما يتوقّعه المصحّح من كلّ فعل — صياغة قصيرة، لا نسبة ولا سلّم */
@@ -44,7 +46,7 @@ function titreUnite(id: string): string {
   return u ? `الوحدة ${nb(u.numero)} — ${u.titre}` : id;
 }
 
-function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
+function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const corrige = corrigeDe(sujet.id);
@@ -82,6 +84,15 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
           )}
           <p className="mt-1 text-sm font-bold text-forest">{e.theme}</p>
           <p className="mt-0.5 text-xs text-mute">{e.unites.map(titreUnite).join(' · ')}</p>
+          {onOuvrirPasAPas && (
+            <button
+              type="button"
+              className="btn-mini mt-2"
+              onClick={() => onOuvrirPasAPas(sujet.id, e.numero)}
+            >
+              خطوة بخطوة · {nb(e.parties.reduce((s2, p) => s2 + p.consignes.length, 0))} خطوات
+            </button>
+          )}
           <div className="mt-3 space-y-3">
             {e.parties.map((p, i) => (
               <div key={i} className="rounded-xl border border-line bg-paper p-3">
@@ -143,7 +154,7 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche }: { sujet: SujetOff
   );
 }
 
-export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer }: Props) {
+export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, onOuvrirPasAPas }: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
   const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
@@ -184,7 +195,16 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
             نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
             معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لكلّ موضوع عناصر إجابة مختصرة (معاد صياغتها من التصحيح الرسمي) تظهر عند الطلب.
           </p>
-          {sujet ? <Sujet sujet={sujet} onOuvrirSynthese={onOuvrirSynthese} onOuvrirRecherche={onOuvrirRecherche} /> : <p className="text-sm text-mute">لا موضوع.</p>}
+          {sujet ? (
+            <Sujet
+              sujet={sujet}
+              onOuvrirSynthese={onOuvrirSynthese}
+              onOuvrirRecherche={onOuvrirRecherche}
+              onOuvrirPasAPas={onOuvrirPasAPas}
+            />
+          ) : (
+            <p className="text-sm text-mute">لا موضوع.</p>
+          )}
 
           <section className="card p-4">
             <p className="eyebrow">ما يتكرّر في {nb(SUJETS_OFFICIELS.length)} مواضيع مهيكلة</p>
