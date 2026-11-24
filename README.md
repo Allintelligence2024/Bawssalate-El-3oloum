@@ -26,23 +26,26 @@ un écran plein écran noir joue la **vidéo d'ouverture officielle** (`public/o
 
 ## 🧭 Architecture « OPUS » (v0.3)
 
-L'application n'est **pas** un sommaire de cours : c'est un **chemin**. Cinq onglets, un moteur qui
-décide de la prochaine action, et des **portes verrouillées** qui empêchent l'élève de courir avant de
-marcher.
+L'application n'est **pas** un sommaire de cours : c'est un **chemin**. **Quatre onglets**, un moteur
+qui décide de la prochaine action, et des **portes verrouillées** qui empêchent l'élève de courir
+avant de marcher.
 
-### Les 5 onglets
+### Les 4 onglets (décision du 2026-11-24 : architecture « peau neuve »)
 
 | Onglet | Rôle |
 |---|---|
-| **اليوم** | L'écran d'accueil. Une seule carte : la *prochaine action* (Next Best Action), le rythme de la semaine, la position par rapport à la classe, les statistiques du Mُرشد. |
-| **مساري** | Le chemin complet : 11 unités verrouillées séquentiellement, chacune se terminant par un **جسر** (pont-jalon). |
-| **البوصلة** | Le laboratoire de lecture des documents et de rédaction du Bac. Les autres ateliers de méthodologie restent accessibles dans l’onglet et depuis تدريبات. |
-| **تدريبات** | Le banc d'entraînement : 620 items (500 QCM + 120 définitions converties en QCM 4 options) répartis sur 49 axes du programme officiel. **Même verrouillage linéaire que مساري** : les axes d'une unité ne s'ouvrent qu'une fois le جسر de l'unité précédente franchi. À l'entrée : **trois portes (icônes) — أسئلة QCM, ورشات الخرائط الذهنية** (les 4 ateliers) **et تمارين المنهجية** (ouvre `Methodologie` directement sur les 4 مستويات de تدريب, fermeture → retour à تدريبات). |
-| **أنا** | Le journal, les notes, les statistiques, le bouton de réinitialisation. |
+| **مساري** | Le chemin complet : 11 unités verrouillées séquentiellement, chacune se terminant par un **جسر** (pont-jalon). Une carte = une action, jauge d'avancement (jamais de pourcentage affiché). |
+| **كويست** | L'écran d'accueil et la *quête du jour* : la prochaine action (Next Best Action), le rythme de la semaine, la position par rapport à la classe, les statistiques du مُرشد. Les **تدريبات** (620 items, 500 QCM + 120 définitions, 49 axes) s'ouvrent depuis ici, en sous-écran avec un bouton retour. |
+| **الباك** | Tout ce qui concerne l'épreuve : les **30 sujets** 2013→2026, l'**امتحان تجريبي**, la **منهجية** (laboratoire de lecture des documents, 4 ateliers) et les **6 schémas à légender**. Les fréquences de verbes et d'unités y sont calculées sur les sujets réels. |
+| **أنا** | Le journal, les notes, les statistiques, la sauvegarde et la réinitialisation. |
+
+Les anciens onglets **البوصلة** et **تدريبات** ne sont plus des portes : ce sont des sous-écrans de
+**الباك** et de **كويست**, avec une barre de retour. La barre du bas n'allume que quatre entrées
+(`.onglets` / `.onglet`, cible ≥ 54 px) ; un sous-écran allume son parent.
 
 ### 🧭 La rubrique البوصلة (`Boussole.tsx`, `Methodologie.tsx`)
 
-Le troisième onglet, **البوصلة**, affiche directement **مختبر الفضول** dans l’application. Les anciens écrans Miftah sont remplacés ; le repère **فعل ← دليل ← جواب ← فحص** reste explicité dans le laboratoire. Des listes de relecture facultatives précèdent les modèles, sans score ni blocage du travail sur papier. Dans les exercices de l'unité 1, l'aide ouvre un exemple de protéines en rappelant qu'il ne résout pas l'exercice ; la réponse et le focus sont conservés au retour. Le laboratoire autonome `/boussole/index.html` reste accessible sans compte. Voir [le module](modules/boussole/README.md).
+Ouverte depuis **الباك** (sous-écran, retour → الباك), elle affiche directement **مختبر الفضول** dans l’application. Les anciens écrans Miftah sont remplacés ; le repère **فعل ← دليل ← جواب ← فحص** reste explicité dans le laboratoire. Des listes de relecture facultatives précèdent les modèles, sans score ni blocage du travail sur papier. Dans les exercices de l'unité 1, l'aide ouvre un exemple de protéines en rappelant qu'il ne résout pas l'exercice ; la réponse et le focus sont conservés au retour. Le laboratoire autonome `/boussole/index.html` reste accessible sans compte. Voir [le module](modules/boussole/README.md).
 
 **Données et limites.** Les brouillons du laboratoire courant sont inclus dans la sauvegarde JSON et dans la réinitialisation locales ; une ancienne sauvegarde sans ce champ ne les remplace pas. Ils ne sont pas liés au compte, restent lisibles sur un navigateur partagé et ne sont pas effacés par la déconnexion. Un export complet est refusé si la progression, le carnet ou les statistiques nécessaires sont illisibles. La sauvegarde et la réinitialisation n'incluent ni les carnets des anciens laboratoires autonomes, ni les fichiers téléchargés ou données serveur. Fermer les autres onglets avant d'importer ou d'effacer : les contrôles optimistes signalent certains conflits et préservent les brouillons temporaires, mais ne garantissent pas l'atomicité ni la fusion des modifications concurrentes. Le laboratoire ne produit ni score ni mise à jour de `kafaa`/SM-2. Une publication des extraits et PDF intégrés exige une **décision sur les droits** et une **relecture scientifique** ; elles ne sont pas établies par les tests. Voir l'[inventaire des ressources](plans/sources/INVENTAIRE-BOUSSOLE-2026-11-21.md) et le [protocole QA](plans/QA-BOUSSOLE-2026-11-21.md).
 
@@ -380,7 +383,7 @@ app-svt-bac/
 ├── src/
 │   ├── main.tsx                  # racine + enregistrement du SW
 │   ├── index.css                 # Tailwind + base RTL
-│   ├── App.tsx                   # 5 onglets : اليوم / مساري / البوصلة / تدريبات / أنا
+│   ├── App.tsx                   # 4 onglets : مساري / كويست / الباك / أنا (+ sous-écrans)
 │   ├── types.ts                  # État (jalons, notes, journal, séances, bonus, drills)
 │   ├── data/
 │   │   ├── lessonGoldSummaries.ts # 58 résumés d'or (source de vérité du contenu)
@@ -716,6 +719,17 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.0** — **peau neuve : quatre portes** (intégration de la maquette `maquettes/super-bawssala`,
+  architecture A). (1) **Palette** alignée sur la maquette (encre `#183d31`, primaire `#225342`, fond
+  `#f6f6ee`, miel `#b07d22` ; texte miel `#79531f` pour rester à 6,8:1) + thème sombre.
+  (2) **Briques de composants** `.carte` `.mention` `.rangee` `.puce` `.btn--primaire` `.btn-mini`
+  `.jauge` `.onglets` `.onglet`, portées depuis `css/components.css` sans toucher aux styles existants.
+  (3) **Quatre onglets** : مساري · كويست · الباك · أنا ; تدريبات et المنهجية deviennent des
+  sous-écrans avec barre de retour. (4) **Nouvel écran الباك** (`src/components/Bac.tsx`) :
+  sujets, examen blanc, méthodologie, schémas + fréquences de verbes et d'unités calculées sur les
+  30 sujets. (5) **مساري re-skinnée** : une carte = une action, jauge, badges, pont pleine largeur —
+  logique de verrouillage inchangée. (6) **Atelier de design** `?design=1` (dev) et son test
+  `onglets-ui.test.tsx` qui verrouille la règle des quatre portes. `tsc` 0 erreur, **267 tests**.
 - **v0.9.3** — **polish UI + audit de contraste WCAG** : (1) **bouton de retour RTL** — `IcoRetour`
   corrigé (chevron pointant à **droite** `M9 5l7 7-7 7`, vérifié au pixel x=744/800 sur émulateur),
   présent sur chaque page plein écran (Methodologie, LecteurLecon, ExamBlanc, ateliers, mindmap) ;

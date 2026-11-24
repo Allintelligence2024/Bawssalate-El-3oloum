@@ -1,4 +1,8 @@
 // مساري — الطريق الكامل مقفلًا حتى يُنهى ما قبله. لا وصول مباشر للدروس المتقدّمة.
+//
+// Habillage « maquette » (étape 1) : une carte = une action, jauge au lieu d'un
+// pourcentage, badges en `.mention`, et le pont de l'unité en carte pleine largeur.
+// La logique (verrouillage, pont, priorités) vient de `moteur.ts` — inchangée.
 
 import {
   CHEMIN,
@@ -10,7 +14,7 @@ import {
   type ItemChemin,
 } from '../data/programme';
 import { itemFait, itemVerrouille, leconsUniteFaites } from '../utils/moteur';
-import { nb, compteLecons } from '../utils/dates';
+import { nb } from '../utils/dates';
 import type { Etat } from '../types';
 import { ACCENTS } from '../utils/accents';
 import { IcoVerifie, IcoVerrou } from './Icones';
@@ -36,120 +40,143 @@ function itemsUnite(uniteId: string): ItemChemin[] {
 
 export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindmap,
   onOuvrirRecherche }: Props) {
+  const faits = CHEMIN.filter((i) => itemFait(etat, i)).length;
+  const pourcent = Math.round((faits / Math.max(CHEMIN.length, 1)) * 100);
+
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
-      <header className="mb-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="eyebrow">الطريق</p>
-            <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">مساري</h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {onOuvrirRecherche && (
-              <button
-                onClick={onOuvrirRecherche}
-                className="flex items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 py-3 text-xs font-bold text-forest transition-colors hover:border-sage hover:bg-sage-soft"
-                aria-label="بحث في الدروس"
-              >
-                <span aria-hidden>🔎</span>
-                بحث
-              </button>
-            )}
-            <button
-              onClick={onOuvrirMindmap}
-              className="flex items-center gap-1.5 rounded-2xl border border-line bg-paper px-3.5 py-3 text-xs font-bold text-forest transition-colors hover:border-sage hover:bg-sage-soft"
-              aria-label="فتح الخريطة الذهنية"
-            >
-              <span aria-hidden>🗺️</span>
-              الخريطة الذهنية
-            </button>
-          </div>
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-mute">
-          3 مجالات، 11 وحدة، 58 درسًا. كل بند مقفل حتى تنهي ما قبله — هذه الضمانة الوحيدة لعدم
-          تراكم الثغرات.
+    <div dir="rtl" className="mx-auto max-w-3xl px-4 pb-28 pt-6">
+      <header className="mb-4">
+        <p className="oeil">الطريق · 3 مجالات</p>
+        <h1 className="titre-1 mt-1">مساري</h1>
+        <p className="petit doux mt-1">
+          11 وحدة، {nb(CHEMIN.length)} بنية. كلّ بند مقفل حتى تنهي اللي قبله — هذه الضمانة
+          الوحيدة لعدم تراكم الثغرات.
         </p>
+        <div className="rangee rangee--galerie mt-3">
+          {onOuvrirRecherche && (
+            <button type="button" className="btn-mini" onClick={onOuvrirRecherche}>
+              <span aria-hidden="true">🔎</span> بحث
+            </button>
+          )}
+          <button type="button" className="btn-mini" onClick={onOuvrirMindmap}>
+            <span aria-hidden="true">🗺️</span> الخريطة الذهنية
+          </button>
+        </div>
       </header>
+
+      {/* Où j'en suis — une seule ligne, jamais un pourcentage affiché */}
+      <section className="carte mb-4">
+        <div className="rangee rangee--entre mb-2">
+          <span className="oeil">تقدّمي في الطريق</span>
+          <span className="mention mention--or tnum">
+            {nb(faits)} من {nb(CHEMIN.length)}
+          </span>
+        </div>
+        <div
+          className="jauge"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={CHEMIN.length}
+          aria-valuenow={faits}
+          aria-label="تقدّمي في الطريق"
+        >
+          <div className="jauge__r" style={{ width: `${pourcent}%` }} />
+        </div>
+        <p className="petit doux mt-2">بنية واحدة في كلّ حصّة — الباقي يجي وحدو.</p>
+      </section>
+
       <MascotteKunz
         compact
         message="أهلاً أيها المستكشف! افتح الوحدات بالتدريج: كل درس تنهيه يفتح لك جزءًا جديدًا من خريطة بوصلة العلوم."
       />
 
-      <div className="space-y-8">
+      <div className="mt-5 flex flex-col gap-6">
         {DOMAINES.map((d) => {
           const accent = ACCENTS[d.accent] ?? ACCENTS.forest;
           return (
             <section key={d.id}>
-              <div className={`mb-3 flex items-center gap-3 border-r-4 ${accent.border} pr-3`}>
+              <div className={`mb-3 flex items-center gap-2 border-r-4 ${accent.border} pr-3`}>
                 <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
                 <h2 className="font-naskh text-lg font-bold leading-snug">{d.titre}</h2>
               </div>
 
-              <div className="space-y-4">
+              <div className="flex flex-col gap-2.5">
                 {d.unites.map((uniteId) => {
                   const u = UNITE_PAR_ID[uniteId];
                   const items = itemsUnite(uniteId);
                   const premierVerrouille = itemVerrouille(etat, items[0]);
-                  const jalonVerrouille = itemVerrouille(etat, {
-                    type: 'jalon',
-                    uniteId,
-                  });
+                  const jalonVerrouille = itemVerrouille(etat, { type: 'jalon', uniteId });
                   const faites = leconsUniteFaites(etat, uniteId);
+                  const total = u.lessonIds.length;
                   const jalonFait = itemFait(etat, { type: 'jalon', uniteId });
-                  const uniteActuelle = !premierVerrouille && faites < u.lessonIds.length;
+                  const uniteActuelle = !premierVerrouille && faites < total;
+                  const pct = Math.round((faites / Math.max(total, 1)) * 100);
 
                   return (
                     <div
                       key={uniteId}
-                      className={`card overflow-hidden ${
-                        uniteActuelle ? 'ring-2 ring-forest/30' : ''
-                      }`}
+                      className={`carte ${uniteActuelle ? 'ring-2 ring-primary/25' : ''}`}
                     >
-                      {/* رأس الوحدة */}
+                      {/* رأس الوحدة — نقرة واحدة تفتح جسر الوحدة */}
                       <button
+                        type="button"
                         onClick={() => onVoirUnite(uniteId)}
-                        className="flex w-full items-center gap-3 p-4 text-right transition-colors hover:bg-sage-soft/50"
+                        className="carte__ligne w-full text-right"
                       >
                         <span
-                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-black ${
+                          className={`grid h-9 w-9 flex-none place-items-center rounded-xl text-sm font-black tnum ${
                             jalonFait
-                              ? 'bg-forest text-paper'
+                              ? 'bg-primary text-bg'
                               : uniteActuelle
-                                ? 'bg-sage text-forest-deep'
+                                ? 'bg-primary-soft text-primary'
                                 : premierVerrouille
-                                  ? 'bg-cream text-mute'
-                                  : 'bg-gold-soft text-forest-deep'
+                                  ? 'bg-bg text-mute border border-line'
+                                  : 'bg-gold-soft text-honey-ink'
                           }`}
+                          aria-hidden="true"
                         >
                           {jalonFait ? '✓' : nb(u.numero)}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-bold">{u.titre}</h3>
-                          <p className="mt-0.5 text-[11px] text-mute">
-                            {compteLecons(faites)} من {compteLecons(u.lessonIds.length)} · {u.fenetreAr}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
+
+                        <span className="carte__texte mx-2 flex-1">
+                          <span className="carte__titre block">{u.titre}</span>
+                          <span className="petit doux block">
+                            {nb(faites)} من {nb(total)} دروس · {u.fenetreAr}
+                          </span>
+                          {!premierVerrouille && (
+                            <span className="jauge mt-2 block" aria-hidden="true">
+                              <span className="jauge__r block" style={{ width: `${pct}%` }} />
+                            </span>
+                          )}
+                        </span>
+
+                        <span className="flex flex-none items-center gap-1.5">
                           <span
-                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary"
+                            className="mention mention--or"
                             title="ثقل الوحدة في البكالوريا (1-5)"
                           >
                             {u.poidsBac}/5
                           </span>
-                          {premierVerrouille && (
-                            <span className="grid h-6 w-6 shrink-0 place-items-center text-mute">
-                              <span className="block h-4 w-4">
-                                <IcoVerrou />
-                              </span>
+                          {premierVerrouille ? (
+                            <span className="block h-4 w-4 text-mute" aria-label="مقفلة">
+                              <IcoVerrou />
+                            </span>
+                          ) : jalonFait ? (
+                            <span className="block h-4 w-4 text-primary" aria-label="منجزة">
+                              <IcoVerifie />
+                            </span>
+                          ) : (
+                            <span className="block h-4 w-4 text-mute" aria-hidden="true">
+                              <IcoVerrou />
                             </span>
                           )}
-                        </div>
+                        </span>
                       </button>
 
                       {/* قائمة الدروس — تظهر إن فُتحت الوحدة */}
                       {!premierVerrouille && (
-                        <div className="border-t border-line px-3 pb-3">
-                          <ul className="divide-y divide-line/70">
+                        <div className="mt-2 border-t border-line pt-1">
+                          <ul className="flex flex-col">
                             {items.map((item) => {
                               const fait = itemFait(etat, item);
                               const enCours =
@@ -159,47 +186,44 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
                               return (
                                 <li key={cleItem(item)}>
                                   <button
+                                    type="button"
                                     onClick={() => !verrouille && onOuvrirItem(item)}
                                     disabled={verrouille}
-                                    className="flex w-full items-center gap-3 py-2.5 pr-1 text-right transition-colors hover:bg-sage-soft/40 disabled:opacity-60"
+                                    className="rangee w-full py-2 text-right transition-colors hover:bg-sage-soft/60 disabled:opacity-60"
                                   >
-                                    <span className="grid h-6 w-6 shrink-0 place-items-center">
+                                    <span className="grid h-5 w-5 flex-none place-items-center">
                                       {fait ? (
-                                        <span className="block h-4 w-4 text-forest">
+                                        <span className="block h-4 w-4 text-primary">
                                           <IcoVerifie />
                                         </span>
                                       ) : enCours ? (
-                                        <span className="h-3.5 w-3.5 rounded-full bg-gold" />
-                                                      ) : verrouille ? (
-                                                        <span className="block h-3.5 w-3.5 text-mute">
-                                                          <IcoVerrou />
-                                                        </span>
-                                                      ) : (
-                                                        <span className="h-3.5 w-3.5 rounded-full border-2 border-line" />
-                                                      )}
+                                        <span className="block h-2.5 w-2.5 rounded-full bg-gold" />
+                                      ) : verrouille ? (
+                                        <span className="block h-3.5 w-3.5 text-mute">
+                                          <IcoVerrou />
+                                        </span>
+                                      ) : (
+                                        <span className="block h-3 w-3 rounded-full border-2 border-line" />
+                                      )}
                                     </span>
                                     <span
                                       className={`flex-1 text-sm ${
                                         fait
-                                          ? 'font-semibold text-mute line-through decoration-line'
+                                          ? 'font-semibold text-mute'
                                           : enCours
-                                            ? 'font-bold text-forest'
+                                            ? 'font-bold text-primary'
                                             : 'font-medium text-ink-soft'
                                       }`}
                                     >
                                       {titreItem(item)}
                                     </span>
-                                    {enCours && (
-                                      <span className="rounded-full bg-gold-soft px-2 py-0.5 text-[10px] font-bold text-forest-deep">
-                                        متابعة
-                                      </span>
-                                    )}
-                                    {item.type === 'lecon' && prioriteLecon(item.id) === 1 && !fait && (
+                                    {enCours && <span className="mention mention--or">متابعة</span>}
+                                    {item.type === 'lecon' && prioriteLecon(item.id) === 1 && !fait && !verrouille && (
                                       <span
-                                        className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-mute"
+                                        className="mention"
                                         title="ظهر هذا الموضوع في معظم مواضيع البكالوريا السابقة"
                                       >
-                                        يتكرّر في البكالوريا
+                                        يتكرّر
                                       </span>
                                     )}
                                   </button>
@@ -208,52 +232,47 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
                             })}
                           </ul>
 
-                          {/* جسر الوحدة */}
-                          <div className="mt-3">
-                            <button
-                              onClick={() => !jalonVerrouille && onVoirUnite(uniteId)}
-                              disabled={jalonVerrouille}
-                              className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-right transition-colors disabled:opacity-60 ${
-                                jalonFait
-                                  ? 'border-sage bg-sage-soft'
+                          {/* جسر الوحدة — carte pleine largeur, une seule action */}
+                          <button
+                            type="button"
+                            onClick={() => !jalonVerrouille && onVoirUnite(uniteId)}
+                            disabled={jalonVerrouille}
+                            className={`carte__ligne mt-2 w-full rounded-xl border p-2.5 text-right transition-colors disabled:opacity-60 ${
+                              jalonFait
+                                ? 'border-primary/30 bg-primary-soft'
+                                : jalonVerrouille
+                                  ? 'border-line bg-bg'
+                                  : 'border-honey-line bg-honey-soft hover:bg-honey-soft/70'
+                            }`}
+                          >
+                            <span className="text-base" aria-hidden="true">🌉</span>
+                            <span className="carte__texte mx-2 flex-1">
+                              <span className="block text-sm font-bold">
+                                جسر الوحدة {nb(u.numero)}
+                              </span>
+                              <span className="petit doux block">
+                                {jalonFait
+                                  ? 'أَجَبْتَ عن سؤال الوحدة كتابةً من ذاكرتك.'
                                   : jalonVerrouille
-                                    ? 'border-line bg-cream/60'
-                                    : 'border-gold-soft bg-gold-soft/50 hover:bg-gold-soft'
-                              }`}
-                            >
-                              <span className="text-lg">🌉</span>
-                              <div className="flex-1">
-                                <p className="text-sm font-bold">
-                                  جسر الوحدة {nb(u.numero)}
-                                </p>
-                                <p className="mt-0.5 text-[11px] leading-relaxed text-mute">
-                                  {jalonFait
-                                    ? 'أَجَبْتَ عن سؤال الوحدة كتابةً من ذاكرتك.'
-                                    : jalonVerrouille
-                                      ? 'يُفتح بعد إنهاء كل دروس الوحدة.'
-                                      : 'سؤال واحد، إجابة مكتوبة من الذاكرة — هذا هو الجسر.'}
-                                </p>
-                              </div>
-                              {jalonFait && (
-                                <span className="block h-5 w-5 text-forest">
-                                  <IcoVerifie />
-                                </span>
-                              )}
-                            </button>
-                          </div>
+                                    ? 'يُفتح بعد إنهاء كل دروس الوحدة.'
+                                    : 'سؤال واحد، إجابة مكتوبة من الذاكرة — هذا هو الجسر.'}
+                              </span>
+                            </span>
+                            {jalonFait && (
+                              <span className="block h-5 w-5 flex-none text-primary">
+                                <IcoVerifie />
+                              </span>
+                            )}
+                          </button>
                         </div>
                       )}
 
                       {premierVerrouille && (
-                        <div className="border-t border-line px-4 py-3">
-                          <p className="text-[11px] leading-relaxed text-mute">
-                            {u.numero === 1
-                              ? 'يُفتح هذا القسم مع بداية الطريق.'
-                              : `يُفتح هذا القسم بعد إنهاء جسر الوحدة ${nb(
-                                  u.numero - 1
-                                )}.`}
-                          </p>
-                        </div>
+                        <p className="petit doux mt-2 border-t border-line pt-2">
+                          {u.numero === 1
+                            ? 'يُفتح هذا القسم مع بداية الطريق.'
+                            : `يُفتح هذا القسم بعد إنهاء جسر الوحدة ${nb(u.numero - 1)}.`}
+                        </p>
                       )}
                     </div>
                   );
@@ -264,8 +283,8 @@ export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindma
         })}
       </div>
 
-      <p className="mt-8 text-center text-xs leading-relaxed text-mute">
-        الطريق وحده يصل بك. {nb(CHEMIN.length)} بنية، واحدة في كل حصّة.
+      <p className="petit doux mt-8 text-center">
+        الطريق وحده يصل بك. {nb(CHEMIN.length)} بنية، واحدة في كلّ حصّة.
       </p>
     </div>
   );

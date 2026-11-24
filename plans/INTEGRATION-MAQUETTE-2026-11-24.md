@@ -293,10 +293,34 @@ npx vite --host 0.0.0.0 --port 3000
 
 ---
 
-## 13. Prochaine étape : GO 1 — مساري
+## 13. GO 1 — les quatre portes + مساري (FAIT, v0.10.0)
 
-1. Remplacer le shell (en-tête + `.pied` à 4 onglets, éléments de 44 px).
-2. Re-skinner `Masari.tsx` : une carte = une action (`.carte__ligne`), badge d'unité,
-   `·` + `fenetreAr`, `poidsBac` en `.mention--or`, pont 🌉 en carte pleine largeur.
-3. Brancher l'état réel (fait / en cours / verrouillé) sur `.mention`, sans changer `moteur.ts`.
-4. Tests : 266 verts + captures 320/390 px.
+| Livrable | Fichier | Détail |
+|---|---|---|
+| Barre à 4 onglets | `src/App.tsx` + `.onglets`/`.onglet` | مساري · كويست · الباك · أنا. `aria-current="page"`, cible 54 px, fond sauge + filet miel. |
+| Sous-écrans | `src/App.tsx` | `exercices` et `methodo` restent des valeurs d'état mais sortent de la barre ; `ongletParent()` allume كويست / الباك. `BarreRetour` rend une sortie explicite. |
+| Écran الباك | `src/components/Bac.tsx` (neuf) | sujets (30), examen blanc, méthodologie, schémas + « 3 خطوات » + fréquences réelles des verbes (`frequenceVerbes`) et des unités (`frequenceUnites`). |
+| مساري re-skinnée | `src/components/Masari.tsx` | en-tête `.oeil`/`.titre-1`, carte de progression avec `.jauge` (« 0 من 69 »), cartes d'unité `.carte` + badge numéro + `poidsBac` + jauge, pont 🌉 pleine largeur, états fait/en cours/verrouillé en `.mention`. **Logique `moteur.ts` intacte.** |
+| Contrat testé | `src/__tests__/onglets-ui.test.tsx` | vérifie qu'il y a **exactement** 4 boutons, dans cet ordre, que كويست est actif par défaut et que الباك s'ouvre (preuve que la décision ne se perdra pas). |
+| Divers | `src/utils/sync.ts`, `README.md` | `VERSION_APP` 0.10.0 ; README passe à 4 onglets + entrée de changelog v0.10.0. |
+
+QA : `tsc -b` 0 erreur · **43 fichiers / 267 tests** · captures 390 px des 4 portes
+(`plans/captures/etape-1-*.png`) · aucun `pageerror`.
+
+Deux détails corrigés au passage : le défilement ne se réinitialisait pas au changement d'onglet
+(on héritait de la position du parent), et la mention « يتكرّر » s'affichait sur des leçons
+verrouillées.
+
+---
+
+## 14. Prochaine étape : GO 3 — le الباك pas-à-pas (ou GO 2 — كويست)
+
+1. **GO 3** : lire un sujet `exercices[].parties[].consignes[]` comme une suite d'étapes
+   (1 consigne = 1 étape), réponse écrite puis comparaison avec `corriges/`, XP 3/2/0 + 6.
+2. **GO 2** : généraliser la quête aux 11 unités depuis `QCM_LECONS[].rappel/.synthese/.pieges`.
+3. **GO 4** : أنا + « ملفّي » + carte A4 imprimable.
+4. **GO 5** : صيّاد الفخاخ (22 `piegesAr` + pièges QCM, 2 XP + 4 au bout).
+5. **GO 6** : finition, PWA, APK, docs.
+
+Le protocole 46 min reste branché tel quel ; il sera exposé en fin de quête au GO 2
+(« كمّل الجلسة كاملة »).
