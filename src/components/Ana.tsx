@@ -56,6 +56,8 @@ interface Props {
   onRappel: (r: { actif: boolean; heure: string }) => void;
   onAllerExercices: () => void;
   onOuvrirConfidentialite: () => void;
+  /** « ملفّي » : la fiche A4 imprimable. */
+  onOuvrirFiche?: () => void;
 }
 
 /** Export JSON unifié : sur Android/iOS le WebView Capacitor n'a AUCUN DownloadListener
@@ -146,6 +148,7 @@ export default function Ana({
   onRappel,
   onAllerExercices,
   onOuvrirConfidentialite,
+  onOuvrirFiche,
 }: Props) {
   const [confirme, setConfirme] = useState(false);
   const carnetAvantEffacement = useRef<string | null>(null);
@@ -227,10 +230,29 @@ export default function Ana({
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
-      <header className="mb-6">
-        <p className="eyebrow">الكرّاسة</p>
-        <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">أنا</h1>
+      <header className="mb-4">
+        <p className="oeil">الكرّاسة · هويتي</p>
+        <h1 className="titre-1 mt-1">أنا</h1>
+        <p className="petit doux mt-1">
+          كلّ ما يخصّك في بلاصة واحدة: الهوية، التقدّم، الأخطاء، والنسخة الاحتياطية.
+        </p>
       </header>
+
+      {onOuvrirFiche && (
+        <section className="carte mb-4">
+          <div className="rangee rangee--entre">
+            <div className="carte__texte">
+              <p className="carte__titre">ملفّي — ورقة A4</p>
+              <p className="petit doux mt-1">
+                ورقة واحدة فيها تقدّمك وكفاءاتك وما يستحقّ المراجعة — تعلّقها ولا تعطيها لأستاذك.
+              </p>
+            </div>
+            <button type="button" className="btn-mini" onClick={onOuvrirFiche}>
+              افتح
+            </button>
+          </div>
+        </section>
+      )}
       <MascotteKunz
         compact
         tone="paper"

@@ -719,6 +719,14 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.10.3** — **« ملفّي » : la fiche A4 imprimable** (`src/components/FicheEleve.tsx`). Depuis
+  **أنا**, une carte ouvre une feuille A4 qui rassemble ce que l'app sait déjà : identité (nom,
+  wilaya), niveau et XP, série de jours, compte à rebours du Bac, progression (leçons / جسور /
+  تدريبات), cartes kafaa (dont les fragiles), révisions dues, étapes et exercices du Bac, activité
+  des 7 derniers jours, puis une ligne de signature. **Aucune note, aucun pourcentage** : le pied
+  de page le dit (« لا علامة على 20 »). Impression propre (`@media print` : barre d'action et
+  navigation masquées, `@page A4`, cartes non coupées). L'en-tête d'**أنا** passe à la langue
+  visuelle de la maquette (`.oeil` + `.titre-1`).
 - **v0.10.2** — **كويست اليوم : la porte d'entrée** (`src/components/Kouest.tsx`,
   `src/utils/kouest.ts`). Sur l'onglet **كويست**, une carte propose une quête de **3 minutes**
   (3 étapes : `rappel` → `synthese` → `piege`) tirée du QCM réel de la leçon que le moteur

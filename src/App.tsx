@@ -32,6 +32,7 @@ const Methodologie = lazy(() => import('./components/Methodologie'));
 const Bac = lazy(() => import('./components/Bac'));
 const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
 const Kouest = lazy(() => import('./components/Kouest'));
+const FicheEleve = lazy(() => import('./components/FicheEleve'));
 import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
@@ -93,6 +94,7 @@ type Mode =
   | { type: 'sujets' }
   | { type: 'bacPasAPas'; sujetId: string; exercice: number }
   | { type: 'kouest'; lessonId: string }
+  | { type: 'fiche' }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
@@ -804,6 +806,9 @@ export default function App() {
         />
       );
     }
+    if (mode.type === 'fiche') {
+      return <FicheEleve etat={etat} onFermer={() => setMode(null)} />;
+    }
     if (mode.type === 'kouest') {
       return (
         <Kouest
@@ -1269,6 +1274,7 @@ export default function App() {
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
           onAllerExercices={() => setOnglet('exercices')}
           onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
+          onOuvrirFiche={() => setMode({ type: 'fiche' })}
         />
         </Suspense>
       )}

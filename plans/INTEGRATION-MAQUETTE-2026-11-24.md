@@ -347,9 +347,31 @@ même leçon, aucun `pageerror`. Captures : `plans/captures/etape-2-kouest-*.png
 
 ---
 
-## 16. Prochaine étape : GO 4 — أنا + « ملفّي »
+## 16. GO 4 — أنا + « ملفّي » (FAIT, v0.10.3)
 
-1. **GO 4** : re-skin de `Ana.tsx` (carte identité, kafaa 8 compétences, révisions SRS, sauvegarde)
-   + carte A4 imprimable « ملفّي » + drapeaux depuis `journal`/`rythmeSemaine`.
-2. **GO 5** : صيّاد الفخاخ (22 `piegesAr` + pièges QCM, 2 XP + 4 au bout).
-3. **GO 6** : finition, PWA, APK, docs, `README` de bout en bout.
+| Livrable | Fichier | Détail |
+|---|---|---|
+| Fiche A4 | `src/components/FicheEleve.tsx` (neuf) | identité, niveau/XP, série, compte à rebours du Bac, progression (leçons / جسور / تدريبات), kafaa (dont fragiles), révisions dues (`revisionsDues`), étapes + exercices du Bac (`bacPasAPas`), activité des 7 derniers jours, ligne de signature. |
+| Impression | `src/index.css` | `@media print` : `@page A4` 12 mm, `nav` et `.sans-impression` masqués, `.fiche-a4` sans bord/ombre, `.carte` en `break-inside: avoid`. |
+| Entrée | `src/components/Ana.tsx` | en-tête `.oeil` / `.titre-1` + carte « ملفّي — ورقة A4 » avec bouton *افتح*. |
+
+Deux écarts assumés par rapport au plan :
+
+1. **Pas de grille « 8 compétences »** : le modèle de données de l'app n'a pas cette grille
+   (les cartes kafaa sont indexées par `methodo{n}` / `synthese{id}`). La fiche affiche donc ce qui
+   existe vraiment — nombre de cartes, cartes fragiles — plutôt qu'inventer huit colonnes.
+2. **Le re-skin complet d'`Ana.tsx` n'est pas fait** : seuls l'en-tête et l'entrée « ملفّي » sont
+   passés à la nouvelle langue visuelle. Les 723 lignes de sections (compte, sauvegarde,
+   réinitialisation, consentement) restent en place et fonctionnelles ; elles seront habillées au
+   GO 6, une fois toutes les mécaniques en place.
+
+QA : `tsc` 0 erreur · **46 fichiers / 280 tests** · fiche rendue à l'écran et en `emulateMedia('print')`
+(captures `plans/captures/etape-4-*.png`), aucun `pageerror`.
+
+---
+
+## 17. Prochaine étape : GO 5 — صيّاد الفخاخ
+
+1. **GO 5** : chasse aux pièges depuis `UNITES[].piegesAr` (22) + `QCM_LECONS[].pieges` ;
+   2 XP par piège démasqué, +4 au bout de la série, aucune perte.
+2. **GO 6** : finition (re-skin des sections d'أنا, en-tête du shell), PWA, APK, docs.
