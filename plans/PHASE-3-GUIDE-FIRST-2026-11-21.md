@@ -121,7 +121,8 @@ mettre à jour au prochain build APK, ce n'est pas un fichier suivi par cette ph
 | `src/utils/__tests__/seance-comptage.test.ts` | **nouveau** (4 tests) |
 | `src/utils/__tests__/son-vibrations.test.ts` | **nouveau** (3 tests) |
 | `src/__tests__/premier-ecran-ui.test.tsx` | assertion « الجلسة الكاملة » n'est plus un bouton, fixture sans la prop supprimée |
-| `modules/boussole/tests/integration.cjs`, `recovery.cjs` | les parcours export / import / effacement ouvrent d'abord le volet « إعداداتي » (les cartes repliées sortent de l'arbre d'accessibilité) |
+| `modules/boussole/tests/integration.cjs`, `recovery.cjs` | les parcours export / import / effacement ouvrent d'abord le volet « إعداداتي » (les cartes repliées sortent de l'arbre d'accessibilité) ; le test d'effacement vérifie le **retour au mode invité** au lieu de l'écran « أنشئ حسابك » |
+| `modules/boussole/tests/account.cjs` | les deux scénarios partent du mode invité (plus de péage) : création demandée depuis la fiche XP, « سجّل الدخول » atteint par une déconnexion explicite |
 
 ---
 
@@ -135,6 +136,7 @@ mettre à jour au prochain build APK, ce n'est pas un fichier suivi par cette ph
 | `node scripts/verifier-hors-ligne.mjs` | OK — 103 fichiers interrogés, 6 689 258 o servis vs 6 674 461 o déclarés, **0 incohérence**, 0 échec HTTP |
 | `node scripts/sync-metrics.mjs --check` | aucune dérive (README régénéré : 80 fichiers de tests, coquille **2,18 Mio**) |
 | `vite preview --port 4176` + `curl` | `/`, `/guide-sombre.webp`, `/manifest.webmanifest` → **200** (serveur arrêté ensuite) |
+| CI GitHub Actions (PR #13, `33b377e`) | **Vérifications ✓** — les trois scénarios Playwright (`integration`, `recovery`, `account`) passent sur le build local, Vercel ✓ |
 
 Coquille hors-ligne : **2,18 Mio** (7 entrées) — +0,01 Mio vs phase 2 (CSS du mouvement réduit,
 bascule de thème et chunk de fierté).
@@ -159,6 +161,21 @@ npm run dev        # http://localhost:3000
 5. **Vibration** : sur mobile, une bonne réponse vibre 15 ms ; une erreur ne vibre pas.
 
 ---
+
+## 5 bis. Ce que la CI a appris (et qui a été corrigé)
+
+La première poussée a fait tomber les scénarios Playwright sur trois points qui étaient tous des
+**contrats devenus faux**, pas des bugs d'affichage :
+
+1. « تصدير نسختي » et « مسح كل بياناتي » ne sont plus dans le premier écran d'« أنا » → les tests
+   ouvrent le volet `إعداداتي` (ajout d'un helper `volet()`).
+2. Après un effacement complet, l'app retombe en **mode invité** : le test exigeait encore
+   « أنشئ حسابك » et zéro navigation — c'était le péage supprimé en phase 2.
+3. `account.cjs` supposait qu'une installation neuve ouvre l'écran de création et qu'un compte
+   enregistré verrouille le démarrage : les deux chemins passent maintenant par une demande
+   explicite (fiche XP, ou déconnexion).
+
+Ces trois corrections sont dans les commits `9e6ab96`, `04e48aa` et `33b377e`.
 
 ## 6. Reste ouvert
 
