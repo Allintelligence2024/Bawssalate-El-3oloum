@@ -128,3 +128,31 @@ Les deux fonctionnent, mais le guide empile `التالي` + `السابق` + `�
 2. Accueil : un CTA principal, deux liens secondaires, suppression du doublon sémantique `كويست اليوم` / `مهمّة اليوم`.
 3. Écran vidéo : une fois par appareil (`localStorage`), pas une fois par session (`sessionStorage`).
 4. Test d'utilisabilité à 5 personnes (terminales, Oran) sur le seul chemin `première page → sujet 2022 → consigne 3`.
+
+---
+
+## 9. Suite du 21/11 — les cinq blocages sont traités (v0.13)
+
+| Blocage | État | Ce qui a changé |
+|---|---|---|
+| **B1** compte obligatoire | ✅ corrigé | `جرّب بلا حساب · ابدأ الآن ←` en haut de l'écran de compte. Aucun email, aucun mot de passe, rien ne quitte l'appareil. Le compte n'est plus qu'une option (sync, changement de téléphone), proposée depuis la barre XP et depuis « أنا ». |
+| **B2** trois départs concurrents | ✅ corrigé | La **mission du jour passe en premier**, juste sous le titre. Le quiz devient `افتح الكويست` (secondaire), le défi minute `العب`. Un seul bouton commence par « ابدأ » sur tout l'accueil. |
+| **B3** promesse 3 minutes | ✅ déjà corrigé | l'écran des micro-nœuds affiche la durée du nœud, la séance complète est une ligne optionnelle. |
+| **B4** durée de l'épreuve | ✅ clarifié | 4 h 30 confirmé (18 en-têtes archivés) ; la valeur n'est plus recopiée, elle est dérivée de `DUREE_BAC_MIN`. |
+| **B5** écran « squelette » | ✅ corrigé | titre `حِلّها كاملة` + bandeau en trois gestes : `اختار موضوعًا · حُلّه كاملًا · قارن`. |
+| **B6** jargon | ⚠️ partiel | `أمانة النقل` réduite à `نقْل: …`, `الفعل المطلوب` nommé. `التعليمة` reste : c'est le mot des sujets officiels. |
+| **B7** quatre sorties dans le guide | ✅ corrigé | un seul bouton par temps, `البوصلة` remonte dans l'en-tête, et `أنهيت الموضوع` n'apparaît qu'à la dernière consigne. |
+| Vidéo à chaque session | ✅ corrigé | l'intro est retenue **par appareil** (`localStorage`), plus par session. |
+
+### Médias livrés (compression sans perte visible)
+
+| Fichier | Avant | Après | Détail |
+|---|---|---|---|
+| `public/ouverture.mp4` | 1,61 Mo en 720×1280 | **2,05 Mo en 1080×1920** | source 13,4 Mo → **−85 %**, débruitage léger, 1,9 Mb/s deux passes, `+faststart` |
+| `public/personnage-pirate.webp` | 59 ko, découpe de l'ancienne mascotte | **62 ko, scène 560×1003** | photo du Drive, WebP q78 ; sert aussi d'affiche (`poster`) pendant le chargement |
+| `public/mascotte.webp` | 18,6 ko, 280×360 flou | **14,6 ko, 320 px détouré** | fond blanc retiré, halo corrigé, net sur écran 2× |
+| Coquille hors ligne | 2,493 Mio | **2,495 Mio** | budget 2,5 Mio tenu malgré l'ajout du mode invité |
+
+Les icônes PWA restent celles du générateur vectoriel : les remplacer par l'icône photo coûte
+~52 ko et ne tient pas dans les 5 ko de marge restants sans sortir `icon-512.png` du pré-cache.
+L'original est archivé (`plans/sources/medias/icone-app-1024.jpg`) avec les recettes exactes.

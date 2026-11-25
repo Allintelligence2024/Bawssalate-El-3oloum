@@ -162,10 +162,20 @@ export default function SujetGuide({
     <div dir="rtl" className="mx-auto max-w-2xl px-4 pb-32 pt-6">
       {/* En-tête : où je suis dans le sujet, sans note ni pourcentage */}
       <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
         <button type="button" onClick={onFermer} className="btn-mini flex items-center gap-1">
           <span className="h-4 w-4"><IcoRetour /></span>
           خروج
         </button>
+        <button
+          type="button"
+          onClick={() => ouvrirTiroir('verificateur')}
+          className="btn-mini"
+          aria-label="افتح البوصلة"
+        >
+          البوصلة
+        </button>
+        </div>
         <p className="oeil tnum">
           التمرين {nb(etape.exercice)} · التعليمة {nb(etape.numero)} من {nb(etapes.length)}
         </p>
@@ -244,14 +254,10 @@ export default function SujetGuide({
             </p>
           )}
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn--secondaire w-full text-xs" onClick={() => ouvrirTiroir('verbe')}>
-              افتح البوصلة
-            </button>
-            <button type="button" className="btn--primaire w-full text-xs" onClick={() => setTemps(2)}>
-              التالي · تحقّق
-            </button>
-          </div>
+          {/* v0.13 (B7) : un seul bouton par temps — la بوصلة reste dans l'en-tête. */}
+          <button type="button" className="btn--primaire mt-3 w-full text-xs" onClick={() => setTemps(2)}>
+            التالي · تحقّق
+          </button>
         </section>
       )}
 
@@ -290,14 +296,9 @@ export default function SujetGuide({
               );
             })}
           </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn--secondaire w-full text-xs" onClick={() => ouvrirTiroir('verificateur')}>
-              الثلاثة تحقّقات · البوصلة
-            </button>
-            <button type="button" className="btn--primaire w-full text-xs" onClick={() => setTemps(3)}>
-              التالي · اكتب
-            </button>
-          </div>
+          <button type="button" className="btn--primaire mt-3 w-full text-xs" onClick={() => setTemps(3)}>
+            التالي · اكتب
+          </button>
         </section>
       )}
 
@@ -322,14 +323,9 @@ export default function SujetGuide({
               لا أجد الصياغة · ركّب الجواب بالبنى (1-2-3)
             </button>
           )}
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <button type="button" className="btn--secondaire w-full text-xs" onClick={() => ouvrirTiroir('pieges')}>
-              الفخاخ الشائعة
-            </button>
-            <button type="button" className="btn--primaire w-full text-xs" onClick={() => setTemps(4)}>
-              التالي · قارن
-            </button>
-          </div>
+          <button type="button" className="btn--primaire mt-3 w-full text-xs" onClick={() => setTemps(4)}>
+            التالي · قارن
+          </button>
         </section>
       )}
 
@@ -399,18 +395,20 @@ export default function SujetGuide({
         >
           → السابق
         </button>
-        <button type="button" className="btn-mini" onClick={() => setFin(true)}>
-          أنهيت الموضوع
-        </button>
-        <button
-          type="button"
-          className="btn-mini"
-          onClick={() => aller(index + 1)}
-          disabled={index + 1 >= etapes.length}
-          aria-label="التعليمة التالية"
-        >
-          التالي ←
-        </button>
+        {index + 1 >= etapes.length ? (
+          <button type="button" className="btn-mini" onClick={() => setFin(true)}>
+            أنهيت الموضوع
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn-mini"
+            onClick={() => aller(index + 1)}
+            aria-label="التعليمة التالية"
+          >
+            التالي ←
+          </button>
+        )}
       </div>
 
       <dialog

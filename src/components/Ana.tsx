@@ -52,6 +52,8 @@ interface Props {
   onReinitialiser: (carnetAvantConfirmation: string | null) => boolean | void;
   onRestaurer: (etat: Etat, stats?: StatsReponses, carnetBoussole?: CarnetBoussole | null, carnetAvantConfirmation?: string | null) => void; // استيراد نسخة احتياطية كاملة
   onDeconnexion?: () => void;
+  /** Mode invité : créer un compte quand l'élève le décide (jamais imposé). */
+  onCreerCompte?: () => void;
   onConsentementSync: (ok: boolean) => void;
   onObjectif: (o: Objectif) => void;
   onModeIntensif: (m: 'auto' | 'on' | 'off') => void;
@@ -148,6 +150,7 @@ export default function Ana({
   onReinitialiser,
   onRestaurer,
   onDeconnexion,
+  onCreerCompte,
   onConsentementSync,
   onObjectif,
   onModeIntensif,
@@ -305,7 +308,21 @@ export default function Ana({
         )}
       </section>
 
-      {/* الحساب */}
+      {/* الحساب — أو بطاقة الزائر (v0.13) : on peut réviser sans compte, sans être coincé. */}
+      {!etat.compte && onCreerCompte && (
+        <section className="card mt-5 p-5">
+          <p className="eyebrow">حسابي</p>
+          <p className="mt-2 text-sm font-bold">أنت في وضع الزائر</p>
+          <p className="mt-1 text-xs leading-relaxed text-mute">
+            كل تقدّمك ومسوّداتك محفوظة على هذا الجهاز فقط، بلا بريد ولا كلمة مرور. الحساب اختياري:
+            يضيف نقل تقدّمك إلى هاتف آخر، ولا يُرسل شيئًا دون موافقتك.
+          </p>
+          <button onClick={onCreerCompte} className="btn btn-primary mt-4 w-full text-sm">
+            أنشئ حسابًا
+          </button>
+        </section>
+      )}
+
       {etat.compte && (
         <section className="card mt-5 p-5">
           <p className="eyebrow">حسابي</p>

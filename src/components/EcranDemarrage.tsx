@@ -70,11 +70,21 @@ useEffect(() => {
 
     // زر التخطي يظهر بعد لحظات قصيرة (الفيديو نفسه يُتخطى بالنقر في أي وقت)
     const tSkip = setTimeout(() => setSkippable(true), 2500);
-    const t = setTimeout(() => setPhase('fin'), 6500);
+    // Filet de sécurité : si la vidéo ne démarre pas (autoplay bloqué, réseau lent), on passe
+    // à l'écran final au bout de SA durée réelle — 6,5 s fixes coupaient la vidéo de 8 s.
+    let t = setTimeout(() => setPhase('fin'), 9000);
+    const calerSurLaDuree = () => {
+      const duree = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : 8;
+      clearTimeout(t);
+      t = setTimeout(() => setPhase('fin'), Math.round(duree * 1000) + 800);
+    };
+    v.addEventListener('loadedmetadata', calerSurLaDuree, { once: true });
+    if (v.readyState >= 1) calerSurLaDuree();
 
     return () => {
       clearTimeout(tSkip);
       clearTimeout(t);
+      v.removeEventListener('loadedmetadata', calerSurLaDuree);
       window.removeEventListener('focus', onFocus);
       v.removeEventListener('ended', onEnded);
       v.removeEventListener('canplay', onCanPlay);
@@ -103,12 +113,14 @@ return (
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && skip()}
       aria-label="بوصلة العلوم — اضغط للمتابعة"
     >
+      {/* v0.13 : l'affiche (déjà précachée) remplace l'écran noir pendant le téléchargement. */}
       <video
         ref={videoRef}
         className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-700 ${videoEnCours ? 'opacity-100' : 'opacity-0'}`}
         autoPlay
         playsInline
         preload="auto"
+        poster="/personnage-pirate.webp"
         onClick={skip}
         aria-hidden="true"
       >

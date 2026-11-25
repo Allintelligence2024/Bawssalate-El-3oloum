@@ -157,6 +157,12 @@ export interface Compte {
 
 export interface Etat {
   version: number;
+  /**
+   * وضع الزائر (v0.13) — «جرّب بلا حساب» : l'élève entre dans l'app sans email ni mot de
+   * passe, tout reste sur l'appareil. Le compte n'est proposé que lorsqu'il devient utile
+   * (sync, export, changement d'appareil). Absent = pas invité.
+   */
+  modeInvite?: boolean;
   compte?: Compte;
   progression: Record<string, ProgressionLecon>;
   jalons: Record<string, JalonUnite>;

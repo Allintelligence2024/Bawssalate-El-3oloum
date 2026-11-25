@@ -309,9 +309,15 @@ export default function SujetsOfficiels({
       </header>
       <main className="flex-1 px-4 pb-16 pt-4">
         <div className="mx-auto max-w-3xl space-y-4">
+          {/* v0.13 (priorité 4 du rapport) : la promesse en trois gestes, avant les années. */}
+          <ol className="grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-forest-deep">
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">اختار موضوعًا</li>
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">حُلّه كاملًا · خطوة بخطوة</li>
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">قارن بعناصر الإجابة</li>
+          </ol>
           <p className="text-xs leading-relaxed text-mute">
-            اختار موضوعًا وسِر فيه تعليمةً بتعليمة. الجداول والرسوم الأصلية غير معروضة (وصفها النصّي موجود)،
-            وعناصر الإجابة مختصرة من التصحيح الرسمي وتظهر عند الطلب فقط.
+            الجداول والرسوم الأصلية غير معروضة (وصفها النصّي موجود)، وعناصر الإجابة مختصرة من
+            التصحيح الرسمي وتظهر عند الطلب فقط.
           </p>
           {sujet ? (
             <Sujet

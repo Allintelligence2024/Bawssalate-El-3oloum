@@ -148,7 +148,48 @@ export default function Aujourdhui({
         </div>
       </header>
 
-      {/* كويست اليوم — la porte d'entrée : 3 minutes avant tout le reste */}
+      {/* v0.13 · B2 du rapport d'utilisabilité : UNE action principale, en premier.
+          La mission du jour passe avant le quiz et le défi : c'est elle qui sert au bac. */}
+      {/* المهمّة الواحدة · v0.11 — 3 إلى 5 دقائق، بلا جدار وبلا طابور */}
+      <section className="carte mb-4" aria-label="مهمّة اليوم">
+        <div className="rangee rangee--entre">
+          <p className="oeil">مهمّة اليوم · {nb(planMission.mission.minutes)} دقائق</p>
+          <span
+            className={`mention ${
+              planMission.mission.type === 'repos' || planMission.mission.type === 'fini'
+                ? 'mention--vert'
+                : 'mention--or'
+            }`}
+          >
+            {etiquetteMission(planMission.mission.type)}
+          </span>
+        </div>
+        <p className="carte__titre mt-1">{planMission.mission.titre}</p>
+        <p className="petit mt-1">في النهاية تعرف: {planMission.mission.savoirFaire}</p>
+        <p className="petit doux mt-1">{planMission.mission.pourquoi}</p>
+
+        <button type="button" className="btn--primaire mt-3 w-full" onClick={lancerMission}>
+          {libelleMission(planMission.mission)}
+        </button>
+
+        <p className="petit doux mt-2 text-center">{sousTitreMission(planMission)}</p>
+
+        {reposChoisi ? (
+          <p role="status" className="mt-2 rounded-xl border border-line bg-bg px-3 py-2 text-center text-xs font-bold text-ink-soft">
+            سجّلنا راحتك — المهمّة تبقى هنا غدًا، بلا حساب.
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="btn-mini mt-2 w-full"
+            onClick={() => setReposChoisi(true)}
+          >
+            يكفي اليوم
+          </button>
+        )}
+      </section>
+
+      {/* كويست اليوم — entrée secondaire : un quiz de 3 min, après la mission. */}
       {leconQuete && onDemarrerKouest && (
         <section className="carte mb-4">
           <div className="rangee rangee--entre mb-1">
@@ -164,11 +205,11 @@ export default function Aujourdhui({
           </p>
           <button
             type="button"
-            className="btn btn--primaire mt-3 w-full"
+            className="btn btn--secondaire mt-3 w-full"
             onClick={() => onDemarrerKouest(leconQuete)}
           >
             {faitesQuete === 0
-              ? 'ابدأ الكويست'
+              ? 'افتح الكويست'
               : faitesQuete >= etapesQuete.length
                 ? 'أعد الكويست'
                 : 'كمّل الكويست'}
@@ -184,7 +225,7 @@ export default function Aujourdhui({
             <p className="petit doux mt-0.5">دقيقة واحدة من أسئلة وحدتك — للتنشيط فقط، بلا خسارة.</p>
           </div>
           <button type="button" className="btn-mini shrink-0" onClick={onDefi60}>
-            ابدأ
+            العب
           </button>
         </section>
       )}
@@ -236,44 +277,6 @@ export default function Aujourdhui({
         </section>
       )}
 
-      {/* المهمّة الواحدة · v0.11 — 3 إلى 5 دقائق، بلا جدار وبلا طابور */}
-      <section className="carte mb-4" aria-label="مهمّة اليوم">
-        <div className="rangee rangee--entre">
-          <p className="oeil">مهمّة اليوم · {nb(planMission.mission.minutes)} دقائق</p>
-          <span
-            className={`mention ${
-              planMission.mission.type === 'repos' || planMission.mission.type === 'fini'
-                ? 'mention--vert'
-                : 'mention--or'
-            }`}
-          >
-            {etiquetteMission(planMission.mission.type)}
-          </span>
-        </div>
-        <p className="carte__titre mt-1">{planMission.mission.titre}</p>
-        <p className="petit mt-1">في النهاية تعرف: {planMission.mission.savoirFaire}</p>
-        <p className="petit doux mt-1">{planMission.mission.pourquoi}</p>
-
-        <button type="button" className="btn--primaire mt-3 w-full" onClick={lancerMission}>
-          {libelleMission(planMission.mission)}
-        </button>
-
-        <p className="petit doux mt-2 text-center">{sousTitreMission(planMission)}</p>
-
-        {reposChoisi ? (
-          <p role="status" className="mt-2 rounded-xl border border-line bg-bg px-3 py-2 text-center text-xs font-bold text-ink-soft">
-            سجّلنا راحتك — المهمّة تبقى هنا غدًا، بلا حساب.
-          </p>
-        ) : (
-          <button
-            type="button"
-            className="btn-mini mt-2 w-full"
-            onClick={() => setReposChoisi(true)}
-          >
-            يكفي اليوم
-          </button>
-        )}
-      </section>
 
       {/* تحدّي الأسبوع (P3.2) — يظهر بعد المهمّة الواحدة، ولا يُطلب حين يكون استرجاع مستحقًّا */}
       {onChoisirDefi && action.type !== 'rappel' && <CarteDefi etat={etat} onChoisir={onChoisirDefi} />}

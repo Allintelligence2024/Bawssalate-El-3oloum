@@ -332,7 +332,11 @@ export default function App() {
   const [leconLue, setLeconLue] = useState(false);
   const [demarrage, setDemarrage] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    try { return !sessionStorage.getItem('kunz_demarrage'); } catch { return true; }
+    // v0.13 (B3 du rapport) : l'intro ne revient plus à chaque session — une fois par appareil.
+    // `sessionStorage` reste lu en second : les anciens onglets ouverts la masquent aussi.
+    try {
+      return !localStorage.getItem('kunz_intro_vue') && !sessionStorage.getItem('kunz_demarrage');
+    } catch { return true; }
   });
   // جلسة الدخول: تبقى مفتوحة ما دام التبويب مفتوحًا (لا كلمة مرور في كل تحميل)
   const [session, setSession] = useState<boolean>(() => sessionOuverte(etat.compte?.email));
@@ -391,7 +395,10 @@ export default function App() {
   }
 
   function fermerDemarrage() {
-    try { sessionStorage.setItem('kunz_demarrage', '1'); } catch { /* le parcours reste accessible dans cet onglet */ }
+    try {
+      localStorage.setItem('kunz_intro_vue', '1');
+      sessionStorage.setItem('kunz_demarrage', '1');
+    } catch { /* le parcours reste accessible dans cet onglet */ }
     setDemarrage(false);
   }
 
@@ -399,7 +406,9 @@ export default function App() {
 
   function onCompteValide(compte: Compte) {
     const memeCompte = etat.compte?.email === compte.email && etat.compte?.jeton === compte.jeton;
-    const suivant = memeCompte ? { ...etat, compte } : { ...etat, compte, consentementSync: false, consentementSyncDecideLe: undefined };
+    const suivant = memeCompte
+      ? { ...etat, compte, modeInvite: false }
+      : { ...etat, compte, modeInvite: false, consentementSync: false, consentementSyncDecideLe: undefined };
     if (!memeCompte) suspendreSync(etat.compte?.email);
     setEtat(suivant);
     ouvrirSession(compte.email);
@@ -407,6 +416,17 @@ export default function App() {
     // Afficher l'écran de consentement si l'élève n'a encore jamais répondu
     if (doitDemanderConsentement(suivant)) setAfficheConsentement(true);
     else if (doitProposerDiagnostic(suivant)) setAfficheDiagnostic(true);
+  }
+
+  /** «جرّب بلا حساب» : aucune donnée ne quitte l'appareil, aucun email demandé. */
+  function onInvite() {
+    setEtat((prev) => ({ ...prev, modeInvite: true }));
+    setOnglet('aujourdhui');
+  }
+
+  /** Depuis l'app en mode invité : on revient à l'écran de compte, sans rien perdre. */
+  function demanderCreationCompte() {
+    setEtat((prev) => ({ ...prev, modeInvite: false }));
   }
 
   function onDeconnexion() {
@@ -1333,7 +1353,9 @@ export default function App() {
     );
   }
 
-  const inscrit = Boolean(etat.compte) && session;
+  // v0.13 (B1) : le compte n'est plus un péage. Un élève en mode invité voit tout de suite
+  // l'app ; le compte reste requis pour la sync et le changement d'appareil.
+  const inscrit = (Boolean(etat.compte) && session) || etat.modeInvite === true;
   // لا تبويبات ولا شارة قبل اكتمال شاشة الإقلاع وفتح حساب
   const pret = inscrit && !demarrage;
 
@@ -1358,7 +1380,13 @@ export default function App() {
               </div>
               <div className="flex items-center gap-2">
                 {/* شارة XP — مصدر وحيد للمستوى (popup منسدل، لا يغطي المحتوى) */}
-                {pret && <BaguetteXp etat={etat} onDeconnexion={onDeconnexion} />}
+                {pret && (
+                  <BaguetteXp
+                    etat={etat}
+                    onDeconnexion={etat.compte ? onDeconnexion : undefined}
+                    onCreerCompte={etat.compte ? undefined : demanderCreationCompte}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={basculerTheme}
@@ -1396,6 +1424,7 @@ export default function App() {
         <Inscription
           compte={etat.compte}
           onValide={onCompteValide}
+          onInvite={onInvite}
           onSupprimerCompte={etat.compte ? onSupprimerCompte : undefined}
         />
       )}
@@ -1510,7 +1539,8 @@ export default function App() {
           onSupprimerNote={onSupprimerNote}
           onReinitialiser={onReinitialiser}
           onRestaurer={onRestaurerEtat}
-          onDeconnexion={onDeconnexion}
+          onDeconnexion={etat.compte ? onDeconnexion : undefined}
+          onCreerCompte={etat.compte ? undefined : demanderCreationCompte}
           onConsentementSync={onConsentementSync}
           onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
           onModeIntensif={(modeIntensif) => {
