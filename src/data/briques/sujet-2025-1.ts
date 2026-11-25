@@ -17,12 +17,19 @@ export const JEUX_SUJET_2025_1: JeuBriques[] = [
   {
     id: 'jb:2025-1:1:1',
     document:
-      'نصّ قصير: بروتينات RIP تقطع رابطة أدينين–ريبوز الذهنية في بعض ARN فتفقده بنيته ووظيفته؛ تُستعمل ضدّ بعض الأورام.',
+      'نصّ قصير: بروتينات RIP تكسر الرابطة بين الأدنين وسكر الريبوز في بعض جزيئات ARN فتفقده بنيته ووظيفته؛ تُستعمل في علاج بعض الأورام السرطانية.',
     question:
       'اكتب نصًّا علميًّا توضّح فيه دور كلّ نوع من ARN في تركيب البروتين وتأثير بروتينات RIP على الخلايا السرطانية.',
+    // `نصّ علمي` (exercice 1) n'est pas une analyse de document : ses rôles sont
+    // مقدّمة / عرض بالآليات / خاتمة. Tant que `BriqueRole` ne porte pas ces trois rôles
+    // (arbitrage A-009), ce jeu ne peut pas être jugé sur une structure d'observation et de
+    // comparaison au témoin : il reste hors du catalogue servi et attend la relecture.
     verbe: 'نصّ علمي',
     attendu: 'مقدّمة · عرض بالآليات وروابطها · خاتمة تجيب عن الإشكال.',
-    structure: ['observation', 'comparaison', 'interpretation', 'conclusion'],
+    // Pas d'entrée dans `structure` : un rôle absent de la structure n'est jamais exigé, donc
+    // l'élève n'est pas jugé sur une grille qui ne correspond pas au verbe de la consigne.
+    // Ce jeu est de toute façon `a_valider_enseignant` (jamais servi sans aperçu).
+    structure: [],
     uniteId: 'u1',
     statut: 'a_valider_enseignant',
     briques: [
@@ -38,9 +45,15 @@ export const JEUX_SUJET_2025_1: JeuBriques[] = [
     id: 'jb:2025-1:2:1',
     document:
       'الوثيقة 1: (أ) نسبة نمو السلالة العادية والطافرة بتركيزين من HCO₃⁻؛ (ب) رسم لصانعة السلالة العادية (بيرينويد) والطافرة (بدونه).',
-    question: 'أبرز أثر الخصائص البنيوية للصانعة الخضراء على النمو باستغلال الشكل (ب).',
+    // La brique 1 cite les 80 % / 20 % qui viennent du الشكل (أ) : la question doit donc
+    // autoriser les deux figures, sinon l'élève qui suit la consigne ne peut pas poser la
+    // première observation.
+    question: 'أبرز أثر الخصائص البنيوية للصانعة الخضراء على النمو باستغلال الشكلين (أ) و(ب).',
     verbe: 'بيِّن',
     attendu: 'إظهار العلاقة بين معطيين بالدليل، لا رأيًا.',
+    // Structure dérivée des briques : `observation` (1), `comparaison` (2), `interpretation`
+    // (3), `conclusion` (4). La comparaison est bien au programme ici (souche normale vs
+    // souche mutée), elle n'est donc pas un rôle fantôme.
     structure: ['observation', 'comparaison', 'interpretation', 'conclusion'],
     uniteId: 'u6',
     statut: 'a_valider_enseignant',

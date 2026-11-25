@@ -25,8 +25,9 @@ import { etatVierge, type Etat } from '../../types';
 const LE = '2026-11-21T09:00:00.000Z';
 const e2 = JEUX_UNITE1.find((j) => j.id === 'jb:u1:e2')!;
 
+/** Toutes les briques des rôles donnés (un rôle = plusieurs briques possibles). */
 function idsDes(jeu: typeof e2, roles: string[]): string[] {
-  return roles.map((r) => jeu.briques.find((b) => b.role === r)!.id);
+  return jeu.briques.filter((b) => roles.includes(b.role)).map((b) => b.id);
 }
 
 const COMPLET = idsDes(e2, ['observation', 'comparaison', 'interpretation', 'conclusion']);
@@ -154,11 +155,13 @@ describe('Avant / Après sur les tentatives de briques', () => {
   it('la deuxième tente garde l’Avant et gagne en critères', () => {
     const premier = enregistrerTentative(etatVierge(), e2.id, evaluerAssemblage(e2, PARTIEL), LE);
     const second = enregistrerTentative(premier, e2.id, evaluerAssemblage(e2, COMPLET), LE);
-    const p = progresDuJeu(second, e2.id, 4);
+    // `jb:u1:e2` a cinq critères depuis que les deux termes de la comparaison portent le même
+    // rôle : l'Avant/Après se compte en critères (briques), pas en rôles distincts.
+    const p = progresDuJeu(second, e2.id, 5);
     expect(p).not.toBeNull();
     expect(p!.avant).toBe(1);
-    expect(p!.apres).toBe(4);
-    expect(p!.gain).toBe(3);
+    expect(p!.apres).toBe(5);
+    expect(p!.gain).toBe(4);
   });
 
   it('la dernière tentative est la seule conservée (une entrée par jeu)', () => {

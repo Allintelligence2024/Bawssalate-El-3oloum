@@ -87,9 +87,25 @@ export function rolesDepuisModele(n: number): BriqueRole[] {
  */
 export function jeuDepuisSituation(
   situation: SituationSynthese,
-  options: { id: string; verbe: VerbeConsigne; attendu: string; statut?: StatutEditorial },
+  options: {
+    id: string;
+    verbe: VerbeConsigne;
+    attendu: string;
+    statut?: StatutEditorial;
+    /**
+     * Rôle de chaque élément de `modele`, dans l'ordre. Pour un `قارن`, la position de la
+     * comparaison est un choix éditorial explicite (aucune heuristique ne peut la deviner) :
+     * elle doit être donnée ici, sinon le jeu ne demande aucune comparaison.
+     */
+    roles?: BriqueRole[];
+  },
 ): JeuBriques {
-  const roles = rolesDepuisModele(situation.modele.length);
+  if (options.roles && options.roles.length !== situation.modele.length) {
+    throw new Error(
+      `Jeu ${options.id} : ${options.roles.length} rôles pour ${situation.modele.length} éléments de modèle.`,
+    );
+  }
+  const roles = options.roles ?? rolesDepuisModele(situation.modele.length);
   const briques: BriqueSource[] = situation.modele.map((texte, i) => ({
     role: roles[i],
     texte,
@@ -98,8 +114,15 @@ export function jeuDepuisSituation(
   for (const piege of situation.pieges) {
     briques.push({ role: 'piege', texte: piege, source: `programme · ${situation.uniteId} · piegesAr` });
   }
-  const structure = ['observation', 'comparaison', 'interpretation', 'conclusion']
-    .filter((role): role is BriqueRole => roles.includes(role as BriqueRole));
+  // La structure est exactement l'ensemble des rôles réellement produits (dans l'ordre
+  // canonique). Aucun rôle fantôme : une structure qui annonce un rôle absent des briques
+  // réclame au correcteur un critère que l'élève ne peut pas poser. Quand le verbe est `قارن`
+  // et que le découpage ne produit aucune comparaison, c'est le découpage qu'on corrige
+  // (option `roles`), pas la structure qu'on invente.
+  const produits = new Set<BriqueRole>(roles);
+  const structure = (['observation', 'comparaison', 'interpretation', 'conclusion'] as BriqueRole[]).filter(
+    (role) => produits.has(role),
+  );
   return jeuBriques({
     id: options.id,
     document: situation.sujet,
