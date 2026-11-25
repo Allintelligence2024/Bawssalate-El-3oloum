@@ -378,7 +378,7 @@ rien ne devienne illisible.
 | Items de drills | **700** (4 fichiers) |
 | Jeux de briques | **16** (actifs : 4) |
 | Fichiers de tests | **82** |
-| Coquille hors ligne (téléchargée d'office) | **2.18 Mio** (7 entrées) |
+| Coquille hors ligne (téléchargée d'office) | **2.17 Mio** (7 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
 <!-- METRICS:END -->

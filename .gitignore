@@ -29,3 +29,19 @@ android/.gradle/
 .agents/
 skills-lock.json
 opencode.json
+
+# Archives produites localement (packs d'audit, exports, dumps)
+*.zip
+
+# Preuves visuelles QA : conservées sur le poste, hors dépôt (poids, aucun usage
+# par l'application). Les outils qui les produisent restent suivis.
+plans/screenshots/*.png
+plans/screenshots/*.raw
+plans/captures/*.png
+plans/sources/medias/*.jpg
+
+# Maquette de référence (HTML/CSS/JS autonomes, jamais bundlée) : archivée hors Git
+maquettes/
+
+# Copie figée du dépôt telle qu'elle a été livrée + captures de contrôle
+NEW bawssala/
