@@ -74,9 +74,11 @@ describe('les trois volets d’أنا', () => {
     expect(onglet('كرّاستي')!.getAttribute('aria-selected')).toBe('false');
     expect(onglet('إعداداتي')!.getAttribute('aria-selected')).toBe('false');
 
+    // le premier volet porte l'identité (la fiche A4 imprime ce nom) et les chiffres
     expect(sectionDe('رحلتي بالأرقام')!.hasAttribute('hidden')).toBe(false);
+    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(false);
     expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(true);
-    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(true);
+    expect(sectionDe('النسخة الاحتياطية')!.hasAttribute('hidden')).toBe(true);
   });
 
   it('bascule vers « كرّاستي » puis « إعداداتي » sans rien perdre', async () => {
@@ -85,11 +87,12 @@ describe('les trois volets d’أنا', () => {
     expect(sectionDe('دوّن')!.hasAttribute('hidden')).toBe(false);
     expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(false);
     expect(sectionDe('رحلتي بالأرقام')!.hasAttribute('hidden')).toBe(true);
+    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(true);
 
     await choisir('إعداداتي');
-    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(false);
     expect(sectionDe('النسخة الاحتياطية')!.hasAttribute('hidden')).toBe(false);
     expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(true);
+    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(true);
 
     await choisir('تقدّمي');
     expect(sectionDe('أيام نشاطي')!.hasAttribute('hidden')).toBe(false);

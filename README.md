@@ -784,8 +784,9 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   التالي » (le prochain item du chemin, `prochainItem`) ou « يكفي اليوم ». Aucun pourcentage,
   aucun score : le test le vérifie (`expect(texte).not.toMatch(/%/)`). Le parcours منهجية
   (`onAllerMethodo`) garde sa destination : il appelle `onTerminer` puis écrase le mode.
-  (2) **« أنا » en trois volets** : `تقدّمي` (fiche A4, chiffres, jours d'activité), `كرّاستي`
-  (دوّن + سجلّ الأخطاء), `إعداداتي` (identité, compte, نسخة احتياطية, إعادة الضبط, confidentialité).
+  (2) **« أنا » en trois volets** : `تقدّمي` (identité, fiche A4, chiffres, jours d'activité,
+  boucliers, trophées), `كرّاستي` (دوّن + سجلّ الأخطاء), `إعداداتي` (compte, objectif, taille
+  du texte, rappels, نسخة احتياطية, إعادة الضبط, confidentialité).
   Rien n'est démonté : les cartes restent dans la page et sont repliées par `hidden`, donc un nom
   à moitié saisi survit au changement d'onglet (vérifié). (3) **Mouvement réduit** : une règle
   globale `@media (prefers-reduced-motion: reduce)` ramène animations et transitions à 0,01 ms

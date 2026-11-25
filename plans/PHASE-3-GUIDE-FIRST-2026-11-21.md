@@ -44,9 +44,13 @@ le mode par `methodoExos` — l'écran de fierté ne s'interpose pas sur un choi
 
 | Volet | Contenu |
 |---|---|
-| `تقدّمي` | fiche A4 (« ملفّي »), « رحلتي بالأرقام », « أيام نشاطي », boucliers SM-2, trophées |
+| `تقدّمي` | identité (nom, date du bac), fiche A4 (« ملفّي »), « رحلتي بالأرقام » (qui porte déjà les boucliers SM-2, badges, trophées, examens et favoris), « أيام نشاطي » |
 | `كرّاستي` | « دوّن » (notes), « سجلّ الأخطاء » |
-| `إعداداتي` | identité (nom, date du bac), compte / mode invité, objectif, intensif, taille du texte, rappels, « النسخة الاحتياطية », « إعادة الضبط », confidentialité |
+| `إعداداتي` | compte / mode invité, objectif, intensif, taille du texte, rappels, synchronisation, « النسخة الاحتياطية », « إعادة الضبط », confidentialité |
+
+Le nom est dans le **premier** volet, avec la fiche A4 qui l'imprime : c'est une identité, pas
+un réglage. Conséquence pratique : les parcours qui écrivent `#nom` (conflit de deux onglets,
+sauvegarde périmée) continuent de fonctionner sans changer d'onglet.
 
 Choix d'implémentation : **rien n'est démonté**. Les sections restent dans la page et sont
 repliées par l'attribut `hidden` (preflight Tailwind : `[hidden] { display: none !important }`).
@@ -117,6 +121,7 @@ mettre à jour au prochain build APK, ce n'est pas un fichier suivi par cette ph
 | `src/utils/__tests__/seance-comptage.test.ts` | **nouveau** (4 tests) |
 | `src/utils/__tests__/son-vibrations.test.ts` | **nouveau** (3 tests) |
 | `src/__tests__/premier-ecran-ui.test.tsx` | assertion « الجلسة الكاملة » n'est plus un bouton, fixture sans la prop supprimée |
+| `modules/boussole/tests/integration.cjs`, `recovery.cjs` | les parcours export / import / effacement ouvrent d'abord le volet « إعداداتي » (les cartes repliées sortent de l'arbre d'accessibilité) |
 
 ---
 

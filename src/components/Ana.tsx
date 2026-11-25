@@ -301,8 +301,8 @@ export default function Ana({
         message="هذه كراستك يا مستكشف. سجّل تقدمك، راجع أخطاءك، وابنِ عادتك العلمية خطوة بعد خطوة."
       />
 
-      {/* الهوية */}
-      <section hidden={volet !== 'reglages'} className="card p-5">
+      {/* الهوية — premier volet : la fiche A4 et le nom qu'elle imprime sont ensemble */}
+      <section hidden={volet !== 'progres'} className="card p-5">
         <p className="eyebrow">هويتي</p>
         <label className="mt-3 block text-xs font-bold text-ink-soft" htmlFor="nom">
           اسمي
@@ -391,46 +391,52 @@ export default function Ana({
         </section>
       )}
 
-      {/* الأقوى / الأضعف (P2.4) */}
-      <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
+      {/* ── volet « تقدّمي » : forces/faiblesses, badges, boucliers, examens, favoris ── */}
+      <div hidden={volet !== 'progres'}>
+        {/* الأقوى / الأضعف (P2.4) */}
+        <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
 
-      {/* شارات المحتوى (P3.2) */}
-      <CarteBadges etat={etat} />
+        {/* شارات المحتوى (P substances) */}
+        <CarteBadges etat={etat} />
 
-      {/* دروع الانتظام (v0.11) — 4 أيام من 7 تعطي درعًا، والدرع لا يضيع */}
-      <CarteBoucliersSM2 etat={etat} />
+        {/* دروع الانتظام (v0.11) — 4 أيام من 7 تعطي درعًا، والدرع لا يضيع */}
+        <CarteBoucliersSM2 etat={etat} />
 
-      {/* سجلّ الامتحانات التجريبية (P1.4) */}
-      <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
+        {/* سجلّ الامتحانات التجريبية (P1.4) */}
+        <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
 
-      {/* التموضع · المفضّلة */}
-      <CarteDiagnosticFavoris
-        etat={etat}
-        onOuvrirDiagnostic={onOuvrirDiagnostic}
-        onOuvrirLecon={onOuvrirLecon}
-        onDemarrerRevision={onDemarrerRevision}
-        onBasculerFavori={onBasculerFavori}
-      />
+        {/* التموضع · المفضّلة */}
+        <CarteDiagnosticFavoris
+          etat={etat}
+          onOuvrirDiagnostic={onOuvrirDiagnostic}
+          onOuvrirLecon={onOuvrirLecon}
+          onDemarrerRevision={onDemarrerRevision}
+          onBasculerFavori={onBasculerFavori}
+        />
+      </div>
 
-      {/* الهدف · المراجعة المكثّفة · حجم الخط */}
-      <ReglagesParcours
-        etat={etat}
-        onObjectif={onObjectif}
-        onModeIntensif={onModeIntensif}
-        onTailleTexte={onTailleTexte}
-      />
+      {/* ── volet « إعداداتي » : objectif, intensif, taille, rappel, sync, confidentialité ── */}
+      <div hidden={volet !== 'reglages'}>
+        {/* الهدف · المراجعة المكثّفة · حجم الخط */}
+        <ReglagesParcours
+          etat={etat}
+          onObjectif={onObjectif}
+          onModeIntensif={onModeIntensif}
+          onTailleTexte={onTailleTexte}
+        />
 
-      {/* التذكير اليومي (P2.4) */}
-      <ReglageRappel etat={etat} onChanger={onRappel} />
+        {/* التذكير اليومي (P2.4) */}
+        <ReglageRappel etat={etat} onChanger={onRappel} />
 
-      {/* المزامنة — إعداد دائم */}
-      <ReglageSync etat={etat} onChoix={onConsentementSync} />
+        {/* المزامنة — إعداد دائم */}
+        <ReglageSync etat={etat} onChoix={onConsentementSync} />
 
-      {/* الخصوصية · الأسئلة الشائعة · عن التطبيق (P0.8 / P3.4) */}
-      <button type="button" onClick={onOuvrirConfidentialite} className="card mt-5 w-full p-5 text-start transition-colors hover:border-forest">
-        <p className="eyebrow">الخصوصية · الأسئلة الشائعة · عن التطبيق</p>
-        <p className="mt-1 text-sm font-bold">ما يحدث لبياناتك بالضبط، حقوقك، وحذف سجلّك من الخادم ←</p>
-      </button>
+        {/* الخصوصية · الأسئلة الشائعة · عن التطبيق (P0.8 / P3.4) */}
+        <button type="button" onClick={onOuvrirConfidentialite} className="card mt-5 w-full p-5 text-start transition-colors hover:border-forest">
+          <p className="eyebrow">الخصوصية · الأسئلة الشائعة · عن التطبيق</p>
+          <p className="mt-1 text-sm font-bold">ما يحدث لبياناتك بالضبط، حقوقك، وحذف سجلّك من الخادم ←</p>
+        </button>
+      </div>
 
       {/* الإحصاء بالحروف */}
       <section hidden={volet !== 'progres'} className="card mt-5 p-5">
