@@ -49,6 +49,9 @@ C'est **le** point de décrochage. Une lycéenne qui teste depuis un lien n'écr
 
 > Ce qu'elle pense : « صبرني، علاش نسجّل؟ ما زال ما شفتش والو. »
 
+### 🔴 B1 bis — « أفتح البوصلة وأعود إلى تمريني » ouvrait un écran vide de l'exemple promis
+Le bouton d'aide d'un exercice promet « le laboratoire explique avec un exemple de synthèse des protéines ». Depuis la v0.11 le tiroir s'ouvrait sur l'onglet « تحقّق » : l'élève cliquait, ne voyait ni exemple ni schéma, refermait. C'était aussi la cause du rouge de la CI (le test navigateur attendait `.case-protein`, timeout 8 s). Corrigé : l'aide ouvre directement l'onglet laboratoire.
+
 ### 🟠 B2 — Trois départs concurrents sur l'accueil
 `ابدأ الكويست` · `ابدأ` (défi 60 s) · `ابدأ 3 دقائق` (mission). Trois verbes identiques, trois promesses différentes, zéro hiérarchie. Elle choisit au hasard — et le hasard, ici, c'est souvent le défi 60 s, c'est-à-dire **le moins utile pour le bac**.
 
@@ -89,9 +92,11 @@ Les deux fonctionnent, mais le guide empile `التالي` + `السابق` + `�
 2. **Promesse des micro-nœuds tenue** : l'écran affiche `4 دقائق الآن` (durée du nœud), et la séance complète devient une phrase secondaire optionnelle, plus un « بقيت 24 دقيقة » en gros à l'arrivée.
 3. **Libellé du bouton de mission** : `ابدأ ٣ دقائق` → `ابدأ 4 دقائق`, chiffres latins, cohérent avec le corps de texte.
 4. **Écran des sujets** : titre `مواضيع البكالوريا · حِلّها كاملة`, en-tête `4 سا 30 د` dérivé de la constante, intro réécrite orientée action (`اختار موضوعًا وسِر فيه تعليمةً بتعليمة`), et `أمانة النقل` réduite à `نقْل: قراءة بالعين` (détail au survol).
-5. **Guide** : `الفعل المطلوب` nommé à côté du verbe, mention que le repère est à valider par l'enseignant et qu'en cas de désaccord **on suit l'enseignant**, plus une ligne d'entrée : `اقرأ التعليمة هنا، اكتب جوابك على ورقتك، ثمّ قارن.`
+5. **Aide « البوصلة داخل التمرين » réparée** : elle s'ouvre sur l'onglet laboratoire (`#explore-protein`), avec son bouton « أعود إلى تمريني » et la restauration du focus. Test de régression ajouté.
+6. **Dialogues robustes sur WebView anciens** : `showModal()` / `close()` sans garde faisaient planter l'écran entier sur Android 9–10 (encore fréquents). Un utilitaire `ouvrirDialogue` / `fermerDialogue` remplace les cinq appels directs.
+7. **Guide** : `الفعل المطلوب` nommé à côté du verbe, mention que le repère est à valider par l'enseignant et qu'en cas de désaccord **on suit l'enseignant**, plus une ligne d'entrée : `اقرأ التعليمة هنا، اكتب جوابك على ورقتك، ثمّ قارن.`
 
-État : `tsc -b` 0 erreur · **617 tests / 71 fichiers verts** · lint 0 · build OK · coquille hors ligne **2,49 Mio / 2,5**.
+État : `tsc -b` 0 erreur · **620 tests / 72 fichiers verts** · lint 0 · build OK · coquille hors ligne **2,49 Mio / 2,5**.
 
 ---
 

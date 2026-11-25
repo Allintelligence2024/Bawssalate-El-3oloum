@@ -8,6 +8,7 @@
 //   - aucun verrou : on peut passer une consigne sans être bloqué ;
 //   - l'auto-évaluation n'est pas une correction officielle, et l'écran le dit.
 import { useEffect, useRef, useState } from 'react';
+import { ouvrirDialogue } from '../utils/dialogue';
 import type { SujetOfficiel } from '../data/sujetsOfficiels';
 import {
   construireGrille, calculerResultat, cleConsigne, priorites, statutQualitatif,
@@ -80,7 +81,7 @@ export default function EntraineurSujet({
   // ressemble à un bouton mort (retour d'usage). `showModal` le met au premier plan.
   useEffect(() => {
     const el = dialogue.current;
-    if (tiroir && el && !el.open) el.showModal();
+    if (tiroir) ouvrirDialogue(el);
   }, [tiroir]);
   const reprises = priorites(grille, evaluations);
 

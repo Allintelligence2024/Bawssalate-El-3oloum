@@ -1,4 +1,5 @@
 // «الموضوع كاملًا · 1-2-3» — حلّ موضوع بكالوريا كامل، خطوة بخطوة، بطريقة بوصلة العلوم.
+import { ouvrirDialogue } from '../utils/dialogue';
 //
 // Quatre temps par consigne, dans l'ordre de la méthode :
 //   1. افهم   — le verbe, ce qu'attend le correcteur, les documents du corrigé ;
@@ -102,7 +103,7 @@ export default function SujetGuide({
 
   function ouvrirTiroir(onglet: OngletTiroir): void {
     setTiroir(onglet);
-    dialogue.current?.showModal();
+    ouvrirDialogue(dialogue.current);
   }
 
   // ───────────── sujet introuvable ─────────────

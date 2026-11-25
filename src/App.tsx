@@ -4,6 +4,7 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
+import { fermerDialogue, ouvrirDialogue } from './utils/dialogue';
 import {
   abandonnerJournalRestauration, chargerEtat, CLE_ETAT, fusionnerProgressionImportee,
   restaurationBloqueeAuChargement, restaurerEtatEtStats, sauvegarderEtat,
@@ -237,9 +238,9 @@ function EcranReprise({ cause, onCopier }: { cause: 'locale' | 'autre'; onCopier
   const dialogue = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = dialogue.current;
-    if (el && !el.open) el.showModal();
+    ouvrirDialogue(el);
     titre.current?.focus();
-    return () => { if (el?.open) el.close(); };
+    return () => fermerDialogue(el);
   }, []);
   return (
     <dialog ref={dialogue} onCancel={(e) => e.preventDefault()} aria-labelledby="reprise-titre"

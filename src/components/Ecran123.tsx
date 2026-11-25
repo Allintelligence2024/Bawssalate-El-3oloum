@@ -1,4 +1,5 @@
 // البوصلة 1-2-3 — la méthode universelle, appliquée sur un exercice réel.
+import { ouvrirDialogue } from '../utils/dialogue';
 //
 //   ① التقط        : le verbe de consigne, l'attendu du correcteur, en une ligne ;
 //   ② بدّل وقارن  : épingler la preuve (observation) puis la comparaison au témoin ;
@@ -59,7 +60,7 @@ export default function Ecran123({ etat, jeux, titre, onFermer, onTentative }: P
   const ouvrirTiroir = (onglet: OngletTiroir) => {
     setTiroir(onglet);
     const el = dialogue.current;
-    if (el && !el.open) el.showModal();
+    ouvrirDialogue(el);
   };
   const fermerTiroir = () => {
     dialogue.current?.close();

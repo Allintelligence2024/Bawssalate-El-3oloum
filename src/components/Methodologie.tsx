@@ -1196,7 +1196,7 @@ export default function Methodologie({
           </section>
         )}
 
-        {aideBoussole && <AideBoussole document={exoU1.document} verbe={exoU1.verbe} lessonId={'d1-u1-l1-expression-genique'} onBoussoleEvent={onBoussoleEvent} onFermer={() => { setAideBoussole(false); requestAnimationFrame(() => ouvrirAide.current?.focus({ preventScroll: true })); }} />}
+        {aideBoussole && <AideBoussole document={exoU1.document} verbe={exoU1.verbe} lessonId={'d1-u1-l1-expression-genique'} ongletInitial="labo" onBoussoleEvent={onBoussoleEvent} onFermer={() => { setAideBoussole(false); requestAnimationFrame(() => ouvrirAide.current?.focus({ preventScroll: true })); }} />}
 
         {ecran === 'redaction' && redactionSource === 'enquete' && (
           <section className="card p-6">

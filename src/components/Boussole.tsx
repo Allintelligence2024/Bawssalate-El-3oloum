@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { fermerDialogue, ouvrirDialogue } from '../utils/dialogue';
 import type { BoussoleAttemptEvent } from "../types/boussoleBridge";
 import type { Etat } from "../types";
 import { useBoussoleBridge } from "../hooks/useBoussoleBridge";
@@ -93,9 +94,9 @@ export function AideBoussole({
   const d = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = d.current;
-    if (el && !el.open) el.showModal();
+    ouvrirDialogue(el);
     return () => {
-      if (el?.open) el.close();
+      fermerDialogue(el);
     };
   }, []);
   return (
