@@ -72,6 +72,8 @@ function precacheManifest(): Plugin {
         /^assets\/SujetsOfficiels-/,
         /^assets\/EcranBriques-/,
         /^assets\/u1-/,
+        /^assets\/u3-/,
+        /^assets\/u4-/,
         /^assets\/sujet-2025-1-/,
         /^assets\/Defi60-/,
         /^assets\/JourneeReparation-/,

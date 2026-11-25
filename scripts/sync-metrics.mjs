@@ -64,6 +64,19 @@ const fichiersDrills = FICHIERS_ITEMS.length;
 const contenuAxes = lire('src/data/drills/axes.ts').replace(/\r\n/g, '\n');
 axes = compte(contenuAxes, /^\s*\{\s*id:\s*\d+,/gm);
 
+// Jeux de briques : un jeu = une ligne `id: 'jb:…'` à l'indentation du tableau (les briques
+// sont construites par `brique()`/`jeuDepuisSituation`, elles n'ont pas de ligne `id:`).
+let jeuxBriques = 0;
+let jeuxBriquesActifs = 0;
+for (const f of readdirSync('src/data/briques')) {
+  if (!f.endsWith('.ts') || ['types.ts', 'gabarit.ts', 'index.ts'].includes(f)) continue;
+  const contenu = lire(join('src/data/briques', f)).replace(/\r\n/g, '\n');
+  // Un jeu porte `id: 'jb:…'` (littéral ou argument du gabarit) ; les briques, elles, sont
+  // construites par `brique('jb:…')` et n'ont pas de ligne `id:`.
+  jeuxBriques += compte(contenu, /\bid: 'jb:/g);
+  jeuxBriquesActifs += compte(contenu, /\bstatut: 'actif'/g);
+}
+
 // ── Qualité ──
 let fichiersTests = 0;
 for (const racine of ['src']) {
@@ -106,6 +119,7 @@ lignes.push(`| Sujets officiels structurés | **${sujetsOfficiels}** |`);
 lignes.push(`| Sujets avec éléments de réponse | **${corriges}** |`);
 lignes.push(`| Axes de drills | **${axes}** |`);
 lignes.push(`| Items de drills | **${drills}** (${fichiersDrills} fichiers) |`);
+lignes.push(`| Jeux de briques | **${jeuxBriques}** (actifs : ${jeuxBriquesActifs}) |`);
 lignes.push(`| Fichiers de tests | **${fichiersTests}** |`);
 if (poids) {
   lignes.push(`| Coquille hors ligne (téléchargée d'office) | **${mo(poids.coquille)}** (${poids.statiques} entrées) |`);

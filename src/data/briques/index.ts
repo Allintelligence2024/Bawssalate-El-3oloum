@@ -10,8 +10,12 @@ import type { JeuBriques } from './types';
 
 export type { JeuBriques };
 
-const CHARGEURS_UNITES: Record<string, () => Promise<{ JEUX_UNITE1: JeuBriques[] }>> = {
-  u1: () => import('./u1'),
+// Chaque unité expose son tableau sous un nom explicite (`JEUX_UNITE1`…) : le chargeur
+// normalise, pour que `UNITES_AVEC_BRIQUES` et `chargerJeuxUnite` ne dépendent pas du nom.
+const CHARGEURS_UNITES: Record<string, () => Promise<JeuBriques[]>> = {
+  u1: () => import('./u1').then((m) => m.JEUX_UNITE1),
+  u3: () => import('./u3').then((m) => m.JEUX_UNITE3),
+  u4: () => import('./u4').then((m) => m.JEUX_UNITE4),
 };
 
 const CHARGEURS_SUJETS: Record<string, () => Promise<JeuBriques[]>> = {
@@ -27,8 +31,7 @@ export async function chargerJeuxUnite(uniteId: string): Promise<JeuBriques[]> {
   if (enCache) return enCache;
   const chargeur = CHARGEURS_UNITES[uniteId];
   if (!chargeur) return [];
-  const module = await chargeur();
-  const jeux = module.JEUX_UNITE1;
+  const jeux = await chargeur();
   cache.set(cle, jeux);
   return jeux;
 }

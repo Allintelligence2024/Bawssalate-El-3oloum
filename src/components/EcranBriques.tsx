@@ -4,7 +4,7 @@
 // grossit pas, et l'élève qui n'ouvre pas l'atelier ne télécharge aucun jeu.
 
 import { useEffect, useState } from 'react';
-import { chargerJeuxUnite, chargerJeuxSujet } from '../data/briques';
+import { UNITES_AVEC_BRIQUES, chargerJeuxUnite, chargerJeuxSujet } from '../data/briques';
 import { UNITES, UNITE_PAR_ID } from '../data/programme';
 import type { Etat } from '../types';
 import { apercuRequis, jeuxJouables, type EvaluationBriques, type JeuBriques } from '../utils/briques';
@@ -59,7 +59,8 @@ export default function EcranBriques({ etat, uniteId, sujetId, onFermer, onTenta
         <p className="oeil">البوصلة 1-2-3</p>
         <h1 className="titre-1 mt-1">اختر وحدة</h1>
         <p className="petit doux mt-1">
-          التمارين المبنيّة بالبنى متوفّرة أوّلًا في الوحدة 1؛ الباقي يأتي بالتدريج وبعد المراجعة.
+          البنى متوفّرة في الوحدات المعلَّمة؛ الباقي يأتي بالتدريج. وحدة فيها محتوى قيد
+          المراجعة تفتح على بوابة معاينة، لا على جواب نموذجي.
         </p>
         <div className="mt-3 space-y-2">
           {UNITES.map((u) => (
@@ -70,6 +71,9 @@ export default function EcranBriques({ etat, uniteId, sujetId, onFermer, onTenta
               className="w-full rounded-2xl border border-line bg-paper px-4 py-3 text-right transition hover:border-forest"
             >
               <span className="mention">الوحدة {u.numero}</span>
+              {UNITES_AVEC_BRIQUES.includes(u.id) && (
+                <span className="mention mention--or mr-2">تمارين بالبنى</span>
+              )}
               <p className="mt-1 text-sm font-bold text-ink">{u.titre}</p>
             </button>
           ))}

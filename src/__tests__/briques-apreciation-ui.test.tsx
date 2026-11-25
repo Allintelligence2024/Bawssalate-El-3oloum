@@ -80,4 +80,39 @@ describe('écran 1-2-3 et statut éditorial', () => {
     expect(pret).toBe(true);
     expect((zone.textContent ?? '').includes('محتوى قيد المراجعة')).toBe(false);
   });
+
+  it('l’unité 3 (phase 4) n’ouvre que par la porte d’aperçu, puis affiche la mention', async () => {
+    (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    zone = document.createElement('div');
+    document.body.append(zone);
+    root = createRoot(zone);
+
+    await act(async () => {
+      root!.render(createElement(EcranBriques, {
+        etat: etatDepuisBrut({}),
+        uniteId: 'u3',
+        onFermer: () => {},
+        onTentative: () => {},
+      }));
+    });
+
+    const porte = await attendre(() => (zone!.textContent ?? '').includes('قيد مراجعة الأستاذ'));
+    expect(porte, 'porte d’aperçu absente pour l’unité 3').toBe(true);
+    // Rien du jeu n'est servi avant l'aperçu.
+    expect((zone.textContent ?? '').includes('الريبونوكلياز')).toBe(false);
+    // Sans sujet, on peut revenir au choix de l'unité : le bouton existe et n'est pas mort.
+    expect((zone.textContent ?? '').includes('اختر وحدة أخرى')).toBe(true);
+
+    const bouton = [...zone.querySelectorAll('button')].find((b) =>
+      (b.textContent ?? '').includes('افتح المعاينة'),
+    )!;
+    await act(async () => {
+      bouton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const ouvert = await attendre(() => (zone!.textContent ?? '').includes('محتوى قيد المراجعة'));
+    expect(ouvert, 'mention « قيد المراجعة » absente après l’aperçu').toBe(true);
+    // Le document vient de la synthèse u3b, mot pour mot.
+    expect(zone.textContent).toContain('الريبونوكلياز A');
+  });
 });
