@@ -354,10 +354,12 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     await second.waitForFunction(() => document.querySelector("#txt-solo")?.value === "");
     a.equal(await second.evaluate(() => localStorage.getItem("boussole.bac.classe16.carnet.1")), null);
     await second.close();
-    await p.getByRole("heading", { name: "أنشئ حسابك" }).waitFor();
-    a.equal(await p.getByRole("navigation").count(), 0);
-    a.equal(await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).count(), 0);
-    results.push("Réinitialisation hors ligne : carnet et journal supprimés, autre document averti, champ vidé et navigation masquée après déconnexion.");
+    // Depuis la phase 2, tout effacer ne renvoie plus sur un péage de création de compte :
+    // l'élève retombe en mode invité, avec la navigation et zéro barrage.
+    await p.getByRole("navigation").waitFor();
+    a.equal(await p.getByRole("heading", { name: "أنشئ حسابك" }).count(), 0);
+    a.equal(await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).count(), 1);
+    results.push("Réinitialisation hors ligne : carnet et journal supprimés, autre document averti, champ vidé, retour au mode invité sans péage.");
     // Un journal illisible n'est plus supprimé silencieusement. L'abandon reste
     // une action distincte et confirmée, sans effacer l'état existant.
     const recovery = await browser.newContext();
