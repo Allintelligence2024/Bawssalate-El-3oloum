@@ -120,7 +120,14 @@ jobs:
             let texte = "";
             try { texte = fs.readFileSync("/tmp/boussole-integration.log", "utf8"); } catch {}
             if (!texte) try { texte = fs.readFileSync("/tmp/boussole-preview.log", "utf8"); } catch {}
-            const lignes = texte.trim().split("\n").slice(-25).join("\n").slice(-3000);
+            // On ne garde que les lignes qui situent l'échec : les dumps de texte arabe
+            // de la page noieraient l'annotation (et dépasseraient sa taille maximale).
+            const utiles = texte
+              .split("\n")
+              .filter((l) => /waiting for|locator|Error|Timeout|assert|expected|actual|\.cjs:\d+|not ok/i.test(l))
+              .filter((l) => l.length < 400)
+              .slice(-40);
+            const lignes = (utiles.length ? utiles.join("\n") : texte.trim().split("\n").slice(-20).join("\n")).slice(-3500);
             if (!lignes) { console.log("::error title=Intégration navigateur::Aucune sortie capturée."); process.exit(0); }
             console.log("::error title=Intégration navigateur::" + lignes.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A"));
           '
