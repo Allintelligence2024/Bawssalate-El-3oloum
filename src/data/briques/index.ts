@@ -10,13 +10,15 @@ import type { JeuBriques } from './types';
 
 export type { JeuBriques };
 
-// Chaque unité expose son tableau sous un nom explicite (`JEUX_UNITE1`…) : le chargeur
-// normalise, pour que `UNITES_AVEC_BRIQUES` et `chargerJeuxUnite` ne dépendent pas du nom.
+// Une unité peut avoir deux origines :
+//   · un fichier **écrit à la main** (u1 : quatre jeux actifs découpés dans les exercices de
+//     méthodologie) — chargé par son propre chunk ;
+//   · sinon, un jeu **dérivé** de sa situation de synthèse par `unites.ts` (chargé à la demande,
+//     jamais au démarrage, et exclu du précache comme les autres jeux).
 const CHARGEURS_UNITES: Record<string, () => Promise<JeuBriques[]>> = {
   u1: () => import('./u1').then((m) => m.JEUX_UNITE1),
-  u3: () => import('./u3').then((m) => m.JEUX_UNITE3),
-  u4: () => import('./u4').then((m) => m.JEUX_UNITE4),
 };
+const chargerDerives = () => import('./unites');
 
 const CHARGEURS_SUJETS: Record<string, () => Promise<JeuBriques[]>> = {
   '2025-1': () => import('./sujet-2025-1').then((m) => m.JEUX_SUJET_2025_1),
@@ -24,14 +26,19 @@ const CHARGEURS_SUJETS: Record<string, () => Promise<JeuBriques[]>> = {
 
 const cache = new Map<string, JeuBriques[]>();
 
-/** Jeux d'une unité (vide si l'unité n'a pas encore de contenu relu). */
+/** Jeux d'une unité (vide si l'unité n'a ni jeux écrits ni situation de synthèse). */
 export async function chargerJeuxUnite(uniteId: string): Promise<JeuBriques[]> {
   const cle = `unite:${uniteId}`;
   const enCache = cache.get(cle);
   if (enCache) return enCache;
   const chargeur = CHARGEURS_UNITES[uniteId];
-  if (!chargeur) return [];
-  const jeux = await chargeur();
+  let jeux: JeuBriques[];
+  if (chargeur) {
+    jeux = await chargeur();
+  } else {
+    const { jeuxSynthese } = await chargerDerives();
+    jeux = jeuxSynthese(uniteId);
+  }
   cache.set(cle, jeux);
   return jeux;
 }
@@ -48,8 +55,14 @@ export async function chargerJeuxSujet(sujetId: string): Promise<JeuBriques[]> {
   return jeux;
 }
 
-/** Unités qui disposent d'au moins un jeu (pour afficher « تدريب بالبنى » sans mentir). */
-export const UNITES_AVEC_BRIQUES = Object.keys(CHARGEURS_UNITES);
+/**
+ * Unités qui disposent d'au moins un jeu (pour afficher « تدريب بالبنى » sans mentir).
+ *
+ * La liste est écrite ici plutôt qu'importée de `unites.ts` : cet import ramènerait
+ * `syntheses.ts` dans le chunk de démarrage. Un test vérifie qu'elle reste égale à
+ * `['u1', ...UNITES_SYNTHESE]` — la dérive est donc détectée, pas seulement évitée.
+ */
+export const UNITES_AVEC_BRIQUES = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11'];
 export const SUJETS_AVEC_BRIQUES = Object.keys(CHARGEURS_SUJETS);
 
 /**

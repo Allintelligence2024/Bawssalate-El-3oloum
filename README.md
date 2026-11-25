@@ -376,7 +376,7 @@ rien ne devienne illisible.
 | Sujets avec éléments de réponse | **28** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
-| Jeux de briques | **8** (actifs : 4) |
+| Jeux de briques | **16** (actifs : 4) |
 | Fichiers de tests | **82** |
 | Coquille hors ligne (téléchargée d'office) | **2.18 Mio** (7 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
@@ -793,9 +793,11 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   (4) **Catalogue normalisé** : `CHARGEURS_UNITES` charge `u1` (4 jeux actifs), `u3` et `u4`
   (1 jeu chacun, en revue) ; le choix d'unité marque celles qui ont du contenu. Les chunks
   `u3-*` / `u4-*` sont exclus du précache comme `u1-*` (0,46 ko et 0,36 ko, ouverts à la demande).
-  (5) **Nouvelle métrique générée** : « Jeux de briques · 8 (actifs : 4) », comptée par
-  `sync-metrics`. QA : `npm test` **668 tests / 82 fichiers**, `npm run lint` 0 erreur, build OK,
-  `verifier-hors-ligne` OK (104 fichiers, 0 incohérence), coquille **2,18 Mio**.
+  (5) **Nouvelle métrique générée** : « Jeux de briques · 16 (actifs : 4) », comptée par
+  `sync-metrics` (littéraux **et** table `CHOIX_UNITES`). (6) **Coque Android alignée** :
+  `versionName 0.13.0`, `versionCode 4` (elle annonçait encore 0.10.5). QA : `npm test`
+  **670 tests / 82 fichiers**, `npm run lint` 0 erreur, build OK, `verifier-hors-ligne` OK
+  (103 fichiers, 0 incohérence), coquille **2,18 Mio**, CI verte.
 - **v0.13 · Phase 3 « Fierté »** — **on ne referme plus une leçon finie : on l'annonce.** (1)
   **Écran de fierté** (`EcranFierte.tsx`, nouveau) : à la fin des six nœuds, `onTerminer` ouvre cet
   écran au lieu de refermer sèchement. Il constate **trois preuves** — six phases faites (`6 / 6`),

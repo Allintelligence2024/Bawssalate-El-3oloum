@@ -53,6 +53,12 @@ Le module documente pourquoi (règle du dépôt : aucun énoncé inventé) et po
 |---|---|---|
 | `jb:u3:e1` | `syntheses.ts` · situation `u3b` (الريبونوكلياز والتمسّخ العكوس) | document + question verbatim, 5 briques (2 observations, 2 interprétations, 1 conclusion), 2 pièges de l'unité |
 | `jb:u4:e1` | `syntheses.ts` · situation `u4` (تجربتا النقل: مصل / لمفاويات T) | idem : 5 briques, 2 pièges (dont « الجسم المضاد يقتل المستضد بنفسه ») |
+| `jb:u2:e1` … `jb:u11:e1` | `syntheses.ts` · première situation de chaque unité (u3 garde `u3b`) | même gabarit : un jeu par unité, `unites.ts` ne portant que situation + verbe + attendu |
+
+Total du catalogue : **16 jeux** — 4 `actif` (u1, écrits à la main depuis les exercices de
+méthodologie), 12 `a_valider_enseignant` (2 du sujet pilote 2025-1, 10 des unités `u2`…`u11`).
+`u1` n'a pas de jeu dérivé : ses jeux actifs resteraient seuls jouables, et un doublon en revue
+n'apporterait rien.
 
 Statut `a_valider_enseignant` dans les deux cas : ils ne sont **pas** jouables. `EcranBriques`
 affiche la porte « هذا التدريب قيد مراجعة الأستاذ », puis « افتح المعاينة (محتوى قيد المراجعة) »,
@@ -60,17 +66,22 @@ puis la mention « معاينة: محتوى قيد المراجعة — ليس �
 
 ### 2.3 Catalogue et budget
 
-- `CHARGEURS_UNITES` est normalisé (`u1` → `JEUX_UNITE1`, `u3` → `JEUX_UNITE3`,
-  `u4` → `JEUX_UNITE4`) : le nom d'export d'une unité n'est plus une contrainte cachée.
+- `chargerJeuxUnite` a deux origines : un fichier **écrit à la main** (`u1`) ou, à défaut, le
+  module **chargé à la demande** `unites.ts` qui dérive le jeu de la synthèse. `UNITES_AVEC_BRIQUES`
+  est écrit en clair (importer `unites.ts` ferait entrer `syntheses.ts` dans le chunk de
+  démarrage) et un test vérifie qu'il vaut exactement `['u1', ...UNITES_SYNTHESE]`.
 - Le choix d'unité marque celles qui ont du contenu (`UNITES_AVEC_BRIQUES`) au lieu d'affirmer
   que « seule l'unité 1 est prête ».
-- `vite.config.ts` : `u3-*` et `u4-*` exclus du précache, comme `u1-*` (chunks mesurés :
-  0,46 ko et 0,36 ko ; ils s'ouvrent à la demande). Coquille inchangée : **2,18 Mio**.
+- `vite.config.ts` : `unites-*` exclu du précache comme `u1-*` (chunks mesurés : `unites`
+  3,72 ko / gzip 1,79 ko, `u1` 5,37 ko ; servis à la demande). Coquille inchangée : **2,18 Mio**.
+- **Coque Android** : `versionName` passe de `0.10.5` à `0.13.0`, `versionCode` de 3 à 4 —
+  elle annonçait deux versions de retard.
 
 ### 2.4 Métrique
 
-`sync-metrics.mjs` ajoute une ligne comptée : **« Jeux de briques · 8 (actifs : 4) »**
-(u1 : 4 actifs ; sujet 2025-1 : 2 en revue ; u3 : 1 ; u4 : 1).
+`sync-metrics.mjs` ajoute une ligne comptée : **« Jeux de briques · 16 (actifs : 4) »**
+(u1 : 4 actifs ; sujet 2025-1 : 2 en revue ; unités dérivées : 10, comptées par la table
+`CHOIX_UNITES` puisque leur identifiant est construit dans le code).
 
 ---
 
@@ -79,11 +90,12 @@ puis la mention « معاينة: محتوى قيد المراجعة — ليس �
 | Fichier | Nature |
 |---|---|
 | `src/data/briques/gabarit.ts` | **nouveau** — `jeuBriques`, `rolesDepuisModele`, `jeuDepuisSituation` |
-| `src/data/briques/u3.ts`, `u4.ts` | **nouveaux** — un jeu chacun, construits par le gabarit |
+| `src/data/briques/unites.ts` | **nouveau** — table `CHOIX_UNITES` (situation, verbe, attendu) + `jeuxSynthese()` : un jeu par unité `u2`…`u11` |
 | `src/data/briques/index.ts` | chargeurs normalisés (`u1`, `u3`, `u4`) |
 | `src/components/EcranBriques.tsx` | choix d'unité : mention « تمارين بالبنى », texte d'introduction honnête |
 | `src/components/Ana.tsx` | groupes de volets pour les cartes de progression et les réglages (revue phase 3) |
-| `vite.config.ts` | `u3-*`, `u4-*` hors précache |
+| `vite.config.ts` | `unites-*` hors précache |
+| `android/app/build.gradle` | `versionName 0.13.0`, `versionCode 4` |
 | `scripts/sync-metrics.mjs` | métrique « Jeux de briques » |
 | `src/utils/__tests__/briques-gabarit.test.ts` | **nouveau** (7 tests : gabarit, catalogue, aperçu, verbatim) |
 | `src/__tests__/briques-apreciation-ui.test.tsx` | +1 test : porte d'aperçu de l'unité 3 puis mention |
@@ -96,10 +108,10 @@ puis la mention « معاينة: محتوى قيد المراجعة — ليس �
 
 | Étape | Résultat |
 |---|---|
-| `npm test` | **668 tests / 82 fichiers verts** (658 → 668, +10) |
+| `npm test` | **670 tests / 82 fichiers verts** (658 → 670, +12) |
 | `npm run lint` | 0 erreur |
-| `npm run build` | OK — `u3-Curjdc95.js` 0,46 ko, `u4-bbVUd0G3.js` 0,36 ko |
-| `node scripts/verifier-hors-ligne.mjs` | OK — 104 fichiers, 6 690 919 o servis vs 6 675 917 o déclarés, **0 incohérence** |
+| `npm run build` | OK — `unites-6sK9nHnf.js` 3,72 ko (gzip 1,79 ko), `u1-lHtELbmW.js` 5,37 ko |
+| `node scripts/verifier-hors-ligne.mjs` | OK — 103 fichiers, 6 689 670 o servis vs 6 674 798 o déclarés, **0 incohérence** |
 | `node scripts/sync-metrics.mjs --check` | aucune dérive |
 | Coquille | **2,18 Mio** (7 entrées) — inchangée : les nouveaux jeux ne sont pas précachés |
 
@@ -117,10 +129,13 @@ puis la mention « معاينة: محتوى قيد المراجعة — ليس �
 
 ---
 
-## 6. Reste ouvert
+## 6. Reste ouvert (humain uniquement)
 
-- **Validation éditoriale** : les 4 jeux non relus (sujet 2025-1, u3, u4) attendent un
-  enseignant. Le geste est simple : passer `statut` à `'actif'` dans le jeu ou sa configuration.
-- **Contenu** : une seule situation par unité prioritaire. Les unités 2, 5–11 n'ont pas encore
-  de briques ; le gabarit est prêt (`jeuDepuisSituation` + `syntheses.ts` en fournit déjà 13).
-- `versionName` Android reste `0.10.5` — à aligner sur `0.13.0` au prochain build APK.
+- **Validation éditoriale** : 12 jeux `a_valider_enseignant` attendent un professeur de SVT.
+  Le geste est mécanique : relire, puis passer le statut à `'actif'` (jeu dérivé : ajouter
+  `statut: 'actif'` à son entrée dans `CHOIX_UNITES`). Tant que ce n'est pas fait, ils restent
+  derrière la porte d'aperçu — c'est la règle, pas un oubli.
+- **APK signé** : la coque est alignée (`0.13.0` / code 4) mais la signature, les icônes
+  adaptatives finales et l'essai sur appareil réel restent à faire côté Android.
+- **Reste du programme produit** (hors plan Guide-First) : voir
+  `plans/PASSATION-RESTE-A-FAIRE.md` — revue de sécurité RLS, appareils réels, droits des PDF.

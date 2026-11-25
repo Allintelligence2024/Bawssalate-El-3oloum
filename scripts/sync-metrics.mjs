@@ -77,6 +77,10 @@ for (const f of readdirSync('src/data/briques')) {
   jeuxBriquesActifs += compte(contenu, /\bstatut: 'actif'/g);
 }
 
+// Les jeux dérivés des synthèses n'ont pas d'identifiant littéral (il est construit dans
+// `jeuxSynthese`) : on compte les entrées de la table `CHOIX_UNITES`, une par unité.
+jeuxBriques += compte(lire('src/data/briques/unites.ts').replace(/\r\n/g, '\n'), /^ {2}u\d+: \{$/gm);
+
 // ── Qualité ──
 let fichiersTests = 0;
 for (const racine of ['src']) {

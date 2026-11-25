@@ -147,7 +147,10 @@ describe('chargement paresseux', () => {
   });
 
   it('une unité sans contenu renvoie un tableau vide (état vide honnête)', async () => {
-    await expect(chargerJeuxUnite('u9')).resolves.toEqual([]);
+    // Depuis la phase 4, chaque unité du programme a un jeu dérivé de sa synthèse : l'état
+    // vide ne concerne donc plus une unité réelle mais un identifiant inconnu (ancien état,
+    // lien obsolète) — et il reste honnête : un tableau vide, pas une erreur.
+    await expect(chargerJeuxUnite('u99')).resolves.toEqual([]);
     await expect(chargerJeuxSujet('1999-1')).resolves.toEqual([]);
   });
 
