@@ -7,7 +7,7 @@
 //   - aucune note sur 20 (le résultat parle de maîtrise, pas de note) ;
 //   - aucun verrou : on peut passer une consigne sans être bloqué ;
 //   - l'auto-évaluation n'est pas une correction officielle, et l'écran le dit.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SujetOfficiel } from '../data/sujetsOfficiels';
 import {
   construireGrille, calculerResultat, cleConsigne, priorites, statutQualitatif,
@@ -73,6 +73,14 @@ export default function EntraineurSujet({
   const [simulation, setSimulation] = useState(false);
   // Tiroir « source vivant » ouvert pour une consigne précise (null = fermé).
   const [tiroir, setTiroir] = useState<{ texte: string; verbe: string } | null>(null);
+  const dialogue = useRef<HTMLDialogElement>(null);
+
+  // Le tiroir doit s'ouvrir DEVANT l'élève : un panneau rendu en bas d'une page longue
+  // ressemble à un bouton mort (retour d'usage). `showModal` le met au premier plan.
+  useEffect(() => {
+    const el = dialogue.current;
+    if (tiroir && el && !el.open) el.showModal();
+  }, [tiroir]);
   const reprises = priorites(grille, evaluations);
 
   if (simulation) {
@@ -250,14 +258,31 @@ export default function EntraineurSujet({
         );
       })}
 
-      {tiroir && (
-        <TiroirBoussole
-          document={`${sujet.id} · ${tiroir.texte}`}
-          verbe={tiroir.verbe}
-          etat={etat}
-          onFermer={() => setTiroir(null)}
-        />
-      )}
+      <dialog
+        ref={dialogue}
+        aria-label="البوصلة · مصدر حيّ"
+        dir="rtl"
+        onCancel={(e) => {
+          e.preventDefault();
+          setTiroir(null);
+        }}
+        onClose={() => setTiroir(null)}
+        className="fixed inset-0 m-auto max-h-none w-[min(100%,44rem)] max-w-none border-0 bg-paper p-0 backdrop:bg-black/60"
+      >
+        <div className="flex h-[88dvh] flex-col">
+          {tiroir && (
+            <TiroirBoussole
+              document={`${sujet.id} · ${tiroir.texte}`}
+              verbe={tiroir.verbe}
+              etat={etat}
+              onFermer={() => {
+                dialogue.current?.close();
+                setTiroir(null);
+              }}
+            />
+          )}
+        </div>
+      </dialog>
     </div>
   );
 }

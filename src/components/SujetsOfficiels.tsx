@@ -14,6 +14,7 @@ import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 // v0.11 — accès jamais verrouillé + atelier 1-2-3 par consigne.
 import { accesSujet } from '../utils/accesSujets';
+import { SUJETS_AVEC_BRIQUES } from '../data/briques';
 import type { Etat } from '../types';
 
 interface Props {
@@ -33,6 +34,10 @@ interface Props {
   onPasseOutreSujet?: (sujetId: string) => void;
   /** Ouvre l'atelier de briques du sujet (gabarit pilote). */
   onOuvrirBriques?: (sujetId: string) => void;
+  /** Ouvre le parcours guidé du sujet complet (tous exercices, méthode 1-2-3). */
+  onOuvrirGuide?: (sujetId: string) => void;
+  /** Nombre de consignes déjà travaillées dans ce sujet (pour l'afficher sans mentir). */
+  travaillees?: Record<string, number>;
 }
 
 /** ما يتوقّعه المصحّح من كلّ فعل — صياغة قصيرة، لا نسبة ولا سلّم */
@@ -76,6 +81,8 @@ function Sujet({
   etat,
   onPasseOutreSujet,
   onOuvrirBriques,
+  onOuvrirGuide,
+  travaillees,
 }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
@@ -96,14 +103,34 @@ function Sujet({
           onFermer={() => setEnModeEntrainement(false)}
           acces={etat ? accesSujet(etat, sujet.id) : undefined}
           onPasseOutre={onPasseOutreSujet ? () => onPasseOutreSujet(sujet.id) : undefined}
-          onOuvrirBriques={onOuvrirBriques ? () => onOuvrirBriques(sujet.id) : undefined}
+          // On n'affiche le bouton « briques » que si le sujet a réellement un gabarit :
+          // un bouton qui mène à un état vide est un bouton mort.
+          onOuvrirBriques={
+            onOuvrirBriques && SUJETS_AVEC_BRIQUES.includes(sujet.id)
+              ? () => onOuvrirBriques(sujet.id)
+              : undefined
+          }
           etat={etat}
         />
       ) : (
       <>
+      {onOuvrirGuide && (
+        <button
+          type="button"
+          onClick={() => onOuvrirGuide(sujet.id)}
+          className="btn--primaire w-full px-3 py-2.5 text-sm"
+        >
+          الموضوع كاملًا · خطوة بخطوة (1-2-3) ←
+          {travaillees?.[sujet.id] !== undefined && (
+            <span className="ms-2 text-[11px] font-normal opacity-80 tnum">
+              ({nb(travaillees[sujet.id])} تعليمة عُملت)
+            </span>
+          )}
+        </button>
+      )}
       {estEntrainable(sujet.id) && onEvaluerConsigne && (
         <button type="button" onClick={() => setEnModeEntrainement(true)} className="btn-gold w-full px-3 py-2 text-sm">
-          تدرّب على هذا الموضوع خطوة بخطوة ←
+          تدرّب سريعًا على هذا الموضوع ←
         </button>
       )}
       <p className="flex flex-wrap items-center gap-2 text-[11px] leading-relaxed text-mute">
@@ -236,6 +263,8 @@ export default function SujetsOfficiels({
   etat,
   onPasseOutreSujet,
   onOuvrirBriques,
+  onOuvrirGuide,
+  travaillees,
 }: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
@@ -290,6 +319,8 @@ export default function SujetsOfficiels({
               etat={etat}
               onPasseOutreSujet={onPasseOutreSujet}
               onOuvrirBriques={onOuvrirBriques}
+              onOuvrirGuide={onOuvrirGuide}
+              travaillees={travaillees}
             />
           ) : <p className="text-sm text-mute">لا موضوع.</p>}
 

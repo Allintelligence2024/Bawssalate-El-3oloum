@@ -16,6 +16,7 @@ import { enregistrerTentative } from './utils/amelioration';
 import { cleEvenement, consignerTrophee, dejaVu, marquerVu, tentative } from './utils/evenements';
 import type { EvaluationBriques } from './utils/briques';
 import { tracerDerogation } from './utils/accesSujets';
+import { SUJETS_AVEC_BRIQUES } from './data/briques';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
@@ -57,6 +58,8 @@ const MicroNoeuds = lazy(() => import('./components/MicroNoeuds'));
 const JourneeReparation = lazy(() => import('./components/JourneeReparation'));
 const EcranBriques = lazy(() => import('./components/EcranBriques'));
 const Defi60 = lazy(() => import('./components/Defi60'));
+// v0.12 — le sujet complet guidé (tous les exercices, méthode 1-2-3), chargé à la demande.
+const SujetGuide = lazy(() => import('./components/SujetGuide'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
@@ -113,6 +116,7 @@ type Mode =
   | { type: 'choixSynthese' }
   | { type: 'sujets' }
   | { type: 'bacPasAPas'; sujetId: string; exercice: number }
+  | { type: 'sujetGuide'; sujetId: string }
   | { type: 'kouest'; lessonId: string }
   | { type: 'fiche' }
   | { type: 'fakh'; uniteId?: string }
@@ -865,6 +869,13 @@ export default function App() {
           etat={etat}
           onPasseOutreSujet={onDerogationSujet}
           onOuvrirBriques={(sujetId) => setMode({ type: 'briques', sujetId })}
+          onOuvrirGuide={(sujetId) => setMode({ type: 'sujetGuide', sujetId })}
+          travaillees={Object.fromEntries(
+            Object.entries(etat.maitriseSujets ?? {}).map(([id, evaluation]) => [
+              id,
+              Object.values(evaluation).filter((n) => n === 0 || n === 1 || n === 2).length,
+            ]),
+          )}
           onEvaluerConsigne={(sujetId, cle, niveau) =>
             setEtat((prev) => ({
               ...prev,
@@ -958,6 +969,43 @@ export default function App() {
           onCarnetFaute={onCarnetFaute}
           onFermer={() => setMode(null)}
         />
+      );
+    }
+    if (mode.type === 'sujetGuide') {
+      const sujetId = mode.sujetId;
+      return (
+        <Suspense fallback={<ChargementEcran />}>
+          <SujetGuide
+            sujetId={sujetId}
+            maitrise={etat.maitriseSujets?.[sujetId]}
+            brouillons={etat.brouillonsSujets?.[sujetId]}
+            etat={etat}
+            onEvaluer={(cle, niveau) =>
+              setEtat((prev) => ({
+                ...prev,
+                maitriseSujets: {
+                  ...prev.maitriseSujets,
+                  [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
+                },
+              }))
+            }
+            onBrouillon={(cle, texte) =>
+              setEtat((prev) => ({
+                ...prev,
+                brouillonsSujets: {
+                  ...prev.brouillonsSujets,
+                  [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
+                },
+              }))
+            }
+            onOuvrirBriques={
+              SUJETS_AVEC_BRIQUES.includes(sujetId)
+                ? () => setMode({ type: 'briques', sujetId })
+                : undefined
+            }
+            onFermer={() => setMode({ type: 'sujets' })}
+          />
+        </Suspense>
       );
     }
     if (mode.type === 'choixSynthese') {

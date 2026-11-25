@@ -52,7 +52,7 @@ function precacheManifest(): Plugin {
       // v0.11 — la couche d'entraînement 1-2-3 suit la même règle (mesuré sur le build 0.11) :
       //   EcranBriques 14,9 ko · jeux de l'unité 1 5,4 ko · gabarit 2025-1 3,7 ko ·
       //   Défi 60 s 4,0 ko · Journée de réparation 3,9 ko · carte de leçon 1,9 ko ·
-      //   tiroir de la Boussole 5,0 ko · table des verbes 4,7 ko.
+      //   tiroir de la Boussole 5,0 ko · table des verbes 4,7 ko · sujet complet guidé 14,4 ko.
       // Sans ces exclusions la coquille passe à 2,53 Mio (plafond 2,5). Rien n'est perdu pour
       // l'élève : le service worker met en cache `assets/*` au premier chargement (voir
       // `public/sw.js`, gestionnaire `fetch`), donc un écran ouvert une fois reste hors ligne.
@@ -69,6 +69,7 @@ function precacheManifest(): Plugin {
         /^assets\/pointsCarteLecon-/,
         /^assets\/TiroirBoussole-/,
         /^assets\/attenduVerbes-/,
+        /^assets\/SujetGuide-/,
       ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))

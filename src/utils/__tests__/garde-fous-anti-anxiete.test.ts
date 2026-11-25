@@ -30,6 +30,8 @@ const FICHIERS = [
   'src/components/TiroirBoussole.tsx',
   'src/components/CarteBoucliersSM2.tsx',
   'src/components/CarteTropheesTactiques.tsx',
+  'src/components/SujetGuide.tsx',
+  'src/utils/parcoursSujet.ts',
 ];
 
 /** Code seul : commentaires de ligne et blocs retirés (grossier, suffisant pour un grep-guard). */
@@ -86,7 +88,12 @@ describe('pas de texte latin dans les copies arabes', () => {
 });
 
 describe('l’atelier 1-2-3 ne verrouille rien', () => {
-  it.each(['src/components/EcranBriques.tsx', 'src/components/Ecran123.tsx', 'src/components/Defi60.tsx'])(
+  it.each([
+    'src/components/EcranBriques.tsx',
+    'src/components/Ecran123.tsx',
+    'src/components/Defi60.tsx',
+    'src/components/SujetGuide.tsx',
+  ])(
     '%s : aucun état « verrouillé » ni « bloqué »',
     (fichier) => {
       expect(code(fichier)).not.toMatch(/verrouill|bloqué|محظور|مقفل/);

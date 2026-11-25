@@ -186,3 +186,34 @@ coquille. Avec la couche 1-2-3 complète, `verifier-hors-ligne` sortait à **2,5
 **Résultat.** coquille **2,49 Mio** (65 assets dont 20 au démarrage), contenu 4,19 Mio, 0 problème de
 cohérence, 0 échec HTTP. Si une future phase ajoute du contenu, la règle est désormais : *mesurer avec
 le script*, pas raisonner sur la taille du chunk de démarrage.
+
+## 13. v0.12 — «الموضوع كاملًا · 1-2-3» : le sujet entier, guidé
+
+**Problème constaté (retour d'usage).** Les écrans existaient, mais le parcours d'un sujet
+complet n'était pas praticable : `BacPasAPas` traitait **un exercice** à la fois, `EntraineurSujet`
+laissait l'élève choisir ses consignes, et certains boutons ouvraient un panneau rendu plus bas
+dans la page (impression de « bouton mort »).
+
+**Ce qui a été ajouté.**
+
+| Élément | Rôle |
+|---|---|
+| `utils/parcoursSujet.ts` | Assemble un sujet **complet** : exercice → partie → consigne, avec pour chaque consigne le verbe, l'attendu du correcteur (`attenduVerbes`), la checklist en 3 points, les descriptions de documents et les **éléments de réponse officiels** du corrigé. Aucun contenu inventé : 30 sujets, **331 consignes, 331 avec éléments officiels**. |
+| `components/SujetGuide.tsx` | Le parcours guidé en **quatre temps** — `افهم` (verbe, attendu, documents) → `تحقّق` (les 3 points du verbe) → `اكتب` (brouillon local, jamais la solution d'emblée) → `قارن` (éléments officiels révélés sur demande, puis auto-évaluation 0/1/2). Rail d'avancement, reprise à la première consigne non travaillée, écran de fin sobre. |
+| `SujetsOfficiels` | Bouton principal **«الموضوع كاملًا · خطوة بخطوة (1-2-3)»** sur chaque sujet (aucun verrou, y compris 2013–2022), avec le nombre de consignes déjà travaillées. |
+| `App` | Mode `sujetGuide` (chargé à la demande) ; l'auto-évaluation écrit dans `maitriseSujets` — **la même clé** que l'entraîneur, donc la couverture du sujet et l'accès conseillé restent cohérents. |
+| `EntraineurSujet` | Le tiroir s'ouvre désormais dans un `<dialog>` (`showModal`) : il s'affiche devant l'élève au lieu d'apparaître en bas d'une page longue. |
+| Garde-fous | Le bouton « briques » n'apparaît que si le sujet a réellement un gabarit (pas de bouton menant à un état vide). |
+
+**Tests ajoutés.** `utils/__tests__/parcours-sujet.test.ts` (2022-1 pas à pas, ordre, éléments
+officiels, barème 20 du corrigé, 331 consignes couvertes sur les 30 sujets) et
+`__tests__/sujet-guide-ui.test.tsx` (jsdom : les quatre temps s'enchaînent vraiment, le brouillon
+remonte, les éléments restent cachés avant la demande, l'auto-évaluation avance et l'écran de fin
+n'affiche ni note ni pourcentage).
+
+**Budget.** `SujetGuide` (14,4 ko) rejoint la liste `HORS_PRECACHE` de la couche d'entraînement
+optionnelle (§12.bis) : coquille **2,49 Mio**, 0 incohérence, 0 échec HTTP.
+
+**Reste ouvert (éditorial).** Les descriptions de documents sont celles du corrigé ; les **images**
+des documents ne sont pas dans le dépôt (elles sont redessinées à part dans `figuresSujets`). Le
+parcours le dit explicitement quand une consigne s'appuie sur une figure.
