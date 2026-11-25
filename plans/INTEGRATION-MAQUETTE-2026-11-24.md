@@ -472,3 +472,28 @@ l'app fusionnée : مساري / أنا / الباك / كويست en clair et en 
 Deux tests de `main` ont dû être ajustés, pas contournés :
 `sync.test.ts` figeait `'0.9.3'` (il lit désormais la version de `package.json`), et
 `lint.test.ts` exige un `eslint .` muet — d'où les exclusions ci-dessus.
+
+## 21. Ce que la CI a rattrapé (2026-11-25)
+
+Le premier passage de l'intégration continue a échoué sur le dernier point du job `test`,
+« Tester l'intégration sur le build local » : trois régressions invisibles en local parce
+qu'elles ne se déclenchent que sur l'app **compilée** et servie. Aucune n'était un détail :
+
+1. **Budget hors-ligne dépassé** (coquille 2,67 Mio > 2,5 + cinq images > 150 ko).
+   La fusion avait ramené de notre côté des images que `main` avait déjà supprimées
+   (`favicon.jpg`, `logo.png`, `mascotte.png`, `personnage-pirate.{jpg,png}`) — tout le code
+   sert les `.webp`. Les cinq fichiers sont retirés. Les PNG d'icônes sont quantifiés
+   (512 px : 141 → 44 ko) et `scripts/generer-icones.mjs` le fait désormais lui-même quand
+   ImageMagick est présent. Enfin la maskable et l'icône iOS quittent la coquille : elles ne
+   servent qu'à l'installation, pas hors ligne (37 ko rendus au budget, 2,47 Mio).
+   `scripts/verifier-hors-ligne.mjs` lit maintenant `COQUILLE` **dans `sw.js`** au lieu de
+   recopier une troisième liste qui avait déjà divergé.
+2. **Scénarios Playwright de `main` écrits pour la barre à cinq entrées** : ils cliquaient
+   `البوصلة`, `تدريبات` et `اليوم`, trois portes qui n'existent plus. Ils suivent maintenant
+   le produit : 4 portes, et la méthodologie s'ouvre par الباك → راجع (`integration.cjs`
+   vérifie même le compte de boutons de la barre, `recovery.cjs` reprend le même chemin).
+   Aucun scénario n'a été retiré ni assoupli sur le fond.
+3. Le reste du job (typecheck, lint, 450 tests, build, drills, hors-ligne, déploiement,
+   métriques, `npm audit`, laboratoire autonome) passait déjà.
+
+Résultat : `test` vert en 2 min 02, Vercel vert, PR #12 fusionnée dans `main`.
