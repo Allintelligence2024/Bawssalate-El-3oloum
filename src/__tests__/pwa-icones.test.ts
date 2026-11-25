@@ -31,18 +31,18 @@ describe('images de l’application installée', () => {
     expect(lire('index.html')).toContain('content="#225342"');
   });
 
-  it('laisse le service worker mettre ces icônes en cache hors-ligne', () => {
+  it('précache les deux icônes du manifeste, pas les autres', () => {
     const sw = lire('public/sw.js');
-    for (const chemin of [
-      '/icons/icon-192.png',
-      '/icons/icon-512.png',
-      '/icons/maskable-512.png',
-      '/icons/apple-touch-180.png',
-    ]) {
-      expect(sw).toContain(`'${chemin}'`);
-    }
-    // Le manifeste de pré-cache doit les embarquer aussi, sinon rien n'est copié.
+    // La coquille hors ligne embarque ce que l'écran d'accueil affiche.
+    expect(sw).toContain("'/icons/icon-192.png'");
+    expect(sw).toContain("'/icons/icon-512.png'");
+    // La maskable et l'icône iOS ne servent qu'à l'installation (en ligne) :
+    // les précacher coûtait 37 ko de coquille pour rien.
+    expect(sw).not.toContain("'/icons/maskable-512.png'");
+    expect(sw).not.toContain("'/icons/apple-touch-180.png'");
+    // Le pré-cache de Vite doit lister exactement les mêmes fichiers.
     expect(lire('vite.config.ts')).toContain("'icons/icon-192.png'");
+    expect(lire('vite.config.ts')).toContain("'icons/icon-512.png'");
   });
 
   it('donne à iOS une icône opaque de 180 px', () => {

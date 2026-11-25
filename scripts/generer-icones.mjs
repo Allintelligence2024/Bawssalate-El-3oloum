@@ -91,4 +91,17 @@ for (const [d] of Object.entries(densites)) {
 }
 
 await navigateur.close();
+
+// Chromium sort des PNG non optimisés (512 px ≈ 140 ko). Le vérificateur hors-ligne
+// impose 150 ko par fichier et 2,5 Mio de coquille : on quantifie si ImageMagick est là.
+import { spawnSync } from 'node:child_process';
+const pngs = ['public/icons/icon-192.png', 'public/icons/icon-512.png',
+  'public/icons/maskable-512.png', 'public/icons/apple-touch-180.png'];
+for (const f of pngs) {
+  const r = spawnSync('convert', [f, '-strip', '-colors', '96', '-define', 'png:compression-level=9', f]);
+  if (r.error) {
+    console.warn('ImageMagick absent : les PNG resteront plus lourds que le budget.');
+    break;
+  }
+}
 console.log('icônes rendues');
