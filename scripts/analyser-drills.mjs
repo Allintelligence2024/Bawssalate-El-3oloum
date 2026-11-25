@@ -12,7 +12,6 @@ let unite = null;
 let axe = null;
 let courant = null;
 
-const LETTRES = ['أ', 'ب', 'ج', 'د'];
 
 for (const l of lignes) {
   if (l.startsWith('# أسئلة الاختيار')) { section = 'qcm'; continue; }

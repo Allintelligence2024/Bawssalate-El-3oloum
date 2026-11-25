@@ -10,6 +10,7 @@ import {
   suspendreEcrituresLocalement, surEchecSauvegarde, surEtatPerime, verifierLectureEtat, viderStockage,
 } from './utils/storage';
 import { verifierCoherence } from './utils/coherenceStockage';
+import { consignerCompteur } from './utils/telemetrie';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
@@ -24,6 +25,9 @@ import { SUJETS_OFFICIELS } from './data/sujetsOfficiels';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
+import type { BoussoleAttemptEvent } from './types/boussoleBridge';
+import { appliquerEvenementBoussole, demoterProgressionDepuisKafaa } from './utils/boussoleAdapter';
+import { enregistrerDrillReussi } from './utils/drills';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -590,12 +594,15 @@ export default function App() {
 
   // ───────────── التدريبات ─────────────
 
-  function onItemReussi(id: string): void {
-    setEtat((prev) =>
-      prev.drills?.[id]
-        ? prev
-        : { ...prev, drills: { ...(prev.drills ?? {}), [id]: true } }
-    );
+  function onItemReussi(id: string, erreurs = 0): void {
+    setEtat((prev) => ({
+      ...prev,
+      drills: enregistrerDrillReussi(prev.drills, id, erreurs),
+    }));
+  }
+
+  function onBoussoleEvent(evt: BoussoleAttemptEvent): void {
+    setEtat((prev) => appliquerEvenementBoussole(prev, evt));
   }
 
   // ───────────── بطاقات الكفاءة (منهجية) — même SM-2 que les leçons ─────────────
@@ -633,13 +640,21 @@ export default function App() {
       }
       const debut = debutSemaine(aujourdhui());
       const hebdo = prev.kafaaHebdo?.debut === debut ? prev.kafaaHebdo.n : 0;
-      return {
+      const suivant: Etat = {
         ...prev,
         kafaa: { ...(prev.kafaa ?? {}), [key]: maj },
         // Seule une REVUE (écran اليوم) consomme le quota hebdomadaire (≤ 2) ;
         // une réussite d'exercice programme la carte sans l'épuiser.
         ...(estRevue ? { kafaaHebdo: { debut, n: hebdo + 1 } } : {}),
       };
+      // Lot 5B — rétrogradation croisée douce : si une carte de méthodologie échoue,
+      // les leçons terminées de l'unité associée deviennent fragiles (intervalle / 2).
+      if (qualite < 3) {
+        const matchUnite = /\b(u(?:1[01]|[1-9]))\b/i.exec(key);
+        const uniteCible = matchUnite ? matchUnite[1].toLowerCase() : key.startsWith('methodo') ? 'u1' : undefined;
+        if (uniteCible) return demoterProgressionDepuisKafaa(suivant, uniteCible, auj);
+      }
+      return suivant;
     });
   }
 
@@ -771,6 +786,7 @@ export default function App() {
             onFermer={() => setMode(null)}
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
+            onBoussoleEvent={onBoussoleEvent}
           />
         </Suspense>
       );
@@ -793,6 +809,26 @@ export default function App() {
           onFermer={() => setMode(null)}
           onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
           onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
+          maitriseSujets={etat.maitriseSujets}
+          brouillonsSujets={etat.brouillonsSujets}
+          onEvaluerConsigne={(sujetId, cle, niveau) =>
+            setEtat((prev) => ({
+              ...prev,
+              maitriseSujets: {
+                ...prev.maitriseSujets,
+                [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
+              },
+            }))
+          }
+          onBrouillonConsigne={(sujetId, cle, texte) =>
+            setEtat((prev) => ({
+              ...prev,
+              brouillonsSujets: {
+                ...prev.brouillonsSujets,
+                [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
+              },
+            }))
+          }
           onOuvrirSynthese={(s: SituationSynthese) =>
             setMode({
               type: 'synthese',
@@ -1270,6 +1306,7 @@ export default function App() {
             onCarnetFaute={onCarnetFaute}
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
             onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
+            onBoussoleEvent={onBoussoleEvent}
           />
         </Suspense>
       )}
@@ -1287,7 +1324,12 @@ export default function App() {
           onDeconnexion={onDeconnexion}
           onConsentementSync={onConsentementSync}
           onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
-          onModeIntensif={(modeIntensif) => setEtat((prev) => ({ ...prev, modeIntensif }))}
+          onModeIntensif={(modeIntensif) => {
+            setEtat((prev) => ({ ...prev, modeIntensif }));
+            // §12.1 — on mesure l'USAGE du mode intensif, pas le choix lui-même :
+            // compter chaque clic sur « متوقّف » fausserait la lecture.
+            if (modeIntensif !== 'off') consignerCompteur('modeIntensif');
+          }}
           onTailleTexte={(tailleTexte) => setEtat((prev) => ({ ...prev, tailleTexte }))}
           onOuvrirDiagnostic={() => setAfficheDiagnostic(true)}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
@@ -1297,6 +1339,8 @@ export default function App() {
           onAllerExercices={() => setOnglet('exercices')}
           onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
           onOuvrirFiche={() => setMode({ type: 'fiche' })}
+          evaluationsEntraineur={etat.maitriseSujets}
+          onOuvrirEntraineur={() => setOnglet('exercices')}
         />
         </Suspense>
       )}

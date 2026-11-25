@@ -439,3 +439,36 @@ Les 7 GO sont livrés (v0.10.0 → v0.10.5). Ce qui reste ouvert, par ordre d'ut
    c'était hors périmètre des GO.
 3. **Passe bidi** sur les textes anciens qui mêlent chiffres et sigles latins (`CO₂`, `ARNm`,
    `0 / 69`) : la règle reste « corriger la donnée, pas ajouter de marques invisibles ».
+
+---
+
+## 20. Fusion avec `main` (2026-11-25)
+
+`main` n'était pas un ancêtre de cette branche : entre `d09e082` (base, 2026-11-21) et le
+25 novembre, `main` avait avancé d'une ligne de travail indépendante (2026-11-23) — télémétrie
+`utils/telemetrie.ts`, entraîneur de sujets (`EntraineurSujet.tsx`), profil C1–C8
+(`bridge.ts`, `CarteProfilCompetences`), mesure pilote, découpage hors-ligne **coquille /
+contenu**, version tirée de `package.json` (`__APP_VERSION__`), nouvelle config ESLint et CI.
+La fusion est donc un vrai merge à trois points, pas un simple « prendre la branche ».
+
+**Méthode** : `git merge origin/main --allow-unrelated-histories`, puis pour chaque fichier
+en conflit une fusion à trois voies (`git merge-file`) avec `d09e082` comme base commune ;
+restaient 6 fichiers à arbitrer à la main :
+
+| Fichier | Décision |
+|---|---|
+| `src/App.tsx` | la coquille de la maquette est gardée (4 portes, modes `kouest`/`fakh`/`fiche`/`bacPasAPas`) ; la logique de `main` est greffée (`consignerCompteur`, `onBoussoleEvent`, `enregistrerDrillReussi`, `demoterProgressionDepuisKafaa`, props d'أنا). |
+| `src/components/Ana.tsx` | en-tête + fiche « ملفّي » + pastilles `mention` de la maquette ; les nouvelles cartes de `main` (`CarteProfilCompetences`, `CarteMesurePilote`) sont ajoutées en dessous. |
+| `src/components/SujetsOfficiels.tsx` | version de `main` (entraîneur + documents) ; le bouton « خطوة بخطوة » et sa prop sont re-greffés. |
+| `src/utils/sync.ts` | version de `main` : la version vient de `package.json` via `__APP_VERSION__`. `package.json` passe à `0.10.5`. |
+| `public/sw.js`, `vite.config.ts` | version de `main` (coquille / contenu) ; les icônes PNG rejoignent la coquille. |
+| `eslint.config.mjs` | `maquettes/**`, `NEW bawssala/**` et les sondes QA racine (`android-*.mjs`, `artemis-*.mjs`, `web-*.mjs`) sont hors lint — ce ne sont pas des sources de l'app. |
+
+**Vérifications après fusion** : `tsc -b` 0 erreur · **60 fichiers / 450 tests** verts (la suite
+de `main` + la nôtre) · `npm run lint` propre · `npm run build` vert ·
+`scripts/sync-metrics.mjs` réappliqué (chiffres du README régénérés) · parcours Playwright sur
+l'app fusionnée : مساري / أنا / الباك / كويست en clair et en sombre, 0 `pageerror`.
+
+Deux tests de `main` ont dû être ajustés, pas contournés :
+`sync.test.ts` figeait `'0.9.3'` (il lit désormais la version de `package.json`), et
+`lint.test.ts` exige un `eslint .` muet — d'où les exclusions ci-dessus.

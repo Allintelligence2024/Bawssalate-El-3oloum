@@ -6,7 +6,7 @@ import type { Etat } from '../types';
 import { xpDe, niveauDe } from './xp';
 import { statsActuelles } from './stats';
 
-export const VERSION_APP = '0.10.5';
+export const VERSION_APP = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.3';
 
 function getSupabaseConfig() {
   return {
@@ -104,9 +104,21 @@ export function construireSnapshot(etat: Etat): Snapshot | null {
 
 // ───────────── العميل (يُحمّل عند أول إرسال فقط — لا يثقل حزمة التطبيق الأساسية) ─────────────
 
+/** Délai maximal d'un envoi. Au-delà, on rend la main à l'élève : mieux vaut un état
+ *  « erreur » affiché honnêtement qu'une application qui semble figée dans un couloir. */
+export const DELAI_ENVOI_MS = 8_000;
+
+/** Signal d'annulation à délai fixe. Isolé pour être testable avec un délai court
+ *  (AbortSignal.timeout utilise une horloge interne que les faux timers ne pilotent pas). */
+export function signalDelai(ms: number = DELAI_ENVOI_MS): AbortSignal {
+  return AbortSignal.timeout(ms);
+}
+
 let client: import('@supabase/supabase-js').SupabaseClient | null = null;
 let jetonClient = '';
 let enCours: Promise<void> | null = null;
+/** Dernier état local pas encore remis au serveur. Un seul slot : on veut le PLUS RÉCENT,
+ *  pas une file de tous les états intermédiaires (le serveur ne garde que l'écrasement final). */
 let enAttente: Snapshot | null = null;
 const comptesSuspendus = new Set<string>();
 const suppressionsEnCours = new Set<string>();
@@ -129,6 +141,11 @@ export function reprendreSync(email?: string): void {
 }
 let dernierEnvoye = '';
 export type EtatEnvoi = 'en_attente' | 'envoi' | 'confirme' | 'erreur' | 'hors_ligne';
+/** Compteur local (aucun envoi) des envois interrompus par le délai de 8 s. */
+let derniersDelaisDepasses = 0;
+export function delaisDepasses(): number {
+  return derniersDelaisDepasses;
+}
 const etatsEnvoi = new Map<string, EtatEnvoi>();
 const observateursEnvoi = new Set<() => void>();
 export function etatEnvoi(email?: string): EtatEnvoi {
@@ -167,6 +184,8 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(etat.compte.email, 'hors_ligne'); return; }
   const snap = construireSnapshot(etat);
   if (!snap) return;
+  // Coalescence (BUG-003) : si un envoi est en cours, on mémorise le dernier état produit.
+  // Il sera envoyé dès la fin du précédent — jamais abandonné, même si l'écran a changé dix fois.
   if (enCours) { enAttente = snap; return; }
   await envoyerResume(snap);
 }
@@ -181,6 +200,7 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
     if (!sb || comptesSuspendus.has(snap.email)) return;
     if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(snap.email, 'hors_ligne'); return; }
     publierEtatEnvoi(snap.email, 'envoi');
+    // Timeout borné (BUG-007) : `abortSignal` annule la requête réseau, pas seulement l'attente.
     const { error } = await sb.from('eleves').upsert(
       {
         email: snap.email,
@@ -210,17 +230,25 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
         charge_utile: { ...chargeUtile, maj: snap.maj },
       },
       { onConflict: 'email' },
-    );
+    ).abortSignal(signalDelai());
     if (!error) {
       dernierEnvoye = json;
       publierEtatEnvoi(snap.email, 'confirme');
     } else publierEtatEnvoi(snap.email, 'erreur');
-  } catch {
+  } catch (e) {
+    // Un dépassement de délai n'est pas une erreur serveur : l'élève doit voir « hors ligne »
+    // ou « erreur » selon ce qu'on sait, jamais un silence. On garde 'erreur' (état déjà testé)
+    // et on distingue le délai pour la télémétrie locale.
+    if (e instanceof Error && e.name === 'TimeoutError') derniersDelaisDepasses++;
     publierEtatEnvoi(snap.email, 'erreur');
   }
   });
   enCours = travail;
-  try { await travail; } finally {
+  try {
+    await travail;
+  } finally {
+    // La file est vidée quoi qu'il arrive : succès, erreur, timeout, exception. Un état
+    // produit pendant l'envoi ne doit jamais disparaître parce que l'envoi a échoué.
     if (enCours === travail) {
       enCours = null;
       const suivant = enAttente;

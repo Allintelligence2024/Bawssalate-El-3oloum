@@ -26,7 +26,7 @@ import { IcoCarnet, IcoCible, IcoDiplome, IcoOutils, IcoRetour, IcoTamrin, IcoVe
 
 interface Props {
   etat: Etat;
-  onItemReussi: (id: string) => void;
+  onItemReussi: (id: string, erreurs?: number) => void;
   onOuvrirAtelier: () => void;
   onOuvrirImmunite: () => void;
   onOuvrirOrogenese: () => void;
@@ -170,7 +170,7 @@ export default function Exercices({
       <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
         <header className="mb-6 flex items-start gap-3">
           <img
-            src="/mascotte.png"
+            src="/mascotte.webp"
             alt="مستكشف بوصلة العلوم"
             className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
           />
@@ -637,7 +637,7 @@ function unitesDebloquees(etat: Etat): Set<number> {
 
 interface PropsSeance {
   vue: Extract<Vue, { type: 'seance' }>;
-  onItemReussi: (id: string) => void;
+  onItemReussi: (id: string, erreurs?: number) => void;
   onReponse: (juste: boolean) => void;
   onSuivant: () => void;
   onOuvrirCours: () => void;
@@ -648,6 +648,7 @@ const NOM_MARCHE: Record<1 | 2 | 3, string> = { 1: 'الأساس', 2: 'المت�
 
 function Seance({ vue, onItemReussi, onReponse, onSuivant, onOuvrirCours, onArreter }: PropsSeance) {
   const [repondu, setRepondu] = useState(false);
+  const [erreurPremierEssai, setErreurPremierEssai] = useState(false);
   const [evenement, setEvenement] = useState<Evenement>(null);
   const [inviter, setInviter] = useState(false);
   const item = vue.courant;
@@ -698,13 +699,14 @@ function Seance({ vue, onItemReussi, onReponse, onSuivant, onOuvrirCours, onArre
             qcm={qcm}
             source="exercice"
             onPremiereTentative={(juste) => {
+              setErreurPremierEssai(!juste);
               const t = appliquerReponse(vue.adaptatif, item, juste);
               setEvenement(t.evenement);
               setInviter(t.inviterCours);
               onReponse(juste);
             }}
             onValide={() => {
-              onItemReussi(item.id);
+              onItemReussi(item.id, erreurPremierEssai ? 1 : 0);
               setRepondu(true);
             }}
           />
@@ -733,6 +735,7 @@ function Seance({ vue, onItemReussi, onReponse, onSuivant, onOuvrirCours, onArre
             type="button"
             onClick={() => {
               setRepondu(false);
+              setErreurPremierEssai(false);
               setEvenement(null);
               setInviter(false);
               onSuivant();

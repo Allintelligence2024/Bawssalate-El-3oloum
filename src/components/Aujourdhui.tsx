@@ -111,7 +111,7 @@ export default function Aujourdhui({
       {/* ترحيب */}
       <header className="mb-6 flex items-start gap-3">
         <img
-          src="/mascotte.png"
+          src="/mascotte.webp"
           alt="مستكشف بوصلة العلوم"
           className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
         />
@@ -366,7 +366,7 @@ export default function Aujourdhui({
         <section className="card mt-5 border-2 border-sage bg-sage-soft/40 p-5">
           <div className="flex items-center gap-3">
             <img
-              src="/mascotte.png"
+              src="/mascotte.webp"
               alt=""
               className="h-14 w-14 shrink-0 object-contain"
             />

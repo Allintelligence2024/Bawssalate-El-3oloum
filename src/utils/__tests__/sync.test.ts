@@ -1,4 +1,5 @@
 // Tests de la confidentialité du sync (P0.2 + P0.8) : aucun envoi avant opt-in
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
@@ -115,7 +116,8 @@ describe('sync — confidentialité (P0.2/P0.8)', () => {
 // est prouvée en comptant les appels, pas seulement en lisant le code.
 
 const sbMocks = vi.hoisted(() => ({
-  upsert: vi.fn(async (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({ error: null })),
+  /** Le vrai client PostgREST reçoit le payload puis `.abortSignal()` (timeout borné, BUG-007). */
+  upsert: vi.fn(async (_payload: Record<string, unknown>, _options?: Record<string, unknown>, _signal?: AbortSignal) => ({ error: null })),
   createClient: vi.fn(),
   select: vi.fn(async () => ({ data: [{ email: 'test@example.com' }], error: null })),
 }));
@@ -144,7 +146,9 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
     sbMocks.createClient.mockClear();
     sbMocks.createClient.mockImplementation(() => ({
       from: () => ({
-        upsert: sbMocks.upsert,
+        upsert: (payload: Record<string, unknown>, options?: Record<string, unknown>) => ({
+          abortSignal: (signal: AbortSignal) => sbMocks.upsert(payload, options, signal),
+        }),
         delete: () => ({ eq: () => ({ select: sbMocks.select }) }),
       }),
     }));
@@ -250,6 +254,29 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
       await envoyerSnapshot(etatAvec({ compte: { ...compte, jeton }, consentementSync: true, consentementSyncDecideLe: 'date' }));
     }
     expect(sbMocks.upsert).not.toHaveBeenCalled();
+  });
+
+  it('construireSnapshot n’inclut jamais aucun texte libre (notes, carnet, mot de passe) et aligne VERSION_APP', () => {
+    const snap = construireSnapshot({
+      ...base(),
+      compte,
+      notes: [{ id: 'n1', uniteId: 'u1', lessonId: 'l1', texte: 'SECRET_NOTE_ELEVE', kind: 'note', ts: '2026-11-21' }],
+      carnet: [{ id: 'c1', ts: '2026-11-21', contexte: 'u1', enonce: 'Q', donne: 'SECRET_BROUILLON_LIBRE', diagnostic: 'D' }],
+      consentementSync: true,
+      consentementSyncDecideLe: '2026-11-21T00:00:00Z',
+    });
+    expect(snap).not.toBeNull();
+    const serialise = JSON.stringify(snap);
+    expect(serialise).not.toContain('SECRET_NOTE_ELEVE');
+    expect(serialise).not.toContain('SECRET_BROUILLON_LIBRE');
+    expect(serialise).not.toContain('hachage');
+    expect(snap!.notes_nombre).toBe(1);
+    // La version vient d'une seule source : `package.json` (injectée au build dans
+    // `__APP_VERSION__`, voir vite.config.ts). Le test la lit au lieu de la figer.
+    const pkg = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8')) as {
+      version: string;
+    };
+    expect(snap!.app_version).toBe(pkg.version);
   });
 
 });

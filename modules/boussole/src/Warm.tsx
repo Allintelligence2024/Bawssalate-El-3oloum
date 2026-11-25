@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { points, reading, warmPrompt } from "./model";
 import { Badge, LinkButton } from "./shared";
 import { Icon } from "./icons";
+import { emitBoussoleAttempt } from "./bridge";
 const x = (i: number) => 14 + i * 18.3,
   y = (v: number) => 83 - v * 8.35;
 /** الإحداثيات نسبية، أمّا مساحة لمس النقطة فثابتة لا تصغر مع الرسم. */
@@ -16,7 +17,21 @@ export function Warm() {
         ?.scrollIntoView({ block: "nearest", behavior: "auto" });
   }, [chosen]);
   function pick(i: number) {
-    setChosen(points[i][0]);
+    const ph = points[i][0];
+    setChosen(ph);
+    const res = reading(ph);
+    if (res) {
+      emitBoussoleAttempt({
+        exerciseId: "boussole:warm",
+        unitId: "u3",
+        verbe: "استخرج",
+        titre: "قراءة منحنى نشاط الإنزيم (صحّح الإجابة)",
+        reussi: res.right,
+        prompt: warmPrompt,
+        choix: `درجة الحموضة ${ph}`,
+        erreurTag: res.right ? undefined : res.title,
+      });
+    }
   }
   return (
     <>

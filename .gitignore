@@ -4,11 +4,26 @@ dist/
 .vite/
 .DS_Store
 *.log
+__pycache__/
 
 # مفاتيح Supabase الحقيقية — لا تُرفع أبدًا
 .env
 .env.local
 .env.production
+
+# Certificats de test QA (clés privées — régénérer via New-SelfSignedCertificate)
+*.pfx
+*.pem
+*.key
+
+# Fichiers PDF d'annales tiers retirés du dépôt public (81 Mo — droits ONEC/dzexams)
+plans/sources/sujets/
+dist-relecture-svt/
+
+# Artefacts de build Android / Gradle
+android/app/build/
+android/build/
+android/.gradle/
 
 # Outils agents locaux (OpenCode, skills)
 .agents/

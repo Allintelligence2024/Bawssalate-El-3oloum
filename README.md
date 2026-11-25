@@ -90,7 +90,7 @@ Ouverte depuis **الباك** (sous-écran, retour → الباك), elle affiche
   `mutation` reste en ADN (T, pas U) et chaque flèche a un marker dédié (sur arena, `sequence` et
   `graphique` pointaient un marker defined dans un autre SVG → flèche invisible en écran solo).
 - **القبطان مفتاح — la mascotte guide** (nouveau composant `MascotteKunz.tsx`, ports `e73a484` +
-  `41b5695`) : `personnage-pirate.png` (la mascotte de la maison, pas le logo d'arena) avec un mot
+  `41b5695`) : `personnage-pirate.webp` (la mascotte de la maison, pas le logo d'arena) avec un mot
   de méthode dans 7 endroits — l'accueil de منهجية, la liste de الوحدة 1, l'en-tête de chaque
   tamrin (« ما هو الفعل؟ أين الدليل؟ »), مساري, أنا, et l'en-tête de اليوم ; l'écran de démarrage
   gagne le pirate au-dessus du **titre texte « كنز العلوم Lite »** (conservé — convention « le nom
@@ -191,8 +191,8 @@ reprogrammée à **J+1** au lieu de J+3. L'échec n'est pas puni, il est *utilis
 À la fin de **chaque** phase (bouton « انتهيت من هذه المرحلة »), l'écran de célébration s'ouvre :
 
 - **la personnification كنز العلوم (mascotte pirate)** sort et salue : image PNG de la mascotte
-  (`public/personnage-pirate.png`, 500×500, ajoutée au precache du service worker pour fonctionner
-  hors ligne) avec rebond/sourire animés et bulle de encouragement sans culpabilisation ;
+  (`public/personnage-pirate.webp`, détourée, 58 ko au lieu de 1 001 ko, dans le précache de la
+  coquille pour fonctionner hors ligne) avec rebond/sourire animés et bulle de encouragement sans culpabilisation ;
 - **un son d'applaudissements** (`sonApplaudissement()`) : faux-bruit filtré + lardon vainqueur,
   générés en Web Audio — toujours offline, toujours doux ;
 - **des feux d'artifice** sur canvas léger (~5 s puis s'arrêtent, `prefers-reduced-motion` respecté,
@@ -360,12 +360,52 @@ rien ne devienne illisible.
 
 ---
 
+## 📊 Chiffres (générés depuis le code)
+
+<!-- METRICS:START -->
+
+<!-- Bloc généré par `node scripts/sync-metrics.mjs`. Ne pas modifier à la main. -->
+
+| Métrique | Valeur |
+| --- | --- |
+| Unités du programme | **11** |
+| Leçons référencées | **56** |
+| Résumés dorés | **58** (relus : 0) |
+| Sujets officiels structurés | **28** |
+| Sujets avec éléments de réponse | **28** |
+| Axes de drills | **49** |
+| Items de drills | **700** (4 fichiers) |
+| Fichiers de tests | **60** |
+| Coquille hors ligne (téléchargée d'office) | **2.67 Mio** (8 entrées) |
+| Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
+
+<!-- METRICS:END -->
+
+## 📱 Canal de diffusion : PWA installable (et non Play Store)
+
+Le canal officiel est la **PWA installable** : `manifest.webmanifest` + service worker, ajout à
+l'écran d'accueil depuis le navigateur. C'est le seul canal supporté, pour trois raisons
+concrètes :
+
+- **mise à jour immédiate** — un correctif de contenu est en ligne dès le déploiement, sans
+  validation de store (crucial quand un corrigé doit être rectifié en pleine période de révision) ;
+- **poids** — l'APK embarque un WebView et pèse plusieurs fois la coquille de 1,91 Mio ;
+- **aucun compte développeur** — pas de frais ni de politique de contenu à tenir.
+
+Le dossier `android/` (coque Capacitor `com.bousala.ouloum`) existe à titre **expérimental** :
+il sert à tester sur émulateur. **Il n'est pas publiable en l'état** — signature, icônes de
+store, politique de confidentialité Play et mise à jour différentielle ne sont pas traités.
+Ne pas le présenter comme un canal de diffusion.
+
 ## 🏗️ Stack
 
 - **React 19 + TypeScript 7 + Vite 8** — SPA léger
 - **Tailwind CSS 4** (plugin `@tailwindcss/vite`) — design RTL mobile-first, palette olive claire
-- **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js` (precache app + 25 leçons,
-  navigation network-first)
+- **PWA manuelle** : `public/manifest.webmanifest` + `public/sw.js`. Le précache est **en deux
+  niveaux** : la *coquille* (interface + images, **1,91 Mio**) est toujours téléchargée ; le
+  *contenu lourd* (25 leçons HTML, laboratoire Boussole, 2 PDF, **4,19 Mio**) ne l'est que sur
+  demande explicite, avec son poids annoncé. Le chunk des sujets de bac (≈ 490 ko) reste en ligne
+  et n'entre pas dans le cache.
 - **localStorage** (`src/utils/storage.ts`, clé `murajih_svt_v1`, version 2) — offline-first, aucun
   serveur
 - **Zéro dépendance lourde** : pas de d3, jspdf, framer-motion…
@@ -377,7 +417,7 @@ app-svt-bac/
 ├── index.html                    # lang="ar" dir="rtl"
 ├── public/
 │   ├── manifest.webmanifest      # PWA (nom عربي، rtl، standalone)
-│   ├── sw.js                     # service worker (precache 35 entrées)
+│   ├── sw.js                     # service worker (coquille + contenu, en 2 niveaux)
 │   ├── icon.svg
 │   └── lecons/                   # 25 fichiers HTML de cours interactifs (46 leçons)
 ├── src/
@@ -408,7 +448,7 @@ app-svt-bac/
 │       ├── Exercices.tsx          # ⭐ تدريبات : choix QCM/ورشات الخرائط الذهنية/تمارين المنهجية (3 icônes) + 49 axes verrouillés + journées de 10
 │       ├── Boussole.tsx           # 🧭 المختبر embarqué + aide contextuelle
 │       ├── Methodologie.tsx       # ateliers de méthodologie et accès au laboratoire
-│       ├── MascotteKunz.tsx       # القبطان مفتاح — la mascotte guide (personnage-pirate.png, 7 emplacements)
+│       ├── MascotteKunz.tsx       # القبطان مفتاح — la mascotte guide (mascotte.webp, 7 emplacements)
 │       ├── Ana.tsx                # ⭐ أنا : journal + notes + stats complètes + réglage sync
 │       ├── CarteStats.tsx         # compteurs du Mُرشد (versions compacte Aujourdhui / complète Ana)
 │       ├── CarteSync.tsx          # invitation une fois (اليوم) + réglage permanent (أنا)
@@ -483,6 +523,22 @@ Le fichier fourni (71 entrées) a été traité avant intégration :
 - **`bacSentenceFrameAr` manquant** sur la première leçon (le cadre P6 s'affiche vide).
 - Convention d'IDs non uniforme (`phaseN_chapitres_X_Y` vs `dN-uM-lK-*`) — fonctionnel, mais à
   normaliser si vous éditez le fichier à la main.
+
+## 🧪 Entraîneur et simulation d'épreuve (Phases 10–12 du plan V2)
+
+- **Entraîneur** (`EntraineurSujet.tsx`) : sur les 28 sujets corrigés, l'élève lit le verbe,
+  rédige dans un champ local, puis s'auto-évalue **0 / 1 / 2**. Le résultat est qualitatif
+  (هشّ / في الطريق / متين) — **aucune note sur 20 n'est jamais calculée ni affichée**.
+- **Simulation 270 min** (`SimulationEpreuve.tsx`, `src/utils/simulation.ts`) : temps réparti
+  au prorata des **barèmes réels** (5/7/8, pas trois tiers égaux), 15 min de relecture
+  réservées, chrono qui **ne se bloque pas** à zéro. La synthèse parle de minutes et
+  d'exercices terminés, jamais de niveau en SVT.
+- **Moteur `bridge.ts`** : 8 compétences C1–C8, confiance pondérée par le nombre de preuves
+  (1 preuve → ×0,75), tri qui met devant les compétences **mesurées** les plus faibles (une
+  compétence jamais travaillée ne passe plus avant une faiblesse réelle). Un accès au Bac
+  reste toujours possible : la couverture est une **recommandation**, jamais un verrou.
+- **Mesure d'impact** (`src/utils/telemetrie.ts`, `plans/MESURE-IMPACT-PILOTE.md`) : compteurs
+  100 % locaux, aucun réseau, export JSON anonyme à la seule initiative de l'élève.
 
 ## 🗺️ Roadmap historique
 
@@ -577,7 +633,7 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   fix maison (schéma `mutation` en ADN — T, pas U — et markers fléchés dédiés par schéma, invisibles
   sur arena en écran solo) ; nouveau composant **`MascotteKunz.tsx`** (القبطان مفتاح) diffusé dans
   l'accueil منهجية, الوحدة 1, les tamrins, مساري, أنا et l'en-tête de اليوم — sur arena il utilise
-  `/logo.png`, ici **`personnage-pirate.png`** (convention maison) ; l'écran démarrage affiche le
+  une seule image (la mascotte, `mascotte.webp` / `personnage-pirate.webp`) ; l'écran démarrage affiche le
   pirate au-dessus du titre texte conservé (arena remplaçait le titre par une image, ce qui faisait
   disparaître le nom « كنز العلوم Lite » du premier écran) ; `Bac.tsx` (existant encore sur arena)
   ignoré ; retry sans révélation, sons et feedbackTon maison préservés partout.
@@ -837,13 +893,22 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   élève connu ; les lignes anciennes sans jeton restent modifiables (compatibilité), le documenté
   recommande de les laisser vieillir. (5) **réparation de l'affichage** : deux fichiers corrompus en
   mojibake (`CarteStats.tsx`, `EcranDemarrage.tsx`) décodés et restaurés en arabe ; la mascotte
-  officielle (`personnage-pirate.jpg`) est **détourée en canvas** en deux PNG transparents —
-  `personnage-pirate.png` (poster avec titre doré, splash) et `mascotte.png` (personnage seul,
-  avatars de l'app) — tous deux precache par le service worker (`murajih-svt-v2`, avec
-  `/favicon.jpg`) ; la couche XP est réorganisée (BaguetteXp intégrée à l'en-tête, barre fine sous
+  officielle a été **détourée** en deux images transparents, converties en WebP —
+  `personnage-pirate.webp` (poster avec titre doré, splash) et `mascotte.webp` (personnage seul,
+  avatars de l'app) — toutes deux dans le précache de la coquille. `favicon.jpg`, `logo.png` et
+  `personnage-pirate.jpg` ont été supprimés : 1,5 Mo de fichiers jamais servis ou en double.
+  La couche XP est réorganisée (BaguetteXp intégrée à l'en-tête, barre fine sous
   l'en-tête, plus aucun panneau flottant qui chevauche le contenu).
 - **v0.9+** — conversion des 25 leçons au format manuel scolaire (suppression du scaffolding) ;
   exercices « نمط بكالوريا » et « تحليل وثيقة » (reportés).
+
+---
+
+## 📄 Licence & droits des contenus
+
+- **Code source** : sous licence **MIT** (voir [`LICENSE`](LICENSE)).
+- **Contenus pédagogiques originaux** (leçons, QCM, drills, synthèses, ateliers méthodologiques) : sous licence **CC BY-NC-SA 4.0** sauf mention contraire.
+- **Extraits d’annales et supports tiers** (Baccalauréat algérien / ONEC, figures adaptées de `public/boussole/`) : soumis aux droits de leurs titulaires respectifs — voir [`plans/DECISION-DROITS-CONTENUS.md`](plans/DECISION-DROITS-CONTENUS.md) et [`plans/sources/REGISTRE.md`](plans/sources/REGISTRE.md). Les 81 Mo de PDF d’annales `dzexams` ont été retirés du dépôt public.
 
 ---
 

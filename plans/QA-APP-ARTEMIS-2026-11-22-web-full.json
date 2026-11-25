@@ -1,0 +1,101 @@
+{
+  "checks": [
+    {
+      "name": "Web : page chargée",
+      "ok": true,
+      "detail": "http://localhost:3000/"
+    },
+    {
+      "name": "Accueil : navigation visible",
+      "ok": true,
+      "detail": "بوصلة العلوم |  | مراجعة البكالوريا — علوم الطبيعة والحياة"
+    },
+    {
+      "name": "Onglet اليوم : bouton navigation",
+      "ok": true,
+      "detail": "1 bouton(s)"
+    },
+    {
+      "name": "Onglet اليوم : contenu chargé",
+      "ok": true,
+      "detail": "بوصلة العلوم | مراجعة البكالوريا — علوم الطبيعة والحياة | ⚡"
+    },
+    {
+      "name": "Onglet اليوم : boutons testés",
+      "ok": true,
+      "detail": "1 clics, +0 erreur console"
+    },
+    {
+      "name": "Onglet مساري : bouton navigation",
+      "ok": false,
+      "detail": "0 bouton(s)"
+    },
+    {
+      "name": "Onglet البوصلة : bouton navigation",
+      "ok": false,
+      "detail": "0 bouton(s)"
+    },
+    {
+      "name": "Onglet تدريبات : bouton navigation",
+      "ok": false,
+      "detail": "0 bouton(s)"
+    },
+    {
+      "name": "Onglet أنا : bouton navigation",
+      "ok": false,
+      "detail": "0 bouton(s)"
+    },
+    {
+      "name": "QCM : échantillon répondu",
+      "ok": true,
+      "detail": "6 réponses"
+    },
+    {
+      "name": "Examen blanc : carte trouvée",
+      "ok": false,
+      "detail": "0 carte(s)"
+    },
+    {
+      "name": "Mind map : fonctionnalité repérée",
+      "ok": false,
+      "detail": "aucune mention « خريطة / مخطط » visible"
+    },
+    {
+      "name": "PWA : service worker",
+      "ok": false,
+      "detail": "aucun SW enregistré"
+    },
+    {
+      "name": "Erreurs console globales",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Erreurs page globales",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "report": [
+    {
+      "tab": "اليوم",
+      "text": "بوصلة العلوم\n\nمراجعة البكالوريا — علوم الطبيعة والحياة\n\n⚡\n0 XP\n🔥 ابدأ اليوم\n▲\nQ\n\nqa@bousala.test\n\nأدرار — أدرار\n\nمبتدئ\n🔥 ابدأ اليوم\n0 XP\n\nمن أين تأتي نقاطك\n\nمراحل مُنجزة\n0 × 15\nدروس مُتمّمة\n0 × 60\nجسور مكتوبة\n0 × 200\nورشات منجزة\n0 × 150\nتدريبات مُجابة\n0 × 3\nتركيز مسجّل\n0 × 10\nتسجيل الخروج\n\nالخروج لا يمسح مسوّدات البوصلة. امسحها من «دفتر التجربة» أو بإعادة الضبط في «أنا» قبل تسليم جهاز مشترك.\n\nQ\nqa@bousala.test\n\nالإثنين 23 نوفمبر 2026\n\nمساء الخير، تلميذ\n\nكل شيء يبدأ بخطوة واحدة. مهمّة اليوم وحدها تكفي.\n\nحصّة اليوم\n\nتقديم الوحدة: من المورثة إلى البروتين\n\nالوحدة 1: تركيب البروتين · من منتصف سبت",
+      "buttons": [
+        "⚡0 XP🔥 ابدأ اليوم▲",
+        "تسجيل الخروج",
+        "ابدأ الحصّة",
+        "20 تدريبًا هذا الأسبوعجولات السلّم التكيّفي — تُحسب الإجابات",
+        "مراجعة متقاطعة واحدةدرس من كلّ مجال في جلسة واحدة — تظهر في ",
+        "امتحان تجريبي واحدموضوع كامل بوقته الحقيقي، من «التدريبات».",
+        "اليوم",
+        "مساري",
+        "البوصلة",
+        "تدريبات",
+        "أنا"
+      ]
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestsFailed": []
+}

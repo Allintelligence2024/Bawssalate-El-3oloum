@@ -162,7 +162,7 @@ return (
         <div className="relative z-30 flex flex-col items-center px-6">
           {/* الشخصية الرسمية — الصورة تحمل العنوان الذهبي «بوصلة العلوم» بالأسفل */}
           <img
-            src="/personnage-pirate.png"
+            src="/personnage-pirate.webp"
             alt="شخصية بوصلة العلوم — المستكشف بالبوصلة الذهبية"
             className="relative mx-auto h-72 w-auto object-contain drop-shadow-lg kunz-entre md:h-[28rem] transition-[opacity,transform] duration-1000"
           />

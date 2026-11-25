@@ -69,7 +69,7 @@ for (const [d, f] of Object.entries(densites)) {
 }
 
 // Écran de démarrage Android : logo centré sur papier.
-for (const [d, f] of Object.entries(densites)) {
+for (const [d] of Object.entries(densites)) {
   const portrait = { mdpi: [320, 480], hdpi: [480, 800], xhdpi: [720, 1280], xxhdpi: [960, 1600], xxxhdpi: [1280, 1920] }[d];
   for (const [sens, [l, h]] of [
     ['port', portrait],
