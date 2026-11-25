@@ -370,14 +370,14 @@ rien ne devienne illisible.
 | Métrique | Valeur |
 | --- | --- |
 | Unités du programme | **11** |
-| Leçons référencées | **56** |
+| Leçons référencées | **58** |
 | Résumés dorés | **58** (relus : 0) |
 | Sujets officiels structurés | **28** |
 | Sujets avec éléments de réponse | **28** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
 | Jeux de briques | **16** (actifs : 4) |
-| Fichiers de tests | **82** |
+| Fichiers de tests | **84** |
 | Coquille hors ligne (téléchargée d'office) | **2.18 Mio** (7 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 

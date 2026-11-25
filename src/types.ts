@@ -31,6 +31,9 @@ export interface Unite {
   page: number;
   lessonIds: string[];
   prerequis?: string[];
+  /** Leçons hors chemin obligatoire : contenu réel mais absent de la liste officielle des
+   *  activités (enrichissement). Jamais verrouillantes, jamais comptées dans le chemin. */
+  enrichissement?: string[];
   // ── إضافات معماريّة OPUS ──
   questionAr: string; // سؤال الوحدة (يُجاب عنه في الجسر)
   fenetre: Fenetre; // التدرّج السنوي الرسمي

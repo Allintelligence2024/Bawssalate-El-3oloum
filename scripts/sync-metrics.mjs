@@ -30,7 +30,9 @@ const programme = lire('src/data/programme.ts');
 const unites = compte(programme, /^ {2}\{\s*$/gm) > 0
   ? compte(programme, /\bid:\s*'u\d+'/g)
   : 0;
-const leconsIds = (programme.match(/lessonIds:\s*\[[^\]]*\]/g) ?? [])
+// Inclut les prérequis et enrichissements ; ignorer les commentaires dans les tableaux.
+const programmeSansCommentaires = programme.replace(/\/\/[^\n]*/g, '');
+const leconsIds = (programmeSansCommentaires.match(/\b(?:lessonIds|prerequis|enrichissement):\s*\[[^\]]*\]/g) ?? [])
   .flatMap((bloc) => (bloc.match(/'[^']+'/g) ?? [])).length;
 
 const resumes = lire('src/data/lessonGoldSummaries.ts');
