@@ -6,6 +6,10 @@ import type { Etat } from '../types';
 import { nb, joursNb } from '../utils/dates';
 import { WILAYA_PAR_CODE } from '../data/wilayas';
 import { VALEURS, joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
+import { etapesFaites } from '../utils/bacPasAPas';
+// Icônes SVG au lieu des symboles textuels (⚡ 🔥 ▲ ▼) : ces caractères manquent
+// dans la police arabe et sortaient en carrés vides sur certains appareils.
+import { IcoChevron, IcoEclair, IcoFlamme } from './Icones';
 
 interface Props {
   etat: Etat;
@@ -52,6 +56,14 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
     { label: 'ورشات منجزة', valeur: `${nb(ateliers)} × ${nb(VALEURS.atelier)}` },
     { label: 'تدريبات مُجابة', valeur: `${nb(drills)} × ${nb(VALEURS.drill)}` },
     {
+      label: 'خطوات الباك',
+      valeur: `${nb(etapesFaites(etat))} خطوة`,
+    },
+    {
+      label: 'فخاخ مصطادة',
+      valeur: `${nb(Object.keys(etat.fakh ?? {}).length)} × ${nb(VALEURS.fakh)}`,
+    },
+    {
       label: 'تركيز مسجّل',
       valeur: `${nb(Math.floor(etat.minutesTotales / 30))} × ${nb(VALEURS.demiHeure)}`,
     },
@@ -67,19 +79,24 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
         className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2.5 py-1.5 text-start shadow-sm transition hover:border-gold/45 active:scale-[0.97]"
       >
         <span
-          className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-gold to-forest-deep text-xs"
+          className="grid h-7 w-7 shrink-0 place-items-center rounded-[9px] border border-honey-line bg-gold-soft text-honey-ink"
           aria-hidden="true"
         >
-          ⚡
+          <IcoEclair className="h-3.5 w-3.5" />
         </span>
         <span className="leading-tight">
           <span className="tnum block max-w-[6.5rem] text-[12px] font-black text-forest-deep">
             {xpTexte(xp)}
           </span>
-          <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-sage/90">
-            <span>{jours > 0 ? `🔥 ${joursNb(jours)}` : '🔥 ابدأ اليوم'}</span>
-            <span className="text-[9px] text-sage/70" aria-hidden="true">
-              {ouvert ? '▲' : '▼'}
+          <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-mute">
+            <span className="flex items-center gap-1">
+              <span className={jours > 0 ? 'h-3 w-3 text-honey-ink' : 'h-3 w-3 text-mute'} aria-hidden="true">
+                <IcoFlamme />
+              </span>
+              {jours > 0 ? joursNb(jours) : 'ابدأ اليوم'}
+            </span>
+            <span className="h-2.5 w-2.5 text-mute/70">
+              <IcoChevron ouvert={ouvert} />
             </span>
           </span>
         </span>

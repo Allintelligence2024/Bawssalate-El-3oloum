@@ -15,6 +15,7 @@ import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
 import { WILAYA_PAR_CODE } from '../data/wilayas';
 import { CHEMIN } from '../data/programme';
 import { Morceau } from './Communs';
+import { IcoFlamme } from './Icones';
 import CarteStats from './CarteStats';
 import { ReglageSync } from './CarteSync';
 import ReglagesParcours from './ReglagesParcours';
@@ -58,6 +59,8 @@ interface Props {
   onRappel: (r: { actif: boolean; heure: string }) => void;
   onAllerExercices: () => void;
   onOuvrirConfidentialite: () => void;
+  /** « ملفّي » : la fiche A4 imprimable. */
+  onOuvrirFiche?: () => void;
   /** §11 — évaluations de l'entraîneur, pour le profil C1–C8. */
   evaluationsEntraineur?: Record<string, Record<string, 0 | 1 | 2>>;
   /** Ouvre l'onglet des exercices (là où vivent les sujets officiels). */
@@ -152,6 +155,7 @@ export default function Ana({
   onRappel,
   onAllerExercices,
   onOuvrirConfidentialite,
+  onOuvrirFiche,
   evaluationsEntraineur,
   onOuvrirEntraineur,
 }: Props) {
@@ -235,10 +239,29 @@ export default function Ana({
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
-      <header className="mb-6">
-        <p className="eyebrow">الكرّاسة</p>
-        <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">أنا</h1>
+      <header className="mb-4">
+        <p className="oeil">الكرّاسة · هويتي</p>
+        <h1 className="titre-1 mt-1">أنا</h1>
+        <p className="petit doux mt-1">
+          كلّ ما يخصّك في بلاصة واحدة: الهوية، التقدّم، الأخطاء، والنسخة الاحتياطية.
+        </p>
       </header>
+
+      {onOuvrirFiche && (
+        <section className="carte mb-4">
+          <div className="rangee rangee--entre">
+            <div className="carte__texte">
+              <p className="carte__titre">ملفّي — ورقة A4</p>
+              <p className="petit doux mt-1">
+                ورقة واحدة فيها تقدّمك وكفاءاتك وما يستحقّ المراجعة — تعلّقها ولا تعطيها لأستاذك.
+              </p>
+            </div>
+            <button type="button" className="btn-mini" onClick={onOuvrirFiche}>
+              افتح
+            </button>
+          </div>
+        </section>
+      )}
       <MascotteKunz
         compact
         tone="paper"
@@ -298,11 +321,14 @@ export default function Ana({
               </p>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="chip text-[11px] font-bold text-forest-deep">{niveau.nom}</span>
-            <span className="chip text-[11px] font-bold text-forest-deep">{xpTexte(xp)}</span>
-            <span className="chip text-[11px] font-bold text-forest-deep">
-              🔥 {joursNb(jours)}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="mention mention--vert">{niveau.nom}</span>
+            <span className="mention">{xpTexte(xp)}</span>
+            <span className="mention mention--or">
+              <span className="h-3 w-3 text-honey-ink" aria-hidden="true">
+                <IcoFlamme />
+              </span>
+              {joursNb(jours)}
             </span>
           </div>
           {onDeconnexion && (

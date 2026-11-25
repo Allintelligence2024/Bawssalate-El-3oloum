@@ -243,3 +243,41 @@ export function IcoDownload() {
     </svg>
   );
 }
+
+/** Flamme de la série de jours — remplace l'emoji 🔥 (absent de certains
+ *  appareils, il sortait en carré vide sur Android sans police emoji). */
+export function IcoFlamme({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path
+        d="M12 3c2.6 3.2 5.5 5.6 5.5 9.2a5.5 5.5 0 0 1-11 0c0-1.7.6-3.1 1.7-4.5.5 1 1.2 1.6 2 1.9-.3-2.4.6-4.5 1.8-6.6Z"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Éclair du compteur d'XP — remplace l'emoji ⚡. */
+export function IcoEclair({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Chevron d'ouverture (▲/▼ étaient des carrés vides avec la police arabe). */
+export function IcoChevron({ ouvert = false }: { ouvert?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={`h-full w-full transition-transform ${ouvert ? 'rotate-180' : ''}`}
+      aria-hidden
+    >
+      <path d="m5 9 7 7 7-7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

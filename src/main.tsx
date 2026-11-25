@@ -1,6 +1,7 @@
 import { lazy, StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import AtelierDesign from './components/AtelierDesign';
 import { Capacitor } from '@capacitor/core';
 import { adresseRetourVerification } from './utils/identiteSync';
 import { enregistrerServiceWorker } from './utils/pwa';
@@ -17,10 +18,15 @@ const configVerification = (() => {
   } catch { return null; }
 })();
 
+// Atelier de design — uniquement en développement, via `?design=1`.
+const atelier = import.meta.env.DEV && new URLSearchParams(location.search).has('design');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {configVerification && <Suspense fallback={null}><VerificationSync config={configVerification} /></Suspense>}
-    <App />
+    {!atelier && configVerification && (
+      <Suspense fallback={null}><VerificationSync config={configVerification} /></Suspense>
+    )}
+    {atelier ? <AtelierDesign /> : <App />}
   </StrictMode>
 );
 

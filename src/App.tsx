@@ -21,6 +21,7 @@ import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
 import type { ItemChemin } from './data/programme';
 import type { SituationSynthese } from './data/syntheses';
+import { SUJETS_OFFICIELS } from './data/sujetsOfficiels';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
@@ -32,6 +33,11 @@ import Masari from './components/Masari';
 import Exercices from './components/Exercices';
 // Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
+const Bac = lazy(() => import('./components/Bac'));
+const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
+const Kouest = lazy(() => import('./components/Kouest'));
+const FicheEleve = lazy(() => import('./components/FicheEleve'));
+const Fakh = lazy(() => import('./components/Fakh'));
 import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
@@ -62,16 +68,17 @@ import GamifiedOverlay from './components/GamifiedOverlay';
 import { fermerSession, ouvrirSession, sessionOuverte } from './utils/compte';
 import type { Compte } from './types';
 import {
-
   IcoCarnet,
   IcoBoussole,
-  IcoDumbbell,
+  IcoDiplome,
   IcoLune,
   IcoRoute,
-  IcoSoleil,
+  IcoCible,
 } from './components/Icones';
 
-type Onglet = 'aujourdhui' | 'masari' | 'exercices' | 'methodo' | 'ana';
+// أربعة أبواب فقط: كويست · مساري · الباك · أنا.
+// 'exercices' و'methodo' بقاو قيمًا صالحة، لكن كشاشات فرعية بلا تبويب خاصّ بها.
+type Onglet = 'aujourdhui' | 'masari' | 'bac' | 'ana' | 'exercices' | 'methodo';
 type Mode =
   | { type: 'methodoExos' }
   | { type: 'structureTerre' }
@@ -90,16 +97,37 @@ type Mode =
   | { type: 'schemas' }
   | { type: 'choixSynthese' }
   | { type: 'sujets' }
+  | { type: 'bacPasAPas'; sujetId: string; exercice: number }
+  | { type: 'kouest'; lessonId: string }
+  | { type: 'fiche' }
+  | { type: 'fakh'; uniteId?: string }
   | { type: 'flashcards' }
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
-const ONGLETS: { id: Onglet; label: string; icone: typeof IcoSoleil }[] = [
-  { id: 'aujourdhui', label: 'اليوم', icone: IcoSoleil },
+const ONGLETS: { id: Onglet; label: string; icone: typeof IcoCible }[] = [
   { id: 'masari', label: 'مساري', icone: IcoRoute },
-  { id: 'methodo', label: 'البوصلة', icone: IcoBoussole },
-  { id: 'exercices', label: 'تدريبات', icone: IcoDumbbell },
+  { id: 'aujourdhui', label: 'كويست', icone: IcoCible },
+  { id: 'bac', label: 'الباك', icone: IcoDiplome },
   { id: 'ana', label: 'أنا', icone: IcoCarnet },
 ];
+
+/** L'onglet réellement allumé : un sous-écran allume son parent. */
+function ongletParent(o: Onglet): Onglet {
+  if (o === 'exercices') return 'aujourdhui';
+  if (o === 'methodo') return 'bac';
+  return o;
+}
+
+/** Barre de retour des écrans qui ne sont plus des onglets (تدريبات، المنهجية). */
+function BarreRetour({ texte, onRetour }: { texte: string; onRetour: () => void }) {
+  return (
+    <div className="mx-auto max-w-3xl px-4 pt-4">
+      <button type="button" className="btn-mini" onClick={onRetour}>
+        <span aria-hidden="true">→</span> {texte}
+      </button>
+    </div>
+  );
+}
 
 /** Écran d'attente pendant le chargement paresseux de المنهجية. */
 function ChargementEcran() {
@@ -271,6 +299,11 @@ export default function App() {
   blocageRef.current = blocageRestauration;
   const [repriseVisible, setRepriseVisible] = useState(true);
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
+  // Changer de porte remet la page en haut : sinon on hérite du défilement du parent.
+  useEffect(() => {
+    // En jsdom (tests) scrollY vaut toujours 0 : on n'appelle rien.
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [onglet]);
   // P-1.4 (D4): échec d'écriture localStorage → bandeau visible (perte silencieuse interdite)
   const [stockageDefaillant, setStockageDefaillant] = useState(false);
   const [mode, setMode] = useState<Mode | null>(null);
@@ -774,6 +807,8 @@ export default function App() {
       return (
         <SujetsOfficiels
           onFermer={() => setMode(null)}
+          onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
+          onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
           maitriseSujets={etat.maitriseSujets}
           brouillonsSujets={etat.brouillonsSujets}
           onEvaluerConsigne={(sujetId, cle, niveau) =>
@@ -794,7 +829,6 @@ export default function App() {
               },
             }))
           }
-          onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
           onOuvrirSynthese={(s: SituationSynthese) =>
             setMode({
               type: 'synthese',
@@ -807,6 +841,68 @@ export default function App() {
               retour: { type: 'sujets' },
             })
           }
+        />
+      );
+    }
+    if (mode.type === 'fakh') {
+      return (
+        <Fakh
+          etat={etat}
+          uniteInitiale={mode.uniteId}
+          onJugement={(cle) =>
+            setEtat((prev) => (prev.fakh?.[cle] ? prev : { ...prev, fakh: { ...(prev.fakh ?? {}), [cle]: true } }))
+          }
+          onSerieFinie={(uniteId) =>
+            setEtat((prev) =>
+              prev.fakhSeries?.[uniteId]
+                ? prev
+                : { ...prev, fakhSeries: { ...(prev.fakhSeries ?? {}), [uniteId]: true } },
+            )
+          }
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
+    if (mode.type === 'fiche') {
+      return <FicheEleve etat={etat} onFermer={() => setMode(null)} />;
+    }
+    if (mode.type === 'kouest') {
+      return (
+        <Kouest
+          etat={etat}
+          lessonId={mode.lessonId}
+          onBonneReponse={(cle) =>
+            setEtat((prev) =>
+              prev.drills?.[cle] ? prev : { ...prev, drills: { ...(prev.drills ?? {}), [cle]: true } },
+            )
+          }
+          onTerminerSeance={(lessonId) => setMode({ type: 'protocole', lessonId })}
+          onFermer={() => setMode(null)}
+        />
+      );
+    }
+    if (mode.type === 'bacPasAPas') {
+      const sujet = SUJETS_OFFICIELS.find((x) => x.id === mode.sujetId);
+      const exercice = sujet?.exercices.find((e) => e.numero === mode.exercice);
+      if (!sujet || !exercice) {
+        setMode(null);
+        return null;
+      }
+      return (
+        <BacPasAPas
+          etat={etat}
+          sujet={sujet}
+          exercice={exercice}
+          onEtape={(cle, qualite) =>
+            setEtat((prev) => ({ ...prev, bacEtapes: { ...(prev.bacEtapes ?? {}), [cle]: qualite } }))
+          }
+          onTermine={(cle) =>
+            setEtat((prev) =>
+              prev.bacExercices?.[cle] ? prev : { ...prev, bacExercices: { ...(prev.bacExercices ?? {}), [cle]: true } },
+            )
+          }
+          onCarnetFaute={onCarnetFaute}
+          onFermer={() => setMode(null)}
         />
       );
     }
@@ -1065,8 +1161,8 @@ export default function App() {
           <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-line bg-surface">
             <div className="mx-auto flex h-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-lg font-bold text-white shadow-lg shadow-primary/25">
-                  <span className="h-7 w-7"><IcoBoussole /></span>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-forest-deep/20 bg-forest text-lg font-bold text-paper">
+                  <span className="h-6 w-6"><IcoBoussole /></span>
                 </div>
                 <div className="hidden min-w-0 sm:block">
                   <h1 className="app-brand truncate tracking-tight leading-none">بوصلة العلوم</h1>
@@ -1096,7 +1192,7 @@ export default function App() {
                 </button>
                 {etat.compte && (
                   <div className="flex shrink-0 items-center gap-2 rounded-xl border border-line bg-surface py-1.5 pe-3 ps-2 text-xs font-bold text-ink-soft">
-                    <span className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-forest-deep flex items-center justify-center text-white text-[10px] font-bold">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-paper">
                       {etat.compte.email.charAt(0).toUpperCase()}
                     </span>
                     <span className="hidden truncate max-w-[120px] md:inline">{etat.compte.email}</span>
@@ -1152,6 +1248,7 @@ export default function App() {
           onOuvrirMethodologie={() => setOnglet('methodo')}
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
           onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
+          onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
@@ -1169,7 +1266,21 @@ export default function App() {
           onOuvrirRecherche={() => setMode({ type: 'recherche' })}
         />
       )}
+      {pret && onglet === 'bac' && (
+        <Suspense fallback={<ChargementEcran />}>
+          <Bac
+            etat={etat}
+            onOuvrirSujets={() => setMode({ type: 'sujets' })}
+            onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
+            onOuvrirMethodo={() => setOnglet('methodo')}
+            onOuvrirSchemas={() => setMode({ type: 'schemas' })}
+            onOuvrirFakh={() => setMode({ type: 'fakh' })}
+          />
+        </Suspense>
+      )}
       {pret && onglet === 'exercices' && (
+        <>
+        <BarreRetour texte="رجوع إلى كويست" onRetour={() => setOnglet('aujourdhui')} />
         <Exercices
           etat={etat}
           onItemReussi={onItemReussi}
@@ -1185,11 +1296,12 @@ export default function App() {
           onOuvrirSujets={() => setMode({ type: 'sujets' })}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
         />
+        </>
       )}
       {pret && onglet === 'methodo' && (
         <Suspense fallback={<ChargementEcran />}>
           <Methodologie
-            onFermer={() => setOnglet('aujourdhui')}
+            onFermer={() => setOnglet('bac')}
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
@@ -1226,6 +1338,7 @@ export default function App() {
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
           onAllerExercices={() => setOnglet('exercices')}
           onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
+          onOuvrirFiche={() => setMode({ type: 'fiche' })}
           evaluationsEntraineur={etat.maitriseSujets}
           onOuvrirEntraineur={() => setOnglet('exercices')}
         />
@@ -1233,33 +1346,25 @@ export default function App() {
       )}
       </div>
 
-          {/* لا نُظهر تبويبات غير قابلة للاستعمال أو لشارات حساب قبل الدخول. */}
-          {pret && <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface shadow-[0_-10px_40px_-16px_rgba(0,0,0,0.1)]">
+          {/* أربعة أبواب، لا أكثر. الشاشات الفرعية تُضيء أباها. */}
+          {pret && <nav className="fixed inset-x-0 bottom-0 z-40" aria-label="أبواب البوصلة">
             <div className="mx-auto max-w-5xl">
-              <div className="flex h-16 items-center justify-between px-1 sm:px-6">
+              <div className="onglets">
                 {ONGLETS.map((o) => {
                   const Ico = o.icone;
-                  const actif = o.id === onglet;
+                  const actif = o.id === ongletParent(onglet);
                   return (
                     <button
                       key={o.id}
+                      type="button"
                       onClick={() => setOnglet(o.id)}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2 sm:px-4"
+                      className="onglet"
                       aria-current={actif ? 'page' : undefined}
                     >
-                      <span className={`relative h-9 w-9 rounded-2xl flex items-center justify-center transition-[transform,background-color,box-shadow] duration-300 ${
-                        actif ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/30' : 'bg-surface border border-line text-mute hover:bg-primary/10 hover:text-primary'
-                      }`}>
-                        <span className="block h-6 w-6">
-                          <span className={`h-5 w-5 ${actif ? 'text-white' : 'text-current'}`}><Ico /></span>
-                        </span>
-                        {actif && (
-                          <span className="absolute -bottom-1 h-1 w-3 rounded-full bg-primary" />
-                        )}
+                      <span className="block h-[18px] w-[18px]" aria-hidden="true">
+                        <Ico />
                       </span>
-                      <span className={`text-[10px] font-bold transition-colors ${actif ? 'text-primary' : 'text-mute'}`}>
-                        {o.label}
-                      </span>
+                      <span>{o.label}</span>
                     </button>
                   );
                 })}

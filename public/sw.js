@@ -6,7 +6,14 @@ const MANIFESTE = '/precache-manifest.json';
 const INDEX = '/index.html';
 const BOUSSOLE = ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'];
 
-const COQUILLE = ['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'];
+const COQUILLE = [
+  '/icon.svg',
+  '/manifest.webmanifest',
+  '/mascotte.webp',
+  '/personnage-pirate.webp',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+];
 const contenuValide = u => typeof u === 'string' &&
   (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));
 const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
@@ -164,7 +171,7 @@ self.addEventListener('fetch', event => {
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
   if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
-      !BOUSSOLE.includes(url.pathname) && !['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'].includes(url.pathname)) return;
+      !BOUSSOLE.includes(url.pathname) && !COQUILLE.includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);

@@ -26,7 +26,9 @@ const book = (solo) => ({ version: 1, solo, link: "", first: "", events: "", inh
     const app = await ctx.newPage();
     app.setDefaultTimeout(5000);
     await app.goto(origin + "/");
-    await app.getByRole("button", { name: "البوصلة", exact: true }).click();
+    // La méthodologie est devenue un sous-écran du الباك (barre à quatre portes).
+    await app.getByRole("button", { name: "الباك", exact: true }).click();
+    await app.getByRole("button", { name: "راجع", exact: true }).click();
     const labo = app.frameLocator('iframe[data-boussole="labo"]');
     await labo.locator('[data-id="atlas-paper"]').click();
     await labo.locator('[data-id="solo-edit"]').click();

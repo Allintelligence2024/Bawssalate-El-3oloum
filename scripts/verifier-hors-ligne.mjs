@@ -29,7 +29,15 @@ if (!Array.isArray(manifeste.assets) || !manifeste.assets.every((u) => /^\/asset
   problemes.push('manifeste : assets non conformes à la règle du worker');
 }
 // Coquille (statiques) et contenu lourd (contenu) ont chacun leur règle, comme dans sw.js.
-const COQUILLE = ['/icon.svg', '/manifest.webmanifest', '/mascotte.webp', '/personnage-pirate.webp'];
+// La liste blanche de la coquille vit dans sw.js : on la lit au lieu de la recopier,
+// sinon trois fichiers (worker, vite.config, ce script) finissent par diverger.
+const swSource = readFileSync('public/sw.js', 'utf8');
+const blocCoquille = /const COQUILLE = \[([^\]]*)\]/.exec(swSource);
+if (!blocCoquille) {
+  console.error('impossible de lire COQUILLE dans public/sw.js');
+  process.exit(1);
+}
+const COQUILLE = [...blocCoquille[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const coquilleOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
   manifeste.statiques.every((u) => COQUILLE.includes(u));
 if (!coquilleOk) problemes.push('manifeste : entrées de coquille non conformes à la règle du worker');

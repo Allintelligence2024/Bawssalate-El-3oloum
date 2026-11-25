@@ -21,7 +21,19 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
  *
  *  Le découpage est délibéré : sans lui le précache dépassait 8 Mio, dont ~4,2 Mio de
  *  contenu que beaucoup d'élèves n'ouvriront jamais. */
-const COQUILLE = ['icon.svg', 'manifest.webmanifest', 'mascotte.webp', 'personnage-pirate.webp'];
+// Les icônes PNG de l'app installée font partie de la coquille : le manifeste les
+// annonce, et l'écran d'accueil doit les afficher même hors ligne.
+// Hors ligne, on ne garde que ce que l'écran d'accueil utilise vraiment :
+// les deux icônes du manifeste. La maskable et l'icône iOS ne servent qu'à
+// l'installation (en ligne) et pèseraient 37 ko de plus dans la coquille.
+const COQUILLE = [
+  'icon.svg',
+  'manifest.webmanifest',
+  'mascotte.webp',
+  'personnage-pirate.webp',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+];
 const CONTENU_FIXE = ['boussole/index.html', 'boussole/cahier-bac-2022.pdf', 'boussole/memo.pdf'];
 
 function precacheManifest(): Plugin {

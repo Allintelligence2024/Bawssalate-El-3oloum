@@ -1,4 +1,5 @@
 // Tests de la confidentialité du sync (P0.2 + P0.8) : aucun envoi avant opt-in
+import { readFileSync } from 'node:fs';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Etat } from '../../types';
 import {
@@ -270,7 +271,12 @@ describe('sync — preuve réseau (P-1.6 : client simulé, appel par appel)', ()
     expect(serialise).not.toContain('SECRET_BROUILLON_LIBRE');
     expect(serialise).not.toContain('hachage');
     expect(snap!.notes_nombre).toBe(1);
-    expect(snap!.app_version).toBe('0.9.3');
+    // La version vient d'une seule source : `package.json` (injectée au build dans
+    // `__APP_VERSION__`, voir vite.config.ts). Le test la lit au lieu de la figer.
+    const pkg = JSON.parse(readFileSync(new URL('../../../package.json', import.meta.url), 'utf8')) as {
+      version: string;
+    };
+    expect(snap!.app_version).toBe(pkg.version);
   });
 
 });

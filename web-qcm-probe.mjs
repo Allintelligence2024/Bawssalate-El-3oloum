@@ -7,7 +7,7 @@ const click = async (needle) => {
   const loc = page.locator('button, [role="button"]').filter({ hasText: needle });
   const n = await loc.count();
   for (let i = 0; i < n; i++) {
-    const ok = await loc.nth(i).evaluate((e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 0 && cs.opacity !== '0' && cs.pointerEvents !== 'none'; }).catch(() => false);
+    const ok = await loc.nth(i).evaluate((e) => { const r = e.getBoundingClientRect(); const cs = window.getComputedStyle(e); return r.width > 0 && cs.opacity !== '0' && cs.pointerEvents !== 'none'; }).catch(() => false);
     if (ok) { await loc.nth(i).click({ timeout: 3000 }).catch(() => {}); return true; }
   }
   return false;

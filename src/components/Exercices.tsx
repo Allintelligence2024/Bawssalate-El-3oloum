@@ -389,7 +389,7 @@ export default function Exercices({
 
         <section className="card overflow-hidden border-forest/30">
           <div className="bg-gradient-to-l from-forest to-forest-deep p-5 text-paper">
-            <p className="text-[11px] font-bold text-sage">محطة تركيبية جديدة</p>
+            <p className="text-[11px] font-bold text-mute">محطة تركيبية جديدة</p>
             <h2 className="font-naskh mt-1 text-xl font-bold">ورشة تركيب المجال الأول</h2>
             <p className="mt-2 text-sm leading-relaxed text-paper/80">
               اربط بين المعلومة الوراثية، بنية البروتين ووظيفته في خريطة واحدة، ثم استرجعها من

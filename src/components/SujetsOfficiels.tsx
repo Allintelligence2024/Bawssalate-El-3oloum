@@ -17,6 +17,8 @@ interface Props {
   onOuvrirSynthese: (s: SituationSynthese) => void;
   onOuvrirRecherche: (q: string) => void;
   onFermer: () => void;
+  /** Ouvre le même exercice en mode « une consigne = une étape ». */
+  onOuvrirPasAPas?: (sujetId: string, exercice: number) => void;
   /** §10.3 — évaluations et brouillons du mode entraîneur, persistés par l'appelant. */
   maitriseSujets?: Record<string, Record<string, NiveauMaitrise>>;
   brouillonsSujets?: Record<string, Record<string, string>>;
@@ -53,7 +55,7 @@ function titreUnite(id: string): string {
   return u ? `الوحدة ${nb(u.numero)} — ${u.titre}` : id;
 }
 
-function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
+function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const [enModeEntrainement, setEnModeEntrainement] = useState(false);
@@ -121,6 +123,15 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, maitriseSujets, bro
           )}
           <p className="mt-1 text-sm font-bold text-forest">{e.theme}</p>
           <p className="mt-0.5 text-xs text-mute">{e.unites.map(titreUnite).join(' · ')}</p>
+          {onOuvrirPasAPas && (
+            <button
+              type="button"
+              className="btn-mini mt-2"
+              onClick={() => onOuvrirPasAPas(sujet.id, e.numero)}
+            >
+              خطوة بخطوة · {nb(e.parties.reduce((s2, p) => s2 + p.consignes.length, 0))} خطوات
+            </button>
+          )}
           <div className="mt-3 space-y-3">
             {e.parties.map((p, i) => (
               <div key={i} className="rounded-xl border border-line bg-paper p-3">
@@ -188,7 +199,7 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, maitriseSujets, bro
   );
 }
 
-export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: Props) {
+export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
   const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
@@ -234,6 +245,7 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
               sujet={sujet}
               onOuvrirSynthese={onOuvrirSynthese}
               onOuvrirRecherche={onOuvrirRecherche}
+              onOuvrirPasAPas={onOuvrirPasAPas}
               maitriseSujets={maitriseSujets}
               brouillonsSujets={brouillonsSujets}
               onEvaluerConsigne={onEvaluerConsigne}

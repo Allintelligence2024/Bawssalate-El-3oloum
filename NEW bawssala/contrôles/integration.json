@@ -1,0 +1,57 @@
+{
+  "mode": "application compilée locale",
+  "results": [
+    "5 onglets ; la place de Miftah ouvre directement le laboratoire de la même application.",
+    "À ج3, stimulation puis injection : trois vérifications, dont une paire discordante, sur les traces originales.",
+    "Notation authentique repliée par défaut ; ions et GABA disponibles à côté de la figure.",
+    "Laminine : figure recadrée, vrai passage à l’écrit et modèle seulement sur demande.",
+    "Aide remplacée par la vraie Boussole ; même exercice, même zone, même réponse et focus restauré.",
+    "Navigation et retour, carnet indépendant du favori témoin de Lite ; accès des entraînements inchangé.",
+    "Deux PDF sans ZIP et téléchargement du vrai HTML autonome (empreinte égale).",
+    "Vraie coupure réseau Chromium après téléchargement PWA complet : réouverture via l’onglet, interaction et lecture PDF."
+  ],
+  "sizes": [
+    {
+      "width": 320,
+      "height": 568,
+      "parentW": 320,
+      "frameW": 320,
+      "frameH": 391,
+      "frameViewport": 320,
+      "firstAction": 357,
+      "bottom": 459,
+      "navTop": 503
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "parentW": 390,
+      "frameW": 390,
+      "frameH": 667,
+      "frameViewport": 390,
+      "firstAction": 443,
+      "bottom": 735,
+      "navTop": 779
+    },
+    {
+      "width": 1024,
+      "height": 800,
+      "parentW": 1024,
+      "frameW": 1024,
+      "frameH": 623,
+      "frameViewport": 1024,
+      "firstAction": 554,
+      "bottom": 691,
+      "navTop": 735
+    }
+  ],
+  "offlineManifest": {
+    "ok": true,
+    "version": "7a7d4a9fcb227dde93f5",
+    "total": 76,
+    "manquants": 0,
+    "octets": 8340072
+  },
+  "errors": [],
+  "outgoing": []
+}

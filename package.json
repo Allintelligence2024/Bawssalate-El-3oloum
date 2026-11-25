@@ -1,7 +1,7 @@
 {
   "name": "bousala-al-ouloum-lite",
   "private": true,
-  "version": "0.9.3",
+  "version": "0.10.5",
   "type": "module",
   "description": "بوصلة العلوم Lite — تطبيق مراجعة مادة علوم الطبيعة والحياة — بكالوريا علوم تجريبية (الجزائر) — وفق بروتوكول المراجعة في 6 مراحل",
   "scripts": {

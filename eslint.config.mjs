@@ -23,6 +23,19 @@ export default [
       'plans/**',
       // Sous-projet indépendant : ses propres scripts et tests, sa propre CI (voir son package.json).
       'modules/boussole/**',
+      // Maquette de référence : HTML/CSS/JS autonomes livrés tels quels, jamais bundlés
+      // ni exécutés par l'application React (sert de source de vérité visuelle).
+      'maquettes/**',
+      // Dump « NEW bawssala » : copie figée du dépôt telle qu'elle a été livrée,
+      // gardée comme archive. Ce n'est pas du code de l'application.
+      'NEW bawssala/**',
+      // Sondes QA jetables à la racine (pilotage CDP d'un émulateur, Artemis, proxys) :
+      // elles parlent à un navigateur piloté et ne sont jamais importées par l'app.
+      // Les outils durables restent lintés : `scripts/**` et `public/**`.
+      'android-*.mjs',
+      'artemis-*.mjs',
+      'web-*.mjs',
+      'https-proxy-*.mjs',
       // TypeScript : couvert par `tsc -b` + vitest, jamais par ESLint (voir plus haut).
       '**/*.ts',
       '**/*.tsx',
