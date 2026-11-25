@@ -69,18 +69,26 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     await p.goto(origin + "/");
     const nav = p.getByRole("navigation").last();
     const tab = (x) => nav.getByRole("button", { name: x, exact: true });
-    await tab("البوصلة").click();
+    // La méthodologie n'est plus un onglet : c'est un sous-écran du الباك.
+    const ouvrirBoussole = async () => {
+      await tab("الباك").click();
+      await p.getByRole("button", { name: "راجع", exact: true }).click();
+    };
+    // Depuis la v0.10 la barre a QUATRE portes (مساري · كويست · الباك · أنا) :
+    // la méthodologie n'est plus un onglet mais un sous-écran du الباك.
+    a.equal(await nav.getByRole("button").count(), 4);
+    await tab("الباك").click();
+    a.equal(await tab("الباك").getAttribute("aria-current"), "page");
+    await p.getByRole("button", { name: "راجع", exact: true }).click();
     const frame = p.frameLocator('iframe[data-boussole="labo"]');
     await frame.locator(".case-nerve").waitFor();
     const id = (s) => frame.locator('[data-id="' + s + '"]');
-    a.equal(await nav.getByRole("button").count(), 5);
-    a.equal(await tab("البوصلة").getAttribute("aria-current"), "page");
     a.equal(
       await p.locator("iframe").getAttribute("src"),
       "/boussole/index.html",
     );
     results.push(
-      "5 onglets ; la place de Miftah ouvre directement le laboratoire de la même application.",
+      "4 portes ; la méthodologie (sous-écran du الباك) ouvre directement le laboratoire de la même application.",
     );
     const accountMenu = p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" });
     await accountMenu.click();
@@ -208,19 +216,16 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
       "Aide contextualisée sur un autre exemple de protéines ; même exercice, zone, réponse et focus restaurés.",
     );
     await tab("مساري").click();
-    await tab("تدريبات").click();
-    await p.getByRole("button", { name: /تمارين المنهجية/ }).click();
-    await p
-      .getByRole("heading", { name: "أربع مستويات نحو الاستقلال" })
-      .waitFor();
-    await p.getByRole("button", { name: "رجوع", exact: true }).click();
+    await ouvrirBoussole();
+    // Le sous-écran méthodologie garde son accueil et ses exercices guidés.
+    await p.getByRole("button", { name: "تمارين المنهجية الأخرى" }).waitFor();
     await tab("أنا").click();
-    await tab("البوصلة").click();
+    await ouvrirBoussole();
     await id("atlas-paper").click();
     await id("solo-edit").click();
     await frame.locator("#txt-solo").fill("ملاحظة محليّة");
-    await tab("اليوم").click();
-    await tab("البوصلة").click();
+    await tab("كويست").click();
+    await ouvrirBoussole();
     await id("resume").click();
     a.equal(await frame.locator("#txt-solo").inputValue(), "ملاحظة محليّة");
     a.deepEqual(
@@ -268,7 +273,7 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     a.equal(backup.carnetBoussole.solo, "ملاحظة محليّة");
     a.equal(backup.etat.compte, undefined);
     a(!JSON.stringify(backup).includes("fixture-locale"));
-    await tab("البوصلة").click();
+    await ouvrirBoussole();
     await id("resume").click();
     await frame.locator("#txt-solo").fill("نسخة مختلفة");
     await tab("أنا").click();
@@ -321,7 +326,7 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     a.equal(report.manquants, 0);
     await ctx.setOffline(true);
     await p.reload();
-    await tab("البوصلة").click();
+    await ouvrirBoussole();
     await id("case-enzyme").click();
     await id("cond-1").click();
     await id("thought-0").click();
