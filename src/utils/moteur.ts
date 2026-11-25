@@ -22,7 +22,7 @@ import {
   type ItemChemin,
 } from '../data/programme';
 import { prioriteLecon, type Priorite } from '../data/priorites';
-import type { CarteKafaa, Etat, Objectif } from '../types';
+import type { CarteKafaa, Etat, Objectif, ProgressionLecon } from '../types';
 import { ajouterJours, aujourdhui, differenceJours } from './dates';
 import { aReviserAujourdhui } from './srs';
 
@@ -134,6 +134,23 @@ export function enregistrerSeance(etat: Etat): Etat {
     seancesComptees: comptees,
     journal: etat.journal.includes(auj) ? etat.journal : [...etat.journal, auj],
   };
+}
+
+/**
+ * Clôture d'une leçon : la séance n'est comptée **qu'une fois**, et **seulement si la
+ * leçon est finie**. Ouvrir dix fois la même leçon ne fabrique plus dix séances (défaut
+ * corrigé en phase 3 : `ouvrirItem` incrémentait à chaque ouverture).
+ */
+export function cloturerSeance(etat: Etat, lessonId: string, p: ProgressionLecon): Etat {
+  const dejaTerminee = etat.progression[lessonId]?.statut === 'terminee';
+  const base: Etat = { ...etat, progression: { ...etat.progression, [lessonId]: p } };
+  if (p.statut !== 'terminee' || dejaTerminee) return base;
+  const auj = aujourdhui();
+  const comptees = etat.seancesJour === auj ? etat.seancesComptees : 0;
+  const suivant = enregistrerSeance(base);
+  // ما بعد الحصّة اليومية (حسب الهدف / المكثّفة) يُسجَّل كحصّة إضافية
+  if (comptees >= quotaDe(etat).seances) suivant.bonusJour = auj;
+  return suivant;
 }
 
 export function enregistrerActivite(etat: Etat): Etat {

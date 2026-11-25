@@ -10,6 +10,7 @@ import type { Etat } from '../types';
 import { resumeNoeuds, type NoeudMicro } from '../utils/microNoeuds';
 import CarteLecon from './CarteLecon';
 import MascotteKunz from './MascotteKunz';
+import GuideIndice from './GuideIndice';
 import { IcoVerifie } from './Icones';
 
 interface Props {
@@ -17,8 +18,6 @@ interface Props {
   lessonId: string;
   /** Ouvre le protocole : il reprend automatiquement à la première phase non validée. */
   onOuvrirNoeud: () => void;
-  /** Séance complète (46 min) — lien secondaire, jamais imposé. */
-  onOuvrirSeanceComplete: () => void;
   onReparation: () => void;
   onLireLecon: () => void;
   onFermer: () => void;
@@ -52,7 +51,6 @@ export default function MicroNoeuds({
   etat,
   lessonId,
   onOuvrirNoeud,
-  onOuvrirSeanceComplete,
   onReparation,
   onLireLecon,
   onFermer,
@@ -104,6 +102,12 @@ export default function MicroNoeuds({
         <button type="button" className="btn--primaire mt-3 w-full" onClick={onOuvrirNoeud}>
           {termine ? 'راجع الخطوات' : `ابدأ · ${nb(courant?.minutes ?? 3)} دقائق`}
         </button>
+        {!termine && (
+          <GuideIndice
+            className="mt-2"
+            indice={'الخطوة الحالية: «' + (courant?.porte ?? '') + '». ابدأ بالبوّابة وحدها، والباقي يجي بعدها — ما تحتاجش تحفظ الدرس كلّه باش تكمّل.'}
+          />
+        )}
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button type="button" className="btn--secondaire w-full text-xs" onClick={onLireLecon}>
             اقرأ الدرس
@@ -150,9 +154,11 @@ export default function MicroNoeuds({
         </div>
       )}
 
-      <button type="button" className="btn-mini mt-4 w-full" onClick={onOuvrirSeanceComplete}>
-        الجلسة الكاملة · {nb(resume.totalSeance)} دقيقة (اختياري)
-      </button>
+      {/* Ancien second CTA « الجلسة الكاملة » : il ouvrait exactement le même protocole que
+          « ابدأ ». On garde l'information, pas le doublon — une seule porte, dite une fois. */}
+      <p className="petit doux mt-4 text-center">
+        الجلسة الكاملة: 6 مراحل · {nb(resume.totalSeance)} دقيقة — تنجّم توقف بعد كل خطوة، والتقدّم محفوظ.
+      </p>
 
       <div className="mt-4">
         <MascotteKunz

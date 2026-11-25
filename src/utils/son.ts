@@ -41,8 +41,27 @@ function note(
   o.stop(t + duree + 0.05);
 }
 
+/**
+ * نبضة اهتزاز قصيرة (15 ms par défaut) — le seul retour haptique de l'app.
+ *
+ * Elle accompagne **une réussite**, jamais une erreur : le téléphone ne doit pas
+ * « gronder » quand l'élève se trompe. Sur un appareil sans vibreur (ou quand le
+ * navigateur refuse), la fonction ne fait rien et ne lève jamais d'exception.
+ */
+export function vibrerDoux(dureeMs = 15): void {
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(dureeMs);
+    }
+  } catch {
+    /* vibreur absent ou refusé : l'app continue sans */
+  }
+}
+
 /** إجابة صحيحة — نغمة صاعدة صغيرة (أمل) */
 export function sonJuste(): void {
+  // Même appareil muet : la réussite se sent quand même.
+  vibrerDoux();
   const c = audio();
   if (!c) return;
   note(c, 660, 0, 0.18, 0.07);

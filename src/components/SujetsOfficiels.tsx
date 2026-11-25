@@ -105,7 +105,9 @@ function Sujet({
           acces={etat ? accesSujet(etat, sujet.id) : undefined}
           onPasseOutre={onPasseOutreSujet ? () => onPasseOutreSujet(sujet.id) : undefined}
           // On n'affiche le bouton « briques » que si le sujet a réellement un gabarit :
-          // un bouton qui mène à un état vide est un bouton mort.
+          // un bouton qui mène à un état vide est un bouton mort. Le statut éditorial est
+          // filtré plus loin, dans EcranBriques : un gabarit `a_valider_enseignant` ouvre une
+          // porte d'aperçu explicite (« قيد مراجعة الأستاذ »), jamais un corrigé validé.
           onOuvrirBriques={
             onOuvrirBriques && SUJETS_AVEC_BRIQUES.includes(sujet.id)
               ? () => onOuvrirBriques(sujet.id)

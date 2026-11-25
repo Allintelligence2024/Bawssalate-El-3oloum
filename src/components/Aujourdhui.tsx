@@ -13,6 +13,7 @@ import { messageAccueil } from '../utils/diagnostic';
 import { etapesKouest, etapesReussies, leconDeLaQuete } from '../utils/kouest';
 import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteStats from './CarteStats';
+import GuideAccueil, { type Energie } from './GuideAccueil';
 import CarteDefi from './CarteDefi';
 import type { TypeDefi } from '../utils/defis';
 import type { Etat } from '../types';
@@ -40,6 +41,14 @@ interface Props {
   onDemarrerKouest?: (lessonId: string) => void;
   /** « تحدّي 60 ثانية » (v0.11) — format court, optionnel. */
   onDefi60?: () => void;
+  /** Phase 2 « Guide-First » : le guide ouvre la séance et propose un format selon l'énergie. */
+  onFakh?: () => void;
+  onBriques?: () => void;
+  onSujetGuide?: () => void;
+  nomSujet?: string;
+  /** Invitation à créer un compte, après la première micro-victoire (jamais bloquante). */
+  onCreerCompte?: () => void;
+  onMasquerInvitation?: () => void;
 }
 
 const ETIQUETTES_MISSION: Record<TypeMission, string> = {
@@ -67,8 +76,16 @@ export default function Aujourdhui({
   onChoisirDefi,
   onDemarrerKouest,
   onDefi60,
+  onFakh,
+  onBriques,
+  onSujetGuide,
+  nomSujet,
+  onCreerCompte,
+  onMasquerInvitation,
 }: Props) {
   const action = prochaineAction(etat);
+  // Humeur déclarée par l'élève : elle ne s'écrit pas dans l'état, elle ne dure pas.
+  const [energie, setEnergie] = useState<Energie | null>(null);
   const [reposChoisi, setReposChoisi] = useState(false);
   const planMission = missionDuJour(etat);
   const competence = competenceDue(etat);
@@ -126,12 +143,8 @@ export default function Aujourdhui({
   return (
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
       {/* ترحيب */}
-      <header className="mb-6 flex items-start gap-3">
-        <img
-          src="/mascotte.webp"
-          alt="مستكشف بوصلة العلوم"
-          className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
-        />
+      {/* Un seul visuel de guide par écran : il est dans la carte d'accueil, juste en dessous. */}
+      <header className="mb-4">
         <div className="min-w-0 flex-1">
           <p className="eyebrow">{formatJourAr(aujourdhui())}</p>
           <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">
@@ -147,6 +160,30 @@ export default function Aujourdhui({
           )}
         </div>
       </header>
+
+      {/* Phase 2 · المرشد يفتح الحصة — le guide demande l'énergie, puis met en scène
+          l'action que le moteur a déjà choisie. Une seule carte, trois boutons. */}
+      <GuideAccueil
+        mission={{
+          titre: planMission.mission.titre,
+          minutes: planMission.mission.minutes,
+          type: planMission.mission.type,
+        }}
+        reportees={planMission.reportees}
+        energie={energie}
+        onEnergie={setEnergie}
+        onMission={lancerMission}
+        onDefi60={onDefi60}
+        onFakh={onFakh}
+        onBriques={onBriques}
+        onSujetGuide={onSujetGuide}
+        nomSujet={nomSujet}
+        invitation={
+          onCreerCompte && !etat.compte && faits >= 1 && !etat.invitationCompteVue
+            ? { creer: onCreerCompte, plusTard: onMasquerInvitation ?? (() => {}) }
+            : undefined
+        }
+      />
 
       {/* v0.13 · B2 du rapport d'utilisabilité : UNE action principale, en premier.
           La mission du jour passe avant le quiz et le défi : c'est elle qui sert au bac. */}

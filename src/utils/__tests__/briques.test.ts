@@ -5,7 +5,9 @@ import {
   briquesChoisies,
   diagnosticPiege,
   evaluerAssemblage,
+  apercuRequis,
   jeuActif,
+  jeuxJouables,
   rolesExiges,
 } from '../briques';
 import { JEUX_UNITE1 } from '../../data/briques/u1';
@@ -93,6 +95,21 @@ describe('catalogue et statuts éditoriaux', () => {
   it('seuls les jeux explicitement actifs sont jouables', () => {
     for (const jeu of JEUX_UNITE1) expect(jeuActif(jeu)).toBe(jeu.statut === 'actif');
     expect(jeuActif(undefined)).toBe(false);
+  });
+
+  it('l’écran ne reçoit jamais un jeu non relu sans aperçu explicite', () => {
+    // Contenu actif (unité 1) : servi directement, et seulement lui.
+    expect(jeuxJouables(JEUX_UNITE1)).toEqual(JEUX_UNITE1.filter(jeuActif));
+    expect(apercuRequis(JEUX_UNITE1)).toBe(false);
+    // Contenu non relu : rien sans aperçu, tout avec un aperçu explicite.
+    expect(jeuxJouables(JEUX_SUJET_2025_1)).toEqual([]);
+    expect(apercuRequis(JEUX_SUJET_2025_1)).toBe(true);
+    expect(jeuxJouables(JEUX_SUJET_2025_1, true)).toEqual(JEUX_SUJET_2025_1);
+    // Mélange : l'aperçu ne réintroduit pas les jeux non relus à côté des actifs.
+    expect(jeuxJouables([...JEUX_UNITE1, ...JEUX_SUJET_2025_1], true)).toEqual(JEUX_UNITE1.filter(jeuActif));
+    // Catalogue vide : ni porte d'aperçu, ni exercice.
+    expect(jeuxJouables([])).toEqual([]);
+    expect(apercuRequis([])).toBe(false);
   });
 
   it('le gabarit pilote 2025-1 n’est pas jouable avant relecture enseignante', () => {

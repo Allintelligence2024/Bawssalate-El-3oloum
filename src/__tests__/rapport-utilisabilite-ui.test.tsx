@@ -4,7 +4,7 @@
 //       compte plus tard sans rien perdre ;
 //   B2  une seule action principale sur l'accueil (la mission du jour), les autres entrées
 //       ne commencent plus par « ابدأ » ;
-//   B3  l'intro vidéo ne revient plus à chaque session (une fois par appareil) ;
+//   B3  l'intro vidéo n'existe plus : le premier écran est l'action du jour (phase 2) ;
 //   B7  l'écran du guide n'empile plus quatre sorties : un bouton par temps, deux en bas.
 import { afterEach, describe, expect, it } from 'vitest';
 import { act } from 'react';
@@ -144,12 +144,24 @@ describe('B2 — une seule action principale sur l’accueil', () => {
   });
 });
 
-describe('B3 — intro une fois par appareil', () => {
-  it('l’intro est retenue dans localStorage, pas seulement dans la session', async () => {
+describe('B3 — phase 2 : aucun écran de démarrage, aucun compte obligatoire', () => {
+  it('une installation neuve ouvre كويست avec la carte du guide, sans péage', async () => {
+    localStorage.clear();
+    sessionStorage.clear();
     const { readFileSync } = await import('node:fs');
-    const source = readFileSync('src/App.tsx', 'utf8');
-    expect(source).toContain("localStorage.getItem('kunz_intro_vue')");
-    expect(source).toContain("localStorage.setItem('kunz_intro_vue', '1')");
+    expect(readFileSync('src/App.tsx', 'utf8')).not.toContain('EcranDemarrage');
+
+    const { default: App } = await import('../App');
+    await monter(<App />);
+    for (let i = 0; i < 30; i += 1) {
+      await act(async () => { await new Promise((r) => setTimeout(r, 20)); });
+    }
+    const texte = (zone!.textContent ?? '').replace(/\s+/g, ' ');
+    expect(texte, 'l’écran de compte bloque encore l’entrée').not.toContain('جرّب بلا حساب');
+    expect(texte).toContain('المرشد يفتح الحصة');
+    expect(texte).toContain('مهمّة اليوم');
+    localStorage.clear();
+    sessionStorage.clear();
   });
 });
 

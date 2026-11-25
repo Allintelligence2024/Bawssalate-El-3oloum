@@ -132,6 +132,29 @@ export function jeuActif(jeu: JeuBriques | undefined): jeu is JeuBriques {
   return Boolean(jeu && jeu.statut === 'actif');
 }
 
+/**
+ * Jeux réellement servis par l'écran 1-2-3.
+ *
+ * Règle éditoriale du dépôt (cf. `data/briques/types.ts`) : un jeu `a_valider_enseignant`
+ * n'est pas jouable, parce qu'il n'a pas encore été relu. Sans aperçu, l'écran ne reçoit donc
+ * que les jeux `actif`. Avec un aperçu **explicite** demandé par l'élève ou l'enseignant
+ * (`apercu = true`), il reçoit aussi les autres — l'écran doit alors afficher la mention
+ * « قيد المراجعة », jamais laisser croire à un corrigé validé.
+ *
+ * Corollaire vérifié par test : si le catalogue ne contient aucun jeu actif, la fonction rend
+ * une liste vide sans aperçu (l'écran affiche alors la porte d'aperçu, pas des exercices).
+ */
+export function jeuxJouables(jeux: readonly JeuBriques[], apercu = false): JeuBriques[] {
+  const actifs = jeux.filter((jeu) => jeuActif(jeu));
+  if (actifs.length > 0) return actifs;
+  return apercu ? [...jeux] : [];
+}
+
+/** Vrai si du contenu existe mais qu'aucun jeu n'est validé : l'écran doit demander un aperçu. */
+export function apercuRequis(jeux: readonly JeuBriques[]): boolean {
+  return jeux.length > 0 && !jeux.some((jeu) => jeuActif(jeu));
+}
+
 /** Attendu affiché en tête de l'étape 1 — repli sûr si le jeu n'en porte pas. */
 export function attenduDuJeu(jeu: JeuBriques, verbe: VerbeConsigne): string {
   return jeu.attendu || `ما ينتظره المصحّح من الفعل «${verbe}».`;

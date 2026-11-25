@@ -673,3 +673,27 @@ h1, h2 { text-wrap: balance; }
 html[data-taille='s'] { font-size: 15px; }
 html[data-taille='m'] { font-size: 16px; }
 html[data-taille='l'] { font-size: 18.5px; }
+
+/* ── Phase 3 · un seul visuel du guide selon le thème ────────────────────────────
+   Les deux images sont précachées (guide-clair.webp / guide-sombre.webp) : le
+   navigateur n'en affiche qu'une, sans JS et sans écran qui « clignote ». */
+.theme-sombre { display: none; }
+[data-theme='dark'] .theme-sombre { display: block; }
+[data-theme='dark'] .theme-clair { display: none; }
+
+/* ── Phase 3 · mouvement réduit ────────────────────────────────────────────────
+   Quand le système demande moins d'animation, on ne supprime pas les écrans :
+   on supprime le mouvement. Les transitions tombent à 0,01 ms (et non 0) pour que
+   les `transitionend` / `animationend` continuent d'arriver aux composants qui écoutent.
+   Les feux d'artifice et confettis de Fetes.tsx testent déjà `prefers-reduced-motion`. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -18,6 +18,8 @@ import { basculerBrique, type EvaluationBriques, type JeuBriques } from '../util
 import { progresDuJeu } from '../utils/amelioration';
 import { attenduDe } from '../data/methodologie/attenduVerbes';
 import ConstructeurReponse from './ConstructeurReponse';
+import GuideIndice from './GuideIndice';
+import MascotteKunz from './MascotteKunz';
 import TiroirBoussole, { type OngletTiroir } from './TiroirBoussole';
 
 interface Props {
@@ -211,11 +213,25 @@ export default function Ecran123({ etat, jeux, titre, onFermer, onTentative }: P
                 );
               })}
           </div>
+          {/* Le guide réagit en une ligne : un manque est un critère nommé, pas une note.
+              Le message de réussite garde son encart ; l'erreur passe par la voix du guide. */}
           {messagePreuve && (
-            <p role="status" className="mt-3 rounded-xl border border-honey-line bg-honey-soft px-3 py-2 text-[12.5px] font-bold leading-relaxed text-honey-ink">
-              {messagePreuve}
-            </p>
+            <div role="status">
+              {messagePreuve.startsWith('الدليل مثبّت') ? (
+                <p className="mt-3 rounded-xl border border-honey-line bg-honey-soft px-3 py-2 text-[12.5px] font-bold leading-relaxed text-honey-ink">
+                  {messagePreuve}
+                </p>
+              ) : (
+                <div className="mt-3">
+                  <MascotteKunz compact humeur="encouragement" message={messagePreuve} />
+                </div>
+              )}
+            </div>
           )}
+          <GuideIndice
+            humeur="reflexion"
+            indice={'الملاحظة تبدأ بما تُظهره الوثيقة (رقم، منحنى، مقارنة داخلية). المقارنة تحتاج شاهدًا صريحًا خارج الوثيقة، ثم الفرق بينهما.'}
+          />
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <button type="button" className="btn--secondaire w-full text-xs" onClick={verifierPreuves}>
               تحقّق من الدليل

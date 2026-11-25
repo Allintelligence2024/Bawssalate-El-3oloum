@@ -18,6 +18,8 @@ import {
   type Piege,
 } from '../utils/fakh';
 import { IcoRetour, IcoVerifie } from './Icones';
+import GuideIndice from './GuideIndice';
+import MascotteKunz from './MascotteKunz';
 
 interface Props {
   etat: Etat;
@@ -214,7 +216,16 @@ export default function Fakh({ etat, uniteInitiale, onJugement, onSerieFinie, on
         <p className="petit doux mt-2">من {p.lecon}</p>
       </section>
 
-      <div className="flex gap-2">
+      {!aRepondu && (
+        <GuideIndice
+          humeur="piege"
+          libelle="تلميح المرشد"
+          className=""
+          indice={'الفخّ يبان غالبًا في كلمة مطلقة: دائمًا، أبدًا، وحده، لا يتأثّر… اسأل نفسك: هل هذا صحيح في كل الحالات؟'}
+        />
+      )}
+
+      <div className="mt-3 flex gap-2">
         <button
           type="button"
           className="btn btn--secondaire flex-1"
@@ -245,6 +256,15 @@ export default function Fakh({ etat, uniteInitiale, onJugement, onSerieFinie, on
               </span>
             </div>
             <p className="petit mt-2 text-ink-soft">{p.explication}</p>
+            {!bon && (
+              <div className="mt-3">
+                <MascotteKunz
+                  compact
+                  humeur="encouragement"
+                  message="هذا فخّ — والغلط هنا ما ينقصش. سجّلناه، وترجع ليه وقت ما تحب."
+                />
+              </div>
+            )}
           </section>
           <button type="button" className="btn btn--primaire mt-3 w-full" onClick={suivant}>
             {index + 1 < serie.length ? 'الجملة التالية' : 'شوف الحصيلة'}

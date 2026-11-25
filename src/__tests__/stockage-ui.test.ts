@@ -7,10 +7,6 @@ import { effacerAlerteStockage } from '../utils/echecsStockage';
 import { autoriserRemplacementEtat } from '../utils/storage';
 import { etatVierge } from '../types';
 
-vi.mock('../components/EcranDemarrage', () => ({
-  default: ({ onTerminer }: { onTerminer: () => void }) => createElement('button', { onClick: onTerminer }, 'Continuer'),
-}));
-
 vi.mock('../components/Aujourdhui', () => ({
   default: ({ onOuvrirExamenBlanc }: { onOuvrirExamenBlanc: () => void }) => createElement('button', { onClick: onOuvrirExamenBlanc }, 'Ouvrir examen'),
 }));
@@ -38,7 +34,8 @@ describe('avertissement stockage au démarrage', () => {
     vi.stubGlobal('sessionStorage', { getItem: () => '1', setItem: () => {}, removeItem: () => {} });
     await act(async () => { root.render(createElement(App)); });
     expect(zone.querySelector('[role="alert"]')?.textContent).toContain('تعذّر قراءة بياناتك أو حفظها');
-    expect(zone.textContent).toContain('أنشئ حسابك');
+    // Phase 2 : aucun péage — même sans stockage, l'app s'ouvre (l'alerte reste visible).
+    expect(zone.textContent).toContain('Ouvrir examen');
   });
 
   it('reste utilisable si sessionStorage et localStorage refusent les accès', async () => {
@@ -47,10 +44,8 @@ describe('avertissement stockage au démarrage', () => {
     vi.stubGlobal('sessionStorage', { getItem: refuse, setItem: refuse, removeItem: refuse });
     await act(async () => { root.render(createElement(App)); });
     expect(zone.querySelector('[role="alert"]')?.textContent).toContain('تعذّر قراءة بياناتك أو حفظها');
-    const continuer = Array.from(zone.querySelectorAll('button')).find((b) => b.textContent === 'Continuer');
-    expect(continuer).toBeDefined();
-    await act(async () => { continuer!.click(); });
-    expect(zone.textContent).toContain('أنشئ حسابك');
+    // Aucun écran de démarrage à franchir, aucun compte à créer : l'accueil est là.
+    expect(zone.textContent).toContain('Ouvrir examen');
   });
   it('maintient l’avertissement pendant un écran plein écran', async () => {
     const compte = { email: 'eleve@example.com', motDePasse: 'hash', jeton: 'jeton', wilaya: '16', daira: '1', creeLe: '2026-11-17' };

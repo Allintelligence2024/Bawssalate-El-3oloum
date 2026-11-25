@@ -71,6 +71,34 @@ const etatSchema = z.object({
   // refusé plutôt que ramené à 0 — une valeur inventée fausserait sa grille.
   maitriseSujets: dictionnaire(dictionnaire(z.union([z.literal(0), z.literal(1), z.literal(2)]))).optional(),
   brouillonsSujets: dictionnaire(dictionnaire(texte)).optional(),
+  // v0.13 — champs ajoutés après la rédaction du schéma. Sans ces lignes, zod les supprimait
+  // silencieusement à l'import : un export « complet » puis un import effaçait les cartes de
+  // leçon, les jeux de briques, les trophées, les pièges démasqués, les étapes du Bac pas à pas,
+  // les dérogations et les défis 60 s — et faisait réapparaître l'écran de compte d'un invité.
+  // Un test aller-retour (`sauvegarde-champs.test.ts`) verrouille cette liste.
+  modeInvite: z.boolean().optional(),
+  invitationCompteVue: date.optional(),
+  fakh: dictionnaire(z.literal(true)).optional(),
+  fakhSeries: dictionnaire(z.literal(true)).optional(),
+  bacEtapes: dictionnaire(z.union([z.literal(3), z.literal(2), z.literal(0)])).optional(),
+  bacExercices: dictionnaire(z.literal(true)).optional(),
+  cartesLecons: dictionnaire(z.object({
+    gagneeLe: date,
+    points: z.tuple([texte, texte, texte]),
+    version: z.literal(1),
+  })).optional(),
+  briques: dictionnaire(z.object({
+    jeuId: court,
+    rolesChoisis: liste(z.enum(['observation', 'comparaison', 'interpretation', 'conclusion', 'piege'])),
+    manquants: liste(z.enum(['observation', 'comparaison', 'interpretation', 'conclusion', 'piege'])),
+    complete: z.boolean(),
+    le: date,
+    avant: entier.optional(),
+    apres: entier.optional(),
+  })).optional(),
+  derogationsSujets: dictionnaire(date).optional(),
+  trophees: dictionnaire(z.object({ le: date, n: entier })).optional(),
+  defis60: liste(date).optional(),
 });
 const compteurs = z.object({ justes: entier, fausses: entier });
 const statsSchema = z.object({

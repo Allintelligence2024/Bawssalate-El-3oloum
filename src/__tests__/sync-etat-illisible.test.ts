@@ -51,6 +51,12 @@ describe('synchronisation avec progression illisible', () => {
     document.body.append(zone);
     root = createRoot(zone);
     await act(async () => { root!.render(createElement(App)); });
+    // Phase 2 : plus d'écran de compte obligatoire. On ouvre la fiche de compte du bandeau XP,
+    // puis on crée le compte — le garde de synchronisation doit rester le même.
+    const fiche = zone.querySelector('[aria-label="نقاط الخبرة وأيام النشاط"]') as HTMLElement | null;
+    expect(fiche, 'fiche XP absente').toBeTruthy();
+    await act(async () => { fiche!.click(); });
+    await cliquer('أنشئ حسابًا (اختياري)');
     await cliquer('Compte fictif');
     await cliquer('نعم، أفعّل المزامنة');
     await act(async () => {

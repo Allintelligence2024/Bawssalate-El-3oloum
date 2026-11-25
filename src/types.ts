@@ -163,6 +163,11 @@ export interface Etat {
    * (sync, export, changement d'appareil). Absent = pas invité.
    */
   modeInvite?: boolean;
+  /**
+   * Phase 2 « Guide-First » — date ISO à laquelle l'invitation à créer un compte a été vue
+   * (ou refusée) après la première micro-victoire. Une seule fois : on ne harcèle pas.
+   */
+  invitationCompteVue?: string;
   compte?: Compte;
   progression: Record<string, ProgressionLecon>;
   jalons: Record<string, JalonUnite>;

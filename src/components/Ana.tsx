@@ -166,6 +166,9 @@ export default function Ana({
   evaluationsEntraineur,
   onOuvrirEntraineur,
 }: Props) {
+  // Phase 3 — trois volets : ce qui avance, ce qui se travaille, ce qui se règle.
+  // Les cartes ne sont pas cachées : elles restent dans la page, repliées par `hidden`.
+  const [volet, setVolet] = useState<'progres' | 'carnet' | 'reglages'>('progres');
   const [confirme, setConfirme] = useState(false);
   const carnetAvantEffacement = useRef<string | null>(null);
   const boutonEffacement = useRef<HTMLButtonElement>(null);
@@ -254,8 +257,31 @@ export default function Ana({
         </p>
       </header>
 
+      <nav
+        className="mb-4 grid grid-cols-3 gap-1 rounded-2xl border border-line bg-paper p-1"
+        role="tablist"
+        aria-label="أقسام كرّاستي"
+      >
+        {([['progres', 'تقدّمي'], ['carnet', 'كرّاستي'], ['reglages', 'إعداداتي']] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={volet === id}
+            onClick={() => setVolet(id)}
+            className={
+              volet === id
+                ? 'rounded-xl bg-forest px-2 py-2 text-xs font-extrabold text-paper'
+                : 'rounded-xl px-2 py-2 text-xs font-bold text-ink-soft'
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
       {onOuvrirFiche && (
-        <section className="carte mb-4">
+        <section hidden={volet !== 'progres'} className="carte mb-4">
           <div className="rangee rangee--entre">
             <div className="carte__texte">
               <p className="carte__titre">ملفّي — ورقة A4</p>
@@ -276,7 +302,7 @@ export default function Ana({
       />
 
       {/* الهوية */}
-      <section className="card p-5">
+      <section hidden={volet !== 'reglages'} className="card p-5">
         <p className="eyebrow">هويتي</p>
         <label className="mt-3 block text-xs font-bold text-ink-soft" htmlFor="nom">
           اسمي
@@ -310,7 +336,7 @@ export default function Ana({
 
       {/* الحساب — أو بطاقة الزائر (v0.13) : on peut réviser sans compte, sans être coincé. */}
       {!etat.compte && onCreerCompte && (
-        <section className="card mt-5 p-5">
+        <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
           <p className="eyebrow">حسابي</p>
           <p className="mt-2 text-sm font-bold">أنت في وضع الزائر</p>
           <p className="mt-1 text-xs leading-relaxed text-mute">
@@ -324,7 +350,7 @@ export default function Ana({
       )}
 
       {etat.compte && (
-        <section className="card mt-5 p-5">
+        <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
           <p className="eyebrow">حسابي</p>
           <div className="mt-3 flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-forest text-lg font-black text-paper">
@@ -407,7 +433,7 @@ export default function Ana({
       </button>
 
       {/* الإحصاء بالحروف */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'progres'} className="card mt-5 p-5">
         <p className="eyebrow">رحلتي بالأرقام</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-sage bg-sage-soft/60 p-3.5">
@@ -452,7 +478,7 @@ export default function Ana({
 
       {/* سجلّ النشاط */}
       {derniersJours.length > 0 && (
-        <section className="card mt-5 p-5">
+        <section hidden={volet !== 'progres'} className="card mt-5 p-5">
           <p className="eyebrow">أيام نشاطي</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {derniersJours.map((j) => (
@@ -469,7 +495,7 @@ export default function Ana({
       )}
 
       {/* الكرّاسة */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'carnet'} className="card mt-5 p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="eyebrow">دوّن</p>
@@ -529,7 +555,7 @@ export default function Ana({
       </section>
 
       {/* سجلّ الأخطاء — v0.8 : capturé automatiquement dans les exercices de منهجية */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'carnet'} className="card mt-5 p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="eyebrow">سجلّ الأخطاء</p>
@@ -638,7 +664,7 @@ export default function Ana({
       <CarteMesurePilote />
 
       {/* النسخة الاحتياطية — export/import complet de l'état (v0.9.1) */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
         <p className="eyebrow">النسخة الاحتياطية</p>
         <p className="mt-2 text-xs leading-relaxed text-mute">
           صدّر مسارك وإحصاءاتك ومسوّدات مختبر البوصلة في ملف واحد، واستعده في أي جهاز.
@@ -729,7 +755,7 @@ export default function Ana({
       </section>
 
       {/* منطقة الخطر */}
-      <section className="card mt-5 border-clay-soft p-5">
+      <section hidden={volet !== 'reglages'} className="card mt-5 border-clay-soft p-5">
         <p className="eyebrow text-clay">إعادة الضبط</p>
         <p className="mt-2 text-xs leading-relaxed text-mute">
           تحذف الحساب المحلي والتقدّم والملاحظات والإحصاءات ومسوّدات المختبر الحالي من هذا المتصفّح. لا تحذف دفاتر إصدارات المختبر الأقدم، أو الملفات المنزّلة، أو بيانات الخادم. لمحو بيانات الموقع القديمة، احفظ ما تحتاجه ثم امسح بيانات الموقع من إعدادات المتصفّح. أغلق التبويبات الأخرى قبل المسح حتى لا تعيد حفظ بيانات مفتوحة. لا يمكن التراجع.

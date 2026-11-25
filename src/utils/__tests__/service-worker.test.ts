@@ -139,7 +139,9 @@ describe('service worker — simulation', () => {
     expect(e.cachesData.has('autre-application')).toBe(true);
     expect(e.cachesData.has('murajih-svt-v4')).toBe(false);
     expect(await e.demande('/api/eleve')).toBeUndefined();
-    expect(await e.demande('/ouverture.mp4', 'cors', true)).toBeUndefined();
+    // Aucune vidéo n'est livrée depuis la v0.13 : la règle reste vérifiée sur un chemin
+    // vidéo quelconque (le worker ne met en cache que assets/, lecons/ et la Boussole).
+    expect(await e.demande('/medias/intro.mp4', 'cors', true)).toBeUndefined();
   });
 });
 

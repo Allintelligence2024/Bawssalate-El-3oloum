@@ -75,7 +75,6 @@ describe('micro-nœuds — la promesse de 3 minutes est tenue', () => {
         etat,
         lessonId,
         onOuvrirNoeud: () => {},
-        onOuvrirSeanceComplete: () => {},
         onReparation: () => {},
         onLireLecon: () => {},
         onFermer: () => {},
@@ -84,8 +83,11 @@ describe('micro-nœuds — la promesse de 3 minutes est tenue', () => {
     const texte = zone!.textContent ?? '';
     expect(texte).toMatch(/\d+ دقائق الآن/);
     expect(texte).not.toMatch(/بقيت \d+ دقيقة/);
-    // La séance complète reste annoncée, mais comme option secondaire.
+    // La séance complète reste annoncée, mais comme information — un seul bouton, une
+    // seule destination (l'ancien doublon ouvrait le même protocole).
     expect(texte).toContain('الجلسة الكاملة');
+    // …et ce n'est plus un bouton : le libellé n'a pas de destination qui lui soit propre.
+    expect([...zone!.querySelectorAll('button')].some((b) => (b.textContent ?? '').includes('الجلسة الكاملة'))).toBe(false);
   });
 });
 
