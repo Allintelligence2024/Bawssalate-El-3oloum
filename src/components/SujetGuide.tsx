@@ -180,6 +180,9 @@ export default function SujetGuide({
         {nb(avancement.travaillees)} / {nb(avancement.total)} تعليمة عملتَ عليها
         {etape.points !== null && ` · هذه التعليمة: ${nb(etape.points)} ن`}
       </p>
+      <p className="text-[11px] leading-relaxed text-mute">
+        اقرأ التعليمة هنا، اكتب جوابك على ورقتك، ثمّ قارن. لا شيء يُرسَل ولا يُنقَّط.
+      </p>
 
       {/* Les quatre temps de la méthode */}
       <div className="mt-3 flex gap-1.5" role="tablist" aria-label="أوقات الطريقة">
@@ -207,7 +210,9 @@ export default function SujetGuide({
       {temps === 1 && (
         <section className="carte mt-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
+            {/* Le verbe reste lisible par l'élève, pas le nom de catégorie de la méthode. */}
             <span className="chip font-bold">{etape.verbe}</span>
+            <span className="text-[11px] font-bold text-mute">الفعل المطلوب</span>
             {etape.points !== null && <span className="chip tnum">{nb(etape.points)} ن</span>}
             {etape.surDocument && <span className="chip">بالوثيقة</span>}
           </div>
@@ -217,7 +222,9 @@ export default function SujetGuide({
           <div className="mt-3 rounded-xl border border-line bg-bg px-3 py-2">
             <p className="text-[11px] font-extrabold text-forest">ما ينتظره المصحّح</p>
             <p className="mt-1 text-[13px] leading-relaxed text-ink">{etape.attendu}</p>
-            <p className="mt-1 text-[10px] text-mute">{MENTION_STATUT.a_valider_enseignant}</p>
+            <p className="mt-1 text-[10px] text-mute">
+              {MENTION_STATUT.a_valider_enseignant} — إن تعارض مع ما رسّخه أستاذك، اتّبع أستاذك.
+            </p>
           </div>
 
           {etape.documents.length > 0 ? (

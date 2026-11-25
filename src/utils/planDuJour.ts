@@ -18,6 +18,7 @@ import {
 import { prochainNoeud, type NoeudMicro } from './microNoeuds';
 import { prioriteLecon } from '../data/priorites';
 import { titreLecon, uniteDeItem, type ItemChemin } from '../data/programme';
+import { nb } from './dates';
 import type { Etat } from '../types';
 
 export type TypeMission = 'noeud' | 'jalon' | 'revision' | 'entrainement_sujet' | 'repos' | 'fini';
@@ -213,7 +214,7 @@ export function missionDuJour(etat: Etat): PlanDuJour {
 export function libelleMission(m: Mission): string {
   switch (m.type) {
     case 'noeud':
-      return m.titre.startsWith('بطاقة') ? 'افتح البطاقة' : 'ابدأ ٣ دقائق';
+      return m.titre.startsWith('بطاقة') ? 'افتح البطاقة' : `ابدأ ${nb(m.minutes)} دقائق`;
     case 'jalon':
       return 'افتح الجسر';
     case 'revision':

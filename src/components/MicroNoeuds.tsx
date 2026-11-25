@@ -76,7 +76,8 @@ export default function MicroNoeuds({
           {nb(resume.faites)} من {nb(resume.noeuds.length)} خطوات
         </span>
         <span className="mention mention--vert">
-          {termine ? 'الدرس كامل' : `بقيت ${nb(resume.restantes)} دقيقة`}
+          {/* La mission promise à l'accueil fait 3–5 min : on affiche le nœud, pas le total. */}
+          {termine ? 'الدرس كامل' : `${nb(courant?.minutes ?? 3)} دقائق الآن`}
         </span>
       </div>
 
@@ -93,6 +94,11 @@ export default function MicroNoeuds({
         {!termine && (
           <p className="petit doux mt-2">
             البوّابة: {courant?.porte}
+          </p>
+        )}
+        {!termine && resume.restantes > (courant?.minutes ?? 0) && (
+          <p className="petit doux mt-1">
+            الجلسة الكاملة: {nb(resume.restantes)} دقيقة موزّعة على الخطوات — اختيارية، والمهمّة وحدها تكفي اليوم.
           </p>
         )}
         <button type="button" className="btn--primaire mt-3 w-full" onClick={onOuvrirNoeud}>

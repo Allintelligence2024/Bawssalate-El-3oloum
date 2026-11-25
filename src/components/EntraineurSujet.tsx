@@ -15,6 +15,7 @@ import {
 } from '../utils/entrainement';
 import SimulationEpreuve from './SimulationEpreuve';
 import { nb } from '../utils/dates';
+import { DUREE_BAC_MIN } from '../utils/simulation';
 // v0.11 — méthode 1-2-3 dans le sujet : tiroir source vivant, accès jamais verrouillé.
 import TiroirBoussole from './TiroirBoussole';
 import type { AccesSujetCalcule } from '../utils/accesSujets';
@@ -102,7 +103,7 @@ export default function EntraineurSujet({
         <p className="eyebrow">وضع المتدرّب — خطوة بخطوة</p>
         <div className="flex gap-2">
           <button type="button" onClick={() => setSimulation(true)} className="chip text-xs font-bold">
-            محاكاة بالوقت (270 د)
+            محاكاة بالوقت ({nb(DUREE_BAC_MIN)} د)
           </button>
           <button type="button" onClick={onFermer} className="chip text-xs font-bold">عودة إلى القراءة</button>
         </div>

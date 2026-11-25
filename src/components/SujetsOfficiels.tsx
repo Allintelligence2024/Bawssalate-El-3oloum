@@ -2,6 +2,7 @@
 // الإجرائية، الوحدة المستهدفة. لا وثائق مرسومة ولا PDF. المرحلة 2 (2023 فقط حاليًّا): وصف نصّي للوثائق وعناصر إجابة
 // مختصرة بتصرّف من التصحيح الرسمي، مخفيّة افتراضيًّا خلف زرّ «أظهر عناصر الإجابة» (A-009).
 import { useState } from 'react';
+import { DUREE_BAC_MIN } from '../utils/simulation';
 import { ANNEES_STRUCTUREES, LIBELLE_FIDELITE, SUJETS_OFFICIELS, fideliteDe, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
 import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
 import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
@@ -134,7 +135,12 @@ function Sujet({
         </button>
       )}
       <p className="flex flex-wrap items-center gap-2 text-[11px] leading-relaxed text-mute">
-        <span className="chip text-[11px]" title="درجة أمانة النقل">أمانة النقل ({fideliteDe(sujet)}): {LIBELLE_FIDELITE[fideliteDe(sujet)]}</span>
+        <span
+          className="chip text-[11px]"
+          title={`أمانة النقل: ${LIBELLE_FIDELITE[fideliteDe(sujet)]}`}
+        >
+          نقْل: {fideliteDe(sujet) === 'a' ? 'من نصّ الورقة' : fideliteDe(sujet) === 'b' ? 'قراءة بالعين' : 'بالمعنى'}
+        </span>
         {sujet.notes && <span>{sujet.notes}</span>}
       </p>
       {corrige && (
@@ -281,8 +287,9 @@ export default function SujetsOfficiels({
             <span className="block h-5 w-5"><IcoRetour /></span>
           </button>
           <div className="min-w-0">
-            <p className="eyebrow">مواضيع بكالوريا سابقة · علوم تجريبية · {nb(4)} سا {nb(30)} د</p>
-            <h1 className="font-naskh truncate text-xl font-black">بنية الموضوع، لا الموضوع نفسه</h1>
+            <p className="eyebrow">{/* La durée affichée vient de la constante : impossible qu'elle diverge encore. */}
+            مواضيع بكالوريا سابقة · علوم تجريبية · {nb(Math.floor(DUREE_BAC_MIN / 60))} سا {nb(DUREE_BAC_MIN % 60)} د</p>
+            <h1 className="font-naskh truncate text-xl font-black">مواضيع البكالوريا · حِلّها كاملة</h1>
           </div>
         </div>
         <div className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center gap-2">
@@ -303,8 +310,8 @@ export default function SujetsOfficiels({
       <main className="flex-1 px-4 pb-16 pt-4">
         <div className="mx-auto max-w-3xl space-y-4">
           <p className="text-xs leading-relaxed text-mute">
-            نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
-            معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لكلّ موضوع عناصر إجابة مختصرة (معاد صياغتها من التصحيح الرسمي) تظهر عند الطلب.
+            اختار موضوعًا وسِر فيه تعليمةً بتعليمة. الجداول والرسوم الأصلية غير معروضة (وصفها النصّي موجود)،
+            وعناصر الإجابة مختصرة من التصحيح الرسمي وتظهر عند الطلب فقط.
           </p>
           {sujet ? (
             <Sujet
