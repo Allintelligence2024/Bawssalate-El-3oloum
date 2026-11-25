@@ -27,6 +27,10 @@ import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
 import CarteHorsLigne from './CarteHorsLigne';
 import CarteMesurePilote from './CarteMesurePilote';
+// v0.11 — deux cartes sœurs, ajoutées sans toucher à l'existant : les boucliers de régularité
+// et les trophées par verbe. Aucune note, aucun pourcentage, aucune comparaison.
+import CarteBoucliersSM2 from './CarteBoucliersSM2';
+import CarteTropheesTactiques from './CarteTropheesTactiques';
 import CarteProfilCompetences from './CarteProfilCompetences';
 
 interface ImportEnAttente {
@@ -48,6 +52,8 @@ interface Props {
   onReinitialiser: (carnetAvantConfirmation: string | null) => boolean | void;
   onRestaurer: (etat: Etat, stats?: StatsReponses, carnetBoussole?: CarnetBoussole | null, carnetAvantConfirmation?: string | null) => void; // استيراد نسخة احتياطية كاملة
   onDeconnexion?: () => void;
+  /** Mode invité : créer un compte quand l'élève le décide (jamais imposé). */
+  onCreerCompte?: () => void;
   onConsentementSync: (ok: boolean) => void;
   onObjectif: (o: Objectif) => void;
   onModeIntensif: (m: 'auto' | 'on' | 'off') => void;
@@ -144,6 +150,7 @@ export default function Ana({
   onReinitialiser,
   onRestaurer,
   onDeconnexion,
+  onCreerCompte,
   onConsentementSync,
   onObjectif,
   onModeIntensif,
@@ -159,6 +166,9 @@ export default function Ana({
   evaluationsEntraineur,
   onOuvrirEntraineur,
 }: Props) {
+  // Phase 3 — trois volets : ce qui avance, ce qui se travaille, ce qui se règle.
+  // Les cartes ne sont pas cachées : elles restent dans la page, repliées par `hidden`.
+  const [volet, setVolet] = useState<'progres' | 'carnet' | 'reglages'>('progres');
   const [confirme, setConfirme] = useState(false);
   const carnetAvantEffacement = useRef<string | null>(null);
   const boutonEffacement = useRef<HTMLButtonElement>(null);
@@ -247,8 +257,31 @@ export default function Ana({
         </p>
       </header>
 
+      <nav
+        className="mb-4 grid grid-cols-3 gap-1 rounded-2xl border border-line bg-paper p-1"
+        role="tablist"
+        aria-label="أقسام كرّاستي"
+      >
+        {([['progres', 'تقدّمي'], ['carnet', 'كرّاستي'], ['reglages', 'إعداداتي']] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={volet === id}
+            onClick={() => setVolet(id)}
+            className={
+              volet === id
+                ? 'rounded-xl bg-forest px-2 py-2 text-xs font-extrabold text-paper'
+                : 'rounded-xl px-2 py-2 text-xs font-bold text-ink-soft'
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
       {onOuvrirFiche && (
-        <section className="carte mb-4">
+        <section hidden={volet !== 'progres'} className="carte mb-4">
           <div className="rangee rangee--entre">
             <div className="carte__texte">
               <p className="carte__titre">ملفّي — ورقة A4</p>
@@ -268,8 +301,8 @@ export default function Ana({
         message="هذه كراستك يا مستكشف. سجّل تقدمك، راجع أخطاءك، وابنِ عادتك العلمية خطوة بعد خطوة."
       />
 
-      {/* الهوية */}
-      <section className="card p-5">
+      {/* الهوية — premier volet : la fiche A4 et le nom qu'elle imprime sont ensemble */}
+      <section hidden={volet !== 'progres'} className="card p-5">
         <p className="eyebrow">هويتي</p>
         <label className="mt-3 block text-xs font-bold text-ink-soft" htmlFor="nom">
           اسمي
@@ -301,9 +334,23 @@ export default function Ana({
         )}
       </section>
 
-      {/* الحساب */}
+      {/* الحساب — أو بطاقة الزائر (v0.13) : on peut réviser sans compte, sans être coincé. */}
+      {!etat.compte && onCreerCompte && (
+        <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
+          <p className="eyebrow">حسابي</p>
+          <p className="mt-2 text-sm font-bold">أنت في وضع الزائر</p>
+          <p className="mt-1 text-xs leading-relaxed text-mute">
+            كل تقدّمك ومسوّداتك محفوظة على هذا الجهاز فقط، بلا بريد ولا كلمة مرور. الحساب اختياري:
+            يضيف نقل تقدّمك إلى هاتف آخر، ولا يُرسل شيئًا دون موافقتك.
+          </p>
+          <button onClick={onCreerCompte} className="btn btn-primary mt-4 w-full text-sm">
+            أنشئ حسابًا
+          </button>
+        </section>
+      )}
+
       {etat.compte && (
-        <section className="card mt-5 p-5">
+        <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
           <p className="eyebrow">حسابي</p>
           <div className="mt-3 flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-forest text-lg font-black text-paper">
@@ -344,46 +391,55 @@ export default function Ana({
         </section>
       )}
 
-      {/* الأقوى / الأضعف (P2.4) */}
-      <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
+      {/* ── volet « تقدّمي » : forces/faiblesses, badges, boucliers, examens, favoris ── */}
+      <div hidden={volet !== 'progres'}>
+        {/* الأقوى / الأضعف (P2.4) */}
+        <CarteForcesFaiblesses etat={etat} onDemarrerRevision={onDemarrerRevision} onAllerExercices={onAllerExercices} />
 
-      {/* شارات المحتوى (P3.2) */}
-      <CarteBadges etat={etat} />
+        {/* شارات المحتوى (P substances) */}
+        <CarteBadges etat={etat} />
 
-      {/* سجلّ الامتحانات التجريبية (P1.4) */}
-      <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
+        {/* دروع الانتظام (v0.11) — 4 أيام من 7 تعطي درعًا، والدرع لا يضيع */}
+        <CarteBoucliersSM2 etat={etat} />
 
-      {/* التموضع · المفضّلة */}
-      <CarteDiagnosticFavoris
-        etat={etat}
-        onOuvrirDiagnostic={onOuvrirDiagnostic}
-        onOuvrirLecon={onOuvrirLecon}
-        onDemarrerRevision={onDemarrerRevision}
-        onBasculerFavori={onBasculerFavori}
-      />
+        {/* سجلّ الامتحانات التجريبية (P1.4) */}
+        <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
 
-      {/* الهدف · المراجعة المكثّفة · حجم الخط */}
-      <ReglagesParcours
-        etat={etat}
-        onObjectif={onObjectif}
-        onModeIntensif={onModeIntensif}
-        onTailleTexte={onTailleTexte}
-      />
+        {/* التموضع · المفضّلة */}
+        <CarteDiagnosticFavoris
+          etat={etat}
+          onOuvrirDiagnostic={onOuvrirDiagnostic}
+          onOuvrirLecon={onOuvrirLecon}
+          onDemarrerRevision={onDemarrerRevision}
+          onBasculerFavori={onBasculerFavori}
+        />
+      </div>
 
-      {/* التذكير اليومي (P2.4) */}
-      <ReglageRappel etat={etat} onChanger={onRappel} />
+      {/* ── volet « إعداداتي » : objectif, intensif, taille, rappel, sync, confidentialité ── */}
+      <div hidden={volet !== 'reglages'}>
+        {/* الهدف · المراجعة المكثّفة · حجم الخط */}
+        <ReglagesParcours
+          etat={etat}
+          onObjectif={onObjectif}
+          onModeIntensif={onModeIntensif}
+          onTailleTexte={onTailleTexte}
+        />
 
-      {/* المزامنة — إعداد دائم */}
-      <ReglageSync etat={etat} onChoix={onConsentementSync} />
+        {/* التذكير اليومي (P2.4) */}
+        <ReglageRappel etat={etat} onChanger={onRappel} />
 
-      {/* الخصوصية · الأسئلة الشائعة · عن التطبيق (P0.8 / P3.4) */}
-      <button type="button" onClick={onOuvrirConfidentialite} className="card mt-5 w-full p-5 text-start transition-colors hover:border-forest">
-        <p className="eyebrow">الخصوصية · الأسئلة الشائعة · عن التطبيق</p>
-        <p className="mt-1 text-sm font-bold">ما يحدث لبياناتك بالضبط، حقوقك، وحذف سجلّك من الخادم ←</p>
-      </button>
+        {/* المزامنة — إعداد دائم */}
+        <ReglageSync etat={etat} onChoix={onConsentementSync} />
+
+        {/* الخصوصية · الأسئلة الشائعة · عن التطبيق (P0.8 / P3.4) */}
+        <button type="button" onClick={onOuvrirConfidentialite} className="card mt-5 w-full p-5 text-start transition-colors hover:border-forest">
+          <p className="eyebrow">الخصوصية · الأسئلة الشائعة · عن التطبيق</p>
+          <p className="mt-1 text-sm font-bold">ما يحدث لبياناتك بالضبط، حقوقك، وحذف سجلّك من الخادم ←</p>
+        </button>
+      </div>
 
       {/* الإحصاء بالحروف */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'progres'} className="card mt-5 p-5">
         <p className="eyebrow">رحلتي بالأرقام</p>
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-sage bg-sage-soft/60 p-3.5">
@@ -428,7 +484,7 @@ export default function Ana({
 
       {/* سجلّ النشاط */}
       {derniersJours.length > 0 && (
-        <section className="card mt-5 p-5">
+        <section hidden={volet !== 'progres'} className="card mt-5 p-5">
           <p className="eyebrow">أيام نشاطي</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {derniersJours.map((j) => (
@@ -445,7 +501,7 @@ export default function Ana({
       )}
 
       {/* الكرّاسة */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'carnet'} className="card mt-5 p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="eyebrow">دوّن</p>
@@ -505,7 +561,7 @@ export default function Ana({
       </section>
 
       {/* سجلّ الأخطاء — v0.8 : capturé automatiquement dans les exercices de منهجية */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'carnet'} className="card mt-5 p-5">
         <div className="flex items-center justify-between">
           <div>
             <p className="eyebrow">سجلّ الأخطاء</p>
@@ -608,10 +664,13 @@ export default function Ana({
 
       <CarteProfilCompetences evaluations={evaluationsEntraineur} onOuvrirEntraineur={onOuvrirEntraineur} />
 
+      {/* أوسمة الأفعال (v0.11) — كلّ فعل عملته في 1-2-3 */}
+      <CarteTropheesTactiques etat={etat} />
+
       <CarteMesurePilote />
 
       {/* النسخة الاحتياطية — export/import complet de l'état (v0.9.1) */}
-      <section className="card mt-5 p-5">
+      <section hidden={volet !== 'reglages'} className="card mt-5 p-5">
         <p className="eyebrow">النسخة الاحتياطية</p>
         <p className="mt-2 text-xs leading-relaxed text-mute">
           صدّر مسارك وإحصاءاتك ومسوّدات مختبر البوصلة في ملف واحد، واستعده في أي جهاز.
@@ -702,7 +761,7 @@ export default function Ana({
       </section>
 
       {/* منطقة الخطر */}
-      <section className="card mt-5 border-clay-soft p-5">
+      <section hidden={volet !== 'reglages'} className="card mt-5 border-clay-soft p-5">
         <p className="eyebrow text-clay">إعادة الضبط</p>
         <p className="mt-2 text-xs leading-relaxed text-mute">
           تحذف الحساب المحلي والتقدّم والملاحظات والإحصاءات ومسوّدات المختبر الحالي من هذا المتصفّح. لا تحذف دفاتر إصدارات المختبر الأقدم، أو الملفات المنزّلة، أو بيانات الخادم. لمحو بيانات الموقع القديمة، احفظ ما تحتاجه ثم امسح بيانات الموقع من إعدادات المتصفّح. أغلق التبويبات الأخرى قبل المسح حتى لا تعيد حفظ بيانات مفتوحة. لا يمكن التراجع.

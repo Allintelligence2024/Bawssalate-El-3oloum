@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
+import { fermerDialogue, ouvrirDialogue } from '../utils/dialogue';
 import type { BoussoleAttemptEvent } from "../types/boussoleBridge";
+import type { Etat } from "../types";
 import { useBoussoleBridge } from "../hooks/useBoussoleBridge";
+import TiroirBoussole, { type OngletTiroir } from "./TiroirBoussole";
 
 /** Le même document embarqué dans l'app, consultable et imprimable sans réseau externe. */
 const LABO = "/boussole/index.html";
@@ -75,18 +78,25 @@ export function AideBoussole({
   document,
   verbe,
   onBoussoleEvent,
+  etat,
+  lessonId,
+  ongletInitial,
 }: {
   onFermer: () => void;
   document: string;
   verbe: string;
   onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
+  /** État de l'élève : sert uniquement à montrer les cartes de leçons gagnées. */
+  etat?: Etat;
+  lessonId?: string;
+  ongletInitial?: OngletTiroir;
 }) {
   const d = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = d.current;
-    if (el && !el.open) el.showModal();
+    ouvrirDialogue(el);
     return () => {
-      if (el?.open) el.close();
+      fermerDialogue(el);
     };
   }, []);
   return (
@@ -101,22 +111,23 @@ export function AideBoussole({
       className="fixed inset-0 m-auto max-h-none w-[min(100%,70rem)] max-w-none border-0 bg-paper p-0 backdrop:bg-black/60"
     >
       <div className="flex h-[92dvh] flex-col">
-        <div className="flex min-h-12 items-center justify-between gap-2 border-b border-line px-4">
-          <b>البوصلة</b>
-          <button
-            type="button"
-            autoFocus
-            onClick={onFermer}
-            className="btn btn-ghost min-h-11"
-          >
-            أعود إلى تمريني
-          </button>
-        </div>
-        <div className="shrink-0 border-b border-line px-4 py-2 text-xs leading-relaxed text-ink-soft">
-          <p><b>تمرينك:</b> {document} · الفعل «{verbe}»</p>
-          <p>المثال التالي من تركيب البروتين، وليس حلّ تمرينك. لاحظ الدليل ثم ارجع وطبّق الفعل على سندك.</p>
-        </div>
-        <Laboratoire hash="#explore-protein" onBoussoleEvent={onBoussoleEvent} />
+        <TiroirBoussole
+          document={document}
+          verbe={verbe}
+          lessonId={lessonId}
+          etat={etat}
+          ongletInitial={ongletInitial}
+          onFermer={onFermer}
+          renduLabo={
+            <div className="flex h-[62dvh] flex-col">
+              <p className="petit doux mb-2">
+                المختبر يشرح بمثال من تركيب البروتين، وليس حلّ تمرينك. لاحظ الدليل ثم ارجع وطبّق
+                الفعل على سندك.
+              </p>
+              <Laboratoire hash="#explore-protein" onBoussoleEvent={onBoussoleEvent} />
+            </div>
+          }
+        />
       </div>
     </dialog>
   );

@@ -14,12 +14,14 @@ import { IcoChevron, IcoEclair, IcoFlamme } from './Icones';
 interface Props {
   etat: Etat;
   onDeconnexion?: () => void;
+  /** Mode invité : ouvrir la création de compte, sans rien perdre. */
+  onCreerCompte?: () => void;
 }
 
 // آخر قيمة XP عُرضت (في مستوى الوحدة — تبقى بعد إخفاء الشارة أو إعادة تركيبها)
 let dernierXpVu: number | null = null;
 
-export default function BaguetteXp({ etat, onDeconnexion }: Props) {
+export default function BaguetteXp({ etat, onDeconnexion, onCreerCompte }: Props) {
   const [ouvert, setOuvert] = useState(false);
   const [gain, setGain] = useState<string | null>(null);
   const xp = xpDe(etat);
@@ -115,9 +117,11 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
               {(etat.compte?.email ?? '؟').trim().charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{etat.compte?.email ?? 'بدون حساب'}</p>
+              <p className="truncate text-sm font-bold">
+                {etat.compte?.email ?? (etat.modeInvite ? 'زائر · بلا حساب' : 'بدون حساب')}
+              </p>
               <p className="truncate text-[11px] text-mute">
-                {wilaya ? `${wilaya.nom} — ${etat.compte?.daira}` : 'لم تُحدَّد الولاية بعد'}
+                {wilaya ? `${wilaya.nom} — ${etat.compte?.daira}` : 'تقدّمك محفوظ على هذا الجهاز'}
               </p>
             </div>
           </div>
@@ -139,6 +143,24 @@ export default function BaguetteXp({ etat, onDeconnexion }: Props) {
               </li>
             ))}
           </ul>
+
+          {!etat.compte && onCreerCompte && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setOuvert(false);
+                  onCreerCompte();
+                }}
+                className="btn btn-primary mt-4 w-full text-sm"
+              >
+                أنشئ حسابًا (اختياري)
+              </button>
+              <p className="mt-2 text-xs leading-relaxed text-mute">
+                الحساب لا يلزم للمراجعة: يضيف نقل تقدّمك إلى هاتف آخر ومزامنة اختيارية. كل ما فعلته الآن يبقى محفوظًا.
+              </p>
+            </>
+          )}
 
           {onDeconnexion && (
             <>

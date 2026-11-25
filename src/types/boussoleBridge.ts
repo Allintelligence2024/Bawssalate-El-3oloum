@@ -9,6 +9,13 @@ export const BOUSSOLE_SOURCE = 'boussole' as const;
 
 export const UNITE_IDS = ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8', 'u9', 'u10', 'u11'] as const;
 
+// v0.11 — champs OPTIONNELS ajoutés par l'hôte (briques, exercices, sujets). Le laboratoire
+// embarqué continue d'émettre exactement le même v1 : un ancien producteur reste valide, et
+// `parseBoussoleEvent` normalise l'origine pour que les consommateurs n'aient qu'un seul cas.
+export const ORIGINES_EVENEMENT = ['boussole', 'exercice', 'sujet', 'drill', 'briques'] as const;
+export const MODES_EVENEMENT = ['atelier', 'briques', 'redaction', 'libre'] as const;
+export const CRITERES_EVENEMENT = ['observation', 'comparaison', 'interpretation', 'conclusion', 'piege'] as const;
+
 export const boussoleAttemptEventSchema = z.object({
   type: z.literal(BOUSSOLE_EVENT_TYPE),
   schemaVersion: z.literal(BOUSSOLE_SCHEMA_VERSION),
@@ -23,11 +30,16 @@ export const boussoleAttemptEventSchema = z.object({
   prompt: z.string().max(300).optional(),
   choix: z.string().max(200).optional(),
   timestamp: z.string().min(10).max(64),
+  origine: z.enum(ORIGINES_EVENEMENT).optional(),
+  mode: z.enum(MODES_EVENEMENT).optional(),
+  jeuId: z.string().min(2).max(100).optional(),
+  criteres: z.array(z.enum(CRITERES_EVENEMENT)).max(8).optional(),
 });
 
 export type BoussoleAttemptEvent = z.infer<typeof boussoleAttemptEventSchema>;
 
 export function parseBoussoleEvent(raw: unknown): BoussoleAttemptEvent | null {
   const res = boussoleAttemptEventSchema.safeParse(raw);
-  return res.success ? res.data : null;
+  if (!res.success) return null;
+  return { ...res.data, origine: res.data.origine ?? BOUSSOLE_SOURCE };
 }

@@ -108,4 +108,77 @@ jobs:
             attendre().catch(e => { console.error(e); process.exitCode = 1; });
           '
           cd modules/boussole
-          APP_URL=http://127.0.0.1:4182 npm run test:integration
+          # On garde la sortie complète : le log de job exige une authentification GitHub,
+          # l'étape suivante la recopie donc dans une annotation lisible par l'API.
+          set +e
+          APP_URL=http://127.0.0.1:4182 npm run test:integration > /tmp/boussole-integration.log 2>&1
+          code=$?
+          set -e
+          tail -n 120 /tmp/boussole-integration.log
+          exit $code
+      - name: Remonter l'échec d'intégration dans l'annotation
+        if: failure()
+        run: |
+          node scripts/annoter-echec-integration.mjs || true
+      - name: Mettre en cache les navigateurs Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('modules/boussole/package-lock.json') }}
+      - name: Installer Chromium pour les tests locaux
+        run: |
+          if npx playwright install --with-deps chromium > /tmp/boussole-chromium-install.log 2>&1; then
+            cat /tmp/boussole-chromium-install.log
+          else
+            cat /tmp/boussole-chromium-install.log
+            node -e '
+              const fs = require("fs");
+              const lignes = fs.readFileSync("/tmp/boussole-chromium-install.log", "utf8").trim().split("\n").slice(-15);
+              const message = lignes.join("\n").replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
+              console.log("::error title=Installation Chromium::" + message);
+            '
+            exit 1
+          fi
+        working-directory: modules/boussole
+      - name: Tester le laboratoire autonome
+        run: npm test
+        working-directory: modules/boussole
+      - name: Tester l'intégration sur le build local
+        run: |
+          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4182 --strictPort > /tmp/boussole-preview.log 2>&1 &
+          serveur=$!
+          trap 'kill "$serveur" 2>/dev/null || true' EXIT
+          node -e '
+            async function attendre() {
+              for (let i = 0; i < 60; i++) {
+                try { if ((await fetch("http://127.0.0.1:4182/")).ok) return; } catch {}
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+              throw new Error("Le serveur local n’a pas démarré.");
+            }
+            attendre().catch(e => { console.error(e); process.exitCode = 1; });
+          '
+          cd modules/boussole
+          # Le log de job exige une authentification GitHub : on recopie les dernières lignes
+          # dans une annotation de check, lisible par l'API et par l'onglet « Checks ».
+          set -o pipefail
+          APP_URL=http://127.0.0.1:4182 npm run test:integration 2>&1 | tee /tmp/boussole-integration.log
+      - name: Remonter l'échec d'intégration dans l'annotation
+        if: failure()
+        run: |
+          node -e '
+            const fs = require("fs");
+            let texte = "";
+            try { texte = fs.readFileSync("/tmp/boussole-integration.log", "utf8"); } catch {}
+            if (!texte) try { texte = fs.readFileSync("/tmp/boussole-preview.log", "utf8"); } catch {}
+            // On ne garde que les lignes qui situent l'échec : les dumps de texte arabe
+            // de la page noieraient l'annotation (et dépasseraient sa taille maximale).
+            const utiles = texte
+              .split("\n")
+              .filter((l) => /waiting for|locator|Error|Timeout|assert|expected|actual|\.cjs:\d+|not ok/i.test(l))
+              .filter((l) => l.length < 400)
+              .slice(-40);
+            const lignes = (utiles.length ? utiles.join("\n") : texte.trim().split("\n").slice(-20).join("\n")).slice(-3500);
+            if (!lignes) { console.log("::error title=Intégration navigateur::Aucune sortie capturée."); process.exit(0); }
+            console.log("::error title=Intégration navigateur::" + lignes.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A"));
+          '

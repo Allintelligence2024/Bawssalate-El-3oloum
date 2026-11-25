@@ -9,18 +9,20 @@
 
 ---
 
-## 🏴‍☠️ Écran de démarrage (splash)
+## 🧭 Entrée dans l'application (plus de splash)
 
-Au premier chargement de l'app (une fois par session d'onglet, via `sessionStorage['kunz_demarrage']`),
-un écran plein écran noir joue la **vidéo d'ouverture officielle** (`public/ouverture.mp4`,
-1080×1920, 5 s, muette) :
+Il n'y a **plus d'écran de démarrage** : le premier écran est l'action du jour. Au lancement,
+`App.tsx` compte uniquement trois choses : un état lisible, un mode (invité, compte local ou
+demande explicite de compte) et aucun péage. Un élève qui installe l'app arrive donc sur كويست,
+avec la carte « المرشد يفتح الحصة » et le bouton de mission à un tap.
 
-- la vidéo se lance en auto-play **muet** (aucun téléchargement supplémentaire, fichier local),
-- à la fin de la vidéo (ou au clic n'importe où sur l'écran) apparaissent le titre
-  « بوصلة العلوم Lite » et le bouton « ابدأ ← » (fondu échelonné),
-- le clic sur le bouton ferme l'écran (fondu 600 ms) et révèle l'application.
-
-> Pas de son : la vidéo est volontairement muette (choix de l'auteur).
+- plus de vidéo (supprimée en phase 1 : `public/ouverture.mp4`, 2 050 998 o) ;
+- plus de minuteur, plus de `sessionStorage['kunz_demarrage']`, plus de `kunz_intro_vue` ;
+- l'écran de compte ne s'ouvre que sur demande : « أنشئ حسابي » (après une première victoire,
+  ou depuis la fiche XP) et « خروج » (là, l'écran sert de verrou et de connexion) ;
+- les visuels du guide (`guide-clair.webp`, `guide-sombre.webp`) restent servis et précachés :
+  ils illustrent l'**écran de fierté** de fin de leçon (phase 3), pas un barrage. Un seul des
+  deux s'affiche selon le thème (`[data-theme]`), sans JS et sans clignotement.
 
 ---
 
@@ -90,11 +92,10 @@ Ouverte depuis **الباك** (sous-écran, retour → الباك), elle affiche
   `mutation` reste en ADN (T, pas U) et chaque flèche a un marker dédié (sur arena, `sequence` et
   `graphique` pointaient un marker defined dans un autre SVG → flèche invisible en écran solo).
 - **القبطان مفتاح — la mascotte guide** (nouveau composant `MascotteKunz.tsx`, ports `e73a484` +
-  `41b5695`) : `personnage-pirate.webp` (la mascotte de la maison, pas le logo d'arena) avec un mot
+  `41b5695`) : le portrait détouré de l'artwork officiel (`mascotte.webp`, 17,6 ko) avec un mot
   de méthode dans 7 endroits — l'accueil de منهجية, la liste de الوحدة 1, l'en-tête de chaque
   tamrin (« ما هو الفعل؟ أين الدليل؟ »), مساري, أنا, et l'en-tête de اليوم ; l'écran de démarrage
-  gagne le pirate au-dessus du **titre texte « كنز العلوم Lite »** (conservé — convention « le nom
-  partout », là où arena remplaçait le titre par une image).
+  affiche le guide complet au-dessus du **titre texte** conservé (convention « le nom partout »).
 
 ### 🔮 Le moteur Next Best Action (`src/utils/moteur.ts`)
 
@@ -190,9 +191,9 @@ reprogrammée à **J+1** au lieu de J+3. L'échec n'est pas puni, il est *utilis
 
 À la fin de **chaque** phase (bouton « انتهيت من هذه المرحلة »), l'écran de célébration s'ouvre :
 
-- **la personnification كنز العلوم (mascotte pirate)** sort et salue : image PNG de la mascotte
-  (`public/personnage-pirate.webp`, détourée, 58 ko au lieu de 1 001 ko, dans le précache de la
-  coquille pour fonctionner hors ligne) avec rebond/sourire animés et bulle de encouragement sans culpabilisation ;
+- **la mascotte guide** sort et salue : portrait détouré de l'artwork officiel
+  (`public/mascotte.webp`, 17,6 ko, dans le précache de la coquille pour fonctionner hors ligne)
+  avec rebond/sourire animés et bulle d'encouragement sans culpabilisation ;
 - **un son d'applaudissements** (`sonApplaudissement()`) : faux-bruit filtré + lardon vainqueur,
   générés en Web Audio — toujours offline, toujours doux ;
 - **des feux d'artifice** sur canvas léger (~5 s puis s'arrêtent, `prefers-reduced-motion` respecté,
@@ -375,8 +376,9 @@ rien ne devienne illisible.
 | Sujets avec éléments de réponse | **28** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
-| Fichiers de tests | **60** |
-| Coquille hors ligne (téléchargée d'office) | **2.47 Mio** (6 entrées) |
+| Jeux de briques | **16** (actifs : 4) |
+| Fichiers de tests | **82** |
+| Coquille hors ligne (téléchargée d'office) | **2.18 Mio** (7 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
 <!-- METRICS:END -->
@@ -775,6 +777,97 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   3 domaines + explication après réussite, erreur sans révélation, validation désactivée sans
   choix, grille qui se coche étape par étape, diagnostic typé au lieu du message générique,
   كفاءة 5 vs 3, écran de fin sans %).
+- **v0.13 · Phase 4 « Gabarit »** — **un jeu de briques se découpe, il ne s'écrit pas.** (1)
+  **Gabarit exécutable** (`src/data/briques/gabarit.ts`) : `jeuBriques()` numérote les briques
+  (`b:<jeuId>:<n>`), applique le statut `a_valider_enseignant` par défaut et refuse un jeu vide ;
+  `rolesDepuisModele()` répartit observation / interprétation / conclusion dans l'ordre canonique ;
+  `jeuDepuisSituation()` prend une situation de synthèse et n'en copie **que** des morceaux —
+  `document` = `sujet`, `question` = `question`, briques = `modele` dans l'ordre, pièges =
+  `piegesAr` de l'unité. Aucun texte scientifique n'est saisi à la main. (2) **Un jeu par unité
+  prioritaire** : `jb:u3:e1` (الريبونوكلياز والتمسّخ العكوس, situation `u3b`) et `jb:u4:e1`
+  (تجربتا النقل: مصل / لمفاويات T), cinq briques + les deux pièges de l'unité chacun, statut
+  `a_valider_enseignant`. (3) **Visibles seulement par la porte d'aperçu** : `jeuxJouables()`
+  rend `[]` sans aperçu explicite, `apercuRequis()` déclenche « هذا التدريب قيد مراجعة الأستاذ »,
+  et la mention « معاينة: محتوى قيد المراجعة » reste affichée pendant l'exercice (tests d'écran :
+  rien du jeu n'est servi avant l'aperçu, puis le document de la synthèse apparaît mot pour mot).
+  (4) **Catalogue normalisé** : `CHARGEURS_UNITES` charge `u1` (4 jeux actifs), `u3` et `u4`
+  (1 jeu chacun, en revue) ; le choix d'unité marque celles qui ont du contenu. Les chunks
+  `u3-*` / `u4-*` sont exclus du précache comme `u1-*` (0,46 ko et 0,36 ko, ouverts à la demande).
+  (5) **Nouvelle métrique générée** : « Jeux de briques · 16 (actifs : 4) », comptée par
+  `sync-metrics` (littéraux **et** table `CHOIX_UNITES`). (6) **Coque Android alignée** :
+  `versionName 0.13.0`, `versionCode 4` (elle annonçait encore 0.10.5). QA : `npm test`
+  **670 tests / 82 fichiers**, `npm run lint` 0 erreur, build OK, `verifier-hors-ligne` OK
+  (103 fichiers, 0 incohérence), coquille **2,18 Mio**, CI verte.
+- **v0.13 · Phase 3 « Fierté »** — **on ne referme plus une leçon finie : on l'annonce.** (1)
+  **Écran de fierté** (`EcranFierte.tsx`, nouveau) : à la fin des six nœuds, `onTerminer` ouvre cet
+  écran au lieu de refermer sèchement. Il constate **trois preuves** — six phases faites (`6 / 6`),
+  carte de leçon gagnée, **date de la prochaine revision** en arabe clair — puis laisse **un seul
+  geste au choix** : « شوف بطاقة الدرس » (dépliée sur place, rien de plus à charger), « الدرس
+  التالي » (le prochain item du chemin, `prochainItem`) ou « يكفي اليوم ». Aucun pourcentage,
+  aucun score : le test le vérifie (`expect(texte).not.toMatch(/%/)`). Le parcours منهجية
+  (`onAllerMethodo`) garde sa destination : il appelle `onTerminer` puis écrase le mode.
+  (2) **« أنا » en trois volets** : `تقدّمي` (identité, fiche A4, chiffres, jours d'activité,
+  boucliers, trophées), `كرّاستي` (دوّن + سجلّ الأخطاء), `إعداداتي` (compte, objectif, taille
+  du texte, rappels, نسخة احتياطية, إعادة الضبط, confidentialité).
+  Rien n'est démonté : les cartes restent dans la page et sont repliées par `hidden`, donc un nom
+  à moitié saisi survit au changement d'onglet (vérifié). (3) **Mouvement réduit** : une règle
+  globale `@media (prefers-reduced-motion: reduce)` ramène animations et transitions à 0,01 ms
+  (jamais 0, pour que `transitionend`/`animationend` continuent d'arriver) ; les confettis de
+  `Fetes.tsx` étaient déjà couverts. (4) **Vibration douce** : `vibrerDoux()` (15 ms) dans
+  `src/utils/son.ts`, appelée par `sonJuste()` **et jamais par `sonFaux()`** — le téléphone ne
+  gronde pas quand un élève se trompe ; appareil sans vibreur → aucun bruit, aucune exception.
+  (5) **MicroNoeuds reste le défaut** : une leçon non terminée ouverte depuis كويست ou مساري
+  passe par `{ type: 'noeuds' }` (six micro-nœuds), `protocole` n'est plus atteint que par
+  « الجلسة الكاملة · 6 مراحل » ; l'écran de fierté est le seul chemin de sortie d'une leçon
+  terminée. (6) **La séance se compte à la clôture** (`cloturerSeance`, `moteur.ts`) : ouvrir
+  puis fermer dix fois une leçon ne fabrique plus dix séances ; une leçon déjà terminée ne
+  recompte jamais, la séance bonus se pose toujours au-delà du quota. (7) **Un seul CTA dans
+  MicroNoeuds** : « الجلسة الكاملة » n'est plus un bouton qui ouvrait exactement le même
+  protocole que « ابدأ » — c'est une ligne d'information (6 phases, N minutes, arrêt libre).
+  (8) **Version** : `package.json` / `package-lock.json` passent à **0.13.0**, alignés sur les
+  entrées v0.13 du journal (`versionName` Android reste 0.10.5 jusqu'au prochain build APK).
+  QA : `npm test` **658 tests / 80 fichiers**, `npm run lint` 0 erreur, build OK,
+  `verifier-hors-ligne` OK (103 fichiers, 0 incohérence), coquille **2,18 Mio**.
+- **v0.13 · Phase 2 « Guide-First »** — **zéro barrage, le guide ouvre la séance, il a des
+  humeurs.** (1) **Plus d'écran de démarrage** : `EcranDemarrage.tsx` est supprimé (fichier et
+  tests), `kunz_demarrage` / `kunz_intro_vue` ne sont plus lus ; l'écran de compte ne s'ouvre
+  que sur demande (`demandeCompte`), donc une installation neuve entre directement en mode
+  invité. (2) **Carte « المرشد يفتح الحصة »** en tête de كويست (`GuideAccueil.tsx`) : le guide
+  demande l'énergie — **عيان** → « صيّاد الفخاخ » (2 min) ou « تحدّي 60 ثانية » ; **لاباس** →
+  la mission du jour telle quelle (moteur unique) ; **في الفورمة** → sujet guidé ou
+  البوصلة 1-2-3. Trois icônes SVG (lune, soleil, éclair), aucun emoji. (3) **Humeurs du guide**
+  (`MascotteKunz` : `accueil`, `reflexion`, `encouragement`, `piege`, `victoire`) et **تلميح
+  المرشد** (`GuideIndice`) dans `Ecran123`, `Fakh` et `MicroNoeuds` ; en cas d'erreur, le guide
+  réagit en **une ligne** (« هذا فخّ — والغلط ما ينقصش ») au lieu d'un message d'échec.
+  (4) **Invitation au compte après la première micro-victoire seulement** (nouveau champ
+  `invitationCompteVue`, ajouté au schéma de sauvegarde et au test aller-retour), avec
+  « نكمّل بلا حساب » qui la fait disparaître définitivement. (5) **Ligne rassurante** quand des
+  revues attendent leur tour : « بقيت N مراجعة في القائمة — تنتظر دورها، بلا عجلة », plafonnée
+  à 5. QA : `npm test` **646 tests / 76 fichiers**, `npm run lint` 0 erreur, build OK,
+  `verifier-hors-ligne` OK (0 incohérence), coquille **2,17 Mio**.
+- **v0.13 · Phase 1 « Guide-First »** — **la sauvegarde n'efface plus, le statut éditorial est
+  filtré, la vidéo disparaît.** (1) **`backup.ts`** ne déclarait que 34 des 47 champs d'`Etat` :
+  un export puis un import effaçait silencieusement `cartesLecons`, `briques`, `trophees`,
+  `bacEtapes`, `bacExercices`, `derogationsSujets`, `defis60`, `fakh`, `fakhSeries` et
+  `modeInvite`. Les 10 champs sont désormais typés (tuple de trois points, rôles de briques,
+  entiers bornés à 0/2/3) ; `sauvegarde-champs.test.ts` fait l'aller-retour export → import et
+  un second test vérifie **champ par champ** que `interface Etat` et `etatSchema` ne peuvent plus
+  diverger. Compte et consentement restent exclus de l'import. (2) **`jeuActif()` était testé
+  mais jamais appelé** : `EcranBriques` filtre le catalogue (`jeuxJouables`), et un gabarit
+  `a_valider_enseignant` ouvre une **porte d'aperçu explicite** (« قيد مراجعة الأستاذ ») au lieu
+  d'être servi comme corrigé validé (2 tests d'écran + 1 test unitaire). (3) **Médias** :
+  `ouverture.mp4` (2 050 998 o), `personnage-pirate.webp`, les icônes PNG et l'écran vidéo de
+  démarrage sont supprimés ; l'artwork officiel fournit `mascotte.webp` (17,6 ko),
+  `guide-clair.webp` (35,5 ko), `guide-sombre.webp` (50,6 ko), les icônes WebP 192/512/maskable
+  (10,3 / 39,4 / 29,1 ko) et `apple-touch-180.png` pour iOS. L'icône officielle remplace aussi le
+  pictogramme de l'en-tête. (4) **Coquille hors ligne : 2,17 Mio** (2 271 954 o, 7 entrées) au
+  lieu de 2,49 Mio, sous la cible de 2,2 Mio : `supabase-*` (214 ko, sans usage hors ligne) et
+  deux écrans de consultation (`Methodologie`, `ExamBlanc`) sortent du précache ;
+  `sujetsCorriges` (370 ko) **reste** précaché car il est tiré par `entrainement`, donc présent
+  dans les assets de démarrage — l'exclure faisait échouer l'installation du service worker
+  (`asset de démarrage hors manifeste`), mesuré puis corrigé. QA : `npm test` **636 tests /
+  75 fichiers verts**, `npm run lint` 0 erreur, `npm run build` OK,
+  `node scripts/verifier-hors-ligne.mjs` OK (0 incohérence, 0 échec HTTP).
 - **v0.10.5** — **GO 6 : la peau partout, l'icône installable, l'Android à jour.**
   **Peau unifiée** : `.card` (212 usages dans les écrans profonds) prend le dessin de la
   maquette — papier plein, filet 1,5 px, rayon 14 px — et le survol ne soulève plus la carte

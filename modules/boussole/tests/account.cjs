@@ -45,9 +45,14 @@ async function deconnecter(page) {
     const p = await fresh.newPage();
     p.setDefaultTimeout(8000);
     await p.goto(origin + "/");
+    // Phase 2 : sans compte, on entre directement en mode invité — plus de péage.
+    await p.getByRole("navigation").waitFor();
+    assert.equal(await p.getByRole("heading", { name: "أنشئ حسابك" }).count(), 0);
+    // La création se demande explicitement, depuis la fiche XP.
+    await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).click();
+    await p.getByRole("button", { name: "أنشئ حسابًا (اختياري)" }).click();
     await p.getByRole("heading", { name: "أنشئ حسابك" }).waitFor();
     assert.equal(await p.getByRole("navigation").count(), 0);
-    assert.equal(await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).count(), 0);
     assert((await p.locator("body").innerText()).includes("الحساب لا يشفّر البيانات"));
     await p.locator("#email").fill("nouveau@example.invalid");
     await p.locator("#mdp").fill("secret-123");
@@ -88,8 +93,10 @@ async function deconnecter(page) {
     const q = await legacy.newPage();
     q.setDefaultTimeout(8000);
     await q.goto(origin + "/");
-    await q.getByRole("heading", { name: "سجّل الدخول" }).waitFor();
-    assert.equal(await q.getByRole("navigation").count(), 0);
+    // Un compte enregistré n'est plus un verrou au démarrage (phase 2) : on se déconnecte
+    // explicitement pour retrouver l'écran de connexion, puis on teste le vieux hachage.
+    await q.getByRole("navigation").waitFor();
+    await deconnecter(q);
     await q.locator("#mdp").fill("incorrect");
     await q.getByRole("button", { name: "دخول ←" }).click();
     await q.getByRole("alert").filter({ hasText: "كلمة المرور خاطئة" }).waitFor();

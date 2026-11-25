@@ -69,6 +69,9 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     await p.goto(origin + "/");
     const nav = p.getByRole("navigation").last();
     const tab = (x) => nav.getByRole("button", { name: x, exact: true });
+    // Depuis la phase 3, « أنا » a trois volets (تقدّمي · كرّاستي · إعداداتي) : les cartes
+    // repliées sont hors de l'arbre d'accessibilité, donc chaque parcours ouvre son volet.
+    const volet = (x) => p.getByRole("tab", { name: x }).click();
     // La méthodologie n'est plus un onglet : c'est un sous-écran du الباك.
     const ouvrirBoussole = async () => {
       await tab("الباك").click();
@@ -265,6 +268,7 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     );
     // Sauvegarde réellement téléchargée depuis l'interface, puis restauration.
     await tab("أنا").click();
+    await volet("إعداداتي");
     const [backupDownload] = await Promise.all([
       p.waitForEvent("download"),
       p.getByRole("button", { name: "تصدير نسختي" }).click(),
@@ -277,6 +281,7 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
     await id("resume").click();
     await frame.locator("#txt-solo").fill("نسخة مختلفة");
     await tab("أنا").click();
+    await volet("إعداداتي");
     // Un second onglet de l'application ne doit pas réécrire son ancien état
     // après l'import engagé dans le premier.
     const otherApp = await ctx.newPage();
@@ -342,16 +347,19 @@ const sum = (b) => crypto.createHash("sha256").update(b).digest("hex");
       "Coupure réseau Chromium après téléchargement PWA complet : réouverture via l’onglet, interaction et accès au PDF en cache.",
     );
     await tab("أنا").click();
+    await volet("إعداداتي");
     await p.getByRole("button", { name: "مسح كل بياناتي" }).click();
     await p.getByRole("button", { name: "نعم، امسح كل شيء" }).click();
     await p.waitForFunction(() => localStorage.getItem("boussole.bac.classe16.carnet.1") === null && localStorage.getItem("murajih_restauration_v1") === null);
     await second.waitForFunction(() => document.querySelector("#txt-solo")?.value === "");
     a.equal(await second.evaluate(() => localStorage.getItem("boussole.bac.classe16.carnet.1")), null);
     await second.close();
-    await p.getByRole("heading", { name: "أنشئ حسابك" }).waitFor();
-    a.equal(await p.getByRole("navigation").count(), 0);
-    a.equal(await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).count(), 0);
-    results.push("Réinitialisation hors ligne : carnet et journal supprimés, autre document averti, champ vidé et navigation masquée après déconnexion.");
+    // Depuis la phase 2, tout effacer ne renvoie plus sur un péage de création de compte :
+    // l'élève retombe en mode invité, avec la navigation et zéro barrage.
+    await p.getByRole("navigation").waitFor();
+    a.equal(await p.getByRole("heading", { name: "أنشئ حسابك" }).count(), 0);
+    a.equal(await p.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).count(), 1);
+    results.push("Réinitialisation hors ligne : carnet et journal supprimés, autre document averti, champ vidé, retour au mode invité sans péage.");
     // Un journal illisible n'est plus supprimé silencieusement. L'abandon reste
     // une action distincte et confirmée, sans effacer l'état existant.
     const recovery = await browser.newContext();

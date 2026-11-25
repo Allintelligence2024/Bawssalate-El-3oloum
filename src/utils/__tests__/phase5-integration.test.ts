@@ -164,7 +164,8 @@ describe('Lot 5A — Contrat typé, idempotence et règle « Preuve ≠ Complét
       );
     });
     expect(onEvent).toHaveBeenCalledTimes(1);
-    expect(onEvent).toHaveBeenCalledWith(valide);
+    // `parseBoussoleEvent` normalise l'origine : un seul cas côté consommateur (v0.11).
+    expect(onEvent).toHaveBeenCalledWith({ ...valide, origine: 'boussole' });
 
     act(() => {
       root.unmount();

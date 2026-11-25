@@ -4,6 +4,7 @@
 
 import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from 'react';
 import type { Etat, CarteKafaa, FauteCarnet } from './types';
+import { fermerDialogue, ouvrirDialogue } from './utils/dialogue';
 import {
   abandonnerJournalRestauration, chargerEtat, CLE_ETAT, fusionnerProgressionImportee,
   restaurationBloqueeAuChargement, restaurerEtatEtStats, sauvegarderEtat,
@@ -11,11 +12,17 @@ import {
 } from './utils/storage';
 import { verifierCoherence } from './utils/coherenceStockage';
 import { consignerCompteur } from './utils/telemetrie';
+import { attribuerCarteLecon } from './utils/etat';
+import { enregistrerTentative } from './utils/amelioration';
+import { cleEvenement, consignerTrophee, dejaVu, marquerVu, tentative } from './utils/evenements';
+import type { EvaluationBriques } from './utils/briques';
+import { tracerDerogation } from './utils/accesSujets';
+import { SUJETS_AVEC_BRIQUES } from './data/briques';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
 import { ajouterJours, aujourdhui } from './utils/dates';
-import { debutSemaine, enregistrerSeance, modeIntensifActif, quotaDe } from './utils/moteur';
+import { cloturerSeance, debutSemaine, modeIntensifActif } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
 import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
 import { envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
@@ -38,7 +45,6 @@ const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
 const Kouest = lazy(() => import('./components/Kouest'));
 const FicheEleve = lazy(() => import('./components/FicheEleve'));
 const Fakh = lazy(() => import('./components/Fakh'));
-import EcranDemarrage from './components/EcranDemarrage';
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
 // (lessonGoldSummaries, qcmLecons) qui n'ont rien à faire dans le chunk de démarrage.
@@ -46,6 +52,16 @@ const ExamBlanc = lazy(() => import('./components/ExamBlanc'));
 const SyntheseLibre = lazy(() => import('./components/SyntheseLibre'));
 const Ana = lazy(() => import('./components/Ana'));
 const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
+// v0.11 — la leçon en six pas, la réparation, et la méthode 1-2-3 : trois écrans paresseux
+// (budget hors-ligne : rien de tout cela n'entre dans le chunk de démarrage).
+const MicroNoeuds = lazy(() => import('./components/MicroNoeuds'));
+// Fin des six nœuds : la fierté (Phase 3) — chargée seulement le jour où un élève termine.
+const EcranFierte = lazy(() => import('./components/EcranFierte'));
+const JourneeReparation = lazy(() => import('./components/JourneeReparation'));
+const EcranBriques = lazy(() => import('./components/EcranBriques'));
+const Defi60 = lazy(() => import('./components/Defi60'));
+// v0.12 — le sujet complet guidé (tous les exercices, méthode 1-2-3), chargé à la demande.
+const SujetGuide = lazy(() => import('./components/SujetGuide'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
@@ -69,7 +85,6 @@ import { fermerSession, ouvrirSession, sessionOuverte } from './utils/compte';
 import type { Compte } from './types';
 import {
   IcoCarnet,
-  IcoBoussole,
   IcoDiplome,
   IcoLune,
   IcoRoute,
@@ -86,6 +101,11 @@ type Mode =
   | { type: 'immunite' }
   | { type: 'atelier'; domaineId: string }
   | { type: 'protocole'; lessonId: string }
+  | { type: 'noeuds'; lessonId: string }
+  | { type: 'fierte'; lessonId: string }
+  | { type: 'reparation'; lessonId: string }
+  | { type: 'briques'; uniteId?: string; sujetId?: string }
+  | { type: 'defi60' }
   | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
   | { type: 'confidentialite' }
   | { type: 'mourchid' }
@@ -98,6 +118,7 @@ type Mode =
   | { type: 'choixSynthese' }
   | { type: 'sujets' }
   | { type: 'bacPasAPas'; sujetId: string; exercice: number }
+  | { type: 'sujetGuide'; sujetId: string }
   | { type: 'kouest'; lessonId: string }
   | { type: 'fiche' }
   | { type: 'fakh'; uniteId?: string }
@@ -218,9 +239,9 @@ function EcranReprise({ cause, onCopier }: { cause: 'locale' | 'autre'; onCopier
   const dialogue = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const el = dialogue.current;
-    if (el && !el.open) el.showModal();
+    ouvrirDialogue(el);
     titre.current?.focus();
-    return () => { if (el?.open) el.close(); };
+    return () => fermerDialogue(el);
   }, []);
   return (
     <dialog ref={dialogue} onCancel={(e) => e.preventDefault()} aria-labelledby="reprise-titre"
@@ -310,12 +331,14 @@ export default function App() {
   const [ouverteLecon, setOuverteLecon] = useState<string | null>(null);
   // قراءة الدرس مُفروضة: لا تُفتح بوّابة المرحلة 1 قبل فتح القارئ وإغلاقه فعلًا
   const [leconLue, setLeconLue] = useState(false);
-  const [demarrage, setDemarrage] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try { return !sessionStorage.getItem('kunz_demarrage'); } catch { return true; }
-  });
-  // جلسة الدخول: تبقى مفتوحة ما دام التبويب مفتوحًا (لا كلمة مرور في كل تحميل)
-  const [session, setSession] = useState<boolean>(() => sessionOuverte(etat.compte?.email));
+  // Phase 2 « Guide-First » — plus d'écran de démarrage : le premier écran EST l'action du
+  // jour. Le guide demande l'énergie dans كويست, la mission reste à un tap (`ابدأ N دقائق`).
+  // `demandeCompte` n'est pas un péage : il ne s'ouvre que si l'élève le demande (après une
+  // micro-victoire, ou depuis أنا).
+  const [demandeCompte, setDemandeCompte] = useState(false);
+  // Phase 2 : la notion de « session d'onglet » ne garde plus la porte — l'écran de compte
+  // s'ouvre uniquement sur demande (`demandeCompte`). `sessionOuverte` ne sert plus qu'à
+  // savoir s'il faut demander le consentement de synchronisation.
   // السمة: داكن أو فاتح — يُحفظ في localStorage
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -370,35 +393,50 @@ export default function App() {
     setTheme((t) => (t === 'light' ? 'dark' : 'light'));
   }
 
-  function fermerDemarrage() {
-    try { sessionStorage.setItem('kunz_demarrage', '1'); } catch { /* le parcours reste accessible dans cet onglet */ }
-    setDemarrage(false);
-  }
-
   // ───────────── الحساب ─────────────
 
   function onCompteValide(compte: Compte) {
     const memeCompte = etat.compte?.email === compte.email && etat.compte?.jeton === compte.jeton;
-    const suivant = memeCompte ? { ...etat, compte } : { ...etat, compte, consentementSync: false, consentementSyncDecideLe: undefined };
+    const suivant = memeCompte
+      ? { ...etat, compte, modeInvite: false }
+      : { ...etat, compte, modeInvite: false, consentementSync: false, consentementSyncDecideLe: undefined };
     if (!memeCompte) suspendreSync(etat.compte?.email);
     setEtat(suivant);
     ouvrirSession(compte.email);
-    setSession(true);
+    setDemandeCompte(false);
     // Afficher l'écran de consentement si l'élève n'a encore jamais répondu
     if (doitDemanderConsentement(suivant)) setAfficheConsentement(true);
     else if (doitProposerDiagnostic(suivant)) setAfficheDiagnostic(true);
   }
 
+  /** «جرّب بلا حساب» : aucune donnée ne quitte l'appareil, aucun email demandé. */
+  function onInvite() {
+    setEtat((prev) => ({ ...prev, modeInvite: true }));
+    setDemandeCompte(false);
+    setOnglet('aujourdhui');
+  }
+
+  /** Depuis l'app en mode invité : on ouvre l'écran de compte, sans rien perdre. */
+  function demanderCreationCompte() {
+    setDemandeCompte(true);
+  }
+
+  /** « نكمّل بلا حساب » : l'invitation ne revient plus (une seule fois, jamais un rappel). */
+  function masquerInvitationCompte() {
+    setEtat((prev) => ({ ...prev, invitationCompteVue: new Date().toISOString() }));
+  }
+
   function onDeconnexion() {
     fermerSession();
-    setSession(false);
     setOnglet('aujourdhui');
     setMode(null);
+    // Se déconnecter, c'est fermer la porte : l'écran de compte s'ouvre en mode connexion.
+    setDemandeCompte(true);
   }
 
   function onSupprimerCompte() {
     fermerSession();
-    setSession(false);
+    setDemandeCompte(false);
     suspendreSync(etat.compte?.email);
     setEtat((prev) => {
       const suivant = { ...prev, consentementSync: false, consentementSyncDecideLe: undefined };
@@ -504,16 +542,12 @@ export default function App() {
       setMode({ type: 'lecture', lessonId: item.id });
       return;
     }
-    // حصّة جديدة تُحتسب في الحصّة اليومية (أو تُسجّل كإضافية)
-    setEtat((prev) => {
-      const comptees = prev.seancesJour === aujourdhui() ? prev.seancesComptees : 0;
-      const suivant = enregistrerSeance(prev);
-      // ما بعد الحصّة اليومية (حسب الهدف / المكثّفة) يُسجَّل كحصّة إضافية
-      if (comptees >= quotaDe(prev).seances) suivant.bonusJour = aujourdhui();
-      return suivant;
-    });
+    // La séance se compte à la **clôture** (voir `cloturerSeance`), pas à l'ouverture :
+    // ouvrir puis refermer dix fois la même leçon ne fabriquait dix séances.
     setLeconLue(false);
-    setMode({ type: 'protocole', lessonId: item.id });
+    // v0.11 : on ouvre la carte des six micro-nœuds (3–5 min chacun) ; l'élève choisit
+    // d'enchaîner ou de s'arrêter — la séance complète reste accessible depuis cet écran.
+    setMode({ type: 'noeuds', lessonId: item.id });
   }
 
   // ───────────── ouverture depuis la الخريطة الذهنية ─────────────
@@ -535,30 +569,63 @@ export default function App() {
       setMode({ type: 'lecture', lessonId: item.id, retour: { type: 'mindmap' } });
       return;
     }
-    setEtat((prev) => {
-      const comptees = prev.seancesJour === aujourdhui() ? prev.seancesComptees : 0;
-      const suivant = enregistrerSeance(prev);
-      // ما بعد الحصّة اليومية (حسب الهدف / المكثّفة) يُسجَّل كحصّة إضافية
-      if (comptees >= quotaDe(prev).seances) suivant.bonusJour = aujourdhui();
-      return suivant;
-    });
+    // Même règle qu'ailleurs : la séance se compte à la clôture, et une leçon non finie
+    // passe d'abord par les six micro-nœuds (phase 3).
     setLeconLue(false);
-    setMode({ type: 'protocole', lessonId: item.id });
+    setMode({ type: 'noeuds', lessonId: item.id });
   }
 
   // ───────────── ردود البروتوكول ─────────────
 
   function onProgresse(lessonId: string, p: Etat['progression'][string]): void {
     setEtat((prev) => ({ ...prev, progression: { ...prev.progression, [lessonId]: p } }));
+    // Fin des six nœuds → « بطاقة الدرس », une seule fois, figée au moment du gain.
+    // Import dynamique : la fiche dorée (~120 Kio) ne doit pas entrer dans la coquille, et
+    // l'attribution est idempotente (`attribuerCarteLecon`), donc un double appel est sans effet.
+    void import('./utils/pointsCarteLecon').then(({ pointsCarteLecon }) => {
+      setEtat((actuel) => attribuerCarteLecon(actuel, lessonId, pointsCarteLecon(lessonId), new Date().toISOString()));
+    });
   }
 
   function onTerminer(lessonId: string, p: Etat['progression'][string]): void {
-    setEtat((prev) => ({
-      ...prev,
-      progression: { ...prev.progression, [lessonId]: p },
-      revisions: prev.revisions,
-    }));
+    // Une leçon finie = une séance, une seule fois (idempotent sur double clôture).
+    setEtat((prev) => cloturerSeance(prev, lessonId, p));
+    // On ne « referme » plus la leçon terminée : on l'annonce. Un élève qui vient de
+    // finir les six nœuds mérite de voir ce qu'il a gagné (carte, révision programmée),
+    // pas de retomber sur la carte du jour sans explication.
+    if (p.statut === 'terminee') {
+      // Depuis la carte mentale aussi : la fierté passe devant, et sa sortie ramène à la carte.
+      setMode({ type: 'fierte', lessonId });
+      return;
+    }
     setMode(retourMindmap ? { type: 'mindmap' } : null);
+  }
+
+  // ───────────── v0.11 : briques, événements, dérogations ─────────────
+
+  /** Dernière tentative par jeu + trophée par verbe. Evidence ≠ Completion : rien d'autre. */
+  function onTentativeBriques(jeuId: string, verbe: string, evaluation: EvaluationBriques, le: string): void {
+    setEtat((prev) => {
+      const avecTentative = enregistrerTentative(prev, jeuId, evaluation, le);
+      return {
+        ...avecTentative,
+        trophees: consignerTrophee(avecTentative, verbe, le),
+      };
+    });
+  }
+
+  /** Événement local : il ne touche ni `phases`, ni `statut`, ni `jalons`. */
+  function onEvenement(evt: ReturnType<typeof tentative>): void {
+    setEtat((prev) => {
+      const cle = cleEvenement(evt);
+      if (dejaVu(prev, cle)) return prev;
+      return { ...prev, boussoleEventsSeen: marquerVu(prev, cle) };
+    });
+  }
+
+  /** « متابعة رغم ذلك » : on trace le choix de l'élève, on ne le lui reproche jamais. */
+  function onDerogationSujet(sujetId: string): void {
+    setEtat((prev) => tracerDerogation(prev, sujetId, new Date().toISOString()));
   }
 
   // ───────────── الاسترجاع ─────────────
@@ -710,7 +777,6 @@ export default function App() {
     if (blocageRef.current) return false;
     if (!viderStockage(carnetAvantConfirmation)) return false; // Une suppression partielle n'est pas annoncée comme réussie.
     fermerSession();
-    setSession(false);
     setEtat(chargerEtat());
     setMode(null);
     setOnglet('aujourdhui');
@@ -787,8 +853,20 @@ export default function App() {
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
             onBoussoleEvent={onBoussoleEvent}
+            onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
           />
         </Suspense>
+      );
+    }
+    // Fin des six nœuds → écran de fierté : trois preuves, puis un geste au choix.
+    if (mode.type === 'fierte') {
+      return (
+        <EcranFierte
+          etat={etat}
+          lessonId={mode.lessonId}
+          onOuvrirItem={ouvrirItem}
+          onFermer={() => setMode(retourMindmap ? { type: 'mindmap' } : null)}
+        />
       );
     }
     if (mode.type === 'flashcards') {
@@ -811,6 +889,16 @@ export default function App() {
           onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
           maitriseSujets={etat.maitriseSujets}
           brouillonsSujets={etat.brouillonsSujets}
+          etat={etat}
+          onPasseOutreSujet={onDerogationSujet}
+          onOuvrirBriques={(sujetId) => setMode({ type: 'briques', sujetId })}
+          onOuvrirGuide={(sujetId) => setMode({ type: 'sujetGuide', sujetId })}
+          travaillees={Object.fromEntries(
+            Object.entries(etat.maitriseSujets ?? {}).map(([id, evaluation]) => [
+              id,
+              Object.values(evaluation).filter((n) => n === 0 || n === 1 || n === 2).length,
+            ]),
+          )}
           onEvaluerConsigne={(sujetId, cle, niveau) =>
             setEtat((prev) => ({
               ...prev,
@@ -904,6 +992,43 @@ export default function App() {
           onCarnetFaute={onCarnetFaute}
           onFermer={() => setMode(null)}
         />
+      );
+    }
+    if (mode.type === 'sujetGuide') {
+      const sujetId = mode.sujetId;
+      return (
+        <Suspense fallback={<ChargementEcran />}>
+          <SujetGuide
+            sujetId={sujetId}
+            maitrise={etat.maitriseSujets?.[sujetId]}
+            brouillons={etat.brouillonsSujets?.[sujetId]}
+            etat={etat}
+            onEvaluer={(cle, niveau) =>
+              setEtat((prev) => ({
+                ...prev,
+                maitriseSujets: {
+                  ...prev.maitriseSujets,
+                  [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
+                },
+              }))
+            }
+            onBrouillon={(cle, texte) =>
+              setEtat((prev) => ({
+                ...prev,
+                brouillonsSujets: {
+                  ...prev.brouillonsSujets,
+                  [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
+                },
+              }))
+            }
+            onOuvrirBriques={
+              SUJETS_AVEC_BRIQUES.includes(sujetId)
+                ? () => setMode({ type: 'briques', sujetId })
+                : undefined
+            }
+            onFermer={() => setMode({ type: 'sujets' })}
+          />
+        </Suspense>
       );
     }
     if (mode.type === 'choixSynthese') {
@@ -1087,6 +1212,89 @@ export default function App() {
         </>
       );
     }
+    // ── v0.11 : la leçon en six micro-nœuds (3–5 min chacun) ──
+    if (mode.type === 'noeuds') {
+      return (
+        <>
+          <MicroNoeuds
+            etat={etat}
+            lessonId={mode.lessonId}
+            onOuvrirNoeud={() => setMode({ type: 'protocole', lessonId: mode.lessonId })}
+            onReparation={() => setMode({ type: 'reparation', lessonId: mode.lessonId })}
+            onLireLecon={() => setOuverteLecon(mode.lessonId)}
+            onFermer={() => setMode(retourMindmap ? { type: 'mindmap' } : null)}
+          />
+          {ouverteLecon && (
+            <div className="fixed inset-0 z-50 overflow-y-auto bg-cream">
+              <LecteurLecon
+                lessonId={ouverteLecon}
+                onFermer={() => {
+                  setOuverteLecon(null);
+                  setLeconLue(true);
+                }}
+              />
+            </div>
+          )}
+        </>
+      );
+    }
+    // ── v0.11 : جولة التصحيح — jamais d'écran d'échec, une réparation courte ──
+    if (mode.type === 'reparation') {
+      return (
+        <JourneeReparation
+          lessonId={mode.lessonId}
+          onTermine={() => setMode({ type: 'protocole', lessonId: mode.lessonId })}
+          onFermer={() => setMode({ type: 'noeuds', lessonId: mode.lessonId })}
+        />
+      );
+    }
+    // ── v0.11 : البوصلة 1-2-3 — l'atelier de construction de réponse ──
+    if (mode.type === 'briques') {
+      return (
+        <EcranBriques
+          etat={etat}
+          uniteId={mode.uniteId}
+          sujetId={mode.sujetId}
+          onFermer={() => setMode(null)}
+          onTentative={(jeu, ids, evaluation) => {
+            const le = new Date().toISOString();
+            onTentativeBriques(jeu.id, jeu.verbe, evaluation, le);
+            onEvenement(
+              tentative({
+                attemptId: `${jeu.id}:${ids.length}:${evaluation.score}`,
+                origine: 'briques',
+                mode: 'briques',
+                exerciceId: jeu.id,
+                uniteId: jeu.uniteId ?? 'u1',
+                verbe: jeu.verbe,
+                titre: jeu.question,
+                reussi: evaluation.complete,
+                criteres: evaluation.rolesChoisis,
+                ...(evaluation.critereNomme ? { erreurTag: evaluation.critereNomme } : {}),
+                timestamp: le,
+              }),
+            );
+          }}
+        />
+      );
+    }
+    // ── v0.11 : تحدّي 60 ثانية ──
+    if (mode.type === 'defi60') {
+      return (
+        <Defi60
+          etat={etat}
+          onItemReussi={onItemReussi}
+          onFermer={() => setMode(null)}
+          onTermine={() =>
+            setEtat((prev) => ({
+              ...prev,
+              // On garde la trace des 60 dernières séries : une date, jamais un score.
+              defis60: [...(prev.defis60 ?? []), new Date().toISOString()].slice(-60),
+            }))
+          }
+        />
+      );
+    }
     if (mode.type === 'revision') {
       const diagnostics: Record<string, string> = {};
       for (const id of mode.lessonIds) {
@@ -1146,24 +1354,32 @@ export default function App() {
     );
   }
 
-  const inscrit = Boolean(etat.compte) && session;
-  // لا تبويبات ولا شارة قبل اكتمال شاشة الإقلاع وفتح حساب
-  const pret = inscrit && !demarrage;
+  // Phase 2 : zéro barrage. L'écran de compte ne s'ouvre que sur demande explicite :
+  //  · « أنشئ حسابي » (après une micro-victoire, ou depuis la fiche XP) ;
+  //  · « خروج » depuis la fiche XP — là, l'écran de compte sert de verrou et de connexion.
+  // Dans tous les autres cas — installation neuve, invité, compte local dont l'onglet a été
+  // fermé — l'élève entre directement : le premier écran est l'action du jour.
+  const inscrit = !demandeCompte;
+  const pret = inscrit;
 
   return <>
     {reprise}
     <div className="min-h-dvh" inert={ecranInerte} aria-hidden={ecranInerte}>
       <AlerteStockage visible={stockageDefaillant && !blocageRestauration} pret={pret} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
-      {demarrage && <EcranDemarrage onTerminer={fermerDemarrage} />}
-      {!demarrage && (
-        <>
+      <>
           {/* الشريط العلوي الحديث — اسم التطبيق، السمة، المستخدم */}
           <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b border-line bg-surface">
             <div className="mx-auto flex h-full max-w-5xl items-center justify-between gap-2 px-4 sm:px-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-forest-deep/20 bg-forest text-lg font-bold text-paper">
-                  <span className="h-6 w-6"><IcoBoussole /></span>
-                </div>
+                {/* v0.13 — l'icône officielle de l'application remplace le pictogramme SVG :
+                    même visuel à l'écran et sur l'écran d'accueil du téléphone. */}
+                <img
+                  src="/icons/icon-192.webp"
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 shrink-0 rounded-[11px] border border-forest-deep/20 object-cover"
+                />
                 <div className="hidden min-w-0 sm:block">
                   <h1 className="app-brand truncate tracking-tight leading-none">بوصلة العلوم</h1>
                   <p className="text-[11px] font-medium text-mute">مراجعة البكالوريا — علوم الطبيعة والحياة</p>
@@ -1171,7 +1387,13 @@ export default function App() {
               </div>
               <div className="flex items-center gap-2">
                 {/* شارة XP — مصدر وحيد للمستوى (popup منسدل، لا يغطي المحتوى) */}
-                {pret && <BaguetteXp etat={etat} onDeconnexion={onDeconnexion} />}
+                {pret && (
+                  <BaguetteXp
+                    etat={etat}
+                    onDeconnexion={etat.compte ? onDeconnexion : undefined}
+                    onCreerCompte={etat.compte ? undefined : demanderCreationCompte}
+                  />
+                )}
                 <button
                   type="button"
                   onClick={basculerTheme}
@@ -1205,10 +1427,11 @@ export default function App() {
           {/* الطبقة الترفيهية — شريط XP + تصفيق (لا شيء عائم فوق المحتوى) */}
           <GamifiedOverlay etat={etat} />
 
-      {!demarrage && !inscrit && (
+      {!inscrit && (
         <Inscription
           compte={etat.compte}
           onValide={onCompteValide}
+          onInvite={onInvite}
           onSupprimerCompte={etat.compte ? onSupprimerCompte : undefined}
         />
       )}
@@ -1249,6 +1472,15 @@ export default function App() {
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
           onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
           onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
+          onDefi60={() => setMode({ type: 'defi60' })}
+          onFakh={() => setMode({ type: 'fakh' })}
+          onBriques={() => setMode({ type: 'briques' })}
+          onSujetGuide={() =>
+            setMode({ type: 'sujetGuide', sujetId: SUJETS_OFFICIELS[0]?.id ?? '2024-1' })
+          }
+          nomSujet={SUJETS_OFFICIELS[0]?.id}
+          onCreerCompte={demanderCreationCompte}
+          onMasquerInvitation={masquerInvitationCompte}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
@@ -1307,6 +1539,7 @@ export default function App() {
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
             onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
             onBoussoleEvent={onBoussoleEvent}
+            onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
           />
         </Suspense>
       )}
@@ -1321,7 +1554,8 @@ export default function App() {
           onSupprimerNote={onSupprimerNote}
           onReinitialiser={onReinitialiser}
           onRestaurer={onRestaurerEtat}
-          onDeconnexion={onDeconnexion}
+          onDeconnexion={etat.compte ? onDeconnexion : undefined}
+          onCreerCompte={etat.compte ? undefined : demanderCreationCompte}
           onConsentementSync={onConsentementSync}
           onObjectif={(objectif) => setEtat((prev) => ({ ...prev, objectif }))}
           onModeIntensif={(modeIntensif) => {
@@ -1371,8 +1605,7 @@ export default function App() {
               </div>
             </div>
           </nav>}
-        </>
-      )}
+      </>
     </div>
   </>;
 }

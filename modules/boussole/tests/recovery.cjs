@@ -137,6 +137,8 @@ const book = (solo) => ({ version: 1, solo, link: "", first: "", events: "", inh
     bad.setDefaultTimeout(5000);
     await bad.goto(origin + "/");
     await bad.getByRole("button", { name: "أنا", exact: true }).click();
+    // Phase 3 : la sauvegarde vit dans le volet « إعداداتي ».
+    await bad.getByRole("tab", { name: "إعداداتي" }).click();
     await bad.getByRole("button", { name: "تصدير نسختي" }).click();
     await bad.getByRole("status").filter({ hasText: "تعذّرت قراءة الإحصاءات المحفوظة" }).waitFor();
     assert.equal(await bad.evaluate(() => localStorage.getItem("kunz_stats_v1")), '{"justes":"invalide"}');
@@ -204,6 +206,8 @@ const book = (solo) => ({ version: 1, solo, link: "", first: "", events: "", inh
       await ancien.goto(origin + "/");
       await ancien.getByRole("button", { name: "أنا", exact: true }).click();
       await ancien.locator("#nom").waitFor();
+      // Phase 3 : effacement et import vivent dans le volet « إعداداتي ».
+      await ancien.getByRole("tab", { name: "إعداداتي" }).click();
       const etatAvant = await ancien.evaluate(() => localStorage.getItem("murajih_svt_v1"));
       await autre.goto(origin + "/boussole/index.html");
       const nouveau = JSON.stringify(book("version récente à conserver"));

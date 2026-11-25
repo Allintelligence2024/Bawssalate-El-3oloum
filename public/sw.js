@@ -6,13 +6,17 @@ const MANIFESTE = '/precache-manifest.json';
 const INDEX = '/index.html';
 const BOUSSOLE = ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'];
 
+// v0.13 : les deux visuels du guide sont la première chose vue hors ligne.
+// Aucun commentaire entre les entrees : `scripts/verifier-hors-ligne.mjs` lit cette liste
+// avec une expression régulière, et une apostrophe dans un commentaire la ferait déraper.
 const COQUILLE = [
   '/icon.svg',
   '/manifest.webmanifest',
   '/mascotte.webp',
-  '/personnage-pirate.webp',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/guide-clair.webp',
+  '/guide-sombre.webp',
+  '/icons/icon-192.webp',
+  '/icons/icon-512.webp',
 ];
 const contenuValide = u => typeof u === 'string' &&
   (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));

@@ -1,9 +1,14 @@
 // Régénère toutes les icônes de l'app installée à partir de `public/icon.svg` :
 //   node scripts/generer-icones.mjs
-// Sorties : public/icons/*.png (manifeste + iOS) et android/…/res/mipmap-* +
-// drawable-*-*/splash.png (lanceur et écran de démarrage Android).
-// On rasterise avec Chromium parce qu'ImageMagick n'a pas de délégué SVG ici.
+// Sorties : public/icons/*.webp (manifeste), public/icons/apple-touch-180.png (iOS) et
+// android/…/res/mipmap-* + drawable-*-*/splash.png (lanceur et écran de démarrage Android).
+// On rasterise avec Chromium parce qu'ImageMagick n'a pas de délégué SVG ici, puis on encode
+// en WebP avec ImageMagick (Chromium ne sait pas écrire de WebP via `screenshot`).
+//
+// v0.13 — les icônes **livrées** ne viennent pas de ce SVG mais de l'artwork officiel
+// (voir `plans/sources/medias.md`) : ce script reste la voie vectorielle (Android, secours).
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { chromium } from 'playwright';
 
 const svg = readFileSync('public/icon.svg', 'utf8');
@@ -52,12 +57,21 @@ async function rendre(taille, chemin, { part = 1, fond = null } = {}) {
 }
 
 mkdirSync('public/icons', { recursive: true });
-await rendre(192, 'public/icons/icon-192.png');
-await rendre(512, 'public/icons/icon-512.png');
+const tampon = '.cache/icones';
+mkdirSync(tampon, { recursive: true });
+/** Rend en PNG dans `.cache/icones`, puis encode en WebP (qualité 82, alpha conservé). */
+async function rendreWebp(taille, chemin, { part = 1, fond = null, qualite = 82 } = {}) {
+  const png = `${tampon}/${chemin.split('/').pop().replace(/\.webp$/, '')}.png`;
+  await rendre(taille, png, { part, fond });
+  const r = spawnSync('convert', [png, '-resize', `${taille}x${taille}`, '-quality', String(qualite), chemin]);
+  if (r.status !== 0) throw new Error(`ImageMagick n'a pas pu écrire ${chemin} — installer ImageMagick.`);
+}
+await rendreWebp(192, 'public/icons/icon-192.webp');
+await rendreWebp(512, 'public/icons/icon-512.webp');
 // Icône iOS : opaque (iOS n'accepte pas la transparence sur l'écran d'accueil).
 await rendre(180, 'public/icons/apple-touch-180.png', { part: 0.92, fond: '#0b3b2c' });
 // Maskable : fond plein (pas de transparence), contenu dans les 80 % sûrs.
-await rendre(512, 'public/icons/maskable-512.png', { part: 0.78, fond: '#0b3b2c' });
+await rendreWebp(512, 'public/icons/maskable-512.webp', { part: 0.78, fond: '#0b3b2c' });
 
 const densites = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 for (const [d, f] of Object.entries(densites)) {
@@ -92,11 +106,9 @@ for (const [d] of Object.entries(densites)) {
 
 await navigateur.close();
 
-// Chromium sort des PNG non optimisés (512 px ≈ 140 ko). Le vérificateur hors-ligne
-// impose 150 ko par fichier et 2,5 Mio de coquille : on quantifie si ImageMagick est là.
-import { spawnSync } from 'node:child_process';
-const pngs = ['public/icons/icon-192.png', 'public/icons/icon-512.png',
-  'public/icons/maskable-512.png', 'public/icons/apple-touch-180.png'];
+// Chromium sort des PNG non optimisés (180 px ≈ 60 ko). Le vérificateur hors-ligne impose
+// 150 ko par fichier et 2,5 Mio de coquille : on quantifie le seul PNG restant (iOS).
+const pngs = ['public/icons/apple-touch-180.png'];
 for (const f of pngs) {
   const r = spawnSync('convert', [f, '-strip', '-colors', '96', '-define', 'png:compression-level=9', f]);
   if (r.error) {

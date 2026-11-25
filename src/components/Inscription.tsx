@@ -18,12 +18,14 @@ import {
 interface Props {
   compte?: Compte;
   onValide: (compte: Compte) => void;
+  /** «جرّب بلا حساب» : entre dans l'app sans email, sans mot de passe, sans envoi. */
+  onInvite?: () => void;
   onSupprimerCompte?: () => void;
 }
 
 type Vue = 'creation' | 'connexion';
 
-export default function Inscription({ compte, onValide, onSupprimerCompte }: Props) {
+export default function Inscription({ compte, onValide, onInvite, onSupprimerCompte }: Props) {
   const [vue, setVue] = useState<Vue>(compte ? 'connexion' : 'creation');
   const [email, setEmail] = useState(compte?.email ?? '');
   const [mdp, setMdp] = useState('');
@@ -118,6 +120,24 @@ export default function Inscription({ compte, onValide, onSupprimerCompte }: Pro
           noValidate
           className="rounded-3xl border border-line bg-paper p-6 shadow-[0_24px_60px_rgba(0,0,0,0.45)]"
         >
+
+          {/* v0.13 · B1 du rapport : personne ne devrait créer un compte pour voir l'app. */}
+          {onInvite && !compte && (
+            <div className="mb-5 rounded-2xl border border-gold-soft bg-gold-soft/40 px-4 py-3">
+              <button
+                type="button"
+                onClick={onInvite}
+                className="btn btn-ghost w-full border border-gold/40 text-sm font-bold text-forest-deep"
+              >
+                جرّب بلا حساب · ابدأ الآن ←
+              </button>
+              <p className="mt-2 text-center text-[11px] leading-relaxed text-forest-deep/80">
+                بلا بريد وبلا كلمة مرور. كل شيء يبقى على هذا الجهاز، وتنشئ حسابًا لاحقًا إن أردت
+                نقل تقدّمك إلى هاتف آخر.
+              </p>
+            </div>
+          )}
+
           {/* البريد */}
           <label className="block text-xs font-bold text-ink-soft" htmlFor="email">
             البريد الإلكتروني

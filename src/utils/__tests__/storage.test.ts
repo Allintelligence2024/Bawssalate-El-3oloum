@@ -5,6 +5,7 @@ import { etatDepuisFichier, lireSauvegarde } from '../backup';
 import { noterReponse, statsActuelles, restaurerStats, viderStats } from '../stats';
 import { effacerAlerteStockage } from '../echecsStockage';
 import { memoriserValeur, reinitialiserEtatPerime } from '../coherenceStockage';
+import { VERSION_ETAT } from '../etat';
 import {
   chargerEtat,
   sauvegarderEtat,
@@ -45,7 +46,7 @@ afterEach(() => {
 describe('storage — chargeur/sauveur', () => {
   it('retourne un état vierge si pas de donnée', () => {
     const e = chargerEtat();
-    expect(e.version).toBe(2);
+    expect(e.version).toBe(VERSION_ETAT);
     expect(e.progression).toEqual({});
   });
 
@@ -85,7 +86,7 @@ describe('storage — chargeur/sauveur', () => {
   it('etatDepuisBrut comble les champs manquants', () => {
     const brut = { progression: {}, jalons: {}, notes: [], carnet: [], journal: [], minutesTotales: 0, revisions: 0, nom: 'x', dateBac: '2027-06-10', seancesComptees: 0, ateliers: {} };
     const e = etatDepuisBrut(brut as any);
-    expect(e.version).toBe(2); // valeur par défaut
+    expect(e.version).toBe(VERSION_ETAT); // valeur par défaut
     expect(e.nom).toBe('x');
     expect(e.consentementSync).toBe(false); // valeur par défaut
   });

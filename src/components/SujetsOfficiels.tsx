@@ -2,6 +2,7 @@
 // الإجرائية، الوحدة المستهدفة. لا وثائق مرسومة ولا PDF. المرحلة 2 (2023 فقط حاليًّا): وصف نصّي للوثائق وعناصر إجابة
 // مختصرة بتصرّف من التصحيح الرسمي، مخفيّة افتراضيًّا خلف زرّ «أظهر عناصر الإجابة» (A-009).
 import { useState } from 'react';
+import { DUREE_BAC_MIN } from '../utils/simulation';
 import { ANNEES_STRUCTUREES, LIBELLE_FIDELITE, SUJETS_OFFICIELS, fideliteDe, frequenceUnites, frequenceVerbes, type SujetOfficiel, type VerbeConsigne } from '../data/sujetsOfficiels';
 import { situationDeUnite, type SituationSynthese } from '../data/syntheses';
 import { corrigeDe, type PartieCorrigee } from '../data/sujetsCorriges';
@@ -12,6 +13,10 @@ import { estEntrainable, type NiveauMaitrise } from '../utils/entrainement';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
+// v0.11 — accès jamais verrouillé + atelier 1-2-3 par consigne.
+import { accesSujet } from '../utils/accesSujets';
+import { SUJETS_AVEC_BRIQUES } from '../data/briques';
+import type { Etat } from '../types';
 
 interface Props {
   onOuvrirSynthese: (s: SituationSynthese) => void;
@@ -24,6 +29,16 @@ interface Props {
   brouillonsSujets?: Record<string, Record<string, string>>;
   onEvaluerConsigne?: (sujetId: string, cle: string, niveau: NiveauMaitrise) => void;
   onBrouillonConsigne?: (sujetId: string, cle: string, texte: string) => void;
+  /** v0.11 — état de l'élève (couverture, cartes de leçons) pour l'accès et le tiroir. */
+  etat?: Etat;
+  /** « متابعة رغم ذلك » : l'appelant trace le choix. */
+  onPasseOutreSujet?: (sujetId: string) => void;
+  /** Ouvre l'atelier de briques du sujet (gabarit pilote). */
+  onOuvrirBriques?: (sujetId: string) => void;
+  /** Ouvre le parcours guidé du sujet complet (tous exercices, méthode 1-2-3). */
+  onOuvrirGuide?: (sujetId: string) => void;
+  /** Nombre de consignes déjà travaillées dans ce sujet (pour l'afficher sans mentir). */
+  travaillees?: Record<string, number>;
 }
 
 /** ما يتوقّعه المصحّح من كلّ فعل — صياغة قصيرة، لا نسبة ولا سلّم */
@@ -55,7 +70,21 @@ function titreUnite(id: string): string {
   return u ? `الوحدة ${nb(u.numero)} — ${u.titre}` : id;
 }
 
-function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
+function Sujet({
+  sujet,
+  onOuvrirSynthese,
+  onOuvrirRecherche,
+  onOuvrirPasAPas,
+  maitriseSujets,
+  brouillonsSujets,
+  onEvaluerConsigne,
+  onBrouillonConsigne,
+  etat,
+  onPasseOutreSujet,
+  onOuvrirBriques,
+  onOuvrirGuide,
+  travaillees,
+}: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const [enModeEntrainement, setEnModeEntrainement] = useState(false);
@@ -73,16 +102,47 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, ma
           onEvaluer={(cle, niveau) => onEvaluerConsigne(sujet.id, cle, niveau)}
           onBrouillon={(cle, texte) => onBrouillonConsigne(sujet.id, cle, texte)}
           onFermer={() => setEnModeEntrainement(false)}
+          acces={etat ? accesSujet(etat, sujet.id) : undefined}
+          onPasseOutre={onPasseOutreSujet ? () => onPasseOutreSujet(sujet.id) : undefined}
+          // On n'affiche le bouton « briques » que si le sujet a réellement un gabarit :
+          // un bouton qui mène à un état vide est un bouton mort. Le statut éditorial est
+          // filtré plus loin, dans EcranBriques : un gabarit `a_valider_enseignant` ouvre une
+          // porte d'aperçu explicite (« قيد مراجعة الأستاذ »), jamais un corrigé validé.
+          onOuvrirBriques={
+            onOuvrirBriques && SUJETS_AVEC_BRIQUES.includes(sujet.id)
+              ? () => onOuvrirBriques(sujet.id)
+              : undefined
+          }
+          etat={etat}
         />
       ) : (
       <>
+      {onOuvrirGuide && (
+        <button
+          type="button"
+          onClick={() => onOuvrirGuide(sujet.id)}
+          className="btn--primaire w-full px-3 py-2.5 text-sm"
+        >
+          الموضوع كاملًا · خطوة بخطوة (1-2-3) ←
+          {travaillees?.[sujet.id] !== undefined && (
+            <span className="ms-2 text-[11px] font-normal opacity-80 tnum">
+              ({nb(travaillees[sujet.id])} تعليمة عُملت)
+            </span>
+          )}
+        </button>
+      )}
       {estEntrainable(sujet.id) && onEvaluerConsigne && (
         <button type="button" onClick={() => setEnModeEntrainement(true)} className="btn-gold w-full px-3 py-2 text-sm">
-          تدرّب على هذا الموضوع خطوة بخطوة ←
+          تدرّب سريعًا على هذا الموضوع ←
         </button>
       )}
       <p className="flex flex-wrap items-center gap-2 text-[11px] leading-relaxed text-mute">
-        <span className="chip text-[11px]" title="درجة أمانة النقل">أمانة النقل ({fideliteDe(sujet)}): {LIBELLE_FIDELITE[fideliteDe(sujet)]}</span>
+        <span
+          className="chip text-[11px]"
+          title={`أمانة النقل: ${LIBELLE_FIDELITE[fideliteDe(sujet)]}`}
+        >
+          نقْل: {fideliteDe(sujet) === 'a' ? 'من نصّ الورقة' : fideliteDe(sujet) === 'b' ? 'قراءة بالعين' : 'بالمعنى'}
+        </span>
         {sujet.notes && <span>{sujet.notes}</span>}
       </p>
       {corrige && (
@@ -199,7 +259,21 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, ma
   );
 }
 
-export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: Props) {
+export default function SujetsOfficiels({
+  onOuvrirSynthese,
+  onOuvrirRecherche,
+  onFermer,
+  onOuvrirPasAPas,
+  maitriseSujets,
+  brouillonsSujets,
+  onEvaluerConsigne,
+  onBrouillonConsigne,
+  etat,
+  onPasseOutreSujet,
+  onOuvrirBriques,
+  onOuvrirGuide,
+  travaillees,
+}: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
   const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
@@ -215,8 +289,9 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
             <span className="block h-5 w-5"><IcoRetour /></span>
           </button>
           <div className="min-w-0">
-            <p className="eyebrow">مواضيع بكالوريا سابقة · علوم تجريبية · {nb(4)} سا {nb(30)} د</p>
-            <h1 className="font-naskh truncate text-xl font-black">بنية الموضوع، لا الموضوع نفسه</h1>
+            <p className="eyebrow">{/* La durée affichée vient de la constante : impossible qu'elle diverge encore. */}
+            مواضيع بكالوريا سابقة · علوم تجريبية · {nb(Math.floor(DUREE_BAC_MIN / 60))} سا {nb(DUREE_BAC_MIN % 60)} د</p>
+            <h1 className="font-naskh truncate text-xl font-black">مواضيع البكالوريا · حِلّها كاملة</h1>
           </div>
         </div>
         <div className="mx-auto mt-3 flex max-w-3xl flex-wrap items-center gap-2">
@@ -236,9 +311,15 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
       </header>
       <main className="flex-1 px-4 pb-16 pt-4">
         <div className="mx-auto max-w-3xl space-y-4">
+          {/* v0.13 (priorité 4 du rapport) : la promesse en trois gestes, avant les années. */}
+          <ol className="grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-forest-deep">
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">اختار موضوعًا</li>
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">حُلّه كاملًا · خطوة بخطوة</li>
+            <li className="rounded-xl border border-line bg-paper px-2 py-2">قارن بعناصر الإجابة</li>
+          </ol>
           <p className="text-xs leading-relaxed text-mute">
-            نعرض هيكل المواضيع الرسمية (التمارين، السلّم، التعليمات وأفعالها) لتتدرّب على قراءة المطلوب. الرسوم والجداول الأصلية غير
-            معروضة؛ انقر فعل التعليمة لترى ما يُنتظر منك. لكلّ موضوع عناصر إجابة مختصرة (معاد صياغتها من التصحيح الرسمي) تظهر عند الطلب.
+            الجداول والرسوم الأصلية غير معروضة (وصفها النصّي موجود)، وعناصر الإجابة مختصرة من
+            التصحيح الرسمي وتظهر عند الطلب فقط.
           </p>
           {sujet ? (
             <Sujet
@@ -250,6 +331,11 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
               brouillonsSujets={brouillonsSujets}
               onEvaluerConsigne={onEvaluerConsigne}
               onBrouillonConsigne={onBrouillonConsigne}
+              etat={etat}
+              onPasseOutreSujet={onPasseOutreSujet}
+              onOuvrirBriques={onOuvrirBriques}
+              onOuvrirGuide={onOuvrirGuide}
+              travaillees={travaillees}
             />
           ) : <p className="text-sm text-mute">لا موضوع.</p>}
 

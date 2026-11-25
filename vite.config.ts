@@ -30,9 +30,10 @@ const COQUILLE = [
   'icon.svg',
   'manifest.webmanifest',
   'mascotte.webp',
-  'personnage-pirate.webp',
-  'icons/icon-192.png',
-  'icons/icon-512.png',
+  'guide-clair.webp',
+  'guide-sombre.webp',
+  'icons/icon-192.webp',
+  'icons/icon-512.webp',
 ];
 const CONTENU_FIXE = ['boussole/index.html', 'boussole/cahier-bac-2022.pdf', 'boussole/memo.pdf'];
 
@@ -48,7 +49,42 @@ function precacheManifest(): Plugin {
       // Les données de sujets de bac (`SujetsOfficiels`) sont volontairement EXCLUES : c'est le
       // plus gros chunk (≈ 490 ko) et il reste consultable en ligne ; le mettre en cache coûtait
       // 20 % du poids pour un écran qui n'a pas à fonctionner hors connexion en priorité.
-      const HORS_PRECACHE = [/^assets\/SujetsOfficiels-/];
+      //
+      // v0.11 — la couche d'entraînement 1-2-3 suit la même règle (mesuré sur le build 0.11) :
+      //   EcranBriques 14,9 ko · jeux de l'unité 1 5,4 ko · gabarit 2025-1 3,7 ko ·
+      //   Défi 60 s 4,0 ko · Journée de réparation 3,9 ko · carte de leçon 1,9 ko ·
+      //   tiroir de la Boussole 5,0 ko · table des verbes 4,7 ko · sujet complet guidé 14,4 ko.
+      // Sans ces exclusions la coquille passe à 2,53 Mio (plafond 2,5). Rien n'est perdu pour
+      // l'élève : le service worker met en cache `assets/*` au premier chargement (voir
+      // `public/sw.js`, gestionnaire `fetch`), donc un écran ouvert une fois reste hors ligne.
+      // v0.13 — deux exclusions de plus, mesurées sur le build 0.13 :
+      //   NB — `sujetsCorriges` (370 ko) n'est PAS exclu : mesuré sur ce build, il est tiré
+      //     par `entrainement`, donc présent dans les assets de démarrage ; l'exclure faisait
+      //     échouer l'installation du service worker (asset de démarrage hors manifeste).
+      //   supabase (214 ko, nommé `supabase-` par manualChunks) : la synchronisation exige le
+      //     réseau par définition ; la précacher ne protégeait rien.
+      //   Methodologie (139 ko) et ExamBlanc (13 ko) : écrans de consultation ponctuelle
+      //     (lire la méthode, simuler un examen chronométré), hors boucle quotidienne.
+      // Résultat : coquille ≈ 2,18 Mio au lieu de 2,5 Mio, sous le plafond de 2,2 Mio visé.
+      // Aucun écran antérieur à la v0.11 n'entre dans cette liste : la coquille d'origine reste
+      // intégralement précachée.
+      const HORS_PRECACHE = [
+        /^assets\/SujetsOfficiels-/,
+        /^assets\/EcranBriques-/,
+        /^assets\/u1-/,
+        /^assets\/unites-/,
+        /^assets\/sujet-2025-1-/,
+        /^assets\/Defi60-/,
+        /^assets\/JourneeReparation-/,
+        /^assets\/CarteLecon-/,
+        /^assets\/pointsCarteLecon-/,
+        /^assets\/TiroirBoussole-/,
+        /^assets\/attenduVerbes-/,
+        /^assets\/SujetGuide-/,
+        /^assets\/supabase-/,
+        /^assets\/Methodologie-/,
+        /^assets\/ExamBlanc-/,
+      ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))
         .filter((f) => !HORS_PRECACHE.some((r) => r.test(f)))
@@ -98,5 +134,13 @@ export default defineConfig({
   build: {
     target: 'es2022',
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        // Nom stable pour exclure la synchronisation du précache (voir HORS_PRECACHE).
+        // Sans cela, le client Supabase sortait sous un nom opaque (`dist-*.js`).
+        // Vite 8 (Rolldown) n'accepte que la forme fonction.
+        manualChunks: (id: string) => (id.includes('node_modules/@supabase/') ? 'supabase' : undefined),
+      },
+    },
   },
 });

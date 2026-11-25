@@ -34,6 +34,8 @@ interface Props {
   }) => void;
   /** أحداث جسر البوصلة (Lot 5A) — مُتحقَّق منها بالأصل والمصدر والمخطّط قبل الوصول. */
   onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
+  /** v0.11 — ouvre l'atelier « البوصلة 1-2-3 » (constructeur de réponse par briques). */
+  onOuvrirBriques?: () => void;
 }
 
 type Ecran = 'boussole' | 'accueil' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat' | 'diagrammes';
@@ -77,6 +79,7 @@ export default function Methodologie({
   onCarnetFaute,
   onOuvrirSynthese,
   onBoussoleEvent,
+  onOuvrirBriques,
 }: Props) {
   const [ecran, setEcran] = useState<Ecran>(modeInitial);
   const [q, setQ] = useState(0);
@@ -650,6 +653,21 @@ export default function Methodologie({
               <h2 className="font-naskh mt-1 text-xl font-bold">أيّ مهارة أريد أن أتدرّب عليها؟</h2>
               <button onClick={startDiagnostic} className="btn btn-ghost mt-4 w-full">أجرّب التشخيص</button>
             </div>
+            {onOuvrirBriques && (
+              <button
+                onClick={onOuvrirBriques}
+                className="card flex w-full items-center justify-between p-4 text-right hover:border-forest"
+              >
+                <span>
+                  <b className="text-sm text-forest">البوصلة 1-2-3 · ركّب الجواب</b>
+                  <span className="mt-1 block text-xs text-mute">
+                    التقط الفعل، اثبت الدليل، ثمّ ابنِ الجواب ببنى جاهزة — بلا كتابة.
+                  </span>
+                </span>
+                <span className="text-mute">←</span>
+              </button>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-2">
               <button
                 onClick={() => setEcran('operations')}
@@ -1178,7 +1196,7 @@ export default function Methodologie({
           </section>
         )}
 
-        {aideBoussole && <AideBoussole document={exoU1.document} verbe={exoU1.verbe} onBoussoleEvent={onBoussoleEvent} onFermer={() => { setAideBoussole(false); requestAnimationFrame(() => ouvrirAide.current?.focus({ preventScroll: true })); }} />}
+        {aideBoussole && <AideBoussole document={exoU1.document} verbe={exoU1.verbe} lessonId={'d1-u1-l1-expression-genique'} ongletInitial="labo" onBoussoleEvent={onBoussoleEvent} onFermer={() => { setAideBoussole(false); requestAnimationFrame(() => ouvrirAide.current?.focus({ preventScroll: true })); }} />}
 
         {ecran === 'redaction' && redactionSource === 'enquete' && (
           <section className="card p-6">
