@@ -27,6 +27,10 @@ import CarteExamens from './CarteExamens';
 import MascotteKunz from './MascotteKunz';
 import CarteHorsLigne from './CarteHorsLigne';
 import CarteMesurePilote from './CarteMesurePilote';
+// v0.11 — deux cartes sœurs, ajoutées sans toucher à l'existant : les boucliers de régularité
+// et les trophées par verbe. Aucune note, aucun pourcentage, aucune comparaison.
+import CarteBoucliersSM2 from './CarteBoucliersSM2';
+import CarteTropheesTactiques from './CarteTropheesTactiques';
 import CarteProfilCompetences from './CarteProfilCompetences';
 
 interface ImportEnAttente {
@@ -350,6 +354,9 @@ export default function Ana({
       {/* شارات المحتوى (P3.2) */}
       <CarteBadges etat={etat} />
 
+      {/* دروع الانتظام (v0.11) — 4 أيام من 7 تعطي درعًا، والدرع لا يضيع */}
+      <CarteBoucliersSM2 etat={etat} />
+
       {/* سجلّ الامتحانات التجريبية (P1.4) */}
       <CarteExamens etat={etat} onAllerExercices={onAllerExercices} />
 
@@ -607,6 +614,9 @@ export default function Ana({
       <CarteHorsLigne />
 
       <CarteProfilCompetences evaluations={evaluationsEntraineur} onOuvrirEntraineur={onOuvrirEntraineur} />
+
+      {/* أوسمة الأفعال (v0.11) — كلّ فعل عملته في 1-2-3 */}
+      <CarteTropheesTactiques etat={etat} />
 
       <CarteMesurePilote />
 

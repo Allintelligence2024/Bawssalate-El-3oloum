@@ -103,6 +103,14 @@ export interface CarteKafaa {
   fragile?: boolean;
 }
 
+// ───────────── v0.11 : constructeur de réponse par briques ─────────────
+// Trois rôles académiques + un rôle « piège » : c'est la structure qu'attend le correcteur
+// ([الملاحظة/الدليل] + [التفسير العلمي] + [الاستنتاج]). Le rôle, jamais le texte libre, est
+// ce que l'application vérifie — d'où le « clic seulement » de bout en bout.
+export type BriqueRole = 'observation' | 'comparaison' | 'interpretation' | 'conclusion' | 'piege';
+
+export type StatutEditorial = 'a_valider_enseignant' | 'actif';
+
 // مربّط الوحدة (جسر) — كتابة تركيبية من الذاكرة
 export interface JalonUnite {
   fait: boolean;
@@ -206,6 +214,29 @@ export interface Etat {
   fakh?: Record<string, true>;
   fakhSeries?: Record<string, true>;
   bacEtapes?: Record<string, 3 | 2 | 0>;
+  /**
+   * « بطاقة الدرس » (v0.11) — fiche de poche gagnée à la fin des six nœuds d'une leçon.
+   * Les trois points sont figés au moment du gain : la carte reste lisible hors ligne même si
+   * la fiche dorée évolue, et elle ne se régénère jamais à la place de l'élève.
+   */
+  cartesLecons?: Record<string, { gagneeLe: string; points: [string, string, string]; version: 1 }>;
+  /** Tentatives d'assemblage par briques (v0.11) — la dernière par clé de consigne. Local uniquement. */
+  briques?: Record<string, {
+    jeuId: string;
+    rolesChoisis: BriqueRole[];
+    manquants: BriqueRole[];
+    complete: boolean;
+    le: string;
+    avant?: number;
+    apres?: number;
+  }>;
+  /** Sujets Bac ouverts malgré une couverture faible (v0.11) : le choix est tracé, jamais jugé. */
+  derogationsSujets?: Record<string, string>;
+  /** Trophées tactiques (v0.11) : verbes travaillés en 1-2-3, par verbe de consigne. */
+  trophees?: Record<string, { le: string; n: number }>;
+  /** « تحدّي 60 ثانية » (v0.11) : séries rapides jouées, par date ISO. */
+  defis60?: string[];
+
   bacExercices?: Record<string, true>; // تمارين أُكملت كلّ خطواتها (مفتاح: `${sujetId}:${numéro}`)
 }
 
@@ -225,7 +256,9 @@ export function progressionVierge(): ProgressionLecon {
 
 export function etatVierge(): Etat {
   return {
-    version: 2,
+    // v3 (2026-11-26) : cartes de leçons, briques, dérogations de sujets, trophées, défis 60 s.
+    // Tous ces champs sont optionnels : un état v2 reste lisible, cf. `migrerEtat`.
+    version: 3,
     progression: {},
     jalons: {},
     notes: [],

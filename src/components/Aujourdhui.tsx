@@ -1,9 +1,14 @@
 // اليوم — مهمّة واحدة فقط. أولوية: استئناف → استرجاع مستحق → حصّة جديدة → راحة.
+//
+// v0.11 : la carte d'entrée ne promet plus « 46 minutes » mais une mission de 3 à 5 minutes,
+// avec ce que l'élève saura faire à la fin. La séance complète reste accessible depuis le
+// parcours de la leçon, jamais imposée ici.
+import { useState } from 'react';
 
 import { competenceDue, prochaineAction, positionClasse, rythmeSemaine, itemsFaits, planIntensif, quotaDe } from '../utils/moteur';
+import { libelleMission, missionDuJour, sousTitreMission, type TypeMission } from '../utils/planDuJour';
 import { CHEMIN, UNITE_PAR_ID, titreItem, titreLecon, uniteDeItem } from '../data/programme';
 import { aujourdhui, compteLeconsAdj, nb, nbMin, formatJourAr, salue } from '../utils/dates';
-import { DUREE_TOTALE_MIN } from '../data/protocole';
 import { messageAccueil } from '../utils/diagnostic';
 import { etapesKouest, etapesReussies, leconDeLaQuete } from '../utils/kouest';
 import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
@@ -33,6 +38,21 @@ interface Props {
   onChoisirDefi?: (type: TypeDefi) => void;
   /** كويست اليوم : la porte d'entrée (3 min) avant la séance complète. */
   onDemarrerKouest?: (lessonId: string) => void;
+  /** « تحدّي 60 ثانية » (v0.11) — format court, optionnel. */
+  onDefi60?: () => void;
+}
+
+const ETIQUETTES_MISSION: Record<TypeMission, string> = {
+  noeud: 'خطوة واحدة',
+  jalon: 'جسر الوحدة',
+  revision: 'استرجاع',
+  entrainement_sujet: 'تدريب قصير',
+  repos: 'راحة',
+  fini: 'مراجعة',
+};
+
+function etiquetteMission(type: TypeMission): string {
+  return ETIQUETTES_MISSION[type];
 }
 
 export default function Aujourdhui({
@@ -46,8 +66,11 @@ export default function Aujourdhui({
   onDemarrerRevueCroisee,
   onChoisirDefi,
   onDemarrerKouest,
+  onDefi60,
 }: Props) {
   const action = prochaineAction(etat);
+  const [reposChoisi, setReposChoisi] = useState(false);
+  const planMission = missionDuJour(etat);
   const competence = competenceDue(etat);
   const croisee = disponibiliteCroisee(etat);
   const leconsCroisees =
@@ -71,34 +94,28 @@ export default function Aujourdhui({
     (p) => p.statut !== 'terminee' && !p.lue
   ).length;
 
-  function titreBouton(): string {
-    switch (action.type) {
-      case 'reprise':
-        return 'متابعة الدرس';
-      case 'rappel':
-        return 'ابدأ الاسترجاع';
-      case 'nouvelle':
-        return 'ابدأ الحصّة';
-      case 'repos':
-        return action.bonusDispo ? 'حصّة إضافية (واحدة اليوم)' : 'حسنًا — راحة';
-      case 'fini':
-        return 'مراجعة ما أُنجز';
-      default:
-        return '';
-    }
-  }
-
-  function principale() {
-    switch (action.type) {
-      case 'reprise':
-      case 'nouvelle':
-        onOuvrirItem(action.item);
+  /** Un seul geste : la mission du jour. Aucun écran intermédiaire, aucun choix à faire. */
+  function lancerMission(): void {
+    const m = planMission.mission;
+    switch (m.type) {
+      case 'noeud':
+        if (m.lessonId) onOuvrirItem({ type: 'lecon', id: m.lessonId });
         break;
-      case 'rappel':
-        onDemarrerRevision(action.lessonIds);
+      case 'jalon':
+        onVoirUnite(etat.progression ? m.cle.replace('jalon:', '') : 'u1');
+        break;
+      case 'revision':
+        if (m.lessonIds?.length) onDemarrerRevision(m.lessonIds);
+        break;
+      case 'entrainement_sujet':
+        onOuvrirMethodologie();
         break;
       case 'repos':
-        if (action.bonusDispo && action.prochaineItem) onOuvrirItem(action.prochaineItem);
+        if (action.type === 'repos' && action.bonusDispo && action.prochaineItem) {
+          onOuvrirItem(action.prochaineItem);
+        } else {
+          setReposChoisi(true);
+        }
         break;
       case 'fini':
         onVoirUnite('u1');
@@ -159,6 +176,19 @@ export default function Aujourdhui({
         </section>
       )}
 
+      {/* تحدّي 60 ثانية (v0.11) — ضدّ الملل، بلا رهان وبلا حساب */}
+      {onDefi60 && (
+        <section className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-line bg-paper px-4 py-3">
+          <div className="min-w-0">
+            <p className="oeil">تحدّي 60 ثانية</p>
+            <p className="petit doux mt-0.5">دقيقة واحدة من أسئلة وحدتك — للتنشيط فقط، بلا خسارة.</p>
+          </div>
+          <button type="button" className="btn-mini shrink-0" onClick={onDefi60}>
+            ابدأ
+          </button>
+        </section>
+      )}
+
       {/* المراجعة المكثّفة (P2.3): خطة الأسبوع — تظهر فقط عند تفعيلها */}
       {plan && (
         <section className="mb-4 rounded-3xl border border-gold-soft bg-gold-soft/40 p-5">
@@ -206,129 +236,43 @@ export default function Aujourdhui({
         </section>
       )}
 
-      {/* بطاقة المهمّة الواحدة — الورقة الرئيسة في الأطلس */}
-      <section className="card animate-lever relative overflow-hidden p-6">
-        {/* شريط علوي متدرّج: غابة ← ذهب (بوصلة الأطلس) */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-l from-forest via-forest-deep to-gold"
-        />
-        {/* وشم بوصلة خفيف في الزاوية */}
-        <svg
-          aria-hidden
-          className="pointer-events-none absolute -start-6 -top-6 h-28 w-28 text-forest/[0.05]"
-          viewBox="0 0 100 100"
-          fill="none"
-        >
-          <circle cx="50" cy="50" r="46" stroke="currentColor" strokeWidth="2" />
-          <circle cx="50" cy="50" r="34" stroke="currentColor" strokeWidth="1" strokeDasharray="3 4" />
-          <path d="M50 8 L58 46 L92 50 L58 54 L50 92 L42 54 L8 50 L42 46 Z" fill="currentColor" opacity="0.5" />
-        </svg>
-        <div className="relative">
-        {action.type === 'reprise' && (
-          <>
-            <p className="eyebrow">استئناف</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold leading-snug">أكمل ما بدأته</h2>
-            <p className="mt-2 text-sm leading-relaxed text-mute">
-              «{titreItem(action.item)}» — توقّفت في المرحلة{' '}
-              {nb((etat.progression[action.item.type === 'lecon' ? action.item.id : '']?.phases ?? []).length + 1)}{' '}
-              من 6. أين توقّفت، نُحفظ.
-            </p>
-          </>
-        )}
-
-        {action.type === 'rappel' && (
-          <>
-            <p className="eyebrow">قبل الجديد</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold leading-snug">
-              {compteLeconsAdj(
-                action.lessonIds.length,
-                'مستحقّ للاسترجاع',
-                'مستحقّان للاسترجاع',
-                'مستحقّة للاسترجاع',
-                'مستحقًّا للاسترجاع'
-              )}
-            </h2>
-            <ul className="mt-3 space-y-1.5">
-              {action.lessonIds.slice(0, 3).map((id) => (
-                <li key={id} className="flex items-center gap-2 text-sm text-ink-soft">
-                  <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                  {titreItem({ type: 'lecon', id })}
-                </li>
-              ))}
-              {action.lessonIds.length > 3 && (
-                <li className="text-xs text-mute">و {nb(action.lessonIds.length - 3)} أخرى...</li>
-              )}
-            </ul>
-            <p className="mt-3 text-xs leading-relaxed text-mute">
-              الاسترجاع يأتي قبل أي جديد — هذه هي القاعدة الأولى للطريقة.
-            </p>
-          </>
-        )}
-
-        {action.type === 'nouvelle' && (
-          <>
-            <p className="eyebrow">حصّة اليوم</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold leading-snug">
-              {titreItem(action.item)}
-            </h2>
-            {(() => {
-              const u = uniteDeItem(action.item);
-              if (!u) return null;
-              return (
-                <p className="mt-2 text-sm leading-relaxed text-mute">
-                  الوحدة {nb(u.numero)}: {u.titre} · {u.fenetreAr}
-                </p>
-              );
-            })()}
-            <p className="mt-3 text-xs leading-relaxed text-mute">
-              {nb(DUREE_TOTALE_MIN)} دقيقة، 6 مراحل، بوّابة في كل مرحلة. لا زر تخطّي — الجدية هي
-              سرّ الطريقة.
-            </p>
-          </>
-        )}
-
-        {action.type === 'repos' && (
-          <>
-            <p className="eyebrow">يكفي اليوم</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold leading-snug">راحة مشروعة</h2>
-            <p className="mt-2 text-sm leading-relaxed text-mute">
-              أنجزت حصّة اليوم. النوم جزء من التثبيت — المراجعة الأولى بعد الحصّة تجلس في الذاكرة
-              أثناء الراحة.
-            </p>
-            {action.bonusDispo && action.prochaineItem && (
-              <p className="mt-3 text-xs leading-relaxed text-mute">
-                عندك طاقة لحصّة إضافية؟ واحدة فقط، ولا تُحسب من حصص الغد.
-              </p>
-            )}
-            {!action.bonusDispo && (
-              <p className="mt-3 text-xs leading-relaxed text-mute">
-                {quota.bonus ? 'استعملت حصّتك الإضافية اليوم. نلتقي غدًا.' : 'حصّة واحدة في اليوم هي إيقاع هدفك. نلتقي غدًا.'}
-              </p>
-            )}
-          </>
-        )}
-
-        {action.type === 'fini' && (
-          <>
-            <p className="eyebrow">النهاية… والبداية</p>
-            <h2 className="font-naskh mt-2 text-2xl font-bold leading-snug">أتممت كل البرنامج</h2>
-            <p className="mt-2 text-sm leading-relaxed text-mute">
-              58 درسًا و11 جسرًا. الآن وقت الاسترجاع والتدريبات — 620 سؤالًا تنتظرك في تبويب
-              «تدريبات».
-            </p>
-          </>
-        )}
-
-        <button onClick={principale} className="btn btn-primary aurora mt-5 w-full overflow-hidden text-base">
-          {titreBouton()}
-        </button>
-        {action.type === 'rappel' && (
-          <p className="mt-3 text-center text-xs text-mute">
-            لن تُفتح أي حصّة جديدة قبل إنهاء الاسترجاع.
-          </p>
-        )}
+      {/* المهمّة الواحدة · v0.11 — 3 إلى 5 دقائق، بلا جدار وبلا طابور */}
+      <section className="carte mb-4" aria-label="مهمّة اليوم">
+        <div className="rangee rangee--entre">
+          <p className="oeil">مهمّة اليوم · {nb(planMission.mission.minutes)} دقائق</p>
+          <span
+            className={`mention ${
+              planMission.mission.type === 'repos' || planMission.mission.type === 'fini'
+                ? 'mention--vert'
+                : 'mention--or'
+            }`}
+          >
+            {etiquetteMission(planMission.mission.type)}
+          </span>
         </div>
+        <p className="carte__titre mt-1">{planMission.mission.titre}</p>
+        <p className="petit mt-1">في النهاية تعرف: {planMission.mission.savoirFaire}</p>
+        <p className="petit doux mt-1">{planMission.mission.pourquoi}</p>
+
+        <button type="button" className="btn--primaire mt-3 w-full" onClick={lancerMission}>
+          {libelleMission(planMission.mission)}
+        </button>
+
+        <p className="petit doux mt-2 text-center">{sousTitreMission(planMission)}</p>
+
+        {reposChoisi ? (
+          <p role="status" className="mt-2 rounded-xl border border-line bg-bg px-3 py-2 text-center text-xs font-bold text-ink-soft">
+            سجّلنا راحتك — المهمّة تبقى هنا غدًا، بلا حساب.
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="btn-mini mt-2 w-full"
+            onClick={() => setReposChoisi(true)}
+          >
+            يكفي اليوم
+          </button>
+        )}
       </section>
 
       {/* تحدّي الأسبوع (P3.2) — يظهر بعد المهمّة الواحدة، ولا يُطلب حين يكون استرجاع مستحقًّا */}

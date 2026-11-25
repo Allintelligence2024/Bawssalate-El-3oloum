@@ -15,6 +15,11 @@ import {
 } from '../utils/entrainement';
 import SimulationEpreuve from './SimulationEpreuve';
 import { nb } from '../utils/dates';
+// v0.11 — méthode 1-2-3 dans le sujet : tiroir source vivant, accès jamais verrouillé.
+import TiroirBoussole from './TiroirBoussole';
+import type { AccesSujetCalcule } from '../utils/accesSujets';
+import { attenduDe } from '../data/methodologie/attenduVerbes';
+import type { Etat } from '../types';
 
 interface Props {
   sujet: SujetOfficiel;
@@ -25,6 +30,14 @@ interface Props {
   onEvaluer: (cle: string, niveau: NiveauMaitrise) => void;
   onBrouillon: (cle: string, texte: string) => void;
   onFermer: () => void;
+  /** Accès calculé (couverture, recommandation) — jamais un verrou, voir utils/accesSujets. */
+  acces?: AccesSujetCalcule;
+  /** « متابعة رغم ذلك » : l'appelant trace le choix, l'écran ne juge pas. */
+  onPasseOutre?: () => void;
+  /** Ouvre l'atelier 1-2-3 (briques) — pilote sur un sujet, extensible ensuite. */
+  onOuvrirBriques?: () => void;
+  /** État : sert au tiroir pour montrer les cartes de leçons gagnées. */
+  etat?: Etat;
 }
 
 const LIBELLE_NIVEAU: Record<NiveauMaitrise, string> = {
@@ -39,7 +52,18 @@ const LIBELLE_STATUT = {
   solide: 'متين — يمكنك الانتقال',
 } as const;
 
-export default function EntraineurSujet({ sujet, evaluations, brouillons, onEvaluer, onBrouillon, onFermer }: Props) {
+export default function EntraineurSujet({
+  sujet,
+  evaluations,
+  brouillons,
+  onEvaluer,
+  onBrouillon,
+  onFermer,
+  acces,
+  onPasseOutre,
+  onOuvrirBriques,
+  etat,
+}: Props) {
   const grille = construireGrille(sujet);
   const resultat = calculerResultat(grille, evaluations);
   const [aide, setAide] = useState<string | null>(null);
@@ -47,6 +71,8 @@ export default function EntraineurSujet({ sujet, evaluations, brouillons, onEval
   const [corrigeVisible, setCorrigeVisible] = useState<string | null>(null);
   // Simulation d'épreuve (§10.4) : même sujet, même grille 0/1/2, mais sous contrainte de temps.
   const [simulation, setSimulation] = useState(false);
+  // Tiroir « source vivant » ouvert pour une consigne précise (null = fermé).
+  const [tiroir, setTiroir] = useState<{ texte: string; verbe: string } | null>(null);
   const reprises = priorites(grille, evaluations);
 
   if (simulation) {
@@ -78,6 +104,22 @@ export default function EntraineurSujet({ sujet, evaluations, brouillons, onEval
         هذا تدريب على المراقبة الذاتية، ليس تصحيحًا رسميًّا ولا نقطة بكالوريا. لا يُقفل عليك شيء:
         يمكنك تجاوز أيّ تعليمة والعودة إليها لاحقًا.
       </p>
+
+      {/* Accès au sujet : recommandation claire, jamais un verrou (v0.11). */}
+      {acces && !acces.passeOutre && acces.recommandation && (
+        <div className="card border border-gold/40 bg-gold-soft/30 p-3">
+          <p className="text-[11.5px] font-bold leading-relaxed text-forest-deep">
+            {acces.recommandation}
+          </p>
+          <button
+            type="button"
+            onClick={() => onPasseOutre?.()}
+            className="chip mt-2 text-[11px] font-bold"
+          >
+            متابعة رغم ذلك
+          </button>
+        </div>
+      )}
 
       {/* Résultat : un statut qualitatif, jamais un pourcentage présenté comme une note. */}
       <div className="card p-4">
@@ -128,11 +170,31 @@ export default function EntraineurSujet({ sujet, evaluations, brouillons, onEval
               </button>
               {consigne.texte}
             </p>
-            {aide === cle && consigne.attenteDuVerbe && (
+            {aide === cle && (consigne.attenteDuVerbe ?? attenduDe(consigne.verbe)?.attendu) && (
               <p className="mt-1 rounded-lg bg-sage-soft/50 px-2.5 py-1.5 text-xs text-forest-deep">
-                ما يُنتظر من هذا الفعل: {consigne.attenteDuVerbe}
+                ما يُنتظر من هذا الفعل: {consigne.attenteDuVerbe ?? attenduDe(consigne.verbe)?.attendu}
               </p>
             )}
+
+            {/* البوصلة 1-2-3 : la méthode applicable à cette consigne, sans quitter le sujet. */}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setTiroir({ texte: consigne.texte, verbe: consigne.verbe })}
+                className="chip text-[11px] font-bold"
+              >
+                افتح البوصلة
+              </button>
+              {onOuvrirBriques && (
+                <button
+                  type="button"
+                  onClick={onOuvrirBriques}
+                  className="chip text-[11px] font-bold"
+                >
+                  ابنِ الجواب · 1-2-3
+                </button>
+              )}
+            </div>
 
             {/* Temps 2 : rédaction locale */}
             <label className="mt-2 block">
@@ -187,6 +249,15 @@ export default function EntraineurSujet({ sujet, evaluations, brouillons, onEval
           </section>
         );
       })}
+
+      {tiroir && (
+        <TiroirBoussole
+          document={`${sujet.id} · ${tiroir.texte}`}
+          verbe={tiroir.verbe}
+          etat={etat}
+          onFermer={() => setTiroir(null)}
+        />
+      )}
     </div>
   );
 }

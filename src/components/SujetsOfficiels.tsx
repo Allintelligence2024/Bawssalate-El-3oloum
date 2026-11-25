@@ -12,6 +12,9 @@ import { estEntrainable, type NiveauMaitrise } from '../utils/entrainement';
 import { UNITES } from '../data/programme';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
+// v0.11 — accès jamais verrouillé + atelier 1-2-3 par consigne.
+import { accesSujet } from '../utils/accesSujets';
+import type { Etat } from '../types';
 
 interface Props {
   onOuvrirSynthese: (s: SituationSynthese) => void;
@@ -24,6 +27,12 @@ interface Props {
   brouillonsSujets?: Record<string, Record<string, string>>;
   onEvaluerConsigne?: (sujetId: string, cle: string, niveau: NiveauMaitrise) => void;
   onBrouillonConsigne?: (sujetId: string, cle: string, texte: string) => void;
+  /** v0.11 — état de l'élève (couverture, cartes de leçons) pour l'accès et le tiroir. */
+  etat?: Etat;
+  /** « متابعة رغم ذلك » : l'appelant trace le choix. */
+  onPasseOutreSujet?: (sujetId: string) => void;
+  /** Ouvre l'atelier de briques du sujet (gabarit pilote). */
+  onOuvrirBriques?: (sujetId: string) => void;
 }
 
 /** ما يتوقّعه المصحّح من كلّ فعل — صياغة قصيرة، لا نسبة ولا سلّم */
@@ -55,7 +64,19 @@ function titreUnite(id: string): string {
   return u ? `الوحدة ${nb(u.numero)} — ${u.titre}` : id;
 }
 
-function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
+function Sujet({
+  sujet,
+  onOuvrirSynthese,
+  onOuvrirRecherche,
+  onOuvrirPasAPas,
+  maitriseSujets,
+  brouillonsSujets,
+  onEvaluerConsigne,
+  onBrouillonConsigne,
+  etat,
+  onPasseOutreSujet,
+  onOuvrirBriques,
+}: { sujet: SujetOfficiel } & Omit<Props, 'onFermer'>) {
   const [ouvert, setOuvert] = useState<VerbeConsigne | null>(null);
   const [montrerReponses, setMontrerReponses] = useState(false);
   const [enModeEntrainement, setEnModeEntrainement] = useState(false);
@@ -73,6 +94,10 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, ma
           onEvaluer={(cle, niveau) => onEvaluerConsigne(sujet.id, cle, niveau)}
           onBrouillon={(cle, texte) => onBrouillonConsigne(sujet.id, cle, texte)}
           onFermer={() => setEnModeEntrainement(false)}
+          acces={etat ? accesSujet(etat, sujet.id) : undefined}
+          onPasseOutre={onPasseOutreSujet ? () => onPasseOutreSujet(sujet.id) : undefined}
+          onOuvrirBriques={onOuvrirBriques ? () => onOuvrirBriques(sujet.id) : undefined}
+          etat={etat}
         />
       ) : (
       <>
@@ -199,7 +224,19 @@ function Sujet({ sujet, onOuvrirSynthese, onOuvrirRecherche, onOuvrirPasAPas, ma
   );
 }
 
-export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, onFermer, onOuvrirPasAPas, maitriseSujets, brouillonsSujets, onEvaluerConsigne, onBrouillonConsigne }: Props) {
+export default function SujetsOfficiels({
+  onOuvrirSynthese,
+  onOuvrirRecherche,
+  onFermer,
+  onOuvrirPasAPas,
+  maitriseSujets,
+  brouillonsSujets,
+  onEvaluerConsigne,
+  onBrouillonConsigne,
+  etat,
+  onPasseOutreSujet,
+  onOuvrirBriques,
+}: Props) {
   const [annee, setAnnee] = useState<number>(ANNEES_STRUCTUREES[0]);
   const [sujetId, setSujetId] = useState<string | null>(null);
   const deAnnee = SUJETS_OFFICIELS.filter((s) => s.annee === annee);
@@ -250,6 +287,9 @@ export default function SujetsOfficiels({ onOuvrirSynthese, onOuvrirRecherche, o
               brouillonsSujets={brouillonsSujets}
               onEvaluerConsigne={onEvaluerConsigne}
               onBrouillonConsigne={onBrouillonConsigne}
+              etat={etat}
+              onPasseOutreSujet={onPasseOutreSujet}
+              onOuvrirBriques={onOuvrirBriques}
             />
           ) : <p className="text-sm text-mute">لا موضوع.</p>}
 

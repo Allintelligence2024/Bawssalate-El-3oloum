@@ -11,6 +11,11 @@ import {
 } from './utils/storage';
 import { verifierCoherence } from './utils/coherenceStockage';
 import { consignerCompteur } from './utils/telemetrie';
+import { attribuerCarteLecon } from './utils/etat';
+import { enregistrerTentative } from './utils/amelioration';
+import { cleEvenement, consignerTrophee, dejaVu, marquerVu, tentative } from './utils/evenements';
+import type { EvaluationBriques } from './utils/briques';
+import { tracerDerogation } from './utils/accesSujets';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
@@ -46,6 +51,12 @@ const ExamBlanc = lazy(() => import('./components/ExamBlanc'));
 const SyntheseLibre = lazy(() => import('./components/SyntheseLibre'));
 const Ana = lazy(() => import('./components/Ana'));
 const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
+// v0.11 — la leçon en six pas, la réparation, et la méthode 1-2-3 : trois écrans paresseux
+// (budget hors-ligne : rien de tout cela n'entre dans le chunk de démarrage).
+const MicroNoeuds = lazy(() => import('./components/MicroNoeuds'));
+const JourneeReparation = lazy(() => import('./components/JourneeReparation'));
+const EcranBriques = lazy(() => import('./components/EcranBriques'));
+const Defi60 = lazy(() => import('./components/Defi60'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
@@ -86,6 +97,10 @@ type Mode =
   | { type: 'immunite' }
   | { type: 'atelier'; domaineId: string }
   | { type: 'protocole'; lessonId: string }
+  | { type: 'noeuds'; lessonId: string }
+  | { type: 'reparation'; lessonId: string }
+  | { type: 'briques'; uniteId?: string; sujetId?: string }
+  | { type: 'defi60' }
   | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
   | { type: 'confidentialite' }
   | { type: 'mourchid' }
@@ -513,7 +528,9 @@ export default function App() {
       return suivant;
     });
     setLeconLue(false);
-    setMode({ type: 'protocole', lessonId: item.id });
+    // v0.11 : on ouvre la carte des six micro-nœuds (3–5 min chacun) ; l'élève choisit
+    // d'enchaîner ou de s'arrêter — la séance complète reste accessible depuis cet écran.
+    setMode({ type: 'noeuds', lessonId: item.id });
   }
 
   // ───────────── ouverture depuis la الخريطة الذهنية ─────────────
@@ -550,6 +567,12 @@ export default function App() {
 
   function onProgresse(lessonId: string, p: Etat['progression'][string]): void {
     setEtat((prev) => ({ ...prev, progression: { ...prev.progression, [lessonId]: p } }));
+    // Fin des six nœuds → « بطاقة الدرس », une seule fois, figée au moment du gain.
+    // Import dynamique : la fiche dorée (~120 Kio) ne doit pas entrer dans la coquille, et
+    // l'attribution est idempotente (`attribuerCarteLecon`), donc un double appel est sans effet.
+    void import('./utils/pointsCarteLecon').then(({ pointsCarteLecon }) => {
+      setEtat((actuel) => attribuerCarteLecon(actuel, lessonId, pointsCarteLecon(lessonId), new Date().toISOString()));
+    });
   }
 
   function onTerminer(lessonId: string, p: Etat['progression'][string]): void {
@@ -559,6 +582,33 @@ export default function App() {
       revisions: prev.revisions,
     }));
     setMode(retourMindmap ? { type: 'mindmap' } : null);
+  }
+
+  // ───────────── v0.11 : briques, événements, dérogations ─────────────
+
+  /** Dernière tentative par jeu + trophée par verbe. Evidence ≠ Completion : rien d'autre. */
+  function onTentativeBriques(jeuId: string, verbe: string, evaluation: EvaluationBriques, le: string): void {
+    setEtat((prev) => {
+      const avecTentative = enregistrerTentative(prev, jeuId, evaluation, le);
+      return {
+        ...avecTentative,
+        trophees: consignerTrophee(avecTentative, verbe, le),
+      };
+    });
+  }
+
+  /** Événement local : il ne touche ni `phases`, ni `statut`, ni `jalons`. */
+  function onEvenement(evt: ReturnType<typeof tentative>): void {
+    setEtat((prev) => {
+      const cle = cleEvenement(evt);
+      if (dejaVu(prev, cle)) return prev;
+      return { ...prev, boussoleEventsSeen: marquerVu(prev, cle) };
+    });
+  }
+
+  /** « متابعة رغم ذلك » : on trace le choix de l'élève, on ne le lui reproche jamais. */
+  function onDerogationSujet(sujetId: string): void {
+    setEtat((prev) => tracerDerogation(prev, sujetId, new Date().toISOString()));
   }
 
   // ───────────── الاسترجاع ─────────────
@@ -787,6 +837,7 @@ export default function App() {
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
             onBoussoleEvent={onBoussoleEvent}
+            onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
           />
         </Suspense>
       );
@@ -811,6 +862,9 @@ export default function App() {
           onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
           maitriseSujets={etat.maitriseSujets}
           brouillonsSujets={etat.brouillonsSujets}
+          etat={etat}
+          onPasseOutreSujet={onDerogationSujet}
+          onOuvrirBriques={(sujetId) => setMode({ type: 'briques', sujetId })}
           onEvaluerConsigne={(sujetId, cle, niveau) =>
             setEtat((prev) => ({
               ...prev,
@@ -1087,6 +1141,90 @@ export default function App() {
         </>
       );
     }
+    // ── v0.11 : la leçon en six micro-nœuds (3–5 min chacun) ──
+    if (mode.type === 'noeuds') {
+      return (
+        <>
+          <MicroNoeuds
+            etat={etat}
+            lessonId={mode.lessonId}
+            onOuvrirNoeud={() => setMode({ type: 'protocole', lessonId: mode.lessonId })}
+            onOuvrirSeanceComplete={() => setMode({ type: 'protocole', lessonId: mode.lessonId })}
+            onReparation={() => setMode({ type: 'reparation', lessonId: mode.lessonId })}
+            onLireLecon={() => setOuverteLecon(mode.lessonId)}
+            onFermer={() => setMode(null)}
+          />
+          {ouverteLecon && (
+            <div className="fixed inset-0 z-50 overflow-y-auto bg-cream">
+              <LecteurLecon
+                lessonId={ouverteLecon}
+                onFermer={() => {
+                  setOuverteLecon(null);
+                  setLeconLue(true);
+                }}
+              />
+            </div>
+          )}
+        </>
+      );
+    }
+    // ── v0.11 : جولة التصحيح — jamais d'écran d'échec, une réparation courte ──
+    if (mode.type === 'reparation') {
+      return (
+        <JourneeReparation
+          lessonId={mode.lessonId}
+          onTermine={() => setMode({ type: 'protocole', lessonId: mode.lessonId })}
+          onFermer={() => setMode({ type: 'noeuds', lessonId: mode.lessonId })}
+        />
+      );
+    }
+    // ── v0.11 : البوصلة 1-2-3 — l'atelier de construction de réponse ──
+    if (mode.type === 'briques') {
+      return (
+        <EcranBriques
+          etat={etat}
+          uniteId={mode.uniteId}
+          sujetId={mode.sujetId}
+          onFermer={() => setMode(null)}
+          onTentative={(jeu, ids, evaluation) => {
+            const le = new Date().toISOString();
+            onTentativeBriques(jeu.id, jeu.verbe, evaluation, le);
+            onEvenement(
+              tentative({
+                attemptId: `${jeu.id}:${ids.length}:${evaluation.score}`,
+                origine: 'briques',
+                mode: 'briques',
+                exerciceId: jeu.id,
+                uniteId: jeu.uniteId ?? 'u1',
+                verbe: jeu.verbe,
+                titre: jeu.question,
+                reussi: evaluation.complete,
+                criteres: evaluation.rolesChoisis,
+                ...(evaluation.critereNomme ? { erreurTag: evaluation.critereNomme } : {}),
+                timestamp: le,
+              }),
+            );
+          }}
+        />
+      );
+    }
+    // ── v0.11 : تحدّي 60 ثانية ──
+    if (mode.type === 'defi60') {
+      return (
+        <Defi60
+          etat={etat}
+          onItemReussi={onItemReussi}
+          onFermer={() => setMode(null)}
+          onTermine={() =>
+            setEtat((prev) => ({
+              ...prev,
+              // On garde la trace des 60 dernières séries : une date, jamais un score.
+              defis60: [...(prev.defis60 ?? []), new Date().toISOString()].slice(-60),
+            }))
+          }
+        />
+      );
+    }
     if (mode.type === 'revision') {
       const diagnostics: Record<string, string> = {};
       for (const id of mode.lessonIds) {
@@ -1249,6 +1387,7 @@ export default function App() {
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
           onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
           onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
+          onDefi60={() => setMode({ type: 'defi60' })}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
@@ -1307,6 +1446,7 @@ export default function App() {
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
             onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
             onBoussoleEvent={onBoussoleEvent}
+            onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
           />
         </Suspense>
       )}

@@ -1,0 +1,60 @@
+// Jeux de briques — sujet Bac pilote 2025-1 (الموضوع الأول، دورة عادية).
+//
+// Chaque brique reprend un fragment **verbatim** des éléments de réponse du corrigé officiel
+// (`src/data/corriges/c2025.ts`, A-009) ou du contexte du sujet
+// (`src/data/sujets/s2024_2026.ts`). Rien n'est rédigé de neuf côté science.
+//
+// Statut : `a_valider_enseignant`. Le découpage en briques est un choix éditorial (quels
+// fragments vont dans « observation » et lesquels dans « interprétation ») : il doit être relu
+// avant d'être présenté comme un corrigé. L'élève, lui, voit la mention dans le tiroir.
+
+import type { JeuBriques } from './types';
+import { brique } from './types';
+
+const SOURCE = 'corrigé 2025-1 · A-009';
+
+export const JEUX_SUJET_2025_1: JeuBriques[] = [
+  {
+    id: 'jb:2025-1:1:1',
+    document:
+      'نصّ قصير: بروتينات RIP تقطع رابطة أدينين–ريبوز الذهنية في بعض ARN فتفقده بنيته ووظيفته؛ تُستعمل ضدّ بعض الأورام.',
+    question:
+      'اكتب نصًّا علميًّا توضّح فيه دور كلّ نوع من ARN في تركيب البروتين وتأثير بروتينات RIP على الخلايا السرطانية.',
+    verbe: 'نصّ علمي',
+    attendu: 'مقدّمة · عرض بالآليات وروابطها · خاتمة تجيب عن الإشكال.',
+    structure: ['observation', 'comparaison', 'interpretation', 'conclusion'],
+    uniteId: 'u1',
+    statut: 'a_valider_enseignant',
+    briques: [
+      brique('jb:2025-1:1:1', 1, 'observation', 'ARNm وARNr وARNt ثلاث جزيئات ARN تشارك في تركيب البروتين؛ RIP يكسر الرابطة أدنين–ريبوز فيفقد ARN بنيته.', 'سند الموضوع · 2025-1', 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 2, 'comparaison', 'ARNm ينقل المعلومة، ARNt ينقل الأحماض الأمينية، ARNr مكوّن للريبوزوم بموقعَي قراءة وتحفيز.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 3, 'interpretation', 'RIP يستهدف ARN في الخلايا السرطانية → توقّف تركيب البروتين → توقّف تكاثر الخلايا.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 4, 'conclusion', 'الأنواع الثلاثة تشارك في تركيب البروتين، وتفقد وظيفتها بوجود موادّ مثل RIP.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 5, 'piege', 'ARNm وحده كافٍ لتركيب بروتين كامل.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 6, 'piege', 'RIP يوقف تكاثر الخلايا لأنه يهضم البروتينات مباشرة.', SOURCE, 'a_valider_enseignant'),
+    ],
+  },
+  {
+    id: 'jb:2025-1:2:1',
+    document:
+      'الوثيقة 1: (أ) نسبة نمو السلالة العادية والطافرة بتركيزين من HCO₃⁻؛ (ب) رسم لصانعة السلالة العادية (بيرينويد) والطافرة (بدونه).',
+    question: 'أبرز أثر الخصائص البنيوية للصانعة الخضراء على النمو باستغلال الشكل (ب).',
+    verbe: 'بيِّن',
+    attendu: 'إظهار العلاقة بين معطيين بالدليل، لا رأيًا.',
+    structure: ['observation', 'comparaison', 'interpretation', 'conclusion'],
+    uniteId: 'u6',
+    statut: 'a_valider_enseignant',
+    briques: [
+      brique('jb:2025-1:2:1', 1, 'observation', 'السلالة العادية تنمو بنسبة 80 % في التركيز المنخفض، والطافرة لا تتعدّى 20 %.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:2:1', 2, 'comparaison', 'الصانعتان متشابهتان (غلاف، حشوة، Rubisco، CA)، لكن العادية فقط تملك بيرينويدًا.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:2:1', 3, 'interpretation', 'البيرينويد يجمع Rubisco وCA في حيّز واحد، فيرفع فعّالية تثبيت CO₂.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:2:1', 4, 'conclusion', 'وجود البيرينويد يمنح القدرة على النمو في أوساط فقيرة بـ HCO₃⁻؛ وغيابه يحدّ من نموّ الطافرة.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:2:1', 5, 'piege', 'الطافرة لا تنمو لأنها فقدت اليخضور كليًّا.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:2:1', 6, 'piege', 'الفرق بين السلالتين في حجم الصانعة الخضراء فقط.', SOURCE, 'a_valider_enseignant'),
+    ],
+  },
+];
+
+export function jeuxSujet2025_1(): JeuBriques[] {
+  return JEUX_SUJET_2025_1;
+}
