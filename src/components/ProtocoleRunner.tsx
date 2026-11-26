@@ -18,6 +18,7 @@ import EcranCelebration from './Fetes';
 import { IcoRetour, IcoVerifie } from './Icones';
 import { qcmPourLecon } from '../utils/qcm';
 import IllustrationsLecon from './IllustrationsLecon';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtCharge';
 
 interface Props {
   lessonId: string;
@@ -109,6 +110,10 @@ export default function ProtocoleRunner({
   onFermer,
   onAllerMethodo,
 }: Props) {
+  // Préchauffage silencieux des schémas (Phase 5) : évite le squelette à l'ouverture.
+  useEffect(() => {
+    prechaufferSchemasSvt();
+  }, []);
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const qcmLecon = qcmPourLecon(lessonId, lecon);

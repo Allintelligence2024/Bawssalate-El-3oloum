@@ -84,11 +84,20 @@ function precacheManifest(): Plugin {
         /^assets\/supabase-/,
         /^assets\/Methodologie-/,
         /^assets\/ExamBlanc-/,
+        // v0.14 — les schémas du programme (registre arabe ~30 ko) sont un `import()`
+        // déclenché à l'ouverture d'une leçon : ils ne doivent pas alourdir la coquille.
+        // Le service worker les met en cache à la volée (gestionnaire `fetch` de `assets/*`).
+        /^assets\/schemasSvt-/,
       ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))
         .filter((f) => !HORS_PRECACHE.some((r) => r.test(f)))
         .sort().map((f) => `/${f}`);
+      // v0.15 — les schémas du programme restent hors coquille, mais entrent dans le lot
+      // « contenu » (téléchargement hors-ligne sur demande) : l'élève qui prépare son
+      // téléchargement hors ligne reçoit aussi les 44 schémas, sans un octet de démarrage
+      // en plus. Le worker les valide par sa règle `contenuValide`.
+      const chunkSchemas = Object.keys(bundle).find((f) => /^assets\/schemasSvt-.+\.js$/.test(f));
       const statiques = COQUILLE;
       // `public/lecons/img/*.webp` reste volontairement hors de `statiques` et de `contenu` :
       // chargement lazy + cache à la volée par le Service Worker (voir public/sw.js).
@@ -100,16 +109,23 @@ function precacheManifest(): Plugin {
         .filter(([f]) => inclus.has(f)).reduce((s, [, item]) =>
           s + Buffer.byteLength(item.type === 'asset' ? item.source : item.code), 0);
       const octetsCoquille = octetsDe(statiques) + octetsAssets;
-      const octetsContenu = octetsDe(contenu);
+      // Le chunk des schémas vit dans le bundle (pas dans `public/`) : son poids se lit
+      // dans `bundle`, et il compte dans le contenu — jamais dans la coquille.
+      const octetsSchemas = chunkSchemas
+        ? Buffer.byteLength(bundle[chunkSchemas].type === 'asset' ? bundle[chunkSchemas].source : bundle[chunkSchemas].code)
+        : 0;
+      const octetsContenu = octetsDe(contenu) + octetsSchemas;
+      const contenuManifeste = [...contenu.map((f) => `/${f}`), ...(chunkSchemas ? [`/${chunkSchemas}`] : [])];
 
       const hash = createHash('sha256').update(assets.join('\n'))
         .update(readFileSync('public/sw.js')).update(readFileSync('index.html'));
       for (const f of [...statiques, ...contenu]) hash.update(f).update(readFileSync(join('public', f)));
-      // Phase 2 : les WebP ne sont pas précachés, mais leur empreinte participe à la
-      // version du cache. Remplacer une image invalide donc l'ancien cache au build
-      // suivant, sans ajouter un seul octet à la coquille de démarrage.
+      if (chunkSchemas) hash.update(chunkSchemas).update(bundle[chunkSchemas].code ?? '');
+      // Phase 2/4 : les visuels (WebP et SVG) ne sont pas précachés, mais leur empreinte
+      // participe à la version du cache. Remplacer une image invalide donc l'ancien cache
+      // au build suivant, sans ajouter un seul octet à la coquille de démarrage.
       if (existsSync('public/lecons/img')) {
-        for (const f of readdirSync('public/lecons/img').filter(x => x.endsWith('.webp')).sort()) {
+        for (const f of readdirSync('public/lecons/img').filter(x => /\.(webp|svg)$/.test(x)).sort()) {
           hash.update(`lecons/img/${f}`).update(readFileSync(join('public/lecons/img', f)));
         }
       }
@@ -119,7 +135,7 @@ function precacheManifest(): Plugin {
           version: identifiant,
           assets,
           statiques: statiques.map(f => `/${f}`),
-          contenu: contenu.map(f => `/${f}`),
+          contenu: contenuManifeste,
           octets: octetsCoquille + octetsContenu,
           octetsCoquille,
           octetsContenu,

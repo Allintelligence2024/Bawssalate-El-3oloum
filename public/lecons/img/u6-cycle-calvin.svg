@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u6-cycle-calvin">
+<rect width="1200" height="760" fill="#ffffff"/>
+<rect x="40" y="40" width="1120" height="680" rx="40" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<rect x="880" y="280" width="230" height="80" rx="14" fill="#fbf1dd" stroke="#a97517" stroke-width="3"/>
+<text x="995" y="327" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#a97517" text-anchor="middle" font-weight="700">RuBP (C5)</text>
+<rect x="880" y="440" width="230" height="80" rx="14" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="995" y="487" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#1f6f52" text-anchor="middle" font-weight="700">APG (C3)</text>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="995" y1="364" x2="995" y2="436"/><path d="M990.5 426 L995 436 L999.5 426" stroke-width="3"/></g>
+<g stroke="#5f6f66" stroke-width="3" fill="none" stroke-linecap="round"><line x1="1140" y1="400" x2="1006" y2="400"/><path d="M1015.1 395.9 L1006 400 L1015.1 404.1" stroke-width="3"/></g>
+<text x="1072" y="372" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#5f6f66" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">3 CO₂</text>
+<rect x="560" y="440" width="230" height="80" rx="14" fill="#fbeceb" stroke="#a5312b" stroke-width="3"/>
+<text x="675" y="487" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#a5312b" text-anchor="middle" font-weight="700">PGAL (C3)</text>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="876" y1="480" x2="794" y2="480"/><path d="M804 475.5 L794 480 L804 484.5" stroke-width="3"/></g>
+<text x="835" y="456" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a5312b" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">ATP</text>
+<text x="835" y="508" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a5312b" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">NADPH</text>
+<path d="M675 436 L675 196 L995 196 L995 276" fill="none" stroke="#a97517" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M990.5 266 L995 276 L999.5 266" fill="none" stroke="#a97517" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="836" y="176" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#a97517" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">RuBP (5/6)</text>
+<rect x="200" y="440" width="300" height="80" rx="14" fill="#eaf4ee" stroke="#1f6f52" stroke-width="3"/>
+<text x="350" y="487" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#1f6f52" text-anchor="middle" font-weight="700">Glucose (C6)</text>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="556" y1="480" x2="504" y2="480"/><path d="M514 475.5 L504 480 L514 484.5" stroke-width="3"/></g>
+</svg>

@@ -1,5 +1,10 @@
-// Phase 2/3 — affichage des illustrations du manuel dans le lecteur de leçon et
-// dans la Phase 5 (« الدليل الوثائقي ») du ProtocoleRunner.
+// Phase 2/3/4 — affichage des illustrations et schémas du programme dans le lecteur de
+// leçon et dans la Phase 5 (« الدليل الوثائقي ») du ProtocoleRunner.
+//
+// Deux familles de visuels, une seule règle : l'image ne porte JAMAIS de texte généré.
+//  - `webp_legacy` / `webp_annote` : image muette du manuel, légendes arabes rendues ici.
+//  - `svg_vectoriel` : courbes et schémas géométriques exacts, dessinés à partir de données
+//    (aucune hallucination possible : valeurs, unités et formules sont écrites à la main).
 //
 // Les fichiers ne sont pas précachés : `loading="lazy"` + cache à la volée du Service
 // Worker à la première ouverture. L'URL passe toujours par `urlIllustration`, ce qui
@@ -8,9 +13,16 @@
 // Le zoom plein écran est volontairement minimal : un bouton, la touche Échap, le focus
 // rendu au déclencheur à la fermeture, et la légende arabe toujours visible sous l'image.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { illustrationsParLecon, type IllustrationLecon } from '../data/illustrationsLecons';
-import { legendeArSecurisee, urlIllustration } from '../utils/illustrations';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ILLUSTRATIONS_LECONS_LEGACY } from '../data/illustrationsLegacy.gen';
+import {
+  aDesAnnotations,
+  typeVisuelDe,
+  type IllustrationLecon,
+} from '../data/illustrationsTypes';
+import { legendeArSecurisee } from '../utils/illustrations';
+import { chargerSchemasSvt } from '../utils/schemasSvtCharge';
+import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
 
 interface Props {
   lessonId: string;
@@ -19,10 +31,46 @@ interface Props {
 }
 
 export default function IllustrationsLecon({ lessonId, compacte = false }: Props) {
-  const illustrations = illustrationsParLecon(lessonId);
+  // Les schémas créés (libellés arabes) sont chargés à la demande : ils ne pèsent plus sur la
+  // coquille de démarrage. Les 21 WebP du manuel, légères, restent disponibles immédiatement.
+  const [schemas, setSchemas] = useState<IllustrationLecon[]>([]);
+  const [etat, setEtat] = useState<'chargement' | 'pret' | 'erreur'>('chargement');
+
+  useEffect(() => {
+    let vivant = true;
+    // Promesse mémorisée par module : les leçons suivantes n'attendent plus rien.
+    chargerSchemasSvt()
+      .then((liste) => {
+        if (!vivant) return;
+        setSchemas(liste);
+        setEtat('pret');
+      })
+      .catch(() => {
+        // Chunk absent du cache (première ouverture hors ligne) : l'écran le dit au lieu
+        // de faire disparaître la section.
+        if (!vivant) return;
+        setSchemas([]);
+        setEtat('erreur');
+      });
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  const illustrations = useMemo(
+    () =>
+      [...ILLUSTRATIONS_LECONS_LEGACY, ...schemas]
+        .filter((i) => i.lessonId === lessonId)
+        .sort(
+          (a, b) =>
+            (a.docNum ?? '').localeCompare(b.docNum ?? '') || a.fichier.localeCompare(b.fichier),
+        ),
+    [schemas, lessonId],
+  );
   const [zoom, setZoom] = useState<IllustrationLecon | null>(null);
   const boutonFermer = useRef<HTMLButtonElement>(null);
   const declencheur = useRef<HTMLButtonElement | null>(null);
+  const dialogue = useRef<HTMLDivElement>(null);
 
   const fermer = useCallback(() => setZoom(null), []);
 
@@ -32,14 +80,27 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
     document.body.style.overflow = 'hidden';
     boutonFermer.current?.focus();
 
-    // Un seul élément focusable dans la lightbox : Tab reste sur le bouton de fermeture.
+    // Piège de focus : Tab boucle sur les éléments focusables de la lightbox (fermeture,
+    // bouton d'auto-test), sans jamais sortir vers la page en arrière-plan.
     const auClavier = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         fermer();
-      } else if (e.key === 'Tab') {
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = dialogue.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables || focusables.length === 0) return;
+      const premier = focusables[0];
+      const dernier = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === premier) {
         e.preventDefault();
-        boutonFermer.current?.focus();
+        dernier.focus();
+      } else if (!e.shiftKey && document.activeElement === dernier) {
+        e.preventDefault();
+        premier.focus();
       }
     };
     document.addEventListener('keydown', auClavier);
@@ -50,10 +111,46 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
     };
   }, [zoom, fermer]);
 
+  // Aucun visuel connu et chargement en cours : on garde une place discrète plutôt que
+  // de faire disparaître la section (les leçons sans WebP du manuel n'ont que des schémas).
+  if (illustrations.length === 0 && etat === 'chargement') {
+    return (
+      <section
+        dir="rtl"
+        aria-label="وثائق الدرس"
+        aria-busy="true"
+        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+      >
+        <p className="eyebrow">وثائق الدرس ومخططاته</p>
+        <div className="mt-3 space-y-2" aria-hidden="true">
+          <div className="h-24 w-full animate-pulse rounded-2xl bg-sage-soft" />
+          <div className="h-3 w-2/3 animate-pulse rounded-full bg-sage-soft" />
+        </div>
+        <p className="sr-only">جارٍ تحميل المخططات…</p>
+      </section>
+    );
+  }
+
+  if (illustrations.length === 0 && etat === 'erreur') {
+    return (
+      <section
+        dir="rtl"
+        aria-label="وثائق الدرس"
+        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+      >
+        <p className="eyebrow">وثائق الدرس ومخططاته</p>
+        <p className="mt-2 text-sm leading-relaxed text-mute" role="status">
+          تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه.
+        </p>
+      </section>
+    );
+  }
+
   if (illustrations.length === 0) return null;
 
   const legende = (illustration: IllustrationLecon) =>
     legendeArSecurisee(illustration.legendeAr ?? illustration.titreAr);
+  const contientSchemaCree = illustrations.some((i) => typeVisuelDe(i) !== 'webp_legacy');
 
   return (
     <section
@@ -61,10 +158,15 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
       aria-label="وثائق الدرس"
       className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
     >
-      <p className="eyebrow">وثائق الدرس</p>
+      <p className="eyebrow">وثائق الدرس ومخططاته</p>
       <p className="mt-1 text-[11px] leading-relaxed text-mute">
         صور محوّلة إلى WebP، محمّلة عند الحاجة فقط — اضغط على الصورة لتكبيرها (Esc للإغلاق) — في انتظار مراجعة أستاذ.
       </p>
+      {contientSchemaCree && (
+        <p className="mt-1 text-[11px] leading-relaxed text-mute">
+          المخططات المُعادة الرسم: كل الأرقام والوحدات والعناوين مكتوبة داخل التطبيق باتجاه عربي سليم، ولا يوجد أي نص مولّد داخل الصورة.
+        </p>
+      )}
 
       <div className="mt-3 space-y-4">
         {illustrations.map((illustration) => (
@@ -73,30 +175,43 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             dir="rtl"
             className="overflow-hidden rounded-2xl border border-line bg-paper"
           >
-            {/* Fond neutre clair : les schémas ont des traits noirs, même en thème sombre. */}
-            <button
-              type="button"
-              onClick={(e) => {
-                declencheur.current = e.currentTarget;
-                setZoom(illustration);
-              }}
-              aria-label={`تكبير الوثيقة: ${illustration.titreAr}`}
-              className="fond-schema-clair block w-full cursor-zoom-in border-0 p-0"
-            >
-              <img
-                src={urlIllustration(illustration.fichier)}
-                alt={illustration.altAr}
-                width={illustration.largeur}
-                height={illustration.hauteur}
-                loading="lazy"
-                decoding="async"
-                className="fond-schema-clair block h-auto w-full object-contain"
-              />
-            </button>
-            <figcaption
-              className="border-t border-line px-3 py-2 text-[12px] leading-relaxed text-ink-soft"
-              dangerouslySetInnerHTML={{ __html: legende(illustration) }}
-            />
+            {/* Fond neutre clair : les schémas ont des traits noirs, même en thème sombre.
+                Un visuel annoté n'est PAS enveloppé dans un bouton : ses pastilles sont
+                cliquables (HTML valide + navigation clavier naturelle). Le zoom a son
+                propre bouton. */}
+            {aDesAnnotations(illustration) ? (
+              <div className="fond-schema-clair block w-full border-0 p-0">
+                <SchemaAnnoteBloc illustration={illustration} compacte={compacte} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  declencheur.current = e.currentTarget;
+                  setZoom(illustration);
+                }}
+                aria-label={`تكبير الوثيقة: ${illustration.titreAr}`}
+                className="fond-schema-clair block w-full cursor-zoom-in border-0 p-0"
+              >
+                <VisuelAnnote illustration={illustration} />
+              </button>
+            )}
+            <figcaption className="border-t border-line px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
+              <p dangerouslySetInnerHTML={{ __html: legende(illustration) }} />
+              <div className="mt-1 flex justify-start">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    declencheur.current = e.currentTarget;
+                    setZoom(illustration);
+                  }}
+                  aria-label={`تكبير الصورة: ${illustration.titreAr}`}
+                  className="rounded-lg border border-line bg-paper px-2.5 py-1 text-[11px] font-bold text-forest hover:bg-sage-soft"
+                >
+                  تكبير الصورة
+                </button>
+              </div>
+            </figcaption>
             {illustration.statut === 'a_valider_enseignant' && (
               <p className="border-t border-line bg-sage-soft px-3 py-1.5 text-[10px] font-bold text-forest">
                 في انتظار مراجعة أستاذ · لم يُعتمد بعد
@@ -108,6 +223,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
 
       {zoom && (
         <div
+          ref={dialogue}
           role="dialog"
           aria-modal="true"
           aria-label={`عرض مكبّر: ${zoom.titreAr}`}
@@ -128,24 +244,23 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             ✕ إغلاق (Esc)
           </button>
 
-          <div className="fond-schema-clair flex max-h-[78dvh] w-full max-w-5xl items-center justify-center overflow-auto rounded-2xl p-2 shadow-2xl">
-            <img
-              src={urlIllustration(zoom.fichier)}
-              alt={zoom.altAr}
-              width={zoom.largeur}
-              height={zoom.hauteur}
-              loading="lazy"
-              decoding="async"
-              className="fond-schema-clair block h-auto max-h-[74dvh] w-auto max-w-full object-contain"
-            />
+          <div
+            className="fond-schema-clair flex max-h-[78dvh] w-full max-w-5xl flex-col items-center justify-center overflow-auto rounded-2xl p-2 shadow-2xl"
+          >
+            {aDesAnnotations(zoom) ? (
+              <SchemaAnnoteBloc illustration={zoom} compacte={compacte} variante="zoom" />
+            ) : (
+              <VisuelAnnote illustration={zoom} variante="zoom" />
+            )}
           </div>
 
-          <p
+          <div
             id="legende-illustration-zoom"
             dir="rtl"
             className="fond-schema-clair w-full max-w-5xl rounded-xl px-4 py-3 text-center text-sm leading-relaxed shadow-lg"
-            dangerouslySetInnerHTML={{ __html: legende(zoom) }}
-          />
+          >
+            <p dangerouslySetInnerHTML={{ __html: legende(zoom) }} />
+          </div>
           <p className="fond-schema-clair rounded-lg px-3 py-1 text-[11px] font-bold">
             في انتظار مراجعة أستاذ · لم يُعتمد بعد
           </p>

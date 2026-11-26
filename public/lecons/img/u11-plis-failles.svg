@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u11-plis-failles">
+<rect width="1200" height="760" fill="#ffffff"/>
+<rect x="50" y="60" width="520" height="290" rx="20" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="74" y="100" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#1f2d27" text-anchor="start" font-weight="700">A</text>
+<path d="M80 297.3 L91.5 296.3 L103 295.1 L114.5 293.5 L126 291.6 L137.5 289.3 L149 286.6 L160.5 283.5 L172 279.9 L183.5 275.9 L195 271.7 L206.5 267.1 L218 262.4 L229.5 257.7 L241 253.2 L252.5 249 L264 245.3 L275.5 242.2 L287 239.9 L298.5 238.5 L310 238 L321.5 238.5 L333 239.9 L344.5 242.2 L356 245.3 L367.5 249 L379 253.2 L390.5 257.7 L402 262.4 L413.5 267.1 L425 271.7 L436.5 275.9 L448 279.9 L459.5 283.5 L471 286.6 L482.5 289.3 L494 291.6 L505.5 293.5 L517 295.1 L528.5 296.3 L540 297.3" fill="none" stroke="#8a7a5c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M80 263.3 L91.5 262.3 L103 261.1 L114.5 259.5 L126 257.6 L137.5 255.3 L149 252.6 L160.5 249.5 L172 245.9 L183.5 241.9 L195 237.7 L206.5 233.1 L218 228.4 L229.5 223.7 L241 219.2 L252.5 215 L264 211.3 L275.5 208.2 L287 205.9 L298.5 204.5 L310 204 L321.5 204.5 L333 205.9 L344.5 208.2 L356 211.3 L367.5 215 L379 219.2 L390.5 223.7 L402 228.4 L413.5 233.1 L425 237.7 L436.5 241.9 L448 245.9 L459.5 249.5 L471 252.6 L482.5 255.3 L494 257.6 L505.5 259.5 L517 261.1 L528.5 262.3 L540 263.3" fill="none" stroke="#a97517" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M80 229.3 L91.5 228.3 L103 227.1 L114.5 225.5 L126 223.6 L137.5 221.3 L149 218.6 L160.5 215.5 L172 211.9 L183.5 207.9 L195 203.7 L206.5 199.1 L218 194.4 L229.5 189.7 L241 185.2 L252.5 181 L264 177.3 L275.5 174.2 L287 171.9 L298.5 170.5 L310 170 L321.5 170.5 L333 171.9 L344.5 174.2 L356 177.3 L367.5 181 L379 185.2 L390.5 189.7 L402 194.4 L413.5 199.1 L425 203.7 L436.5 207.9 L448 211.9 L459.5 215.5 L471 218.6 L482.5 221.3 L494 223.6 L505.5 225.5 L517 227.1 L528.5 228.3 L540 229.3" fill="none" stroke="#8a7a5c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M80 195.3 L91.5 194.3 L103 193.1 L114.5 191.5 L126 189.6 L137.5 187.3 L149 184.6 L160.5 181.5 L172 177.9 L183.5 173.9 L195 169.7 L206.5 165.1 L218 160.4 L229.5 155.7 L241 151.2 L252.5 147 L264 143.3 L275.5 140.2 L287 137.9 L298.5 136.5 L310 136 L321.5 136.5 L333 137.9 L344.5 140.2 L356 143.3 L367.5 147 L379 151.2 L390.5 155.7 L402 160.4 L413.5 165.1 L425 169.7 L436.5 173.9 L448 177.9 L459.5 181.5 L471 184.6 L482.5 187.3 L494 189.6 L505.5 191.5 L517 193.1 L528.5 194.3 L540 195.3" fill="none" stroke="#a97517" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="120" y1="216" x2="236" y2="216"/><path d="M226 220.5 L236 216 L226 211.5" stroke-width="3"/></g>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="500" y1="216" x2="384" y2="216"/><path d="M394 211.5 L384 216 L394 220.5" stroke-width="3"/></g>
+<rect x="630" y="60" width="520" height="290" rx="20" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="654" y="100" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#1f2d27" text-anchor="start" font-weight="700">B</text>
+<path d="M660 216.7 L671.5 217.7 L683 218.9 L694.5 220.5 L706 222.4 L717.5 224.7 L729 227.4 L740.5 230.5 L752 234.1 L763.5 238.1 L775 242.3 L786.5 246.9 L798 251.6 L809.5 256.3 L821 260.8 L832.5 265 L844 268.7 L855.5 271.8 L867 274.1 L878.5 275.5 L890 276 L901.5 275.5 L913 274.1 L924.5 271.8 L936 268.7 L947.5 265 L959 260.8 L970.5 256.3 L982 251.6 L993.5 246.9 L1005 242.3 L1016.5 238.1 L1028 234.1 L1039.5 230.5 L1051 227.4 L1062.5 224.7 L1074 222.4 L1085.5 220.5 L1097 218.9 L1108.5 217.7 L1120 216.7" fill="none" stroke="#8a7a5c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M660 250.7 L671.5 251.7 L683 252.9 L694.5 254.5 L706 256.4 L717.5 258.7 L729 261.4 L740.5 264.5 L752 268.1 L763.5 272.1 L775 276.3 L786.5 280.9 L798 285.6 L809.5 290.3 L821 294.8 L832.5 299 L844 302.7 L855.5 305.8 L867 308.1 L878.5 309.5 L890 310 L901.5 309.5 L913 308.1 L924.5 305.8 L936 302.7 L947.5 299 L959 294.8 L970.5 290.3 L982 285.6 L993.5 280.9 L1005 276.3 L1016.5 272.1 L1028 268.1 L1039.5 264.5 L1051 261.4 L1062.5 258.7 L1074 256.4 L1085.5 254.5 L1097 252.9 L1108.5 251.7 L1120 250.7" fill="none" stroke="#a97517" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M660 284.7 L671.5 285.7 L683 286.9 L694.5 288.5 L706 290.4 L717.5 292.7 L729 295.4 L740.5 298.5 L752 302.1 L763.5 306.1 L775 310.3 L786.5 314.9 L798 319.6 L809.5 324.3 L821 328.8 L832.5 333 L844 336.7 L855.5 339.8 L867 342.1 L878.5 343.5 L890 344 L901.5 343.5 L913 342.1 L924.5 339.8 L936 336.7 L947.5 333 L959 328.8 L970.5 324.3 L982 319.6 L993.5 314.9 L1005 310.3 L1016.5 306.1 L1028 302.1 L1039.5 298.5 L1051 295.4 L1062.5 292.7 L1074 290.4 L1085.5 288.5 L1097 286.9 L1108.5 285.7 L1120 284.7" fill="none" stroke="#8a7a5c" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M660 318.7 L671.5 319.7 L683 320.9 L694.5 322.5 L706 324.4 L717.5 326.7 L729 329.4 L740.5 332.5 L752 336.1 L763.5 340.1 L775 344.3 L786.5 348.9 L798 353.6 L809.5 358.3 L821 362.8 L832.5 367 L844 370.7 L855.5 373.8 L867 376.1 L878.5 377.5 L890 378 L901.5 377.5 L913 376.1 L924.5 373.8 L936 370.7 L947.5 367 L959 362.8 L970.5 358.3 L982 353.6 L993.5 348.9 L1005 344.3 L1016.5 340.1 L1028 336.1 L1039.5 332.5 L1051 329.4 L1062.5 326.7 L1074 324.4 L1085.5 322.5 L1097 320.9 L1108.5 319.7 L1120 318.7" fill="none" stroke="#a97517" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="700" y1="300" x2="816" y2="300"/><path d="M806 304.5 L816 300 L806 295.5" stroke-width="3"/></g>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="1080" y1="300" x2="964" y2="300"/><path d="M974 295.5 L964 300 L974 304.5" stroke-width="3"/></g>
+<rect x="50" y="420" width="520" height="290" rx="20" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="74" y="460" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#1f2d27" text-anchor="start" font-weight="700">C</text>
+<rect x="80" y="470" width="230" height="32" rx="0" fill="#e8f2ec" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="310" y="502" width="230" height="32" rx="0" fill="#e8f2ec" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="80" y="502" width="230" height="32" rx="0" fill="#fbf1dd" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="310" y="534" width="230" height="32" rx="0" fill="#fbf1dd" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="80" y="534" width="230" height="32" rx="0" fill="#dfe7ea" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="310" y="566" width="230" height="32" rx="0" fill="#dfe7ea" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="80" y="566" width="230" height="32" rx="0" fill="#efe6d8" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="310" y="598" width="230" height="32" rx="0" fill="#efe6d8" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="80" y="598" width="230" height="32" rx="0" fill="#e3ece6" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="310" y="630" width="230" height="32" rx="0" fill="#e3ece6" stroke="#8a8f88" stroke-width="1.2"/>
+<line x1="302" y1="466" x2="332" y2="634" stroke="#a5312b" stroke-width="4" stroke-linecap="round"/>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="268" y1="676" x2="128" y2="676"/><path d="M138 671.5 L128 676 L138 680.5" stroke-width="3"/></g>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="352" y1="676" x2="492" y2="676"/><path d="M482 680.5 L492 676 L482 671.5" stroke-width="3"/></g>
+<rect x="630" y="420" width="520" height="290" rx="20" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="654" y="460" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#1f2d27" text-anchor="start" font-weight="700">D</text>
+<rect x="660" y="502" width="230" height="32" rx="0" fill="#e8f2ec" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="890" y="470" width="230" height="32" rx="0" fill="#e8f2ec" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="660" y="534" width="230" height="32" rx="0" fill="#fbf1dd" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="890" y="502" width="230" height="32" rx="0" fill="#fbf1dd" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="660" y="566" width="230" height="32" rx="0" fill="#dfe7ea" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="890" y="534" width="230" height="32" rx="0" fill="#dfe7ea" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="660" y="598" width="230" height="32" rx="0" fill="#efe6d8" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="890" y="566" width="230" height="32" rx="0" fill="#efe6d8" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="660" y="630" width="230" height="32" rx="0" fill="#e3ece6" stroke="#8a8f88" stroke-width="1.2"/>
+<rect x="890" y="598" width="230" height="32" rx="0" fill="#e3ece6" stroke="#8a8f88" stroke-width="1.2"/>
+<line x1="882" y1="466" x2="912" y2="634" stroke="#a5312b" stroke-width="4" stroke-linecap="round"/>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="800" y1="676" x2="940" y2="676"/><path d="M930 680.5 L940 676 L930 671.5" stroke-width="3"/></g>
+<g stroke="#a5312b" stroke-width="3" fill="none" stroke-linecap="round"><line x1="1110" y1="676" x2="970" y2="676"/><path d="M980 671.5 L970 676 L980 680.5" stroke-width="3"/></g>
+</svg>

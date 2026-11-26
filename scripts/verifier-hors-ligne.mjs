@@ -46,6 +46,7 @@ const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
 if (!contenu) problemes.push('manifeste : liste « contenu » absente');
 else {
   const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+    /^\/assets\/schemasSvt-[a-zA-Z0-9_.-]+\.js$/.test(u) ||
     ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
   if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
   if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
@@ -77,12 +78,13 @@ const typeOk = (url, res) => {
   if (url.endsWith('.css')) return t.includes('text/css');
   if (url.endsWith('.html') || url === '/') return t.includes('text/html');
   if (url.endsWith('.webp')) return t.includes('image/webp') || t.includes('application/octet-stream');
+  if (url.endsWith('.svg')) return t.includes('image/svg+xml') || t.includes('application/octet-stream');
   return true;
 };
 
 const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...(contenu ?? []), ...manifeste.assets];
 const images = existsSync(DOSSIER_IMAGES)
-  ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp')).sort().map((f) => `/lecons/img/${f}`)
+  ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp') || f.endsWith('.svg')).sort().map((f) => `/lecons/img/${f}`)
   : [];
 let echecs = 0;
 let octets = 0;
@@ -115,17 +117,28 @@ const BUDGET_ILLUSTRATION = 150 * 1024;
 // Plan V2 §8.2 : une image de public/ au-delà de 150 ko est un accident, pas un choix.
 // (Les anciens PNG faisaient 600 ko et 1 Mo : c'est exactement ce que ce seuil interdit.)
 const BUDGET_FICHIER = 150 * 1024;
-// Phase 3 : le dossier des illustrations ne contient QUE des WebP ≤ 150 Ko, et ils
-// n'apparaissent dans aucune liste du précache (vérifié en section 1).
+// Phase 3 / Lot 1 : le dossier des illustrations ne contient QUE des WebP ou des SVG ≤ 150 Ko,
+// et ils n'apparaissent dans aucune liste du précache (vérifié en section 1).
+// Les SVG sont écrits à la main (`scripts/generer-schemas-svt.mjs`) : pas de raster, pas de
+// texte IA incrusté ; leurs libellés arabes viennent du registre TypeScript.
 if (existsSync(DOSSIER_IMAGES)) {
   for (const f of readdirSync(DOSSIER_IMAGES)) {
     const chemin = join(DOSSIER_IMAGES, f);
     if (!statSync(chemin).isFile()) {
       problemes.push(`illustrations : ${f} est un dossier, pas un fichier`);
-    } else if (!f.endsWith('.webp')) {
-      problemes.push(`illustrations : ${f} n'est pas un .webp (aucun JPEG brut dans Git)`);
+    } else if (!f.endsWith('.webp') && !f.endsWith('.svg')) {
+      problemes.push(`illustrations : ${f} doit être un .webp (photo) ou un .svg (schéma vectoriel)`);
     } else if (statSync(chemin).size > BUDGET_ILLUSTRATION) {
       problemes.push(`illustrations : ${f} pèse ${Math.round(statSync(chemin).size / 1024)} ko > 150 ko`);
+    } else if (f.endsWith('.svg')) {
+      const source = readFileSync(chemin, 'utf8');
+      if (!source.startsWith('<svg')) problemes.push(`illustrations : ${f} n'est pas un SVG autonome`);
+      if (source.includes('base64') || /<image[\s>]/.test(source)) {
+        problemes.push(`illustrations : ${f} embarque un raster (interdit : schéma vectoriel)`);
+      }
+      if (/[\u0600-\u06FF]/.test(source)) {
+        problemes.push(`illustrations : ${f} contient du texte arabe incrusté (doit venir de l'app)`);
+      }
     }
   }
 }
@@ -169,7 +182,7 @@ console.log(`contenu (sur demande) : ${(contenu ?? []).length} entrées — ${(m
 const poidsMaxImage = images.length
   ? Math.max(...images.map((u) => statSync(join(DOSSIER_IMAGES, u.slice('/lecons/img/'.length))).size))
   : 0;
-console.log(`illustrations WebP    : ${images.length} — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
+console.log(`illustrations         : ${images.length} fichiers (WebP + SVG) — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
 console.log(`fichiers interrogés   : ${cibles.length + images.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);

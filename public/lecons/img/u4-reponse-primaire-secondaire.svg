@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" data-schema="u4-reponse-primaire-secondaire">
+<rect width="1200" height="700" fill="#ffffff"/>
+<line x1="150" y1="620" x2="1120" y2="620" stroke="#1f2d27" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="150" y1="110" x2="150" y2="620" stroke="#1f2d27" stroke-width="2.6" stroke-linecap="round"/>
+<line x1="150" y1="492.5" x2="1120" y2="492.5" stroke="#d7dfd9" stroke-width="1.4" stroke-linecap="round"/>
+<text x="138" y="497.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end">25</text>
+<line x1="150" y1="365" x2="1120" y2="365" stroke="#d7dfd9" stroke-width="1.4" stroke-linecap="round"/>
+<text x="138" y="370" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end">50</text>
+<line x1="150" y1="237.5" x2="1120" y2="237.5" stroke="#d7dfd9" stroke-width="1.4" stroke-linecap="round"/>
+<text x="138" y="242.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end">75</text>
+<text x="150" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">0</text>
+<text x="323.2" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">10</text>
+<text x="496.4" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">20</text>
+<text x="669.6" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">30</text>
+<text x="842.9" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">40</text>
+<text x="1016.1" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">50</text>
+<path d="M150 609.8 L219.3 604.7 L253.9 589.4 L288.6 548.6 L323.2 507.8 L357.9 487.4 L392.5 497.6 L427.1 528.2 L496.4 569 L565.7 589.4 L635 599.6" fill="none" stroke="#1d4f8f" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M635 599.6 L652.3 569 L669.6 467 L687 339.5 L721.6 212 L756.3 150.8 L808.2 135.5 L877.5 161 L981.4 212 L1120 303.8" fill="none" stroke="#a5312b" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#1f2d27" stroke-width="2.8" fill="none" stroke-linecap="round"><line x1="150" y1="52" x2="150" y2="96"/><path d="M145.9 86.9 L150 96 L154.1 86.9" stroke-width="2.8"/></g>
+<text x="150" y="40" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="middle" font-weight="700">Ag</text>
+<g stroke="#1f2d27" stroke-width="2.8" fill="none" stroke-linecap="round"><line x1="635" y1="52" x2="635" y2="96"/><path d="M630.9 86.9 L635 96 L639.1 86.9" stroke-width="2.8"/></g>
+<text x="635" y="40" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="middle" font-weight="700">Ag</text>
+<text x="461.8" y="446.6" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1d4f8f" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">IgM</text>
+<text x="860.2" y="116.4" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a5312b" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">IgG</text>
+</svg>

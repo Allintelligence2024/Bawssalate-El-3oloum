@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" data-schema="u2-drepanocytose">
+<rect width="1200" height="700" fill="#ffffff"/>
+<rect x="840" y="80" width="300" height="540" rx="22" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="990" y="116" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle" font-weight="700">A</text>
+<circle cx="948" cy="226" r="50" fill="#e9eff8" stroke="#1d4f8f" stroke-width="3"/>
+<text x="948" y="233" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1d4f8f" text-anchor="middle" font-weight="700">α</text>
+<circle cx="1032" cy="226" r="50" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="1032" y="233" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1f6f52" text-anchor="middle" font-weight="700">β</text>
+<circle cx="948" cy="298" r="50" fill="#e9eff8" stroke="#1d4f8f" stroke-width="3"/>
+<text x="948" y="305" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1d4f8f" text-anchor="middle" font-weight="700">α</text>
+<circle cx="1032" cy="298" r="50" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="1032" y="305" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1f6f52" text-anchor="middle" font-weight="700">β</text>
+<line x1="1032" y1="226" x2="1072" y2="338" stroke="#a5312b" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+<rect x="1057" y="323" width="30" height="30" rx="8" fill="#fbeceb" stroke="#a5312b" stroke-width="2.5"/>
+<text x="1072" y="346" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="24" fill="#a5312b" text-anchor="middle" font-weight="700">−</text>
+<ellipse cx="990" cy="528" rx="96" ry="58" fill="#fbeceb" stroke="#a5312b" stroke-width="3"/>
+<ellipse cx="990" cy="528" rx="44" ry="24" fill="#ffffff" stroke="#a5312b" stroke-width="2"/>
+<text x="990" y="600" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="middle" font-weight="700">HbA</text>
+<rect x="434" y="80" width="300" height="540" rx="22" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="584" y="116" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle" font-weight="700">B</text>
+<circle cx="542" cy="196" r="50" fill="#e9eff8" stroke="#1d4f8f" stroke-width="3"/>
+<text x="542" y="203" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1d4f8f" text-anchor="middle" font-weight="700">α</text>
+<circle cx="626" cy="196" r="50" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="626" y="203" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1f6f52" text-anchor="middle" font-weight="700">β</text>
+<circle cx="542" cy="268" r="50" fill="#e9eff8" stroke="#1d4f8f" stroke-width="3"/>
+<text x="542" y="275" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1d4f8f" text-anchor="middle" font-weight="700">α</text>
+<circle cx="626" cy="268" r="50" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="626" y="275" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1f6f52" text-anchor="middle" font-weight="700">β</text>
+<line x1="626" y1="196" x2="666" y2="308" stroke="#a97517" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>
+<rect x="651" y="293" width="30" height="30" rx="8" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<line x1="652.7" y1="295.8" x2="646.1" y2="289.8" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="666" y1="290" x2="666" y2="281" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="679.2" y1="295.7" x2="685.8" y2="289.6" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="742" y1="458" x2="468" y2="452" stroke="#a5312b" stroke-width="11" stroke-linecap="round"/>
+<rect x="508.3" y="443" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="596" y="443" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="683.7" y="443" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<line x1="742" y1="498" x2="468" y2="492" stroke="#a5312b" stroke-width="11" stroke-linecap="round"/>
+<rect x="508.3" y="483" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="596" y="483" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="683.7" y="483" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<line x1="742" y1="538" x2="468" y2="532" stroke="#a5312b" stroke-width="11" stroke-linecap="round"/>
+<rect x="508.3" y="523" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="596" y="523" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="683.7" y="523" width="18" height="18" rx="4" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<text x="584" y="578" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="middle" font-weight="700">HbS</text>
+<rect x="60" y="80" width="300" height="540" rx="22" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<text x="210" y="116" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle" font-weight="700">C</text>
+<path d="M263 415.7 L257.2 416.8 L251.4 417.6 L245.5 418.1 L239.6 418.2 L233.7 418 L227.8 417.5 L222 416.7 L216.2 415.6 L210.5 414.1 L205 412.4 L199.5 410.3 L194.2 408 L189.1 405.4 L184.1 402.5 L179.4 399.3 L174.9 395.9 L170.6 392.2 L166.5 388.4 L162.8 384.3 L159.3 380 L156.1 375.5 L153.2 370.9 L150.6 366.1 L148.3 361.2 L146.4 356.2 L144.8 351.1 L143.6 345.9 L142.7 340.6 L142.2 335.3 L142 330 L142.2 324.7 L142.7 319.4 L143.6 314.1 L144.8 308.9 L146.4 303.8 L148.3 298.8 L150.6 293.9 L153.2 289.1 L156.1 284.5 L159.3 280 L162.8 275.7 L166.5 271.6 L170.6 267.8 L174.9 264.1 L179.4 260.7 L184.1 257.5 L189.1 254.6 L194.2 252 L199.5 249.7 L205 247.6 L210.5 245.9 L216.2 244.4 L222 243.3 L227.8 242.5 L233.7 242 L239.6 241.8 L245.5 241.9 L251.4 242.4 L257.2 243.2 L263 244.3 L217 244.3 L211.2 243.2 L205.4 242.4 L199.5 241.9 L193.6 241.8 L187.7 242 L181.8 242.5 L176 243.3 L170.2 244.4 L164.5 245.9 L159 247.6 L153.5 249.7 L148.2 252 L143.1 254.6 L138.1 257.5 L133.4 260.7 L128.9 264.1 L124.6 267.8 L120.5 271.6 L116.8 275.7 L113.3 280 L110.1 284.5 L107.2 289.1 L104.6 293.9 L102.3 298.8 L100.4 303.8 L98.8 308.9 L97.6 314.1 L96.7 319.4 L96.2 324.7 L96 330 L96.2 335.3 L96.7 340.6 L97.6 345.9 L98.8 351.1 L100.4 356.2 L102.3 361.2 L104.6 366.1 L107.2 370.9 L110.1 375.5 L113.3 380 L116.8 384.3 L120.5 388.4 L124.6 392.2 L128.9 395.9 L133.4 399.3 L138.1 402.5 L143.1 405.4 L148.2 408 L153.5 410.3 L159 412.4 L164.5 414.1 L170.2 415.6 L176 416.7 L181.8 417.5 L187.7 418 L193.6 418.2 L199.5 418.1 L205.4 417.6 L211.2 416.8 L217 415.7" fill="#fbeceb" stroke="#a5312b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="210" y="520" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="middle" font-weight="700">HbS</text>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="828" y1="300" x2="748" y2="300"/><path d="M758 295.5 L748 300 L758 304.5" stroke-width="3"/></g>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="424" y1="300" x2="372" y2="300"/><path d="M382 295.5 L372 300 L382 304.5" stroke-width="3"/></g>
+</svg>

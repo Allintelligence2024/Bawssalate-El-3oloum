@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u4-vih">
+<rect width="1200" height="760" fill="#ffffff"/>
+<line x1="140" y1="600" x2="1120" y2="600" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="126" y="605" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="end">0</text>
+<line x1="140" y1="472.5" x2="1120" y2="472.5" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="126" y="477.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="end">300</text>
+<line x1="140" y1="345" x2="1120" y2="345" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="126" y="350" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="end">600</text>
+<line x1="140" y1="217.5" x2="1120" y2="217.5" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="126" y="222.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="end">900</text>
+<line x1="140" y1="90" x2="1120" y2="90" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="126" y="95" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="end">1200</text>
+<text x="140" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">0</text>
+<text x="238" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">1</text>
+<text x="336" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">2</text>
+<text x="434" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">3</text>
+<text x="532" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">4</text>
+<text x="630" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">5</text>
+<text x="728" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">6</text>
+<text x="826" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">7</text>
+<text x="924" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">8</text>
+<text x="1022" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">9</text>
+<text x="1120" y="626" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">10</text>
+<line x1="140" y1="90" x2="140" y2="600" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="140" y1="600" x2="1120" y2="600" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<text x="130" y="74" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1f2d27" text-anchor="start" font-weight="700">LT4 / mm³</text>
+<path d="M140 175 L179.2 379 L238 251.5 L336 277 L434 302.5 L532 328 L630 353.5 L728 387.5 L826 438.5 L924 489.5 L1002.4 527.8 L1061.2 561.8 L1120 583" fill="none" stroke="#a5312b" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="140" cy="175" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="179.2" cy="379" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="238" cy="251.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="336" cy="277" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="434" cy="302.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="532" cy="328" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="630" cy="353.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="728" cy="387.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="826" cy="438.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="924" cy="489.5" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="1002.4" cy="527.8" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="1061.2" cy="561.8" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<circle cx="1120" cy="583" r="4" fill="#a5312b" stroke="#a5312b" stroke-width="1"/>
+<line x1="140" y1="515" x2="1120" y2="515" stroke="#a97517" stroke-width="2.5" stroke-dasharray="8 6" stroke-linecap="round"/>
+<text x="1114" y="503" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#a97517" text-anchor="end" font-weight="700">200</text>
+<rect x="977.9" y="90" width="142.1" height="510" rx="6" fill="#fbeceb" stroke="#a5312b" stroke-width="1.5" stroke-dasharray="7 6"/>
+</svg>
