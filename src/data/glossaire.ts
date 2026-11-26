@@ -69,7 +69,7 @@ export const GLOSSAIRE: TermeGlossaire[] = [
   { ar: 'الروابط الهيدروجينية', fr: 'liaisons hydrogène' },
   { ar: 'الجذور الكارهة للماء', fr: 'radicaux hydrophobes' },
   { ar: 'تجربة أنفنصن', fr: 'expérience d’Anfinsen' },
-  { ar: 'الريبونكلياز', fr: 'ribonucléase' },
+  { ar: 'الريبونكلياز', fr: 'ribonucléase', alias: ['الريبونوكلياز'] },
   { ar: 'اليوريا', fr: 'urée' },
   { ar: 'الهيموغلوبين HbS', fr: 'hémoglobine S (HbS)' },
   { ar: 'فقر الدم المنجلي', fr: 'drépanocytose' },
@@ -96,7 +96,7 @@ export const GLOSSAIRE: TermeGlossaire[] = [
   { ar: 'التمسّخ غير العكسي', fr: 'dénaturation irréversible', alias: ['التشوه غير العكسي', 'التمسّخ غير العكوس'] },
   { ar: 'pH الأمثل', fr: 'pH optimal' },
   { ar: 'التأين', fr: 'ionisation' },
-  { ar: 'الجذور الحرة', fr: 'radicaux libres (des acides aminés)' },
+  { ar: 'الجذور الحرة', fr: 'chaînes latérales R libres (radicaux R des acides aminés)' },
   { ar: 'منحنى الجرس', fr: 'courbe en cloche' },
   { ar: 'الحرارة المثلى 37°C', fr: 'température optimale (37 °C)' },
   { ar: 'الطاقة الحركية', fr: 'énergie cinétique' },
@@ -217,6 +217,7 @@ export const GLOSSAIRE: TermeGlossaire[] = [
   { ar: 'الحويصلة الغشائية', fr: 'vésicule membranaire' },
 
   // ── الوحدة 7 · التنفس والتخمر ──
+  { ar: 'الميتوكوندري', fr: 'mitochondrie', alias: ['الميتوكندري', 'الميتوكندرون'] },
   { ar: 'التحلل السكري', fr: 'glycolyse' },
   { ar: 'حمض البيروفيك', fr: 'acide pyruvique (pyruvate)' },
   { ar: 'حلقة كريبس', fr: 'cycle de Krebs' },
@@ -342,7 +343,7 @@ export const GLOSSAIRE: TermeGlossaire[] = [
   { ar: 'الغطاء الكتيم', fr: 'roche couverture (imperméable)' },
   { ar: 'المصيدة البترولية', fr: 'piège pétrolier' },
   { ar: 'تباين الكثافة', fr: 'contraste de densité' },
-  { ar: 'الطبقة الألبية', fr: 'chaîne alpine' },
+  { ar: 'الطبقة الألبية', fr: 'nappe albienne (aquifère saharien)' },
 
   // ── متفرّقات من الملخّصات ──
   { ar: 'الإلكترونات', fr: 'électrons' },

@@ -108,7 +108,12 @@ describe('P2.3 — mode intensif', () => {
     expect(new Set(lecons.map((c) => prioriteLecon(c.id))).size).toBe(3);
     for (const id of UNITE_PAR_ID.u8.lessonIds) expect(prioriteLecon(id)).toBe(3);
     expect(prioriteLecon('prerequis2AS_genetique')).toBe(3);
-    expect(prioriteLecon('enzyme_inhibitors')).toBe(3);
+    // Passe 2 : enzyme_inhibitors est un cœur de l'unité 3 (1), amino_acid_behavior
+    // une leçon régulière (2), et les deux enrichissements U11 hors chemin restent à 3.
+    expect(prioriteLecon('enzyme_inhibitors')).toBe(1);
+    expect(prioriteLecon('amino_acid_behavior')).toBe(2);
+    expect(prioriteLecon('phase22_chapitres_43_44')).toBe(3);
+    expect(prioriteLecon('phase22_chapitres_43_44_2')).toBe(3);
   });
 
   it("scénario « élève qui installe à J-45 » : aucune leçon prioritaire n'est verrouillée derrière les unités précédentes", () => {
