@@ -11,8 +11,8 @@ Comme aux Lots 1 à 3, les **8 WebP du manuel** de ces unités restent **intacte
 | Unité | Leçons | WebP du manuel | Leçons sans visuel |
 |---|---:|---:|---|
 | u9 | 5 | 4 | `phase16_chapitres_31_32`, `phase16_chapitres_31_32_2`, `phase18_chapitres_35_36` |
-| u10 | 4 | 4 | `phase19_chapitres_37_38`, `phase19_chapitres_37_38_2`, `phase20_chapitres_39_40` |
-| u11 | 4 | 3 | `d3-u11-l1-migmatite` |
+| u10 | 3 | 0 | `phase19_chapitres_37_38`, `phase19_chapitres_37_38_2`, `phase20_chapitres_39_40` |
+| u11 | 5 | 4 | `d3-u11-l1-migmatite` |
 
 Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitres_33_34_2`, `phase21_chapitres_41_42`, `phase21_chapitres_41_42_2`) n'ont **pas** été dupliquées : aucune leçon ne dépasse 2 schémas au total, et aucune n'a reçu un schéma « pour faire nombre ».
 
@@ -60,11 +60,14 @@ Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitr
 | u7 | 5 | 2 | 3 | 5 / 5 |
 | u8 | 2 | 2 | 1 | 2 / 2 |
 | u9 | 5 | 4 | **3** | **5 / 5** |
-| u10 | 4 | 4 | **4** | **4 / 4** |
-| u11 | 4 | 3 | **2** | **4 / 4** |
+| u10 | 3 | 0 | **4** | **3 / 3** |
+| u11 | 5 | 4 | **2** | **5 / 5** |
 | **Total** | **55** | 21 | **41** | **52 / 55 (94,5 %)** |
 
-Les 3 leçons encore sans visuel sont des reliquats **u1–u5** — dont `phase6_chapitres_11_12` et `phase9_chapitres_17_18`, déjà signalées au Lot 2 — laissées à la main de l'enseignant : chacune peut encore recevoir un 2ᵉ schéma sans dépasser le plafond. Les unités u6 → u11 sont **intégralement illustrées**.
+Les 3 leçons encore sans visuel sont exactement, d'après `UNITES` de `src/data/programme.ts` :
+**`phase6_chapitres_11_12`** (u4), **`immunity_memory_response`** (u4) et **`phase9_chapitres_17_18`** (u5). Ce sont les reliquats déjà signalés au Lot 2, laissés à la main de l'enseignant : chacune peut encore recevoir un 2ᵉ schéma sans dépasser le plafond. Les unités **u1 → u3** et **u6 → u11** sont intégralement illustrées.
+
+> Note de comptage : `CHEMIN` contient **56** items de type `lecon` = les **55** leçons officielles + **1** leçon de prérequis (`prerequis`, ouverte avant sa unité). Les 55 leçons se répartissent en u1 5, u2 4, u3 6, u4 8, u5 5, u6 7, u7 5, u8 2, u9 5, **u10 3**, **u11 5**.
 
 ---
 
@@ -106,8 +109,16 @@ Les 3 leçons encore sans visuel sont des reliquats **u1–u5** — dont `phase6
 
 ---
 
+## 5 bis. Décision produit — pas de bascule Cloudflare R2
+
+Décision du 2026-11-26 : **tout reste en local** dans `public/lecons/img/`.
+Motifs : **2,1 Mio** pour les 62 illustrations (seuil d'alerte : 5 Mio), chunk `schemasSvt` **67,59 Ko**
+(gzip 16,94) chargé à la demande hors démarrage, zéro infrastructure à maintenir, zéro coût, et un
+mode hors-ligne plus simple à tester sur Android. Le helper `VITE_ILLUSTRATIONS_BASE_URL` reste en
+place, prêt si le volume double — la décision sera réexaminée au-delà de **4 Mio**.
+
 ## 6. Ce qui reste ouvert
 
 1. **Relecture nominative de l'enseignant** : les 40 entrées sont en `a_valider_enseignant`. Aucune n'est promue `reviewed: true` — la porte est ouverte, pas franchie.
-2. Trois leçons de u1–u5 sans visuel, si l'enseignant le demande (§ 3) : u6 → u11 sont closes.
+2. Trois leçons de u4/u5 sans visuel (§ 3) : u1 → u3 et u6 → u11 sont closes ; **aucun schéma facultatif ne sera ajouté** (décision produit du 2026-11-26 : à 94,5 % de couverture, un 42ᵉ schéma n'apporte rien aux élèves).
 3. Les 21 WebP du manuel restent telles quelles ; leur promotion éventuelle est une décision de contenu, hors périmètre des quatre lots.
