@@ -1,4 +1,4 @@
-// Garde-fous du registre des illustrations (Phase 3) et des schémas créés (Lots 1 à 3).
+// Garde-fous du registre des illustrations (Phase 3) et des schémas créés (Lots 1 à 4).
 //
 // On ne vérifie pas seulement les objets TypeScript : on regarde le disque (les fichiers
 // existent-ils, sont-ils seuls dans le dossier, respectent-ils le plafond ?) et le programme
@@ -7,7 +7,7 @@
 //
 // Depuis le Lot 1, deux familles cohabitent :
 //  - 21 WebP `webp_legacy` du manuel (u6, u7, u8, u9, u11) — jamais modifiées ;
-//  - 32 schémas créés (u1 → u8) — 27 SVG écrits à la main, 5 WebP muettes annotées.
+//  - 40 schémas créés (u1 → u11) — 35 SVG écrits à la main, 5 WebP muettes annotées.
 
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -25,7 +25,7 @@ const racine = new URL('../../..', import.meta.url).pathname;
 const dossierImages = join(racine, 'public/lecons/img');
 const PLAFOND_OCTETS = 150 * 1024;
 const REPARTITION_LEGACY: Record<string, number> = { u6: 9, u7: 2, u8: 2, u9: 4, u11: 4 };
-const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6, u4: 6, u5: 4, u6: 2, u7: 3, u8: 1 };
+const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6, u4: 6, u5: 4, u6: 2, u7: 3, u8: 1, u9: 3, u10: 3, u11: 2 };
 
 describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => {
   const legacy = ILLUSTRATIONS_LECONS.filter((i) => typeVisuelDe(i) === 'webp_legacy');
@@ -47,23 +47,23 @@ describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => 
   });
 });
 
-describe('schémas créés — règle « zéro texte IA » (Lots 1 à 3)', () => {
-  it('couvre u1 → u8 avec 32 schémas sur les leçons officielles', () => {
-    expect(SCHEMAS_SVT).toHaveLength(32);
+describe('schémas créés — règle « zéro texte IA » (Lots 1 à 4)', () => {
+  it('couvre u1 → u11 avec 40 schémas sur les leçons officielles', () => {
+    expect(SCHEMAS_SVT).toHaveLength(40);
     const parUnite: Record<string, number> = {};
     for (const i of SCHEMAS_SVT) {
       expect(Object.keys(REPARTITION_SCHEMAS)).toContain(i.uniteId);
       parUnite[i.uniteId] = (parUnite[i.uniteId] ?? 0) + 1;
     }
     expect(parUnite).toEqual(REPARTITION_SCHEMAS);
-    // 27 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
-    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(27);
+    // 35 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
+    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(35);
     expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'webp_annote')).toHaveLength(5);
 
-    // Les schémas se répartissent sur 31 leçons : `phase3_chapitres_5_6` en porte deux
+    // Les schémas se répartissent sur 39 leçons : `phase3_chapitres_5_6` en porte deux
     // (Anfinsen + drépanocytose), conformément au plafond de 2 schémas par leçon.
     const lecons = SCHEMAS_SVT.map((i) => i.lessonId);
-    expect(new Set(lecons).size).toBe(31);
+    expect(new Set(lecons).size).toBe(39);
     const parLecon = new Map<string, number>();
     for (const l of lecons) parLecon.set(l, (parLecon.get(l) ?? 0) + 1);
     expect(Math.max(...parLecon.values())).toBeLessThanOrEqual(2);
@@ -131,8 +131,8 @@ describe('registre complet — disque et programme', () => {
       expect(TOUTES_LECONS, `lessonId absent du programme : ${i.lessonId}`).toContain(i.lessonId);
       expect(uniteDeLecon(i.lessonId)?.id, `unité incohérente pour ${i.lessonId}`).toBe(i.uniteId);
     }
-    // 21 documents du manuel (13 leçons) + 32 schémas (31 leçons) = 44 leçons illustrées.
-    expect(new Set(ILLUSTRATIONS_LECONS.map((i) => i.lessonId)).size).toBe(44);
+    // 21 documents du manuel (13 leçons) + 40 schémas (39 leçons) = 52 leçons illustrées.
+    expect(new Set(ILLUSTRATIONS_LECONS.map((i) => i.lessonId)).size).toBe(52);
   });
 
   it('ne référence que des fichiers réellement présents sur disque, ≤ 150 Ko', () => {
@@ -158,13 +158,13 @@ describe('registre complet — disque et programme', () => {
     }
 
     const surDisque = readdirSync(dossierImages).sort();
-    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(53);
+    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(61);
     expect(surDisque.every((f) => f.endsWith('.webp') || f.endsWith('.svg'))).toBe(true);
     expect(surDisque).toEqual([...fichiers].sort());
   });
 
-  it('garde 0 reviewed: true et 53 statuts a_valider_enseignant', () => {
-    expect(ILLUSTRATIONS_LECONS).toHaveLength(53);
+  it('garde 0 reviewed: true et 61 statuts a_valider_enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(61);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.reviewed === true)).toHaveLength(0);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.reviewed === false)).toBe(true);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.statut === 'a_valider_enseignant')).toBe(true);
@@ -182,7 +182,7 @@ describe('registre complet — disque et programme', () => {
     expect(parLecon.length).toBeGreaterThan(0);
     expect(parLecon.every((i) => i.lessonId === lecon)).toBe(true);
     expect(illustrationsParLecon('lecon-inexistante')).toEqual([]);
-    expect(illustrationsParUnite('u10')).toEqual([]);
+    expect(illustrationsParUnite('u12')).toEqual([]);
     // u6, u7 et u8 portent à la fois des WebP du manuel et des schémas créés : on déduplique.
     const unites = new Set([...Object.keys(REPARTITION_LEGACY), ...Object.keys(REPARTITION_SCHEMAS)]);
     const somme = [...unites].reduce((s, u) => s + illustrationsParUnite(u).length, 0);

@@ -141,12 +141,53 @@ npx vitest run                                                  → 86 fichiers 
 npm run build && node scripts/verifier-hors-ligne.mjs           → 53 illustrations, coquille 2,21 Mio
 ```
 
-## Prochains lots (non commencés)
+# Journal de création des schémas — Lot 4 (u9, u10, u11)
 
-- **Lot 4** — `u9`/`u10`/`u11` : `u10` intégralement (ondes P/S + zones d'ombre, discontinuités, coupe interne).
-- **Lot 4** — `u9`/`u10`/`u11` : `u10` intégralement (ondes P/S + zones d'ombre, discontinuités, coupe interne).
-- **Reliquats u4/u5** (si l'enseignant le demande) : un 2ᵉ schéma possible sur `phase6_chapitres_11_12` (réponse secondaire) et `phase9_chapitres_17_18` (réflexe myotatique) sans dépasser le plafond de 2 par leçon.
+**Date** : 2026-11-26 · **Périmètre** : dernier lot du prompt « schémas zéro texte IA ».
 
-**Budget** : coquille **2,21 Mio / 2,25 Mio (98,2 %)**, contenu 4,19 Mio. Le Lot 2 n'a coûté **aucun**
-octet de coquille (les schémas sont hors précache et hors bundle de démarrage). Marge restante ≈ 40 Ko :
-la porte reste à surveiller avant les Lots 3 et 4.
+## 1. Journal des 8 planches
+
+| Planche | Leçon | Essais | Ce qui a été corrigé après relecture du PNG |
+|---|---|---:|---|
+| `u9-limites-plaques` | `phase16_chapitres_31_32` | 2 | plaques en biseau de part et d'autre de la dorsale ; subduction oblique passée en bleu (panneau B) |
+| `u9-expansion-oceanique` | `phase16_chapitres_31_32_2` | 2 | pastilles N/R décalées des libellés d'âge ; pastille retirée de la croix d'axe |
+| `u9-energie-interne` | `phase18_chapitres_35_36` | 2 | formule `²³⁸U·²³²Th·⁴⁰K` dégagée des ronds radioactifs |
+| `u10-ondes-sismiques` | `phase19_chapitres_37_38` | 3 | axe des profondeurs ré-inversé (`D = y0 + …`) ; libellés Moho/Gutenberg/Lehmann ramenés à gauche avec halo ; `Fe–Ni` remonté |
+| `u10-sial-sima` | `phase19_chapitres_37_38_2` | 3 | planche réécrite (3 colonnes × 4 oxydes), hauteur 680 → 520 px, libellés d'oxydes dégagés du bord des barres |
+| `u10-modelisation-terre` | `phase20_chapitres_39_40` | 3 | anneaux concentriques du noyau interne ; `SIAL`/`SIMA` replacés **dans** leurs anneaux (ils étaient hors du disque, donc invisibles) ; unité `km` ajoutée |
+| `u11-plis-failles` | `phase20_chapitres_39_40_2` | 3 | panneaux C/D en strates empilées ; pastille 6 ramenée dans le cadre ; lettres C/D dégagées des strates |
+| `u11-migmatite` | `d3-u11-l1-migmatite` | 3 | zone de fusion remontée, texte parasite supprimé, encoche parasite retirée des blocs crustaux |
+
+## 2. Synthèse Lot 4
+
+| Mesure | Lot 3 | Lot 4 | Total |
+|---|---:|---:|---:|
+| Schémas créés | 32 | **40** | 40 |
+| SVG écrits à la main | 27 | **35** | 35 |
+| Repères posés | 164 | **212** | 212 |
+| Leçons illustrées | 44 / 55 | **52 / 55** | 52 / 55 (94,5 %) |
+| `reviewed: true` | 0 | **0** | 0 |
+
+## 3. Contrôle final
+
+```
+npm run lint                                                    → 0 erreur
+npx tsc --noEmit                                                → 0 erreur
+npx vitest run                                                  → 86 fichiers / 729 tests
+npm run build                                                   → index 497,94 Ko · schemasSvt 52,47 Ko
+node scripts/verifier-hors-ligne.mjs                            → OK — 61 illustrations, 0 échec
+node scripts/sync-metrics.mjs --check                           → aucune dérive
+node scripts/generer-schemas-svt.mjs --verifier                 → 35 / 35 identiques
+/tmp/.venv/bin/python scripts/previsualiser-schemas.py u9-… …   → 8 planches relues
+/tmp/.venv/bin/python scripts/previsualiser-annotations.py …    → 8 composites relus
+```
+
+## Prochains lots
+
+Les quatre lots du prompt sont **livrés**. Ce qui reste n'est pas un lot de production mais une
+**relecture** : les 40 entrées attendent la validation nominative de l'enseignant (`reviewed: false`
+partout). Reliquats possibles, seulement sur sa demande : un 2ᵉ schéma sur `phase6_chapitres_11_12`
+(réponse secondaire) et `phase9_chapitres_17_18` (réflexe myotatique), plus un 3ᵉ reliquat u1–u5.
+
+**Budget** : coquille **2,21 Mio / 2,25 Mio (98,2 %)**, contenu 4,19 Mio. Les quatre lots n'ont coûté
+**aucun** octet de coquille : les schémas sont hors précache et hors bundle de démarrage.

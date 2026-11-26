@@ -1613,6 +1613,411 @@ planche('u8-cycle-matiere-energie', 1200, 760, ({ repere }) => {
   return out;
 });
 
+// ═══════════════════════════ LOT 4 — u9 (tectonique), u10 (structure interne), u11 (déformation) ═══════════════════════════
+// Même règle : aucun mot arabe dans les SVG ; symboles latins contrôlés (Moho, LVZ, U, Th, K, P, S, SIAL…).
+
+// ── 1. u9 — les trois types de limites de plaques ───────────────────────────────
+planche('u9-limites-plaques', 1200, 760, ({ repere }) => {
+  const out = [];
+  const panneau = (x, libelle) => [
+    boite(x, 120, 320, 520, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 22 }),
+    texte(x + 28, 168, libelle, { taille: 26, couleur: INK, ancre: 'start', gras: true }),
+  ];
+  const astheno = (x) => boite(x + 16, 540, 288, 76, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2, rayon: 10 });
+
+  // A — divergence : dorsale, magma qui monte, plaques qui s'écartent
+  out.push(...panneau(50, 'A'));
+  out.push(astheno(50));
+  // deux plaques lithosphériques qui s'écartent, dorsale surélevée entre elles
+  out.push(poly([[66, 540], [66, 306], [168, 282], [196, 292], [196, 540]], { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(poly([[354, 540], [354, 306], [252, 282], [224, 292], [224, 540]], { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(poly([[210, 246], [196, 292], [224, 292]], { couleur: RED, largeur: 2.5, remplissage: RED_FILL }));
+  out.push(poly([[202, 540], [218, 540], [218, 292], [202, 292]], { couleur: RED, largeur: 2, remplissage: RED_FILL }));
+  out.push(fleche(192, 372, 110, 372, RED, 3, 11));
+  out.push(fleche(228, 372, 310, 372, RED, 3, 11));
+
+  // B — convergence : plaque océanique qui plonge, volcan au-dessus
+  out.push(...panneau(440, 'B'));
+  out.push(astheno(440));
+  // plaque océanique (gauche) qui plonge sous la plaque continentale (droite)
+  out.push(poly([[456, 300], [640, 300], [640, 540], [456, 540]], { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(poly([[640, 300], [744, 300], [744, 540], [640, 540]], { couleur: INK, largeur: 3, remplissage: '#eef2ec' }));
+  out.push(poly([[640, 300], [744, 430], [744, 470], [668, 300]], { couleur: BLUE, largeur: 3, remplissage: BLUE_FILL }));
+  out.push(poly([[690, 300], [712, 224], [734, 300]], { couleur: RED, largeur: 2.5, remplissage: RED_FILL }));
+  out.push(ligne(712, 300, 712, 376, { couleur: RED, largeur: 3, pointilles: '7 6' }));
+  out.push(fleche(470, 262, 596, 262, INK, 3, 11));
+
+  // C — coulissage : deux blocs qui glissent le long d'une faille
+  out.push(...panneau(830, 'C'));
+  out.push(boite(846, 200, 288, 150, { remplissage: GREEN_FILL, couleur: INK, largeur: 3, rayon: 8 }));
+  out.push(boite(846, 400, 288, 150, { remplissage: '#eef2ec', couleur: INK, largeur: 3, rayon: 8 }));
+  out.push(ligne(846, 375, 1134, 375, { couleur: RED, largeur: 4, pointilles: '10 7' }));
+  out.push(fleche(900, 275, 1080, 275, RED, 3, 11));
+  out.push(fleche(1080, 475, 900, 475, RED, 3, 11));
+
+  repere(1, 210, 240);
+  repere(2, 254, 372);
+  repere(3, 533, 262);
+  repere(4, 712, 232);
+  repere(5, 1000, 375);
+  repere(6, 990, 475);
+  return out;
+});
+
+// ── 2. u9 — expansion océanique et bandes magnétiques ──────────────────────────
+planche('u9-expansion-oceanique', 1200, 760, ({ repere }) => {
+  const out = [];
+  const cx = 600;
+  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 36 }));
+
+  // profil du fond océanique : dorsale au centre, plaines abyssales de part et d'autre
+  const fond = (x) => {
+    const d = Math.abs(x - cx);
+    if (d < 90) return 300 - 70 * Math.cos((d / 90) * (Math.PI / 2));
+    return 300 + Math.min(60, ((d - 90) / 420) * 60);
+  };
+  const pts = [];
+  for (let x = 90; x <= 1110; x += 6) pts.push([x, fond(x)]);
+  out.push(poly([...pts, [1110, 420], [90, 420]], { couleur: INK, largeur: 3, remplissage: '#e8e4dc' }));
+  out.push(poly(pts, { couleur: INK, largeur: 3 }));
+  // eau
+  out.push(boite(90, 120, 1020, 108, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2, rayon: 8 }));
+  out.push(texte(120, 176, 'H₂O', { taille: 17, couleur: BLUE, ancre: 'start', gras: true }));
+
+  // axe de la dorsale
+  out.push(ligne(cx, 228, cx, 620, { couleur: RED, largeur: 3, pointilles: '9 8' }));
+  out.push(texte(cx, 654, '0', { taille: 16, couleur: RED, ancre: 'middle', gras: true }));
+
+  // bandes magnétiques symétriques
+  const largeur = 46;
+  for (let i = 0; i < 11; i += 1) {
+    const normale = i % 2 === 0;
+    const couleur = normale ? '#4a5a52' : '#ffffff';
+    for (const sens of [-1, 1]) {
+      const x = cx + sens * (14 + i * largeur);
+      out.push(boite(sens < 0 ? x : x - largeur, 470, largeur, 92, {
+        remplissage: couleur, couleur: GRID, largeur: 1.5, rayon: 0,
+      }));
+    }
+  }
+  out.push(texte(cx + 24, 452, 'N', { taille: 17, couleur: INK, ancre: 'middle', gras: true, halo: true }));
+  out.push(texte(cx + 24 + largeur, 452, 'R', { taille: 17, couleur: MUTE, ancre: 'middle', gras: true, halo: true }));
+
+  // coupe lithosphérique sous les bandes
+  out.push(ligne(90, 580, 1110, 580, { couleur: INK, largeur: 2, pointilles: '6 6' }));
+  out.push(texte(1120, 634, 'Ma', { taille: 16, couleur: MUTE, ancre: 'end', gras: true }));
+  for (const [dx, libelle] of [[-440, '5'], [-220, '2.5'], [220, '2.5'], [440, '5']]) {
+    out.push(texte(cx + dx, 632, libelle, { taille: 15, couleur: MUTE, ancre: 'middle' }));
+  }
+
+  repere(1, cx, 246);
+  repere(2, cx + 46, 552);
+  repere(3, cx + 92, 552);
+  repere(4, 200, 296);
+  repere(5, cx - 300, 512);
+  repere(6, cx, 600);
+  return out;
+});
+
+// ── 3. u9 — énergie interne : désintégration, conduction, convection ────────────
+planche('u9-energie-interne', 1200, 760, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 36 }));
+
+  // croûte + lithosphère
+  out.push(boite(70, 130, 1060, 96, { remplissage: '#e8e4dc', couleur: INK, largeur: 3, rayon: 0 }));
+  out.push(boite(70, 226, 1060, 470, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3, rayon: 0 }));
+
+  // conduction : flèches verticales serrées dans la lithosphère
+  for (let x = 120; x <= 1080; x += 60) out.push(fleche(x, 218, x, 146, RED, 2, 8));
+
+  // convection : deux cellules
+  const cellule = (cx, sens) => {
+    const s = [];
+    s.push(rond(cx, 470, 150, { remplissage: 'none', couleur: '#c9a45a', largeur: 2.5, pointilles: '8 7' }));
+    const a0 = sens > 0 ? -2.6 : -0.5;
+    s.push(...flechePoly(arcEllipse(cx, 470, 110, 110, a0, a0 + 1.9, 24), { couleur: AMBER, largeur: 4, tete: 12 }));
+    s.push(...flechePoly(arcEllipse(cx, 470, 110, 110, a0 + Math.PI, a0 + Math.PI + 1.9, 24), { couleur: AMBER, largeur: 4, tete: 12 }));
+    return s;
+  };
+  out.push(...cellule(360, 1));
+  out.push(...cellule(840, -1));
+
+  // sources de chaleur : désintégration radioactive
+  out.push(texte(600, 268, '²³⁸U · ²³²Th · ⁴⁰K', { taille: 20, couleur: RED, ancre: 'middle', gras: true, halo: true }));
+  for (const [x, y] of [[520, 330], [600, 300], [680, 330]]) {
+    out.push(rond(x, y, 12, { remplissage: RED_FILL, couleur: RED, largeur: 2.5 }));
+  }
+
+  repere(1, 170, 178);
+  repere(2, 430, 180);
+  repere(3, 360, 470);
+  repere(4, 840, 470);
+  repere(5, 600, 368);
+  repere(6, 1020, 152);
+  return out;
+});
+
+// ── 4. u10 — ondes sismiques et discontinuités ──────────────────────────────────
+planche('u10-ondes-sismiques', 1200, 780, ({ repere }) => {
+  const out = [];
+  const cx = 350;
+  const cy = 420;
+  // demi-globe
+  const demi = (r, o) => poly(
+    [...Array.from({ length: 61 }, (_, i) => {
+      const a = Math.PI + (i / 60) * Math.PI;
+      return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    }), [cx + r, cy], [cx - r, cy]],
+    o,
+  );
+  out.push(demi(300, { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(demi(240, { couleur: BLUE, largeur: 2.5, remplissage: BLUE_FILL }));
+  out.push(demi(150, { couleur: AMBER, largeur: 2.5, remplissage: AMBER_FILL }));
+  out.push(demi(80, { couleur: RED, largeur: 2.5, remplissage: RED_FILL }));
+  out.push(texte(cx, cy - 52, 'Fe–Ni', { taille: 15, couleur: RED, ancre: 'middle', gras: true }));
+  out.push(texte(cx, cy - 196, 'SIMA', { taille: 15, couleur: AMBER, ancre: 'middle', gras: true }));
+  out.push(texte(cx, cy - 276, 'SIAL', { taille: 15, couleur: GREEN, ancre: 'middle', gras: true }));
+
+  // foyers et rais sismiques
+  out.push(rond(cx, cy - 296, 8, { remplissage: RED, couleur: RED, largeur: 2 }));
+  for (const a of [0.5, 1.1, 1.9, 2.5]) {
+    out.push(ligne(cx, cy - 296, cx + Math.cos(Math.PI + a) * 290, cy + Math.sin(Math.PI + a) * 290, { couleur: MUTE, largeur: 1.6, pointilles: '5 6' }));
+  }
+
+  // courbe des vitesses
+  const G = { x0: 700, x1: 1130, y0: 150, y1: 640 };
+  const D = (km) => G.y0 + (km / 6500) * (G.y1 - G.y0);
+  const V = (v) => G.x0 + (v / 14) * (G.x1 - G.x0);
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.5 }));
+  const vp = [[0, 5.5], [40, 8], [400, 9], [660, 10.2], [2890, 13.7], [5150, 10.3], [6370, 11.3]];
+  const vs = [[0, 3.2], [40, 4.6], [400, 5.1], [2890, 7.3], [2900, 0.1], [6370, 3.7]];
+  out.push(poly(vp.map(([d, v]) => [V(v), D(d)]), { couleur: BLUE, largeur: 4 }));
+  out.push(poly(vs.map(([d, v]) => [V(v), D(d)]), { couleur: RED, largeur: 4 }));
+  for (const [d, libelle, dy] of [[660, 'Moho', -10], [2890, 'Gutenberg', 22], [5150, 'Lehmann', -10]]) {
+    out.push(ligne(G.x0, D(d), G.x1, D(d), { couleur: GRID, largeur: 1.6, pointilles: '6 6' }));
+    out.push(texte(G.x0 + 12, D(d) + dy, libelle, { taille: 14, couleur: MUTE, ancre: 'start', gras: true, halo: true }));
+  }
+  out.push(texte(V(13.9), G.y1 + 30, 'km/s', { taille: 14, couleur: MUTE, ancre: 'end' }));
+  out.push(texte(G.x0 - 12, G.y0 - 12, '0', { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  out.push(texte(G.x0 - 20, G.y1 + 4, '6400', { taille: 13, couleur: MUTE, ancre: 'end' }));
+  out.push(texte(G.x0 - 12, G.y0 - 34, 'km', { taille: 14, couleur: MUTE, ancre: 'middle', gras: true }));
+
+  repere(1, cx - 100, cy - 248);
+  repere(2, cx + 258, cy - 96);
+  repere(3, cx + 44, cy - 8);
+  repere(4, V(9.2), D(1000));
+  repere(5, V(1.4), D(4600));
+  repere(6, V(11.8), D(660) - 16);
+  return out;
+});
+
+// ── 5. u10 — composition chimique : SIAL, SIMA, péridotite ──────────────────────
+planche('u10-sial-sima', 1200, 520, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 40, 1120, 600, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 36 }));
+
+  const oxydes = ['SiO₂', 'Al₂O₃', 'FeO·MgO', 'CaO'];
+  const colonnes = [
+    { x: 210, titre: 'SIAL', sous: 'granite', valeurs: [72, 14, 4, 2], couleur: GREEN, fond: GREEN_FILL },
+    { x: 600, titre: 'SIMA', sous: 'basalte', valeurs: [50, 16, 12, 10], couleur: BLUE, fond: BLUE_FILL },
+    { x: 990, titre: 'péridotite', sous: 'olivine · pyroxène', valeurs: [45, 4, 45, 3], couleur: AMBER, fond: AMBER_FILL },
+  ];
+
+  for (const c of colonnes) {
+    out.push(texte(c.x, 108, c.titre, { taille: 23, couleur: c.couleur, ancre: 'middle', gras: true }));
+    out.push(texte(c.x, 142, c.sous, { taille: 14, couleur: MUTE, ancre: 'middle' }));
+    c.valeurs.forEach((v, i) => {
+      const y = 190 + i * 92;
+      out.push(texte(c.x - 150, y - 15, oxydes[i], { taille: 14, couleur: INK, ancre: 'start', gras: true }));
+      out.push(boite(c.x - 150, y, 300, 42, { remplissage: '#f4f6f4', couleur: GRID, largeur: 1.5, rayon: 8 }));
+      out.push(boite(c.x - 150, y, (300 * v) / 80, 42, { remplissage: c.fond, couleur: c.couleur, largeur: 2, rayon: 8 }));
+      out.push(texte(c.x + 158, y + 28, `${v} %`, { taille: 15, couleur: c.couleur, ancre: 'start', gras: true }));
+    });
+  }
+
+  repere(1, 210, 70);
+  repere(2, 600, 70);
+  repere(3, 990, 70);
+  repere(4, 330, 211);
+  repere(5, 600, 395);
+  repere(6, 1116, 130);
+  return out;
+});
+
+// ── 6. u10 — modèle interne : noyau solide sous pression ───────────────────────
+planche('u10-modelisation-terre', 1200, 780, ({ repere }) => {
+  const out = [];
+  const cx = 380;
+  const cy = 470;
+  const demi = (r, o) => poly(
+    [...Array.from({ length: 61 }, (_, i) => {
+      const a = Math.PI + (i / 60) * Math.PI;
+      return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    }), [cx + r, cy], [cx - r, cy]],
+    o,
+  );
+  out.push(demi(330, { couleur: INK, largeur: 3, remplissage: '#eef2ec' }));
+  out.push(demi(250, { couleur: INK, largeur: 2.5, remplissage: AMBER_FILL }));
+  out.push(demi(160, { couleur: INK, largeur: 2.5, remplissage: BLUE_FILL }));
+  out.push(demi(84, { couleur: RED, largeur: 3, remplissage: RED_FILL }));
+
+  // noyau externe liquide : pointillés ; noyau interne solide : hachures
+  for (let a = Math.PI; a <= Math.PI * 2; a += 0.16) {
+    for (const r of [100, 128, 152]) {
+      out.push(rond(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.98, 2.4, { remplissage: BLUE, couleur: BLUE, largeur: 1 }));
+    }
+  }
+  // noyau interne solide : anneaux concentriques (le pointillé marque le liquide)
+  for (const r of [26, 46, 66]) {
+    out.push(poly(
+      Array.from({ length: 41 }, (_, i) => {
+        const a = Math.PI + (i / 40) * Math.PI;
+        return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+      }),
+      { couleur: RED, largeur: 1.6 },
+    ));
+  }
+
+  // texte des couches
+  out.push(texte(cx, cy - 60, 'Fe–Ni', { taille: 16, couleur: RED, ancre: 'middle', gras: true }));
+  out.push(texte(cx, cy - 232, 'SIAL', { taille: 15, couleur: GREEN, ancre: 'middle', gras: true }));
+  out.push(texte(cx, cy - 165, 'SIMA', { taille: 15, couleur: AMBER, ancre: 'middle', gras: true }));
+
+  // courbe de température
+  const G = { x0: 760, x1: 1130, y0: 200, y1: 640 };
+  const D = (km) => G.y0 + (km / 6400) * (G.y1 - G.y0);
+  const TT = (c) => G.x0 + (c / 6000) * (G.x1 - G.x0);
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(poly([[TT(20), D(0)], [TT(600), D(100)], [TT(2000), D(660)], [TT(3500), D(2890)], [TT(4500), D(5150)], [TT(5200), D(6370)]], {
+    couleur: RED, largeur: 4,
+  }));
+  out.push(texte(G.x1, G.y0 - 16, 'T (°C)', { taille: 15, couleur: INK, ancre: 'end', gras: true }));
+  out.push(texte(G.x0 - 12, G.y0 - 16, 'km', { taille: 15, couleur: INK, ancre: 'end', gras: true }));
+  out.push(texte(G.x0 - 12, G.y0 - 8, '0', { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  out.push(texte(G.x0 - 12, G.y1 + 4, '6400 km', { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  out.push(texte(G.x1, G.y1 + 26, '5200', { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  out.push(texte(G.x1 + 6, G.y1 + 46, '°C', { taille: 14, couleur: MUTE, ancre: 'end', gras: true }));
+
+  repere(1, cx - 220, cy - 45);
+  repere(2, cx - 120, cy - 120);
+  repere(3, cx + 210, cy - 60);
+  repere(4, cx, cy - 26);
+  repere(5, TT(4700), D(5600));
+  repere(6, TT(900), D(300));
+  return out;
+});
+
+// ── 7. u11 — plis et failles ────────────────────────────────────────────────────
+planche('u11-plis-failles', 1200, 760, ({ repere }) => {
+  const out = [];
+  const panneau = (x, y, libelle) => [
+    boite(x, y, 520, 290, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 20 }),
+    texte(x + 24, y + 40, libelle, { taille: 22, couleur: INK, ancre: 'start', gras: true }),
+  ];
+  const strate = (pts, couleur) => poly(pts, { couleur, largeur: 3 });
+
+  // A — pli anticlinal (compression)
+  out.push(...panneau(50, 60, 'A'));
+  for (let k = 0; k < 4; k += 1) {
+    const pts = [];
+    for (let i = 0; i <= 40; i += 1) {
+      const x = 80 + (i / 40) * 460;
+      const y = 300 - k * 34 - 62 * Math.exp(-(((x - 310) / 130) ** 2));
+      pts.push([x, y]);
+    }
+    out.push(strate(pts, k % 2 ? AMBER : '#8a7a5c'));
+  }
+  out.push(fleche(120, 216, 236, 216, RED, 3, 11));
+  out.push(fleche(500, 216, 384, 216, RED, 3, 11));
+
+  // B — pli synclinal (compression)
+  out.push(...panneau(630, 60, 'B'));
+  for (let k = 0; k < 4; k += 1) {
+    const pts = [];
+    for (let i = 0; i <= 40; i += 1) {
+      const x = 660 + (i / 40) * 460;
+      const y = 214 + k * 34 + 62 * Math.exp(-(((x - 890) / 130) ** 2));
+      pts.push([x, y]);
+    }
+    out.push(strate(pts, k % 2 ? AMBER : '#8a7a5c'));
+  }
+  out.push(fleche(700, 300, 816, 300, RED, 3, 11));
+  out.push(fleche(1080, 300, 964, 300, RED, 3, 11));
+
+  // C — faille normale (distension) : le compartiment de droite s'affaisse
+  out.push(...panneau(50, 420, 'C'));
+  const couches = [GREEN_FILL, AMBER_FILL, '#dfe7ea', '#efe6d8', '#e3ece6'];
+  for (let i = 0; i < 5; i += 1) {
+    out.push(boite(80, 470 + i * 32, 230, 32, { remplissage: couches[i], couleur: '#8a8f88', largeur: 1.2, rayon: 0 }));
+    out.push(boite(310, 502 + i * 32, 230, 32, { remplissage: couches[i], couleur: '#8a8f88', largeur: 1.2, rayon: 0 }));
+  }
+  out.push(ligne(302, 466, 332, 634, { couleur: RED, largeur: 4 }));
+  out.push(fleche(268, 676, 128, 676, RED, 3, 11));
+  out.push(fleche(352, 676, 492, 676, RED, 3, 11));
+
+  // D — faille inverse (compression) : le compartiment de droite remonte
+  out.push(...panneau(630, 420, 'D'));
+  for (let i = 0; i < 5; i += 1) {
+    out.push(boite(660, 502 + i * 32, 230, 32, { remplissage: couches[i], couleur: '#8a8f88', largeur: 1.2, rayon: 0 }));
+    out.push(boite(890, 470 + i * 32, 230, 32, { remplissage: couches[i], couleur: '#8a8f88', largeur: 1.2, rayon: 0 }));
+  }
+  out.push(ligne(882, 466, 912, 634, { couleur: RED, largeur: 4 }));
+  out.push(fleche(800, 676, 940, 676, RED, 3, 11));
+  out.push(fleche(1110, 676, 970, 676, RED, 3, 11));
+
+  repere(1, 310, 138);
+  repere(2, 890, 262);
+  repere(5, 160, 216);
+  repere(3, 318, 566);
+  repere(4, 898, 534);
+  repere(6, 410, 640);
+  return out;
+});
+
+// ── 8. u11 — migmatite : fusion partielle et épaississement crustal ─────────────
+planche('u11-migmatite', 1200, 760, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 36 }));
+
+  // A — coupe : deux blocs continentaux qui se rencontrent, racine épaissie
+  out.push(poly([[90, 150], [520, 150], [520, 470], [90, 470]], { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(poly([[600, 150], [1030, 150], [1030, 470], [600, 470]], { couleur: INK, largeur: 3, remplissage: GREEN_FILL }));
+  out.push(poly([[520, 150], [600, 150], [660, 470], [560, 570], [460, 470]], {
+    couleur: INK, largeur: 3, remplissage: '#e8e4dc',
+  }));
+  out.push(fleche(120, 96, 380, 96, RED, 3, 12));
+  out.push(fleche(1000, 96, 740, 96, RED, 3, 12));
+
+  // zone de fusion partielle (migmatite) dans la racine
+  out.push(ellipse(556, 462, 82, 50, { remplissage: RED_FILL, couleur: RED, largeur: 2.5 }));
+  for (let i = -2; i <= 2; i += 1) {
+    const pts = [];
+    for (let x = 482; x <= 630; x += 6) pts.push([x, 462 + i * 14 + 6 * Math.sin((x - 480) / 18)]);
+    out.push(poly(pts, { couleur: RED, largeur: 3 }));
+  }
+
+  // B — zoom : texture de la migmatite (leucosome clair dans un fond sombre)
+  out.push(boite(760, 560, 360, 120, { remplissage: '#2f3a35', couleur: INK, largeur: 3, rayon: 12 }));
+  for (let i = 0; i < 3; i += 1) {
+    const pts = [];
+    for (let x = 780; x <= 1100; x += 6) {
+      pts.push([x, 594 + i * 30 + 8 * Math.sin((x - 780) / 26 + i)]);
+    }
+    out.push(poly(pts, { couleur: '#f6efe1', largeur: 6 }));
+  }
+
+  repere(1, 556, 250);
+  repere(2, 556, 462);
+  repere(3, 940, 610);
+  repere(4, 626, 360);
+  repere(5, 250, 96);
+  repere(6, 1050, 566);
+  return out;
+});
+
 // ───────────────────────────── écriture / vérification ─────────────────────────────
 
 const diff = [];

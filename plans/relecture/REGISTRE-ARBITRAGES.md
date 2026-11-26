@@ -135,8 +135,8 @@ n'est promu « validé » : cela demande la signature d'un enseignant, poste par
 
 **Porte ouverte** : le Lot 2 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
 729 tests, build OK, `verifier-hors-ligne` **RÉSULTAT : OK** avec 47 illustrations, coquille 2,21 Mio,
-`generer-schemas-svt --verifier` 21/21), mais **le Lot 4 (`u9`–`u11`) n'est pas ouvert** et aucun
-schéma n'est promu « validé ».
+`generer-schemas-svt --verifier` 21/21), sans qu'aucun
+schéma ne soit promu « validé » ; depuis, les Lots 3 et 4 ont été livrés (voir plus bas).
 
 ## Schémas « zéro texte IA » — Lot 3 : u6 (photosynthèse), u7 (respiration), u8 (cycle) (2026-11-26)
 
@@ -146,5 +146,18 @@ schéma n'est promu « validé ».
 
 **Porte ouverte** : le Lot 3 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
 729 tests, build OK, `verifier-hors-ligne` **RÉSULTAT : OK** avec 53 illustrations, coquille 2,21 Mio,
-`generer-schemas-svt --verifier` 27/27), mais **le Lot 4 (`u9`–`u11`) n'est pas ouvert** et aucun
-schéma n'est promu « validé ».
+`generer-schemas-svt --verifier` 27/27), sans qu'aucun
+schéma ne soit promu « validé » ; le Lot 4 a ensuite été livré (voir ci-dessous).
+
+## Schémas « zéro texte IA » — Lot 4 : u9 (tectonique), u10 (globe interne), u11 (déformation) (2026-11-26)
+
+| N° | Objet | Fichiers | Constat | Arbitrage | Statut | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-072 | **8 schémas créés** sur les leçons restées sans visuel du Domaine 3, dernier lot du prompt | `src/data/schemasSvt.ts`, `scripts/generer-schemas-svt.mjs`, `public/lecons/img/u9-*.svg`, `public/lecons/img/u10-*.svg`, `public/lecons/img/u11-*.svg`, `src/data/__tests__/illustrationsLecons.test.ts`, `src/__tests__/metriques.test.ts`, `plans/SCHEMAS-ZERO-TEXTE-IA-LOT4-2026-11-26.md` | `u9` (5 leçons), `u10` (4) et `u11` (4) possédaient **11 WebP du manuel**, mais sept leçons n'avaient **aucun document** : limites de plaques, expansion océanique, énergie interne (`u9`), ondes sismiques, SIAL/SIMA/péridotite, modélisation du globe (`u10`), migmatite (`u11`). Huit schémas vectoriels les couvrent, à 6 repères chacun, dont trois planches à panneaux (A/B/C, A/B/C/D, globe + graphique). Le Domaine 3 est désormais **intégralement illustré** (u9 5/5, u10 4/4, u11 4/4) et la couverture globale passe à **52 / 55 leçons**. | Les 11 WebP du manuel restent **intactes et non promues** ; aucune leçon ne dépasse 1 schéma créé. Deux erreurs de fond corrigées pendant la passe visuelle : (1) la **profondeur du globe était tracée à l'envers** dans `u10-ondes-sismiques` (croûte au fond du graphique), formule remise en `D(km) = y0 + (km/max)·(y1−y0)` ; (2) `SIAL` et `SIMA` de `u10-modelisation-terre` étaient placés **hors du disque**, donc invisibles — replacés dans leurs anneaux. Sens physique des failles vérifié : normale divergente (distension), inverse convergente (compression). **Aucune promotion `reviewed: true`.** | `en attente enseignant` — 61 entrées sur 61 en `a_valider_enseignant` ; relecture nominative (scientifique + arabe) exigée | 2026-11-26 |
+
+**Porte ouverte** : le Lot 4 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
+729 tests, build OK — `index-*.js` 497,94 Ko, `schemasSvt-*.js` 52,47 Ko toujours hors démarrage —
+`verifier-hors-ligne` **RÉSULTAT : OK** avec 61 illustrations, `sync-metrics --check` sans dérive,
+`generer-schemas-svt --verifier` 35/35), et les **quatre lots du prompt sont livrés**. Aucun schéma
+n'est promu « validé » : la validation reste entièrement à l'enseignant.
+

@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="780" viewBox="0 0 1200 780" data-schema="u10-modelisation-terre">
+<rect width="1200" height="780" fill="#ffffff"/>
+<path d="M50 470 L50.5 452.7 L51.8 435.5 L54.1 418.4 L57.2 401.4 L61.2 384.6 L66.2 368 L71.9 351.7 L78.5 335.8 L86 320.2 L94.2 305 L103.2 290.3 L113 276 L123.5 262.3 L134.8 249.2 L146.7 236.7 L159.2 224.8 L172.3 213.5 L186 203 L200.3 193.2 L215 184.2 L230.2 176 L245.8 168.5 L261.7 161.9 L278 156.2 L294.6 151.2 L311.4 147.2 L328.4 144.1 L345.5 141.8 L362.7 140.5 L380 140 L397.3 140.5 L414.5 141.8 L431.6 144.1 L448.6 147.2 L465.4 151.2 L482 156.2 L498.3 161.9 L514.2 168.5 L529.8 176 L545 184.2 L559.7 193.2 L574 203 L587.7 213.5 L600.8 224.8 L613.3 236.7 L625.2 249.2 L636.5 262.3 L647 276 L656.8 290.3 L665.8 305 L674 320.2 L681.5 335.8 L688.1 351.7 L693.8 368 L698.8 384.6 L702.8 401.4 L705.9 418.4 L708.2 435.5 L709.5 452.7 L710 470 L710 470 L50 470" fill="#eef2ec" stroke="#1f2d27" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M130 470 L130.3 456.9 L131.4 443.9 L133.1 430.9 L135.5 418 L138.5 405.3 L142.2 392.7 L146.6 380.4 L151.6 368.3 L157.2 356.5 L163.5 345 L170.3 333.8 L177.7 323.1 L185.7 312.7 L194.2 302.7 L203.2 293.2 L212.7 284.2 L222.7 275.7 L233.1 267.7 L243.8 260.3 L255 253.5 L266.5 247.2 L278.3 241.6 L290.4 236.6 L302.7 232.2 L315.3 228.5 L328 225.5 L340.9 223.1 L353.9 221.4 L366.9 220.3 L380 220 L393.1 220.3 L406.1 221.4 L419.1 223.1 L432 225.5 L444.7 228.5 L457.3 232.2 L469.6 236.6 L481.7 241.6 L493.5 247.2 L505 253.5 L516.2 260.3 L526.9 267.7 L537.3 275.7 L547.3 284.2 L556.8 293.2 L565.8 302.7 L574.3 312.7 L582.3 323.1 L589.7 333.8 L596.5 345 L602.8 356.5 L608.4 368.3 L613.4 380.4 L617.8 392.7 L621.5 405.3 L624.5 418 L626.9 430.9 L628.6 443.9 L629.7 456.9 L630 470 L630 470 L130 470" fill="#fbf1dd" stroke="#1f2d27" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M220 470 L220.2 461.6 L220.9 453.3 L222 445 L223.5 436.7 L225.5 428.6 L227.8 420.6 L230.6 412.7 L233.8 404.9 L237.4 397.4 L241.4 390 L245.8 382.9 L250.6 376 L255.7 369.3 L261.1 362.9 L266.9 356.9 L272.9 351.1 L279.3 345.7 L286 340.6 L292.9 335.8 L300 331.4 L307.4 327.4 L314.9 323.8 L322.7 320.6 L330.6 317.8 L338.6 315.5 L346.7 313.5 L355 312 L363.3 310.9 L371.6 310.2 L380 310 L388.4 310.2 L396.7 310.9 L405 312 L413.3 313.5 L421.4 315.5 L429.4 317.8 L437.3 320.6 L445.1 323.8 L452.6 327.4 L460 331.4 L467.1 335.8 L474 340.6 L480.7 345.7 L487.1 351.1 L493.1 356.9 L498.9 362.9 L504.3 369.3 L509.4 376 L514.2 382.9 L518.6 390 L522.6 397.4 L526.2 404.9 L529.4 412.7 L532.2 420.6 L534.5 428.6 L536.5 436.7 L538 445 L539.1 453.3 L539.8 461.6 L540 470 L540 470 L220 470" fill="#e9eff8" stroke="#1f2d27" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M296 470 L296.1 465.6 L296.5 461.2 L297 456.9 L297.8 452.5 L298.9 448.3 L300.1 444 L301.6 439.9 L303.3 435.8 L305.2 431.9 L307.3 428 L309.6 424.3 L312 420.6 L314.7 417.1 L317.6 413.8 L320.6 410.6 L323.8 407.6 L327.1 404.7 L330.6 402 L334.3 399.6 L338 397.3 L341.9 395.2 L345.8 393.3 L349.9 391.6 L354 390.1 L358.3 388.9 L362.5 387.8 L366.9 387 L371.2 386.5 L375.6 386.1 L380 386 L384.4 386.1 L388.8 386.5 L393.1 387 L397.5 387.8 L401.7 388.9 L406 390.1 L410.1 391.6 L414.2 393.3 L418.1 395.2 L422 397.3 L425.7 399.6 L429.4 402 L432.9 404.7 L436.2 407.6 L439.4 410.6 L442.4 413.8 L445.3 417.1 L448 420.6 L450.4 424.3 L452.7 428 L454.8 431.9 L456.7 435.8 L458.4 439.9 L459.9 444 L461.1 448.3 L462.2 452.5 L463 456.9 L463.5 461.2 L463.9 465.6 L464 470 L464 470 L296 470" fill="#fbeceb" stroke="#a5312b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="280" cy="470" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="252" cy="470" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="228" cy="470" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="281.3" cy="454.4" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="253.6" cy="450" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="229.9" cy="446.3" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="285.1" cy="439.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="258.5" cy="430.5" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="235.7" cy="423.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="291.3" cy="424.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="266.5" cy="412.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="245.2" cy="401.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="299.8" cy="411.5" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="277.3" cy="395.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="258.1" cy="381" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="310.3" cy="399.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="290.8" cy="380" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="274.1" cy="363.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="322.6" cy="389.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="306.6" cy="367.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="292.8" cy="348" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="336.4" cy="381.8" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="324.2" cy="357.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="313.8" cy="335.9" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="351.3" cy="376.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="343.3" cy="349.8" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="336.4" cy="327.3" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="367" cy="372.8" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="363.3" cy="345.6" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="360.2" cy="322.3" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="382.9" cy="372" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="383.7" cy="344.6" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="384.4" cy="321.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="398.8" cy="373.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="404.1" cy="346.8" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="408.6" cy="323.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="414.2" cy="377.9" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="423.8" cy="352.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="432" cy="330" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="428.7" cy="384.4" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="442.4" cy="360.5" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="454.1" cy="339.9" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="442" cy="393.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="459.4" cy="371.6" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="474.3" cy="353.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="453.7" cy="403.8" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="474.4" cy="385.3" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="492.1" cy="369.4" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="463.6" cy="416.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="487" cy="401.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="507" cy="388.2" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="471.2" cy="429.9" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="496.8" cy="418.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="518.7" cy="409" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="476.6" cy="444.7" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="503.6" cy="437.6" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="526.8" cy="431.5" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="479.5" cy="460.1" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="507.3" cy="457.3" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<circle cx="531.2" cy="454.9" r="2.4" fill="#1d4f8f" stroke="#1d4f8f" stroke-width="1"/>
+<path d="M354 470 L354.1 468 L354.3 465.9 L354.7 463.9 L355.3 462 L356 460.1 L356.8 458.2 L357.8 456.4 L359 454.7 L360.2 453.1 L361.6 451.6 L363.1 450.2 L364.7 449 L366.4 447.8 L368.2 446.8 L370.1 446 L372 445.3 L373.9 444.7 L375.9 444.3 L378 444.1 L380 444 L382 444.1 L384.1 444.3 L386.1 444.7 L388 445.3 L389.9 446 L391.8 446.8 L393.6 447.8 L395.3 449 L396.9 450.2 L398.4 451.6 L399.8 453.1 L401 454.7 L402.2 456.4 L403.2 458.2 L404 460.1 L404.7 462 L405.3 463.9 L405.7 465.9 L405.9 468 L406 470" fill="none" stroke="#a5312b" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M334 470 L334.1 466.4 L334.6 462.8 L335.3 459.3 L336.3 455.8 L337.5 452.4 L339 449.1 L340.8 446 L342.8 443 L345 440.1 L347.5 437.5 L350.1 435 L353 432.8 L356 430.8 L359.1 429 L362.4 427.5 L365.8 426.3 L369.3 425.3 L372.8 424.6 L376.4 424.1 L380 424 L383.6 424.1 L387.2 424.6 L390.7 425.3 L394.2 426.3 L397.6 427.5 L400.9 429 L404 430.8 L407 432.8 L409.9 435 L412.5 437.5 L415 440.1 L417.2 443 L419.2 446 L421 449.1 L422.5 452.4 L423.7 455.8 L424.7 459.3 L425.4 462.8 L425.9 466.4 L426 470" fill="none" stroke="#a5312b" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M314 470 L314.2 464.8 L314.8 459.7 L315.8 454.6 L317.2 449.6 L319 444.7 L321.2 440 L323.7 435.5 L326.6 431.2 L329.8 427.1 L333.3 423.3 L337.1 419.8 L341.2 416.6 L345.5 413.7 L350 411.2 L354.7 409 L359.6 407.2 L364.6 405.8 L369.7 404.8 L374.8 404.2 L380 404 L385.2 404.2 L390.3 404.8 L395.4 405.8 L400.4 407.2 L405.3 409 L410 411.2 L414.5 413.7 L418.8 416.6 L422.9 419.8 L426.7 423.3 L430.2 427.1 L433.4 431.2 L436.3 435.5 L438.8 440 L441 444.7 L442.8 449.6 L444.2 454.6 L445.2 459.7 L445.8 464.8 L446 470" fill="none" stroke="#a5312b" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="380" y="410" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#a5312b" text-anchor="middle" font-weight="700">Fe–Ni</text>
+<text x="380" y="238" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f6f52" text-anchor="middle" font-weight="700">SIAL</text>
+<text x="380" y="305" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a97517" text-anchor="middle" font-weight="700">SIMA</text>
+<line x1="760" y1="640" x2="1130" y2="640" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="760" y1="200" x2="760" y2="640" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M761.2 200 L797 206.9 L883.3 245.4 L975.8 398.7 L1037.5 554.1 L1080.7 637.9" fill="none" stroke="#a5312b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="1130" y="184" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f2d27" text-anchor="end" font-weight="700">T (°C)</text>
+<text x="748" y="184" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f2d27" text-anchor="end" font-weight="700">km</text>
+<text x="748" y="192" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">0</text>
+<text x="748" y="644" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">6400 km</text>
+<text x="1130" y="666" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">5200</text>
+<text x="1136" y="686" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">°C</text>
+</svg>
