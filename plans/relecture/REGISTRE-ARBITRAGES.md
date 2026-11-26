@@ -124,5 +124,16 @@ coquille **2,18 Mio** (7 entrées) / contenu **4,19 Mio** (28 entrées), `RÉSUL
 
 **Porte ouverte** : la porte de validation du prompt (Étape 0 + Lot 1) est franchie techniquement
 (`tsc`, ESLint, 86 fichiers / 729 tests, build, `verifier-drills` 0 problème, `verifier-hors-ligne` OK,
-`sync-metrics --check` sans dérive), mais **les Lots 2, 3 et 4 ne sont pas ouverts** et aucun schéma
+`sync-metrics --check` sans dérive), mais **les Lots 3 et 4 ne sont pas ouverts** et aucun schéma
 n'est promu « validé » : cela demande la signature d'un enseignant, poste par poste.
+
+## Schémas « zéro texte IA » — Lot 2 : u4 (immunité) + u5 (nerf) (2026-11-26)
+
+| N° | Objet | Fichiers | Constat | Arbitrage | Statut | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-070 | Budget hors-ligne débloqué, puis **10 schémas créés** (u4, u5) | `src/data/illustrationsTypes.ts`, `src/data/schemasSvt.ts`, `src/data/illustrationsLecons.ts`, `src/components/IllustrationsLecon.tsx`, `vite.config.ts`, `scripts/generer-schemas-svt.mjs`, `public/lecons/img/u4-*.svg`, `public/lecons/img/u5-*.svg`, `plans/SCHEMAS-ZERO-TEXTE-IA-LOT2-2026-11-26.md` | Le Lot 1 s'était arrêté sur une coquille à **98,7 %** de sa cible : l'import statique de `SCHEMAS_SVT` tirait les schémas au démarrage. Corrigé d'abord : types extraits dans `illustrationsTypes.ts` (zéro donnée), `schemasSvt` chargé par `import()` dans un `useEffect`, préfixe `/^assets\/schemasSvt-/` ajouté à `HORS_PRECACHE` → chunk séparé de 26,33 Ko, coquille **2,23 → 2,21 Mio**. Les **10 schémas vectoriels** du Lot 2 couvrent ensuite `u4` (CMH-I/II, ABO, phagocytose, LTc/perforine, coopération LT4/IL-2, cinétique VIH) et `u5` (potentiel de repos, potentiel d'action, intégration synaptique, morphine), avec 5 à 7 repères chacun. | Conserver la règle « zéro texte IA » : seuls des symboles scientifiques contrôlés (ADN, ATP, Ca²⁺, CD8, IL-2…) apparaissent dans le SVG, doublés en arabe par `legendeAr` + `annotations`. Un seul schéma par leçon, 2 emplacements encore libres (`phase6_chapitres_11_12`, `phase9_chapitres_17_18`). **Aucune promotion `reviewed: true`.** | `en attente enseignant` — 47 entrées sur 47 en `a_valider_enseignant` ; relecture nominative (scientifique + arabe) exigée avant usage officiel | 2026-11-26 |
+
+**Porte ouverte** : le Lot 2 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
+729 tests, build OK, `verifier-hors-ligne` **RÉSULTAT : OK** avec 47 illustrations, coquille 2,21 Mio,
+`generer-schemas-svt --verifier` 21/21), mais **les Lots 3 (`u6`–`u8`) et 4 (`u9`–`u11`) ne sont pas
+ouverts** et aucun schéma n'est promu « validé ».

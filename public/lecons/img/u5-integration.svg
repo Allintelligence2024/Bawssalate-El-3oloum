@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" data-schema="u5-integration">
+<rect width="1200" height="720" fill="#ffffff"/>
+<path d="M908 380 L912.5 388.6 L916.1 397.7 L918.5 407.1 L919.5 416.7 L918.8 426.4 L916.5 435.7 L912.5 444.7 L906.8 452.9 L899.7 460.3 L891.3 466.6 L881.8 471.9 L871.7 476.1 L861.2 479.2 L850.4 481.4 L839.8 482.8 L829.5 483.6 L819.6 484 L810.2 484.3 L801.3 484.7 L792.8 485.3 L784.6 486.3 L776.5 487.7 L768.4 489.7 L760 492 L751.3 494.6 L742.1 497.2 L732.3 499.8 L722 502 L711.2 503.6 L700.1 504.3 L688.9 503.9 L677.8 502.4 L667.1 499.6 L657.1 495.4 L647.9 489.9 L640 483.2 L633.4 475.5 L628.2 467 L624.5 457.8 L622.3 448.4 L621.4 438.8 L621.7 429.3 L622.8 420 L624.7 411.2 L626.8 402.8 L629.1 394.8 L631.2 387.3 L632.9 380 L634.2 372.9 L634.9 365.8 L635.1 358.6 L634.9 351.2 L634.4 343.3 L633.9 335.1 L633.6 326.4 L633.8 317.3 L634.8 308.1 L636.8 298.7 L639.9 289.4 L644.3 280.5 L650.1 272.3 L657.3 264.9 L665.6 258.5 L675.1 253.5 L685.3 249.8 L696.2 247.5 L707.4 246.6 L718.6 247.1 L729.6 248.7 L740.3 251.4 L750.5 254.7 L760 258.6 L768.9 262.6 L777.3 266.7 L785.3 270.6 L793 274.1 L800.6 277.2 L808.2 279.8 L816.2 282.1 L824.5 284 L833.2 285.7 L842.5 287.5 L852.2 289.6 L862.2 292.1 L872.4 295.3 L882.4 299.2 L892 304.2 L900.9 310 L908.9 316.9 L915.5 324.6 L920.7 333.1 L924.2 342.2 L925.9 351.6 L925.9 361.2 L924.2 370.7 L920.9 380" fill="#e8f2ec" stroke="#1f2d27" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="760" cy="380" rx="54" ry="46" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<path d="M618 370 L360 348 L360 400 L618 386" fill="#efe6d8" stroke="#1f2d27" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="500" y="424" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1f2d27" text-anchor="middle" font-weight="700">SI</text>
+<circle cx="1010" cy="232" r="32" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<text x="1010" y="237" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#1d4f8f" text-anchor="middle" font-weight="700">Na⁺</text>
+<g stroke="#1f6f52" stroke-width="3" fill="none" stroke-linecap="round"><line x1="976" y1="232" x2="934" y2="232"/><path d="M944 227.5 L934 232 L944 236.5" stroke-width="3"/></g>
+<circle cx="1040" cy="380" r="32" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<text x="1040" y="385" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#1d4f8f" text-anchor="middle" font-weight="700">Na⁺</text>
+<g stroke="#1f6f52" stroke-width="3" fill="none" stroke-linecap="round"><line x1="1006" y1="380" x2="964" y2="380"/><path d="M974 375.5 L964 380 L974 384.5" stroke-width="3"/></g>
+<circle cx="1010" cy="528" r="32" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<text x="1010" y="533" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#1d4f8f" text-anchor="middle" font-weight="700">Na⁺</text>
+<g stroke="#1f6f52" stroke-width="3" fill="none" stroke-linecap="round"><line x1="976" y1="528" x2="934" y2="528"/><path d="M944 523.5 L934 528 L944 532.5" stroke-width="3"/></g>
+<circle cx="1090" cy="150" r="32" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="1090" y="155" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#a5312b" text-anchor="middle" font-weight="700">Cl⁻</text>
+<line x1="1056" y1="150" x2="1014" y2="150" stroke="#a5312b" stroke-width="3" stroke-linecap="round"/>
+<line x1="1014" y1="138" x2="1014" y2="162" stroke="#a5312b" stroke-width="3" stroke-linecap="round"/>
+<circle cx="1090" cy="620" r="32" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="1090" y="625" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#a5312b" text-anchor="middle" font-weight="700">Cl⁻</text>
+<line x1="1056" y1="620" x2="1014" y2="620" stroke="#a5312b" stroke-width="3" stroke-linecap="round"/>
+<line x1="1014" y1="608" x2="1014" y2="632" stroke="#a5312b" stroke-width="3" stroke-linecap="round"/>
+<g stroke="#1f6f52" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="1150" y1="496" x2="1060" y2="512"/><path d="M1069.1 505.8 L1060 512 L1070.7 514.7" stroke-width="2.5"/></g>
+<g stroke="#1f6f52" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="1150" y1="520" x2="1060" y2="536"/><path d="M1069.1 529.8 L1060 536 L1070.7 538.7" stroke-width="2.5"/></g>
+</svg>

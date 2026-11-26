@@ -51,12 +51,63 @@ V6 qualité visuelle et budget (≤ 100 Ko, plafond 150 Ko).
 3. **Étiquettes rouges sur trait rouge** (`S—S`) et `Vmax` sur ligne pointillée : décalage + halo.
 4. **Réflexe retenu** : dès qu'un visuel dépasse 2 essais sur la géométrie, la cause est le **modèle mental du dessin**, pas la pastille — on redessine la forme (enzyme en V, croissant en deux cercles) au lieu de déplacer le repère.
 
+---
+
+# Lot 2 — `u4` (immunité) + `u5` (communication nerveuse), 2026-11-26
+
+## 0. Prérequis budget, réglé avant le premier schéma
+
+L'alerte du Lot 1 (coquille à 98,7 %) est levée **avant** d'écrire une ligne de SVG :
+
+1. `src/data/illustrationsTypes.ts` créé : `AnnotationSchema`, `TypeVisuel`, `IllustrationLecon`, `typeVisuelDe`, `aDesAnnotations` — **aucune donnée**, donc importable par le composant sans tirer le registre.
+2. `IllustrationsLecon.tsx` : `import { SCHEMAS_SVT }` → `import('../data/schemasSvt')` dans un `useEffect` + `useMemo` (fusion avec le legacy, `.catch` silencieux).
+3. `vite.config.ts` : `/^assets\/schemasSvt-/` dans `HORS_PRECACHE`.
+
+Mesure : `schemasSvt-tIvI3yTD.js` **26,33 Ko** (gzip 7,03) sort du graphe de démarrage, coquille **2,21 Mio** (contre 2,23), `verifier-hors-ligne` OK.
+
+## 1. Journal des 10 planches
+
+| # | Slug | Essais | Défaut déclencheur | Correction |
+|---|---|---:|---|---|
+| 1 | `u4-cmh` | 3 | pastilles 1 et 2 **aux mêmes coordonnées** ; « CMH-II » posé sur les têtes de récepteurs ; `ADN` masqué par la pastille 3 | repères dispersés (700/860/942), libellés remontés, peptide CMH-I posé **sur** la tête du récepteur, peptide CMH-II entre les deux domaines |
+| 2 | `u4-groupes-abo` | 2 | pastilles 1 à 3 flottant **entre** les panneaux A/B/AB/O | repères ramenés sur les antigènes de leur propre panneau (120/420/1046), pastilles 4-5 sur les anticorps concernés |
+| 3 | `u4-phagocytose` | 3 | **SVG non parsable** : `out.push(...macro(...))` éclatait la chaîne en caractères ; 4ᵉ panneau hors zone (`x = 1230 > 1200`) ; inversion Ag/Ac | spread retiré, panneaux 60/340/620/900 (largeur 260), pastilles 1 et 2 échangées |
+| 4 | `u4-ltc-perforine` | 2 | LTc **à l'intérieur** de la cellule infectée, « CMH-I » sous la pastille 2, flèches H₂O partant vers l'extérieur | planche réécrite : cellule 380 × 180, LTc sous la membrane, TCR vers le peptide, CD8 décalé, pores sur l'arête + flèches verticales vers l'intérieur |
+| 5 | `u4-cooperation-lt4` | 2 | `IL-2` masqué par la pastille 2 ; flèches **diagonales** vers des boîtes alignées verticalement | libellé `IL-2` sorti des boîtes, flèches verticales LT4 → LB/LTc, 7 pastilles une par acteur |
+| 6 | `u4-vih` | 2 | boîte « SIDA » flottant au-dessus de la courbe, pastilles 3 et 5 redondantes | bande verticale hachurée sous 200 LT4/mm³, 5 pastilles (primo, latence, zone, seuil, effondrement) |
+| 7 | `u5-potentiel-repos` | 2 | pastilles 1 et 2 posées **sur** les ions (libellés Na⁺/K⁺ masqués), `ATP` sous la pastille 5, `−70 mV` sous la pastille 6 | pastilles rejetées à côté des ions, `ATP` remonté, pastille 5 hors de la pompe, 6 à droite de la cote |
+| 8 | `u5-potentiel-action` | 2 | pastille 4 sur la pente descendante, pastille 6 sur le pic de l'encart | 4 décalée à droite de la pente, 6 dans le coin vide de l'encart |
+| 9 | `u5-integration` | réécrit | axone déconnecté, `+`/`Cl⁻` flottants, flèches de sommation vers le vide, 3ᵉ pastille à x = 95,5 (hors `[5, 95]`) | planche réécrite : `Na⁺`/`Cl⁻` écrits **dans** les boutons, sommation temporelle aboutissant sur un bouton précis, pastille 3 ramenée à 94,7 % |
+| 10 | `u5-morphine` | 3 | morphine dessinée **dans** la terminaison, récepteur entièrement hors de la membrane, `Ca²⁺` sur le trait post-synaptique | récepteur agrandi à cheval sur la membrane (378→436) avec la morphine **dedans**, `Ca²⁺` à droite du canal, flèche barrée dégagée |
+
+## 2. Synthèse Lot 2
+
+| Indicateur | Valeur |
+|---|---|
+| Visuels retenus | **10** — 10 SVG écrits à la main, 0 WebP |
+| Essais moyens | 2,2 par visuel (un seul a été réécrit entièrement) |
+| `REJET` définitif | **0** |
+| Poids total | **55,6 Ko** (3,1–10,6 Ko pièce) |
+| Repères | 5 à 7 par visuel, tous dans `[5, 95]`, `detailAr ≤ 90` |
+| Registre après lot | **26 schémas** (21 SVG + 5 WebP annotées), **47 illustrations** au total |
+| `reviewed: true` | **0** — 47 entrées sur 47 en `a_valider_enseignant` |
+
+## 3. Contrôle final
+
+```
+node scripts/generer-schemas-svt.mjs --verifier     → 21 / 21 identiques
+/tmp/.venv/bin/python scripts/previsualiser-schemas.py u4-… u5-…   → 10 planches
+/tmp/.venv/bin/python scripts/previsualiser-annotations.py schema-u4-… schema-u5-…  → 10 composites
+npx vitest run                                      → 86 fichiers / 729 tests
+npm run build && node scripts/verifier-hors-ligne.mjs → 47 illustrations, coquille 2,21 Mio, RÉSULTAT : OK
+```
+
 ## Prochains lots (non commencés)
 
-- **Lot 2** — `u4` (8 leçons) et `u5` (5 leçons) : 0 illustration aujourd'hui.
 - **Lot 3** — `u6`/`u7`/`u8` : conserver les 13 WebP, combler les leçons sans visuel (Jagendorf, glycolyse/Krebs/Mitchell-Racker, fermentation, couplage).
 - **Lot 4** — `u9`/`u10`/`u11` : `u10` intégralement (ondes P/S + zones d'ombre, discontinuités, coupe interne).
+- **Reliquats u4/u5** (si l'enseignant le demande) : un 2ᵉ schéma possible sur `phase6_chapitres_11_12` (réponse secondaire) et `phase9_chapitres_17_18` (réflexe myotatique) sans dépasser le plafond de 2 par leçon.
 
-**Alerte budget** : coquille hors-ligne à **2,23 Mio / 2,25 Mio (98,7 %)**. Avant le Lot 2, sortir
-`src/data/schemasSvt.ts` du bundle de démarrage (import différé) ou gagner de la place ailleurs,
-sinon la porte CI tombera au premier schéma ajouté.
+**Budget** : coquille **2,21 Mio / 2,25 Mio (98,2 %)**, contenu 4,19 Mio. Le Lot 2 n'a coûté **aucun**
+octet de coquille (les schémas sont hors précache et hors bundle de démarrage). Marge restante ≈ 40 Ko :
+la porte reste à surveiller avant les Lots 3 et 4.

@@ -13,13 +13,13 @@
 // Le zoom plein écran est volontairement minimal : un bouton, la touche Échap, le focus
 // rendu au déclencheur à la fermeture, et la légende arabe toujours visible sous l'image.
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ILLUSTRATIONS_LECONS_LEGACY } from '../data/illustrationsLegacy.gen';
 import {
   aDesAnnotations,
-  illustrationsParLecon,
   typeVisuelDe,
   type IllustrationLecon,
-} from '../data/illustrationsLecons';
+} from '../data/illustrationsTypes';
 import { legendeArSecurisee } from '../utils/illustrations';
 import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
 
@@ -30,7 +30,35 @@ interface Props {
 }
 
 export default function IllustrationsLecon({ lessonId, compacte = false }: Props) {
-  const illustrations = illustrationsParLecon(lessonId);
+  // Les schémas créés (libellés arabes) sont chargés à la demande : ils ne pèsent plus sur la
+  // coquille de démarrage. Les 21 WebP du manuel, légères, restent disponibles immédiatement.
+  const [schemas, setSchemas] = useState<IllustrationLecon[]>([]);
+
+  useEffect(() => {
+    let vivant = true;
+    import('../data/schemasSvt')
+      .then((module) => {
+        if (vivant) setSchemas(module.SCHEMAS_SVT);
+      })
+      .catch(() => {
+        // Un schéma manquant ne doit jamais empêcher une leçon de s'afficher.
+        if (vivant) setSchemas([]);
+      });
+    return () => {
+      vivant = false;
+    };
+  }, []);
+
+  const illustrations = useMemo(
+    () =>
+      [...ILLUSTRATIONS_LECONS_LEGACY, ...schemas]
+        .filter((i) => i.lessonId === lessonId)
+        .sort(
+          (a, b) =>
+            (a.docNum ?? '').localeCompare(b.docNum ?? '') || a.fichier.localeCompare(b.fichier),
+        ),
+    [schemas, lessonId],
+  );
   const [zoom, setZoom] = useState<IllustrationLecon | null>(null);
   const boutonFermer = useRef<HTMLButtonElement>(null);
   const declencheur = useRef<HTMLButtonElement | null>(null);

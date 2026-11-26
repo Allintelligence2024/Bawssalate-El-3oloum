@@ -855,6 +855,468 @@ planche('u3-inhibition', 1200, 800, ({ repere }) => {
   return out;
 });
 
+// ═══════════════════════════ LOT 2 — u4 (immunité) et u5 (nerf) ═══════════════════════════
+
+/** Anticorps en Y : deux bras + un pied, dessiné dans une orientation donnée. */
+function anticorps(cx, cy, taille, o = {}) {
+  const { couleur = RED, largeur = 3, rotation = 0 } = o;
+  const s = taille;
+  const bras = [[-0.62, -1], [0, 0.12], [0.62, -1]];
+  const pts = bras.map(([dx, dy]) => [cx + dx * s, cy + dy * s]);
+  const corps = [
+    `M${P(cx)} ${P(cy + 0.12 * s)} L${P(pts[0][0])} ${P(pts[0][1])}`,
+    `M${P(cx)} ${P(cy + 0.12 * s)} L${P(pts[2][0])} ${P(pts[2][1])}`,
+    `M${P(cx)} ${P(cy + 0.12 * s)} L${P(cx)} ${P(cy + 0.95 * s)}`,
+  ];
+  const grp = `<g stroke="${couleur}" stroke-width="${largeur}" fill="none" stroke-linecap="round"` +
+    `${rotation ? ` transform="rotate(${rotation} ${cx} ${cy})"` : ''}>` +
+    corps.map((d) => `<path d="${d}"/>`).join('') + '</g>';
+  const bouts = `<g stroke="${couleur}" stroke-width="${largeur + 1}" stroke-linecap="round"` +
+    `${rotation ? ` transform="rotate(${rotation} ${cx} ${cy})"` : ''}>` +
+    pts.map(([x, y]) => `<line x1="${P(x)}" y1="${P(y)}" x2="${P(x)}" y2="${P(y - 0.2 * s)}"/>`).join('') +
+    '</g>';
+  return grp + bouts;
+}
+
+// ── L1. u4 — CMH-I / CMH-II : qui présente quoi ? ────────────────────────────────
+planche('u4-cmh', 1200, 700, ({ repere }) => {
+  const out = [];
+  /** Récepteur membranaire : pied + tête (deux domaines pour CMH-II). */
+  const recepteur = (x, y, nombreDomaines, couleur) => {
+    const s = [ligne(x, y, x, y - 26, { couleur, largeur: 4 })];
+    if (nombreDomaines === 2) {
+      s.push(rond(x - 10, y - 40, 10, { remplissage: PAPER, couleur, largeur: 3 }));
+      s.push(rond(x + 10, y - 40, 10, { remplissage: PAPER, couleur, largeur: 3 }));
+    } else {
+      s.push(boite(x - 15, y - 52, 30, 30, { remplissage: PAPER, couleur, largeur: 3, rayon: 9 }));
+    }
+    return s;
+  };
+
+  // A (à droite) — cellule nucléée quelconque : CMH-I partout
+  out.push(ellipse(860, 430, 250, 210, { remplissage: GREEN_FILL, couleur: INK, largeur: 3 }));
+  out.push(ellipse(860, 470, 104, 92, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2.5 }));
+  out.push(texte(860, 476, 'ADN', { taille: 16, couleur: BLUE, ancre: 'middle', gras: true }));
+  out.push(...recepteur(740, 246, 1, GREEN));
+  out.push(...recepteur(860, 224, 1, GREEN));
+  out.push(...recepteur(980, 246, 1, GREEN));
+  out.push(boite(846, 166, 28, 24, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5, rayon: 4 }));
+  out.push(texte(1024, 190, 'CMH-I', { taille: 15, couleur: GREEN, ancre: 'start', gras: true }));
+
+  // B (à gauche) — CPA : CMH-II
+  out.push(organique(330, 430, (a) => 196 + 26 * Math.sin(a * 4) + 12 * Math.cos(a * 3), {
+    couleur: INK, largeur: 3, remplissage: AMBER_FILL,
+  }));
+  out.push(ellipse(330, 470, 74, 64, { remplissage: PAPER, couleur: BLUE, largeur: 2.5 }));
+  out.push(...recepteur(232, 292, 2, AMBER));
+  out.push(...recepteur(430, 292, 2, AMBER));
+  out.push(boite(222, 226, 20, 20, { remplissage: GREEN_FILL, couleur: GREEN, largeur: 2, rayon: 4 }));
+  out.push(texte(330, 206, 'CMH-II', { taille: 15, couleur: AMBER, ancre: 'middle', gras: true }));
+
+  repere(1, 700, 210);
+  repere(2, 860, 178);
+  repere(3, 942, 500);
+  repere(4, 202, 236);
+  repere(5, 330, 560);
+  return out;
+});
+
+// ── L2. u4 — groupes ABO : antigènes et anticorps naturels ───────────────────────
+planche('u4-groupes-abo', 1200, 780, ({ repere }) => {
+  const out = [];
+  const colonnes = ['A', 'B', 'AB', 'O'];
+  const antigene = (x, y, type, couleur) => (type === 'carre'
+    ? boite(x - 9, y - 9, 18, 18, { remplissage: couleur, couleur, largeur: 2, rayon: 3 })
+    : poly([[x, y - 11], [x + 10, y + 8], [x - 10, y + 8]], { remplissage: couleur, couleur, largeur: 2 }));
+  for (const [i, groupe] of colonnes.entries()) {
+    const x = 60 + i * 285;
+    const cx = x + 105;
+    out.push(boite(x, 70, 210, 470, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 20 }));
+    out.push(texte(cx, 112, groupe, { taille: 26, couleur: INK, ancre: 'middle', gras: true }));
+    // hématie
+    out.push(rond(cx, 250, 74, { remplissage: RED_FILL, couleur: RED, largeur: 3 }));
+    const marq = [];
+    if (groupe === 'A' || groupe === 'AB') marq.push(['triangle', -24], ['triangle', 18]);
+    if (groupe === 'B' || groupe === 'AB') marq.push(['carre', -4], ['carre', 38]);
+    if (groupe === 'O') marq.push(['h', -10], ['h', 22]);
+    for (const [type, dy] of marq) {
+      const angle = -Math.PI / 2 + dy / 90;
+      const px = cx + Math.cos(angle) * 74;
+      const py = 250 + Math.sin(angle) * 74;
+      if (type === 'h') out.push(rond(px, py, 8, { remplissage: PAPER, couleur: MUTE, largeur: 2 }));
+      else out.push(antigene(px, py, type, GREEN));
+    }
+    // anticorps plasmatiques
+    const anti = groupe === 'A' ? ['B'] : groupe === 'B' ? ['A'] : groupe === 'AB' ? [] : ['A', 'B'];
+    if (anti.length === 0) {
+      out.push(texte(cx, 460, '∅', { taille: 26, couleur: MUTE, ancre: 'middle', gras: true }));
+    } else {
+      anti.forEach((cible, k) => {
+        const ax = cx + (anti.length === 2 ? -46 + k * 92 : 0);
+        out.push(anticorps(ax, 420, 34, { couleur: cible === 'A' ? BLUE : AMBER, largeur: 3 }));
+        out.push(texte(ax, 500, `anti-${cible}`, { taille: 13, couleur: cible === 'A' ? BLUE : AMBER, ancre: 'middle', gras: true }));
+      });
+    }
+  }
+  // bandeau : l'agglutination (mélange incompatible)
+  out.push(boite(60, 566, 1095, 190, { remplissage: RED_FILL, couleur: GRID, largeur: 2, rayon: 18 }));
+  for (const cx of [250, 430, 610, 790, 970]) {
+    for (const [dx, dy] of [[-16, -14], [18, -8], [-6, 18], [22, 20]]) {
+      out.push(rond(cx + dx, 660 + dy, 22, { remplissage: PAPER, couleur: RED, largeur: 2.5 }));
+    }
+    out.push(anticorps(cx, 632, 22, { couleur: AMBER, largeur: 2.5 }));
+  }
+  out.push(texte(1110, 616, 'anti-A / anti-B', { taille: 14, couleur: MUTE, ancre: 'end', gras: true }));
+
+  repere(1, 120, 150);
+  repere(2, 420, 150);
+  repere(3, 1046, 152);
+  repere(4, 410, 402);
+  repere(5, 126, 402);
+  repere(6, 610, 660);
+  return out;
+});
+
+// ── L3. u4 — phagocytose : du complexe immun à la digestion ──────────────────────
+planche('u4-phagocytose', 1200, 720, ({ repere }) => {
+  const out = [];
+  const panneau = (x) => boite(x, 80, 260, 400, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 20 });
+  const macro = (cx, cy) =>
+    organique(cx, cy, (a) => 96 + 14 * Math.sin(a * 3), {
+      couleur: INK, largeur: 3, remplissage: GREEN_FILL,
+    });
+
+  // 1 — complexe immun (antigène entouré d'anticorps)
+  out.push(panneau(60));
+  out.push(rond(190, 250, 34, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3 }));
+  for (const angle of [-135, -90, -45]) {
+    const ax = 190 + 52 * Math.cos((angle * Math.PI) / 180);
+    const ay = 250 + 52 * Math.sin((angle * Math.PI) / 180);
+    out.push(anticorps(ax, ay, 32, { couleur: RED, largeur: 3, rotation: angle + 90 }));
+  }
+  out.push(texte(190, 430, 'Ag–Ac', { taille: 16, couleur: INK, ancre: 'middle', gras: true }));
+
+  // 2 — fixation du Fc sur le récepteur du macrophage
+  out.push(panneau(340));
+  out.push(macro(470, 300));
+  out.push(rond(357, 300, 22, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5 }));
+  out.push(anticorps(392, 296, 24, { couleur: RED, largeur: 3, rotation: 0 }));
+  out.push(poly([[384, 316], [398, 340], [370, 340]], { couleur: INK, largeur: 3, remplissage: PAPER }));
+
+  // 3 — invagination : la membrane englobe, la vésicule se referme
+  out.push(panneau(620));
+  out.push(macro(750, 300));
+  out.push(rond(750, 300, 34, { remplissage: AMBER_FILL, couleur: RED, largeur: 3, pointilles: '6 5' }));
+  out.push(texte(750, 306, 'Ag', { taille: 13, couleur: AMBER, ancre: 'middle', gras: true }));
+
+  // 4 — lysosomes : digestion du contenu
+  out.push(panneau(900));
+  out.push(macro(1030, 300));
+  out.push(rond(1015, 286, 26, { remplissage: RED_FILL, couleur: RED, largeur: 2.5 }));
+  for (const [dx, dy] of [[-12, 4], [4, -8], [10, 10]]) {
+    out.push(rond(1015 + dx, 286 + dy, 5, { remplissage: AMBER, couleur: AMBER, largeur: 1 }));
+  }
+  for (const a of [0.4, 1.6, 2.8]) {
+    out.push(rond(1015 + 44 * Math.cos(a), 286 + 44 * Math.sin(a), 15, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2 }));
+  }
+  for (const [x1, x2] of [[322, 336], [602, 616], [882, 896]]) out.push(fleche(x1, 280, x2, 280, INK, 3));
+
+  repere(1, 190, 250);
+  repere(2, 190, 188);
+  repere(3, 410, 300);
+  repere(4, 672, 306);
+  repere(5, 762, 350);
+  repere(6, 1082, 334);
+  return out;
+});
+
+// ── L4. u4 — LTc : double reconnaissance et perforine ────────────────────────────
+planche('u4-ltc-perforine', 1200, 700, ({ repere }) => {
+  const out = [];
+  const panneau = (x) => boite(x, 60, 540, 560, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 22 });
+
+  // A — double reconnaissance : TCR + peptide/CMH-I, et CD8 + CMH-I
+  out.push(panneau(60));
+  out.push(boite(120, 200, 380, 180, { remplissage: '#eef2ec', couleur: INK, largeur: 3, rayon: 16 }));
+  out.push(ellipse(200, 292, 54, 46, { remplissage: PAPER, couleur: BLUE, largeur: 2.5 }));
+  out.push(boite(408, 350, 36, 30, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5, rayon: 4 }));
+  out.push(texte(392, 344, 'CMH-I', { taille: 14, couleur: GREEN, ancre: 'end', gras: true }));
+  out.push(rond(426, 470, 64, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 3 }));
+  out.push(anticorps(426, 404, 30, { couleur: BLUE, largeur: 3 }));
+  out.push(boite(462, 408, 34, 22, { remplissage: PAPER, couleur: RED, largeur: 2.5, rayon: 5 }));
+  out.push(texte(479, 424, 'CD8', { taille: 11, couleur: RED, ancre: 'middle', gras: true }));
+
+  // B — perforine : pores, entrée d'eau, lyse
+  out.push(panneau(620));
+  out.push(boite(668, 196, 440, 230, { remplissage: '#f6f8f5', couleur: RED, largeur: 2.5, rayon: 20, pointilles: '8 7' }));
+  out.push(boite(700, 216, 380, 170, { remplissage: '#eef2ec', couleur: INK, largeur: 3, rayon: 16 }));
+  out.push(rond(680, 470, 64, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 3 }));
+  out.push(texte(680, 476, 'LTc', { taille: 13, couleur: BLUE, ancre: 'middle', gras: true }));
+  // granules de perforine libérés dans la fente
+  for (const [x, y] of [[706, 418], [724, 400], [740, 384]]) {
+    out.push(rond(x, y, 6, { remplissage: RED_FILL, couleur: RED, largeur: 2 }));
+  }
+  for (const x of [800, 880, 960]) {
+    out.push(rond(x, 216, 10, { remplissage: PAPER, couleur: RED, largeur: 3 }));
+    out.push(fleche(x, 236, x, 286, BLUE, 2.5, 8));
+  }
+  out.push(texte(880, 330, 'H₂O', { taille: 15, couleur: BLUE, ancre: 'middle', gras: true }));
+
+  repere(1, 426, 470);
+  repere(2, 396, 400);
+  repere(3, 508, 404);
+  repere(4, 426, 352);
+  repere(5, 662, 430);
+  repere(6, 1040, 404);
+  return out;
+});
+
+// ── L5. u4 — coopération LT4 → IL-2 → LB / LTc ──────────────────────────────────
+planche('u4-cooperation-lt4', 1200, 780, ({ repere }) => {
+  const out = [];
+  const boiteCellule = (x, y, w, h, couleur, fond) => [
+    boite(x, y, w, h, { remplissage: fond, couleur, largeur: 3, rayon: 16 }),
+    rond(x + w / 2, y + h / 2, Math.min(w, h) * 0.24, { remplissage: PAPER, couleur, largeur: 2 }),
+  ];
+
+  // Sens arabe : CPA (droite) → LT4 → IL-2 → LB / LTc → cellules effectrices (gauche)
+  out.push(...boiteCellule(940, 300, 200, 130, AMBER, AMBER_FILL));
+  out.push(...boiteCellule(700, 300, 180, 130, BLUE, BLUE_FILL));
+  out.push(...boiteCellule(700, 90, 180, 120, GREEN, GREEN_FILL));
+  out.push(...boiteCellule(700, 560, 180, 120, GREEN, GREEN_FILL));
+  out.push(...boiteCellule(420, 90, 180, 120, RED, RED_FILL));
+  out.push(...boiteCellule(420, 560, 180, 120, RED, RED_FILL));
+  out.push(anticorps(340, 150, 26, { couleur: RED, largeur: 2.5 }));
+  out.push(anticorps(320, 620, 26, { couleur: RED, largeur: 2.5 }));
+
+  // CPA → LT4
+  out.push(fleche(936, 365, 888, 365, INK, 3));
+  // LT4 → LB (haut) et LT4 → LTc (bas), via l'IL-2
+  out.push(fleche(790, 296, 790, 216, INK, 3));
+  out.push(fleche(790, 434, 790, 554, INK, 3));
+  out.push(texte(790, 476, 'IL-2', { taille: 15, couleur: BLUE, ancre: 'middle', gras: true }));
+  // LB → plasmocytes, LTc → LTc actifs
+  out.push(fleche(696, 150, 606, 150, INK, 3));
+  out.push(fleche(696, 620, 606, 620, INK, 3));
+
+  repere(1, 1040, 365);
+  repere(2, 745, 330);
+  repere(3, 838, 476);
+  repere(4, 700, 118);
+  repere(5, 510, 118);
+  repere(6, 700, 588);
+  repere(7, 510, 588);
+  return out;
+});
+
+// ── L6. u4 — VIH : chute des LT4 et seuil du SIDA ───────────────────────────────
+planche('u4-vih', 1200, 760, ({ repere }) => {
+  const out = [];
+  const G = { x0: 140, x1: 1120, y0: 90, y1: 600 };
+  const X = (annee) => G.x0 + (annee / 10) * (G.x1 - G.x0);
+  const Y = (n) => G.y1 - (n / 1200) * (G.y1 - G.y0);
+
+  for (const n of [0, 300, 600, 900, 1200]) {
+    out.push(ligne(G.x0, Y(n), G.x1, Y(n), { couleur: GRID, largeur: 1.5, pointilles: '5 6' }));
+    out.push(texte(G.x0 - 14, Y(n) + 5, String(n), { taille: 13, couleur: MUTE, ancre: 'end' }));
+  }
+  for (let a = 0; a <= 10; a += 1) out.push(texte(X(a), G.y1 + 26, String(a), { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(texte(G.x0 - 10, G.y0 - 16, 'LT4 / mm³', { taille: 14, couleur: INK, ancre: 'start', gras: true }));
+
+  // Points de la cinétique : primo-infection, plateau, effondrement
+  const points = [[0, 1000], [0.4, 520], [1, 820], [2, 760], [3, 700], [4, 640], [5, 580],
+    [6, 500], [7, 380], [8, 260], [8.8, 170], [9.4, 90], [10, 40]];
+  const courbe = points.map(([a, n]) => [X(a), Y(n)]);
+  out.push(poly(courbe, { couleur: RED, largeur: 5 }));
+  for (const [x, y] of courbe) out.push(rond(x, y, 4, { remplissage: RED, couleur: RED, largeur: 1 }));
+  out.push(ligne(G.x0, Y(200), G.x1, Y(200), { couleur: AMBER, largeur: 2.5, pointilles: '8 6' }));
+  out.push(texte(G.x1 - 6, Y(200) - 12, '200', { taille: 14, couleur: AMBER, ancre: 'end', gras: true }));
+  // zone « SIDA » : bande verticale sous le seuil des 200 LT4/mm³
+  out.push(boite(X(8.55), G.y0, X(10) - X(8.55), G.y1 - G.y0, {
+    remplissage: RED_FILL, couleur: RED, largeur: 1.5, rayon: 6, pointilles: '7 6',
+  }));
+
+  repere(1, X(0.4), Y(520) + 34);
+  repere(2, X(5), Y(580) + 36);
+  repere(3, X(9.3), G.y0 + 30);
+  repere(4, X(6.4), Y(200) + 18);
+  repere(5, X(9.7), Y(52) - 34);
+  return out;
+});
+
+// ── L7. u5 — potentiel de repos : répartition des ions et pompe ─────────────────
+planche('u5-potentiel-repos', 1200, 700, ({ repere }) => {
+  const out = [];
+  const haut = 330;
+  const bas = 392;
+  // bicouche lipidique
+  for (const y of [haut, bas]) {
+    out.push(ligne(80, y, 1120, y, { couleur: INK, largeur: 4 }));
+    for (let x = 92; x < 1120; x += 30) {
+      out.push(rond(x, y + (y === haut ? -8 : 8), 7, { remplissage: '#e8f2ec', couleur: GREEN, largeur: 2 }));
+    }
+  }
+  // extérieur : Na⁺ majoritaire, charges +
+  for (const x of [140, 220, 300, 380]) out.push(texte(x, 180, '+', { taille: 22, couleur: RED, ancre: 'middle', gras: true }));
+  for (const x of [170, 260]) {
+    out.push(rond(x, 120, 22, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2.5 }));
+    out.push(texte(x, 127, 'Na⁺', { taille: 14, couleur: BLUE, ancre: 'middle', gras: true }));
+  }
+  // intérieur : K⁺ majoritaire, charges −
+  for (const x of [140, 220, 300, 380]) out.push(texte(x, 560, '−', { taille: 22, couleur: BLUE, ancre: 'middle', gras: true }));
+  for (const x of [170, 260, 340]) {
+    out.push(rond(x, 500, 22, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5 }));
+    out.push(texte(x, 507, 'K⁺', { taille: 14, couleur: AMBER, ancre: 'middle', gras: true }));
+  }
+  // canal de fuite K⁺
+  out.push(boite(560, haut - 40, 46, (bas - haut) + 80, { remplissage: PAPER, couleur: GREEN, largeur: 3, rayon: 12 }));
+  out.push(fleche(583, 480, 583, 420, AMBER, 3));
+  // pompe Na⁺/K⁺-ATPase
+  out.push(boite(840, haut - 46, 78, (bas - haut) + 92, { remplissage: PAPER, couleur: BLUE, largeur: 3, rayon: 14 }));
+  out.push(fleche(860, 300, 860, 230, BLUE, 3));
+  out.push(fleche(898, 420, 898, 490, AMBER, 3));
+  out.push(texte(879, 344, 'ATP', { taille: 13, couleur: RED, ancre: 'middle', gras: true }));
+  out.push(texte(884, 236, '3 Na⁺', { taille: 14, couleur: BLUE, ancre: 'start', gras: true }));
+  out.push(texte(922, 500, '2 K⁺', { taille: 14, couleur: AMBER, ancre: 'start', gras: true }));
+  // borne du potentiel de repos
+  out.push(ligne(660, 640, 800, 640, { couleur: INK, largeur: 2 }));
+  out.push(ligne(660, 630, 660, 650, { couleur: INK, largeur: 2 }));
+  out.push(ligne(800, 630, 800, 650, { couleur: INK, largeur: 2 }));
+  out.push(texte(730, 676, '−70 mV', { taille: 20, couleur: INK, ancre: 'middle', gras: true }));
+
+  repere(1, 120, 150);
+  repere(2, 400, 500);
+  repere(3, 583, 404);
+  repere(4, 879, 320);
+  repere(5, 922, 344);
+  repere(6, 838, 640);
+  return out;
+});
+
+// ── L8. u5 — potentiel d'action : phases et loi du tout-ou-rien ─────────────────
+planche('u5-potentiel-action', 1200, 780, ({ repere }) => {
+  const out = [];
+  const G = { x0: 150, x1: 900, y0: 90, y1: 600 };
+  const mV = (v) => G.y1 - ((v + 90) / 130) * (G.y1 - G.y0);
+  const temps = (t) => G.x0 + (t / 6) * (G.x1 - G.x0);
+
+  for (const v of [-80, -70, -50, 0, 30]) {
+    out.push(ligne(G.x0, mV(v), G.x1, mV(v), { couleur: GRID, largeur: 1.5, pointilles: '5 6' }));
+    out.push(texte(G.x0 - 12, mV(v) + 5, String(v), { taille: 13, couleur: MUTE, ancre: 'end' }));
+  }
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(texte(G.x0 - 12, G.y0 - 16, 'mV', { taille: 14, couleur: INK, ancre: 'end', gras: true }));
+  out.push(texte(G.x1 - 8, G.y1 + 26, 'ms', { taille: 14, couleur: INK, ancre: 'end', gras: true }));
+
+  // tracé : repos → seuil → pic → repolarisation → hyperpolarisation → retour
+  const trace = [[0, -70], [1.2, -70], [1.6, -55], [1.9, -50], [2.15, 30], [2.5, -20],
+    [2.9, -70], [3.15, -80], [3.5, -72], [4.2, -70], [6, -70]];
+  out.push(poly(trace.map(([t, v]) => [temps(t), mV(v)]), { couleur: RED, largeur: 4.5 }));
+  out.push(ligne(temps(1.6), mV(-50), temps(2.4), mV(-50), { couleur: AMBER, largeur: 2, pointilles: '6 5' }));
+
+  // encart : stimuli d'intensité croissante → même réponse (tout ou rien)
+  out.push(boite(950, 120, 200, 420, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 16 }));
+  const encart = (y, hauteur) => {
+    const s = [];
+    s.push(fleche(980, y + 60, 980, y + 60 - hauteur, BLUE, 3, 9));
+    s.push(poly([[1040, y + 60], [1040, y + 20], [1070, y - 20], [1100, y + 20], [1100, y + 60]], {
+      couleur: RED, largeur: 3,
+    }));
+    return s;
+  };
+  out.push(...encart(180, 34));
+  out.push(...encart(340, 58));
+
+  repere(1, temps(0.6), mV(-70) - 26);
+  repere(2, temps(1.9), mV(-50) - 24);
+  repere(3, temps(2.15), mV(30) - 22);
+  repere(4, temps(2.98), mV(-28) + 34);
+  repere(5, temps(3.15), mV(-80) + 30);
+  repere(6, 986, 480);
+  return out;
+});
+
+// ── L9. u5 — intégration neuronale : PPSE, PPSI et segment initial ──────────────
+planche('u5-integration', 1200, 720, ({ repere }) => {
+  const out = [];
+  // corps cellulaire + axone vers la gauche (sens de lecture arabe)
+  out.push(organique(760, 380, (a) => 148 + 22 * Math.sin(a * 3.4), {
+    couleur: INK, largeur: 3.5, remplissage: GREEN_FILL,
+  }));
+  out.push(ellipse(760, 380, 54, 46, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2.5 }));
+  out.push(poly([[618, 370], [360, 348], [360, 400], [618, 386]], {
+    couleur: INK, largeur: 3, remplissage: '#efe6d8',
+  }));
+  out.push(texte(500, 424, 'SI', { taille: 16, couleur: INK, ancre: 'middle', gras: true }));
+
+  // boutons excitateurs (PPSE : entrée de Na⁺)
+  for (const [x, y] of [[1010, 232], [1040, 380], [1010, 528]]) {
+    out.push(rond(x, y, 32, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2.5 }));
+    out.push(texte(x, y + 5, 'Na⁺', { taille: 12, couleur: BLUE, ancre: 'middle', gras: true }));
+    out.push(fleche(x - 34, y, x - 76, y, GREEN, 3));
+  }
+  // boutons inhibiteurs (PPSI : entrée de Cl⁻)
+  for (const [x, y] of [[1090, 150], [1090, 620]]) {
+    out.push(rond(x, y, 32, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5 }));
+    out.push(texte(x, y + 5, 'Cl⁻', { taille: 12, couleur: RED, ancre: 'middle', gras: true }));
+    out.push(ligne(x - 34, y, x - 76, y, { couleur: RED, largeur: 3 }));
+    out.push(ligne(x - 76, y - 12, x - 76, y + 12, { couleur: RED, largeur: 3 }));
+  }
+  // sommation temporelle : deux influx rapprochés vers le même bouton
+  out.push(fleche(1150, 496, 1060, 512, GREEN, 2.5));
+  out.push(fleche(1150, 520, 1060, 536, GREEN, 2.5));
+
+  repere(1, 976, 196);
+  repere(2, 1136, 106);
+  repere(3, 1136, 476);
+  repere(4, 596, 300);
+  repere(5, 352, 448);
+  return out;
+});
+
+// ── L10. u5 — morphine et enképhaline : inhibition présynaptique ────────────────
+planche('u5-morphine', 1200, 720, ({ repere }) => {
+  const out = [];
+  // terminaison présynaptique
+  out.push(organique(600, 250, (a) => 172 + 20 * Math.sin(a * 3), {
+    couleur: INK, largeur: 3.5, remplissage: GREEN_FILL,
+  }));
+  // vésicules de substance P
+  for (const [x, y] of [[520, 200], [600, 176], [676, 208], [560, 288], [652, 292]]) {
+    out.push(rond(x, y, 22, { remplissage: PAPER, couleur: GREEN, largeur: 2.5 }));
+    out.push(texte(x, y + 5, 'P', { taille: 13, couleur: GREEN, ancre: 'middle', gras: true }));
+  }
+  // récepteur opioïde + morphinique
+  out.push(boite(536, 378, 46, 58, { remplissage: PAPER, couleur: AMBER, largeur: 3, rayon: 8 }));
+  out.push(boite(546, 392, 26, 26, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5, rayon: 6 }));
+  // canal Ca²⁺ fermé
+  out.push(boite(660, 392, 40, 42, { remplissage: PAPER, couleur: BLUE, largeur: 3, rayon: 8 }));
+  out.push(ligne(654, 386, 706, 440, { couleur: RED, largeur: 4 }));
+  out.push(ligne(654, 440, 706, 386, { couleur: RED, largeur: 4 }));
+  out.push(texte(756, 452, 'Ca²⁺', { taille: 14, couleur: BLUE, ancre: 'middle', gras: true }));
+  // fente synaptique + membrane postsynaptique
+  out.push(ligne(300, 470, 900, 470, { couleur: INK, largeur: 3 }));
+  out.push(ligne(300, 520, 900, 520, { couleur: INK, largeur: 3 }));
+  for (const x of [400, 520, 640, 760]) {
+    out.push(boite(x - 18, 512, 36, 18, { remplissage: PAPER, couleur: RED, largeur: 2.5, rayon: 6 }));
+  }
+  out.push(texte(860, 500, 'P', { taille: 14, couleur: MUTE, ancre: 'middle', gras: true }));
+  // flèche barrée : pas d'exocytose
+  out.push(fleche(600, 340, 600, 400, MUTE, 3));
+  out.push(ligne(578, 352, 622, 392, { couleur: RED, largeur: 4 }));
+
+  repere(1, 508, 456);
+  repere(2, 500, 396);
+  repere(3, 680, 412);
+  repere(4, 600, 200);
+  repere(5, 644, 352);
+  repere(6, 520, 520);
+  return out;
+});
+
 // ───────────────────────────── écriture / vérification ─────────────────────────────
 
 const diff = [];

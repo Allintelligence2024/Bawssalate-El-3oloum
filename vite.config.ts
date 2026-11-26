@@ -84,6 +84,10 @@ function precacheManifest(): Plugin {
         /^assets\/supabase-/,
         /^assets\/Methodologie-/,
         /^assets\/ExamBlanc-/,
+        // v0.14 — les schémas du programme (registre arabe ~30 ko) sont un `import()`
+        // déclenché à l'ouverture d'une leçon : ils ne doivent pas alourdir la coquille.
+        // Le service worker les met en cache à la volée (gestionnaire `fetch` de `assets/*`).
+        /^assets\/schemasSvt-/,
       ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))
