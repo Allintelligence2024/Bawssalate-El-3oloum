@@ -145,7 +145,7 @@ npm run build && node scripts/verifier-hors-ligne.mjs           → 53 illustrat
 
 **Date** : 2026-11-26 · **Périmètre** : dernier lot du prompt « schémas zéro texte IA ».
 
-## 1. Journal des 8 planches
+## 1. Journal des 9 planches
 
 | Planche | Leçon | Essais | Ce qui a été corrigé après relecture du PNG |
 |---|---|---:|---|
@@ -157,16 +157,30 @@ npm run build && node scripts/verifier-hors-ligne.mjs           → 53 illustrat
 | `u10-modelisation-terre` | `phase20_chapitres_39_40` | 3 | anneaux concentriques du noyau interne ; `SIAL`/`SIMA` replacés **dans** leurs anneaux (ils étaient hors du disque, donc invisibles) ; unité `km` ajoutée |
 | `u11-plis-failles` | `phase20_chapitres_39_40_2` | 3 | panneaux C/D en strates empilées ; pastille 6 ramenée dans le cadre ; lettres C/D dégagées des strates |
 | `u11-migmatite` | `d3-u11-l1-migmatite` | 3 | zone de fusion remontée, texte parasite supprimé, encoche parasite retirée des blocs crustaux |
+| `u10-zones-ombre` | `phase19_chapitres_37_38` (2ᵉ schéma) | 2 | ajouté après coup pour combler l'exigence « ondes P/S **+ zones d'ombre** » du prompt ; degrés 103/143/180 lisibles, pastille 6 posée sur le seul bord de la graine |
 
-## 2. Synthèse Lot 4
+## 2. Synthèse du lot
 
 | Mesure | Lot 3 | Lot 4 | Total |
 |---|---:|---:|---:|
-| Schémas créés | 32 | **40** | 40 |
-| SVG écrits à la main | 27 | **35** | 35 |
-| Repères posés | 164 | **212** | 212 |
+| Schémas créés | 32 | **41** | 41 |
+| SVG écrits à la main | 27 | **36** | 36 |
+| Repères posés | 164 | **218** | 218 |
 | Leçons illustrées | 44 / 55 | **52 / 55** | 52 / 55 (94,5 %) |
 | `reviewed: true` | 0 | **0** | 0 |
+
+## 3 bis. Grille V1–V6 (synthèse des 41 schémas)
+
+| Critère | Verdict | Preuve |
+|---|---|---|
+| **V1** zéro texte IA parasite | PASS 41/41 | aucun texte incrusté : 36 SVG contrôlés par `verifier-hors-ligne` (0 caractère arabe), 5 WebP muettes relues à l'œil |
+| **V2** exactitude scientifique 3AS | PASS après corrections | 6 erreurs de fond corrigées en relecture (voir § 3 et A-071/A-072) |
+| **V3** correspondance à la leçon | PASS 41/41 | un schéma par leçon manquante, 2 leçons à deux schémas (plafond respecté) |
+| **V4** précision des repères | PASS 41/41 | `x,y ∈ [5,95]`, `num` consécutifs — test unitaire + 41 composites relus |
+| **V5** terminologie arabe | PASS | libellés issus de `lessonGoldSummaries.ts` (`vocabulary`/`missionAr`), 0 fuite française |
+| **V6** qualité visuelle & budget | PASS | max 99,6 Ko (plafond 150), lisible à 360 px, contraste `.fond-schema-clair` |
+
+Aucun `BLOQUÉ_HUMAIN` : chaque planche a atteint son verdict en 2 à 3 essais.
 
 ## 3. Contrôle final
 
@@ -174,10 +188,10 @@ npm run build && node scripts/verifier-hors-ligne.mjs           → 53 illustrat
 npm run lint                                                    → 0 erreur
 npx tsc --noEmit                                                → 0 erreur
 npx vitest run                                                  → 86 fichiers / 729 tests
-npm run build                                                   → index 497,94 Ko · schemasSvt 52,47 Ko
-node scripts/verifier-hors-ligne.mjs                            → OK — 61 illustrations, 0 échec
+npm run build                                                   → index 497,94 Ko · schemasSvt 67,59 Ko
+node scripts/verifier-hors-ligne.mjs                            → OK — 62 illustrations, 0 échec
 node scripts/sync-metrics.mjs --check                           → aucune dérive
-node scripts/generer-schemas-svt.mjs --verifier                 → 35 / 35 identiques
+node scripts/generer-schemas-svt.mjs --verifier                 → 36 / 36 identiques
 /tmp/.venv/bin/python scripts/previsualiser-schemas.py u9-… …   → 8 planches relues
 /tmp/.venv/bin/python scripts/previsualiser-annotations.py …    → 8 composites relus
 ```

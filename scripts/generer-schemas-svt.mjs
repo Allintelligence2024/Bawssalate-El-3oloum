@@ -2018,6 +2018,85 @@ planche('u11-migmatite', 1200, 760, ({ repere }) => {
   return out;
 });
 
+// ── 9. u10 — zones d'ombre des ondes P et S (2ᵉ schéma de la leçon) ─────────────
+planche('u10-zones-ombre', 1200, 760, ({ repere }) => {
+  const out = [];
+  const cx = 430;
+  const cy = 390;
+  const R = 300;
+  const rc = 136;
+  const T = Math.PI / 180;
+  const ang = (deg, cote) => -Math.PI / 2 + cote * deg * T;
+
+  out.push(rond(cx, cy, R, { remplissage: GREEN_FILL, couleur: INK, largeur: 3 }));
+  out.push(rond(cx, cy, rc, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5 }));
+
+  // anneau S (extérieur) puis anneau P (intérieur)
+  const arc = (r, d0, d1, cote, couleur, largeur) => out.push(poly(
+    arcEllipse(cx, cy, r, r, ang(d0, cote), ang(d1, cote), 50),
+    { couleur, largeur },
+  ));
+  for (const cote of [1, -1]) {
+    arc(R - 12, 0, 103, cote, GREEN, 18);
+    arc(R - 12, 103, 180, cote, RED, 18);
+    arc(R - 36, 0, 103, cote, GREEN, 13);
+    arc(R - 36, 103, 143, cote, AMBER, 13);
+    arc(R - 36, 143, 180, cote, GREEN, 13);
+  }
+
+  // rayons depuis le foyer
+  const E = [cx, cy - R];
+  out.push(rond(E[0], E[1], 9, { remplissage: RED, couleur: RED, largeur: 2 }));
+  for (const deg of [45, 75]) {
+    for (const cote of [1, -1]) {
+      const a = ang(deg, cote);
+      out.push(ligne(E[0], E[1], cx + Math.cos(a) * (R - 48), cy + Math.sin(a) * (R - 48), { couleur: MUTE, largeur: 1.6, pointilles: '5 6' }));
+    }
+  }
+  // rayons qui doivent traverser la graine : arrêt sur le noyau puis trait plein
+  for (const cote of [1, -1]) {
+    const phi = 68 * T;
+    const u = [Math.cos(phi) * cote, Math.sin(phi)];
+    const ex = E[0] - cx;
+    const ey = E[1] - cy;
+    const b = 2 * (ex * u[0] + ey * u[1]);
+    const c = ex * ex + ey * ey - rc * rc;
+    const t = (-b - Math.sqrt(b * b - 4 * c)) / 2;
+    const p1 = [E[0] + u[0] * t, E[1] + u[1] * t];
+    const p2 = [E[0] + u[0] * (t + 96), E[1] + u[1] * (t + 96)];
+    out.push(ligne(E[0], E[1], p1[0], p1[1], { couleur: AMBER, largeur: 2.4 }));
+    out.push(ligne(p1[0], p1[1], p2[0], p2[1], { couleur: AMBER, largeur: 2.4, pointilles: '6 5' }));
+  }
+
+  // graduations et libellés d'angle
+  for (const [deg, dy] of [[103, 7], [143, 18]]) {
+    for (const cote of [1, -1]) {
+      const a = ang(deg, cote);
+      out.push(ligne(cx + Math.cos(a) * (rc + 4), cy + Math.sin(a) * (rc + 4), cx + Math.cos(a) * (R + 12), cy + Math.sin(a) * (R + 12), { couleur: MUTE, largeur: 1.4, pointilles: '4 5' }));
+      out.push(texte(cx + Math.cos(a) * (R + 22) + 12 * cote, cy + Math.sin(a) * (R + 22) + dy, `${deg}°`, { taille: 15, couleur: INK, ancre: cote > 0 ? 'start' : 'end', gras: true, halo: true }));
+    }
+  }
+  out.push(texte(cx, cy + R + 30, '180°', { taille: 15, couleur: INK, ancre: 'middle', gras: true, halo: true }));
+  out.push(texte(cx, cy + 6, 'Fe–Ni', { taille: 16, couleur: AMBER, ancre: 'middle', gras: true }));
+
+  // légende des trois couleurs
+  const leg = [[GREEN, 'P, S'], [AMBER, 'P'], [RED, 'S']];
+  leg.forEach(([couleur, libelle], i) => {
+    const y = 200 + i * 62;
+    out.push(ligne(820, y, 926, y, { couleur, largeur: 15 }));
+    out.push(texte(944, y + 8, libelle, { taille: 21, couleur: INK, ancre: 'start', gras: true }));
+  });
+
+  repere(1, cx + 34, cy - R - 4);
+  repere(2, cx + Math.cos(ang(50, 1)) * (R - 12), cy + Math.sin(ang(50, 1)) * (R - 12));
+  repere(3, cx + Math.cos(ang(140, 1)) * (R - 12), cy + Math.sin(ang(140, 1)) * (R - 12));
+  repere(4, cx + Math.cos(ang(122, 1)) * (R - 36), cy + Math.sin(ang(122, 1)) * (R - 36));
+  repere(5, cx + Math.cos(ang(160, 1)) * (R - 36), cy + Math.sin(ang(160, 1)) * (R - 36));
+  repere(6, cx + Math.cos(ang(25, 1)) * rc, cy + Math.sin(ang(25, 1)) * rc);
+
+  return out;
+});
+
 // ───────────────────────────── écriture / vérification ─────────────────────────────
 
 const diff = [];

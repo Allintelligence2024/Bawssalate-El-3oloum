@@ -1,6 +1,6 @@
 # Schémas « Zéro Texte IA » — Lot 4 (u9, u10, u11)
 
-**Date** : 2026-11-26 · **Branche** : `arena/0fa86abf-bawssalate-el-3oloum` · **Périmètre** : **Lot 4, dernier lot** — `u9` (tectonique, 3 schémas), `u10` (structure interne du globe, 3 schémas), `u11` (déformation / migmatite, 2 schémas). Ce lot clôt les quatre lots du prompt « schémas zéro texte IA ».
+**Date** : 2026-11-26 · **Branche** : `arena/0fa86abf-bawssalate-el-3oloum` · **Périmètre** : **Lot 4, dernier lot** — `u9` (tectonique, 3 schémas), `u10` (structure interne du globe, **4** schémas), `u11` (déformation / migmatite, 2 schémas). Ce lot clôt les quatre lots du prompt « schémas zéro texte IA ».
 
 Comme aux Lots 1 à 3, les **8 WebP du manuel** de ces unités restent **intactes et non promues** : le lot ne crée que ce qui **manquait**, c'est-à-dire les leçons sans aucun document — et deux leçons dont le seul WebP était de faible valeur, sans dépasser le plafond de **2 schémas par leçon**.
 
@@ -18,7 +18,7 @@ Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitr
 
 ---
 
-## 2. Les 8 visuels, contrôlés un par un
+## 2. Les 9 visuels, contrôlés un par un
 
 | # | Fichier | Leçon cible | Poids | Repères | Panneaux | Verdict |
 |---|---|---|---:|---:|---:|---|
@@ -30,10 +30,11 @@ Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitr
 | 6 | `u10-modelisation-terre.svg` | `phase20_chapitres_39_40` | 12,5 Ko | 6 | 2 (globe + courbe T) | VALIDE (3 essais) |
 | 7 | `u11-plis-failles.svg` | `phase20_chapitres_39_40_2` | 9,6 Ko | 6 | 4 (A/B/C/D) | VALIDE (3 essais) |
 | 8 | `u11-migmatite.svg` | `d3-u11-l1-migmatite` | 5,1 Ko | 6 | 1 + zoom | VALIDE (3 essais) |
+| 9 | `u10-zones-ombre.svg` | `phase19_chapitres_37_38` (2ᵉ) | 12,1 Ko | 6 | 1 (globe + anneaux P/S) | VALIDE (2 essais) |
 
-- **8 SVG**, **61,1 Ko** au total (3,7–12,5 Ko pièce), **48 repères** posés à la main (`repere()`).
+- **9 SVG**, **73,2 Ko** au total (3,7–12,5 Ko pièce), **54 repères** posés à la main (`repere()`).
 - Chaque libellé arabe vit dans le registre (`labelAr` + `detailAr ≤ 90`), jamais dans le fichier **sauf** les symboles scientifiques contrôlés : `SIAL`, `SIMA`, `SiO₂`, `Al₂O₃`, `FeO·MgO`, `CaO`, `Fe–Ni`, `Vp`, `Vs`, `Moho`, `Gutenberg`, `Lehmann`, `238U`, `232Th`, `40K`, `Ma`, `km`, `°C`, les lettres de panneau A–D et les pourcentages des barres.
-- Aucune leçon ne dépasse **1 schéma créé** ; le plafond de 2 par leçon reste respecté partout.
+- Une seule leçon reçoit **2 schémas créés** (`phase19_chapitres_37_38` : globe + courbes Vp/Vs, puis zones d'ombre) ; le plafond de 2 par leçon reste respecté partout.
 
 ### Corrections apportées pendant la passe visuelle
 
@@ -59,9 +60,9 @@ Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitr
 | u7 | 5 | 2 | 3 | 5 / 5 |
 | u8 | 2 | 2 | 1 | 2 / 2 |
 | u9 | 5 | 4 | **3** | **5 / 5** |
-| u10 | 4 | 4 | **3** | **4 / 4** |
+| u10 | 4 | 4 | **4** | **4 / 4** |
 | u11 | 4 | 3 | **2** | **4 / 4** |
-| **Total** | **55** | 21 | **40** | **52 / 55 (94,5 %)** |
+| **Total** | **55** | 21 | **41** | **52 / 55 (94,5 %)** |
 
 Les 3 leçons encore sans visuel sont des reliquats **u1–u5** — dont `phase6_chapitres_11_12` et `phase9_chapitres_17_18`, déjà signalées au Lot 2 — laissées à la main de l'enseignant : chacune peut encore recevoir un 2ᵉ schéma sans dépasser le plafond. Les unités u6 → u11 sont **intégralement illustrées**.
 
@@ -77,8 +78,8 @@ Les 3 leçons encore sans visuel sont des reliquats **u1–u5** — dont `phase6
 | Légende arabe RTL | `legendeAr` en `<span>` avec `<strong>` de tête, cohérente avec les Lots 1–3 |
 | `statut: 'a_valider_enseignant'` + `reviewed: false` | 40/40 entrées, **0** `reviewed: true` |
 | Hors précache + `loading="lazy"` | `schemasSvt` chargé par `import()`, `HORS_PRECACHE` inchangé |
-| 2 schémas max par leçon | max observé : 1 schéma créé par leçon |
-| 5 à 9 annotations | 6 pour les 8 planches |
+| 2 schémas max par leçon | max observé : 2 (une seule leçon, `phase19_chapitres_37_38`) |
+| 5 à 9 annotations | 6 pour les 9 planches |
 | `detailAr ≤ 90` | test unitaire, 0 échec |
 
 ---
@@ -90,17 +91,18 @@ Les 3 leçons encore sans visuel sont des reliquats **u1–u5** — dont `phase6
 | `npm run lint` (`eslint .`) | **0 erreur** |
 | `npx tsc --noEmit` | **0 erreur** |
 | `npm test` (`vitest run`) | **86 fichiers / 729 tests — 100 % OK** |
-| `npm run build` | OK — `index-*.js` 497,94 Ko · `schemasSvt-*.js` 52,47 Ko, toujours hors démarrage |
-| `node scripts/verifier-hors-ligne.mjs` | **RÉSULTAT : OK** — **61 illustrations**, 165 fichiers interrogés, 0 échec HTTP/type, 0 incohérence |
+| `npm run build` | OK — `index-*.js` 497,94 Ko · `schemasSvt-*.js` 67,59 Ko (gzip 16,94), toujours hors précache |
+| `node scripts/verifier-drills.mjs` | 700 items · 120 définitions · 80 niveau 3 · **0 problème**, 8 alertes d'options proches (contrôle humain) |
+| `node scripts/verifier-hors-ligne.mjs` | **RÉSULTAT : OK** — **62 illustrations**, 166 fichiers interrogés, 0 échec HTTP/type, 0 incohérence |
 | `node scripts/sync-metrics.mjs --check` | README à jour, aucune dérive |
-| `node scripts/generer-schemas-svt.mjs --verifier` | **35 / 35 identiques** |
-| `previsualiser-schemas.py` | 8 planches relues à l'œil (3 passes sur 4 d'entre elles) |
-| `previsualiser-annotations.py` | 8 composites relus (pastilles ↔ libellés arabes) |
+| `node scripts/generer-schemas-svt.mjs --verifier` | **36 / 36 identiques** |
+| `previsualiser-schemas.py` | 9 planches relues à l'œil (2 à 3 passes) |
+| `previsualiser-annotations.py` | 9 composites relus (pastilles ↔ libellés arabes) |
 
 ### Tests mis à jour
 
-- `src/data/__tests__/illustrationsLecons.test.ts` : 40 schémas (`{u1:5, u2:5, u3:6, u4:6, u5:4, u6:2, u7:3, u8:1, u9:3, u10:3, u11:2}`), **35 SVG** + 5 WebP annotées, **39 leçons** distinctes, disque = registre (**61 fichiers**), **52 leçons illustrées**, 0 `reviewed: true`.
-- `src/__tests__/metriques.test.ts` : **61 visuels**, 35 SVG, **11 unités** couvertes.
+- `src/data/__tests__/illustrationsLecons.test.ts` : 41 schémas (`{u1:5, u2:5, u3:6, u4:6, u5:4, u6:2, u7:3, u8:1, u9:3, u10:4, u11:2}`), **36 SVG** + 5 WebP annotées, **39 leçons** distinctes, disque = registre (**62 fichiers**), **52 leçons illustrées**, 0 `reviewed: true`.
+- `src/__tests__/metriques.test.ts` : **62 visuels**, 36 SVG, **11 unités** couvertes.
 
 ---
 

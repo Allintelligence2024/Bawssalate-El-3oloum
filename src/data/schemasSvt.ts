@@ -1010,4 +1010,28 @@ export const SCHEMAS_SVT: IllustrationLecon[] = [
     statut: 'a_valider_enseignant',
     reviewed: false,
   },
+  {
+    id: 'schema-u10-zones-ombre',
+    lessonId: 'phase19_chapitres_37_38',
+    uniteId: 'u10',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u10-zones-ombre.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'مناطق الظلّ: كيف تكشف الموجتان P وS لبّ الأرض السائل',
+    altAr:
+      'كرة أرضية مقطوعة بنواة حديد ونيكل، عليها حلقتان ملوّنتان: الموجتان P وS تُستقبلان حتى 103 درجات، ثم تنعدم S بين 103 و180 درجة وتغيب P بين 103 و143 درجة قبل أن تعود بعد 143 درجة.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — بين 103° و143° تغيب الموجتان معًا في «منطقة الظلّ»، وبعد 143° تعود P وحدها: هذا الغياب المزدوج هو الدليل على نواة خارجية سائلة.</span>',
+    annotations: [
+      { num: 1, x: 38.7, y: 11.3, labelAr: 'المركز السطحي (الفوّهة)', detailAr: 'نقطة انطلاق الموجتين نحو كل الاتجاهات' },
+      { num: 2, x: 54.2, y: 27, labelAr: 'P وS معًا حتى 103°', detailAr: 'كل الأغلفة الصلبة تنقل الموجتين' },
+      { num: 3, x: 51.3, y: 80.3, labelAr: 'انعدام S بعد 103°', detailAr: 'موجات S لا تعبر النواة السائلة' },
+      { num: 4, x: 54.5, y: 69.7, labelAr: 'ظلّ P من 103° إلى 143°', detailAr: 'النواة السائلة تحرف P وتُضعفها' },
+      { num: 5, x: 43.4, y: 84, labelAr: 'عودة P بعد 143°', detailAr: 'P تعبر النواة لكن S تبقى غائبة' },
+      { num: 6, x: 40.6, y: 35.1, labelAr: 'حدّ النواة (غوتنبرغ)', detailAr: 'سطح الفصل بين البرنس والنواة السائلة' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
 ];

@@ -161,3 +161,13 @@ schéma ne soit promu « validé » ; le Lot 4 a ensuite été livré (voir ci-d
 `generer-schemas-svt --verifier` 35/35), et les **quatre lots du prompt sont livrés**. Aucun schéma
 n'est promu « validé » : la validation reste entièrement à l'enseignant.
 
+## Complément Lot 4 — zones d'ombre des ondes P et S (2026-11-26)
+
+| N° | Objet | Fichiers | Constat | Arbitrage | Statut | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-073 | **Comblement d'un manque du Lot 4** : `u10` devait être traité « intégralement » (ondes P/S **+ zones d'ombre**), seule la coupe + les courbes Vp/Vs avaient été produites | `public/lecons/img/u10-zones-ombre.svg`, `src/data/schemasSvt.ts` (`schema-u10-zones-ombre`), `scripts/generer-schemas-svt.mjs`, `src/data/__tests__/illustrationsLecons.test.ts`, `src/__tests__/metriques.test.ts`, `plans/SCHEMAS-ZERO-TEXTE-IA-LOT4-2026-11-26.md`, `plans/PROMPT-SCHEMAS-ZERO-TEXTE.md` | Le schéma `u10-ondes-sismiques` montrait la structure interne et les courbes de vitesse, mais **pas la lecture angulaire** qui fonde la preuve : P et S reçues jusqu'à 103°, S absentes au-delà, P absentes entre 103° et 143° puis de retour après 143°. Un élève ne pouvait pas reconstituer le raisonnement « S absentes ⇒ noyau externe liquide ». | Deuxième schéma sur la **même leçon** (`phase19_chapitres_37_38`, plafond de 2 respecté) : globe en anneaux S (extérieur) et P (intérieur), secteurs colorés, graduations 103°/143°/180°, rayons depuis le foyer arrêtés sur la graine. 12,1 Ko, 6 repères. Aucune promotion `reviewed: true`. | `en attente enseignant` — 62 entrées sur 62 en `a_valider_enseignant` | 2026-11-26 |
+
+**Porte** : re-vérifiée après ajout (lint 0, `tsc` 0, 86 fichiers / 729 tests, build OK,
+`verifier-hors-ligne` OK avec **62 illustrations**, `sync-metrics --check` sans dérive,
+`generer-schemas-svt --verifier` **36/36**).
+

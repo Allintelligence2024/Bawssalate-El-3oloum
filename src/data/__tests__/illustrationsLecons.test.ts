@@ -7,7 +7,7 @@
 //
 // Depuis le Lot 1, deux familles cohabitent :
 //  - 21 WebP `webp_legacy` du manuel (u6, u7, u8, u9, u11) — jamais modifiées ;
-//  - 40 schémas créés (u1 → u11) — 35 SVG écrits à la main, 5 WebP muettes annotées.
+//  - 41 schémas créés (u1 → u11) — 36 SVG écrits à la main, 5 WebP muettes annotées.
 
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -25,7 +25,7 @@ const racine = new URL('../../..', import.meta.url).pathname;
 const dossierImages = join(racine, 'public/lecons/img');
 const PLAFOND_OCTETS = 150 * 1024;
 const REPARTITION_LEGACY: Record<string, number> = { u6: 9, u7: 2, u8: 2, u9: 4, u11: 4 };
-const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6, u4: 6, u5: 4, u6: 2, u7: 3, u8: 1, u9: 3, u10: 3, u11: 2 };
+const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6, u4: 6, u5: 4, u6: 2, u7: 3, u8: 1, u9: 3, u10: 4, u11: 2 };
 
 describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => {
   const legacy = ILLUSTRATIONS_LECONS.filter((i) => typeVisuelDe(i) === 'webp_legacy');
@@ -48,16 +48,16 @@ describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => 
 });
 
 describe('schémas créés — règle « zéro texte IA » (Lots 1 à 4)', () => {
-  it('couvre u1 → u11 avec 40 schémas sur les leçons officielles', () => {
-    expect(SCHEMAS_SVT).toHaveLength(40);
+  it('couvre u1 → u11 avec 41 schémas sur les leçons officielles', () => {
+    expect(SCHEMAS_SVT).toHaveLength(41);
     const parUnite: Record<string, number> = {};
     for (const i of SCHEMAS_SVT) {
       expect(Object.keys(REPARTITION_SCHEMAS)).toContain(i.uniteId);
       parUnite[i.uniteId] = (parUnite[i.uniteId] ?? 0) + 1;
     }
     expect(parUnite).toEqual(REPARTITION_SCHEMAS);
-    // 35 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
-    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(35);
+    // 36 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
+    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(36);
     expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'webp_annote')).toHaveLength(5);
 
     // Les schémas se répartissent sur 39 leçons : `phase3_chapitres_5_6` en porte deux
@@ -158,13 +158,13 @@ describe('registre complet — disque et programme', () => {
     }
 
     const surDisque = readdirSync(dossierImages).sort();
-    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(61);
+    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(62);
     expect(surDisque.every((f) => f.endsWith('.webp') || f.endsWith('.svg'))).toBe(true);
     expect(surDisque).toEqual([...fichiers].sort());
   });
 
-  it('garde 0 reviewed: true et 61 statuts a_valider_enseignant', () => {
-    expect(ILLUSTRATIONS_LECONS).toHaveLength(61);
+  it('garde 0 reviewed: true et 62 statuts a_valider_enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(62);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.reviewed === true)).toHaveLength(0);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.reviewed === false)).toBe(true);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.statut === 'a_valider_enseignant')).toBe(true);
