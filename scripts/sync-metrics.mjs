@@ -30,7 +30,9 @@ const programme = lire('src/data/programme.ts');
 const unites = compte(programme, /^ {2}\{\s*$/gm) > 0
   ? compte(programme, /\bid:\s*'u\d+'/g)
   : 0;
-const leconsIds = (programme.match(/lessonIds:\s*\[[^\]]*\]/g) ?? [])
+// Inclut les prérequis et enrichissements ; ignorer les commentaires dans les tableaux.
+const programmeSansCommentaires = programme.replace(/\/\/[^\n]*/g, '');
+const leconsIds = (programmeSansCommentaires.match(/\b(?:lessonIds|prerequis|enrichissement):\s*\[[^\]]*\]/g) ?? [])
   .flatMap((bloc) => (bloc.match(/'[^']+'/g) ?? [])).length;
 
 const resumes = lire('src/data/lessonGoldSummaries.ts');
@@ -39,14 +41,14 @@ const resumesTotal = compte(resumes, /^ {2}'[^']+':\s*\{$/gm) + compte(resumes, 
 const resumesRelus = compte(resumes, /reviewed:\s*true/g);
 
 // Les sujets sont répartis : 2020–2023 dans sujetsOfficiels.ts, le reste dans sujets/*.ts.
-let sujetsOfficiels = compte(lire('src/data/sujetsOfficiels.ts'), /\bid:\s*'\d{4}-\d'/g);
+let sujetsOfficiels = compte(lire('src/data/sujetsOfficiels.ts'), /\bid:\s*'\d{4}x?-[12]'/g);
 for (const f of readdirSync('src/data/sujets')) {
-  if (f.endsWith('.ts')) sujetsOfficiels += compte(lire(join('src/data/sujets', f)), /\bid:\s*'\d{4}-\d'/g);
+  if (f.endsWith('.ts')) sujetsOfficiels += compte(lire(join('src/data/sujets', f)), /\bid:\s*'\d{4}x?-[12]'/g);
 }
 // Les corrigés : 2023–2026 dans sujetsCorriges.ts, 2013–2022 dans corriges/c*.ts.
-let corriges = compte(lire('src/data/sujetsCorriges.ts'), /\bsujetId:\s*'\d{4}-\d'/g);
+let corriges = compte(lire('src/data/sujetsCorriges.ts'), /\bsujetId:\s*'\d{4}x?-[12]'/g);
 for (const f of readdirSync('src/data/corriges')) {
-  if (f.endsWith('.ts')) corriges += compte(lire(join('src/data/corriges', f)), /\bsujetId:\s*'\d{4}-\d'/g);
+  if (f.endsWith('.ts')) corriges += compte(lire(join('src/data/corriges', f)), /\bsujetId:\s*'\d{4}x?-[12]'/g);
 }
 
 // Drills : un item = un `id:` dans les fichiers de domaine (les `axes.ts` ne font que compter).

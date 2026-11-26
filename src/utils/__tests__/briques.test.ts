@@ -3,6 +3,7 @@ import {
   avantApres,
   basculerBrique,
   briquesChoisies,
+  briquesExigees,
   diagnosticPiege,
   evaluerAssemblage,
   apercuRequis,
@@ -12,14 +13,26 @@ import {
 } from '../briques';
 import { JEUX_UNITE1 } from '../../data/briques/u1';
 import { JEUX_SUJET_2025_1 } from '../../data/briques/sujet-2025-1';
-import { chargerJeuxSujet, chargerJeuxUnite, jeuPourConsigne } from '../../data/briques';
+import { chargerJeuxSujet, chargerJeuxUnite, jeuPourConsigne, UNITES_AVEC_BRIQUES } from '../../data/briques';
 import type { JeuBriques } from '../../data/briques/types';
 
 const e2 = JEUX_UNITE1.find((j) => j.id === 'jb:u1:e2')!;
 
-/** Le jeu complet dans l'ordre : les 4 rôles de la structure, sans piège. */
+/** Les rôles d'un jeu, dans l'ordre canonique (l'ordre que l'app exige de l'élève). */
+function structureCanonique(jeu: JeuBriques) {
+  return rolesExiges(jeu);
+}
+
+/**
+ * Le jeu complet dans l'ordre : **une brique par critère** (pas une par rôle — `jb:u1:e2` a
+ * deux `comparaison`, une seule ne suffit pas), sans piège.
+ */
 function assemblageComplet(jeu: JeuBriques): string[] {
-  return rolesExiges(jeu).map((role) => jeu.briques.find((b) => b.role === role)!.id);
+  const parRole = new Map<string, string[]>();
+  for (const b of briquesExigees(jeu)) {
+    parRole.set(b.role, [...(parRole.get(b.role) ?? []), b.id]);
+  }
+  return rolesExiges(jeu).flatMap((role) => parRole.get(role) ?? []);
 }
 
 describe('évaluation par rôles — la structure, jamais le texte', () => {
@@ -44,7 +57,7 @@ describe('évaluation par rôles — la structure, jamais le texte', () => {
   });
 
   it('tous les rôles présents mais inversés : hors ordre, pas « incomplet »', () => {
-    const ids = assemblageComplet(e2).reverse();
+    const ids = [...assemblageComplet(e2)].reverse();
     const ev = evaluerAssemblage(e2, ids);
     expect(ev.manquants).toEqual([]);
     expect(ev.horsOrdre).toBe(true);
@@ -68,6 +81,79 @@ describe('évaluation par rôles — la structure, jamais le texte', () => {
     expect(ev.complete).toBe(false);
     expect(ev.score).toBe(0);
     expect(ev.critereNomme).toBe('الملاحظة');
+  });
+});
+
+describe('un critère = une brique, pas un rôle', () => {
+  // Régression : `evaluerAssemblage` comptait les rôles **distincts**. Sur les 10 jeux dérivés
+  // des synthèses (2 observations + 2 interprétations + 1 conclusion), l'élève qui ne posait
+  // qu'une seule observation et une seule interprétation était déclaré « complete » — la moitié
+  // de la réponse manquait. 16 réponses fausses sur 32 combinaisons étaient acceptées.
+  const jeuModele = (roleParBrique: Parameters<typeof briquesExigees>[0]['structure']): JeuBriques => ({
+    id: 'jb:test:crit',
+    document: 'd',
+    question: 'q',
+    verbe: 'بيِّن',
+    attendu: 'a',
+    structure: roleParBrique,
+    statut: 'actif',
+    briques: [
+      { id: 'b1', role: 'observation', texte: 'obs 1', source: 's', statut: 'actif' },
+      { id: 'b2', role: 'observation', texte: 'obs 2', source: 's', statut: 'actif' },
+      { id: 'b3', role: 'interpretation', texte: 'interp 1', source: 's', statut: 'actif' },
+      { id: 'b4', role: 'interpretation', texte: 'interp 2', source: 's', statut: 'actif' },
+      { id: 'b5', role: 'conclusion', texte: 'concl', source: 's', statut: 'actif' },
+    ],
+  });
+
+  it('deux observations exigées : une seule ne suffit pas', () => {
+    const jeu = jeuModele(['observation', 'interpretation', 'conclusion']);
+    const ev = evaluerAssemblage(jeu, ['b1', 'b3', 'b5']);
+    expect(ev.complete).toBe(false);
+    // Les deux rôles sont touchés (une brique manque de chaque), mais un seul l'est à moitié :
+    // le message le dit en clair au lieu d'annoncer « البنية كاملة ».
+    expect(ev.manquants).toEqual(['observation', 'interpretation']);
+    expect(ev.criteresManquants).toBe(2);
+    expect(ev.briquesManquantes.map((b) => b.id)).toEqual(['b2', 'b4']);
+    expect(ev.score).toBe(3);
+    expect(ev.total).toBe(5);
+    expect(ev.message).toContain('ناقص: الملاحظة');
+  });
+
+  it('toutes les briques exigées : complet, score = total', () => {
+    const jeu = jeuModele(['observation', 'interpretation', 'conclusion']);
+    const ev = evaluerAssemblage(jeu, ['b1', 'b2', 'b3', 'b4', 'b5']);
+    expect(ev.complete).toBe(true);
+    expect(ev.score).toBe(ev.total);
+    expect(ev.briquesManquantes).toEqual([]);
+  });
+
+  it('les 10 jeux dérivés refusent la moitié de la réponse (aucun faux positif)', async () => {
+    for (const uniteId of UNITES_AVEC_BRIQUES) {
+      const [jeu] = await chargerJeuxUnite(uniteId);
+      expect(jeu, uniteId).toBeDefined();
+      const exigees = briquesExigees(jeu);
+      if (exigees.length < 2) continue;
+      // Une brique retirée au hasard (la première) : l'assemblage ne peut plus être complet.
+      const ids = exigees.slice(1).map((b) => b.id);
+      const ev = evaluerAssemblage(jeu, ids);
+      expect(ev.complete, `${jeu!.id} : réponse incomplète déclarée complète`).toBe(false);
+      expect(ev.criteresManquants).toBeGreaterThan(0);
+    }
+  });
+
+  it('le message de réussite cite les rôles du jeu, jamais un rôle absent', async () => {
+    const [jeu] = await chargerJeuxUnite('u6');
+    const ev = evaluerAssemblage(jeu, briquesExigees(jeu).map((b) => b.id));
+    expect(ev.complete).toBe(true);
+    expect(ev.message).not.toContain('مقارنة');
+  });
+
+  it('un jeu sans structure n’exige rien et n’invente pas de critère', () => {
+    const jeu = jeuModele([]);
+    const ev = evaluerAssemblage(jeu, []);
+    expect(ev.total).toBe(0);
+    expect(ev.manquants).toEqual([]);
   });
 });
 
@@ -120,13 +206,27 @@ describe('catalogue et statuts éditoriaux', () => {
     }
   });
 
-  it('chaque jeu porte les quatre rôles dans l’ordre, et au moins un piège', () => {
+  it('chaque jeu serti porte au moins un piège et des rôles dans l’ordre canonique', () => {
     for (const jeu of [...JEUX_UNITE1, ...JEUX_SUJET_2025_1]) {
-      expect(rolesExiges(jeu)).toEqual(['observation', 'comparaison', 'interpretation', 'conclusion']);
+      expect(rolesExiges(jeu)).toEqual(structureCanonique(jeu));
       expect(jeu.briques.filter((b) => b.role === 'piege').length).toBeGreaterThanOrEqual(1);
       // Un bloc reste un bloc : court, lisible au pouce.
       for (const b of jeu.briques) expect(b.texte.length).toBeLessThanOrEqual(140);
     }
+  });
+
+  it('le jeu 2025 adapté est évaluable en aperçu, sans prétendre noter un texte scientifique', () => {
+    const jeu = JEUX_SUJET_2025_1.find((j) => j.id === 'jb:2025-1:1:1')!;
+    expect(jeu.verbe).toBe('بيِّن');
+    expect(jeu.statut).toBe('a_valider_enseignant');
+    expect(jeuActif(jeu)).toBe(false);
+    expect(jeu.structure).toEqual(['observation', 'interpretation', 'conclusion']);
+    const ids = assemblageComplet(jeu);
+    expect(ids).toHaveLength(4);
+    expect(evaluerAssemblage(jeu, []).complete).toBe(false);
+    expect(evaluerAssemblage(jeu, ids).complete).toBe(true);
+    for (const id of ids) expect(evaluerAssemblage(jeu, ids.filter((x) => x !== id)).complete).toBe(false);
+    expect(evaluerAssemblage(jeu, [...ids].reverse()).horsOrdre).toBe(true);
   });
 
   it('les briques ne sont actives que si le jeu l’est (pas de contenu non Relu joué)', () => {

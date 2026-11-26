@@ -1,7 +1,7 @@
 // P3.3 — recherche locale : normalisation arabe, couverture des 58 leçons, exemple du plan « كالفن »
 import { describe, it, expect } from 'vitest';
 import { normaliser, construireIndex, rechercher } from '../recherche';
-import { CHEMIN, DOMAINES, UNITE_PAR_ID } from '../../data/programme';
+import { CHEMIN, DOMAINES, LECONS_ENRICHISSEMENT, UNITE_PAR_ID } from '../../data/programme';
 
 describe('recherche locale', () => {
   it('normalise hamza, ta marbouta, alif maqsura, tashkil et tatwil', () => {
@@ -11,10 +11,11 @@ describe('recherche locale', () => {
     expect(normaliser('ATP ')).toBe('atp');
   });
 
-  it("indexe toutes les leçons du chemin", () => {
+  it("indexe les leçons du chemin et les enrichissements", () => {
     const idx = construireIndex();
     const lecons = CHEMIN.filter((c) => c.type === 'lecon').length;
-    expect(idx.length).toBe(lecons);
+    expect(idx.length).toBe(lecons + LECONS_ENRICHISSEMENT.length);
+    for (const id of LECONS_ENRICHISSEMENT) expect(idx.some((e) => e.lessonId === id)).toBe(true);
     expect(idx.every((e) => e.champs.length >= 2)).toBe(true);
   });
 

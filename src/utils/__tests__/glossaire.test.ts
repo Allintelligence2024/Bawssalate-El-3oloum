@@ -19,6 +19,11 @@ describe('glossaire', () => {
     expect(manquants.length, manquants.join(' | ')).toBeLessThanOrEqual(Math.ceil(conceptuels.length * 0.12));
   });
 
+  it('distingue la glycosyltransférase du transporteur de glucose', () => {
+    expect(termeGlossaire('إنزيم ناقل السكر')?.fr).toBe('glycosyltransférase');
+    expect(termeGlossaire('ناقل الغلوكوز')?.fr).toBe('transporteur du glucose');
+  });
+
   it('recherche bilingue : « كالفن » et « calvin » trouvent le cycle de Calvin ; alias et normalisation', () => {
     expect(chercherGlossaire('كالفن').some((t) => t.fr === 'cycle de Calvin')).toBe(true);
     expect(chercherGlossaire('calvin').some((t) => t.ar === 'حلقة كالفن')).toBe(true);

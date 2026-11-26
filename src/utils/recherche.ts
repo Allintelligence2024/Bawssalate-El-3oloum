@@ -35,7 +35,7 @@ export function construireIndex(): EntreeIndex[] {
   if (cache) return cache;
   const out: EntreeIndex[] = [];
   for (const u of UNITES) {
-    for (const lessonId of [...(u.prerequis ?? []), ...u.lessonIds]) {
+    for (const lessonId of [...(u.prerequis ?? []), ...u.lessonIds, ...(u.enrichissement ?? [])]) {
       const g = LESSON_GOLD_SUMMARIES[lessonId];
       const p = LECONS_PASSIVES[lessonId];
       const champs: EntreeIndex['champs'] = [

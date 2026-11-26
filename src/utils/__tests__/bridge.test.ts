@@ -190,9 +190,10 @@ describe('brique 3 — planDeJour et plafond de dette', () => {
     const plan = planDeJour({ unitesAbordees: ['u1'], revisionsDues: [], niveaux: niveauxVierges() });
     const nouvel = plan.actions.find((a) => a.type === 'nouvelle_lecon');
     expect(nouvel).toBeDefined();
-    // Après u1 : u2 (poids 3) et u9 (poids 4) sont accessibles — u9 est la branche géologie,
-    // elle n'exige que u1. u3 exige u2, donc reste inaccessible.
-    expect(nouvel!.uniteId).toBe('u9');
+    // Après u1 : u2 (poids 4) et u9 (poids 2) sont accessibles — u9 est la branche géologie,
+    // elle n'exige que u1. u3 exige u2, donc reste inaccessible. Depuis que les poids sont
+    // dérivés du corpus réel, c'est bien u2 (structure-fonction) qui passe devant la géologie.
+    expect(nouvel!.uniteId).toBe('u2');
     expect(poidsBac(nouvel!.uniteId!)).toBe(4);
   });
 

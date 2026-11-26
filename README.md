@@ -370,15 +370,15 @@ rien ne devienne illisible.
 | Métrique | Valeur |
 | --- | --- |
 | Unités du programme | **11** |
-| Leçons référencées | **56** |
+| Leçons référencées | **58** |
 | Résumés dorés | **58** (relus : 0) |
-| Sujets officiels structurés | **28** |
-| Sujets avec éléments de réponse | **28** |
+| Sujets officiels structurés | **30** |
+| Sujets avec éléments de réponse | **30** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
 | Jeux de briques | **16** (actifs : 4) |
-| Fichiers de tests | **82** |
-| Coquille hors ligne (téléchargée d'office) | **2.17 Mio** (7 entrées) |
+| Fichiers de tests | **84** |
+| Coquille hors ligne (téléchargée d'office) | **2.18 Mio** (7 entrées) |
 | Contenu hors ligne (sur demande) | **4.19 Mio** (28 entrées) |
 
 <!-- METRICS:END -->
@@ -798,6 +798,27 @@ Les entrées ci-dessous décrivent les versions au moment de leur création, pas
   `versionName 0.13.0`, `versionCode 4` (elle annonçait encore 0.10.5). QA : `npm test`
   **670 tests / 82 fichiers**, `npm run lint` 0 erreur, build OK, `verifier-hors-ligne` OK
   (103 fichiers, 0 incohérence), coquille **2,18 Mio**, CI verte.
+- **v0.13.1 · Relecture SVT 3AS des 16 jeux de briques (lot A-022 → A-034)** — **(1) Le vrai
+  bug de notation est corrigé** : `evaluerAssemblage` comptait un critère **par rôle**, pas par
+  brique. Sur les 10 jeux dérivés des synthèses (2 observations + 2 interprétations + conclusion),
+  l'élève qui posait une seule observation et une seule interprétation était déclaré
+  « البنية كاملة » : **16 réponses fausses sur 32 combinaisons** étaient acceptées. `briquesExigees()`
+  fait désormais d'une brique un critère (`score`/`total` en briques, `briquesManquantes`,
+  `criteresManquants`, message « ناقص: … (N عناصر) »), et un test l'interdit sur les 10 jeux.
+  **(2) Plus de message figé** : la réussite, l'ordre attendu et les consignes des étapes 2/3 sont
+  générés depuis `jeu.structure` — un jeu à 3 rôles n'annonce plus une « مقارنة بالشاهد » que
+  l'étape 2 réclamait pourtant. **(3) Contenus corrigés** : `u6` (« الكيموضوئية في الحشوة » →
+  « الكيموحيوية في الحشوة », l'erreur n°1 de l'unité), `jb:u1:e2` (un terme de comparaison classé
+  « تفسير »), `jb:u1:e5` (رامزة sur la مورثة), `jb:u1:e8` (ببتيد الإشارة, hors programme → RER →
+  Golgi → vésicules du manuel 3AS), `jb:2025-1:1:1` (coquille « الذهنية » + rôles d'analyse de
+  document sur un `نصّ علمي` : structure retirée, arbitrage A-009 ouvert), `jb:2025-1:2:1`
+  (الشكلان (أ) و(ب)), `u4`/`u5`/`u11` (IL-2 sur cellules déjà sensibilisées, amplitude et non
+  vitesse, critères communs de comparaison). **(4) Drills** : `d016` (le paratope n'est pas une
+  protéine du lait), `q326`/`q336` (tiges cassées par l'import Markdown), et **six définitions
+  dont deux options étaient justes** (`d035`, `d074`, `d086`, `d092`, `d107`, `d119`).
+  **(5) Coquilles scientifiques** : `التمسّخ` (et non `التمسية`), `اليخضور المثار`, `الارتصاص`,
+  `أرجل كاذبة`. QA : `npm test` **675 tests / 82 fichiers**, `npm run lint` 0 erreur, `tsc -b` OK,
+  build OK, `verifier-drills` 700 items / 0 problème, `verifier-deploiement` OK.
 - **v0.13 · Phase 3 « Fierté »** — **on ne referme plus une leçon finie : on l'annonce.** (1)
   **Écran de fierté** (`EcranFierte.tsx`, nouveau) : à la fin des six nœuds, `onTerminer` ouvre cet
   écran au lieu de refermer sèchement. Il constate **trois preuves** — six phases faites (`6 / 6`),

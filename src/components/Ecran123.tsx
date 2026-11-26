@@ -14,7 +14,7 @@ import { ouvrirDialogue } from '../utils/dialogue';
 import { useMemo, useRef, useState } from 'react';
 import { nb } from '../utils/dates';
 import type { Etat } from '../types';
-import { basculerBrique, type EvaluationBriques, type JeuBriques } from '../utils/briques';
+import { basculerBrique, LIBELLE_ROLE, type EvaluationBriques, type JeuBriques } from '../utils/briques';
 import { progresDuJeu } from '../utils/amelioration';
 import { attenduDe } from '../data/methodologie/attenduVerbes';
 import ConstructeurReponse from './ConstructeurReponse';
@@ -109,15 +109,33 @@ export default function Ecran123({ etat, jeux, titre, onFermer, onTentative }: P
     const choisies = jeu.briques.filter((b) => preuves.includes(b.id));
     const roles = choisies.map((b) => b.role);
     const aObservation = roles.includes('observation');
+    const aInterpretation = roles.includes('interpretation');
+    // Un jeu à 3 rôles (les jeux dérivés des synthèses) n'a pas de `comparaison` : réclamer un
+    // témoin qui n'existe pas rendait le message bloquant à tort. Le 3ᵉ rôle attendu est alors
+    // l'interprétation.
     const aComparaison = roles.includes('comparaison');
-    if (aObservation && aComparaison) {
-      setMessagePreuve('الدليل مثبّت: ملاحظة + مقارنة بالشاهد. هذا ما يُبنى عليه التفسير.');
+    const secondRole = jeu.structure.includes('comparaison') ? 'comparaison' : 'interpretation';
+    const aSecondRole = secondRole === 'comparaison' ? aComparaison : aInterpretation;
+    if (aObservation && aSecondRole) {
+      setMessagePreuve(
+        secondRole === 'comparaison'
+          ? 'الدليل مثبّت: ملاحظة + مقارنة بالشاهد. هذا ما يُبنى عليه التفسير.'
+          : 'الدليل مثبّت: ملاحظة + تفسير علمي. هذا ما يُبنى عليه الاستنتاج.',
+      );
     } else if (aObservation) {
-      setMessagePreuve('عندك الملاحظة، ولكن المقارنة بالشاهد ناقصة: نفس المعيار، ثم الفرق.');
-    } else if (aComparaison) {
-      setMessagePreuve('عندك المقارنة، ولكن الملاحظة ناقصة: ما الذي تُظهره الوثيقة بالأرقام؟');
+      setMessagePreuve(
+        secondRole === 'comparaison'
+          ? 'عندك الملاحظة، ولكن المقارنة بالشاهد ناقصة: نفس المعيار، ثم الفرق.'
+          : 'عندك الملاحظة، ولكن التفسير العلمي ناقص: اربط المعطى بآلية من الدرس («لأنّ…»).',
+      );
+    } else if (aSecondRole) {
+      setMessagePreuve(
+        secondRole === 'comparaison'
+          ? 'عندك المقارنة، ولكن الملاحظة ناقصة: ما الذي تُظهره الوثيقة بالأرقام؟'
+          : 'عندك التفسير، ولكن الملاحظة ناقصة: ما الذي تُظهره الوثيقة أولًا، بلا تفسير؟',
+      );
     } else {
-      setMessagePreuve('ما زال الدليل غير مثبّت: ابدأ بما تُظهره الوثيقة، ثم قارن بالشاهد.');
+      setMessagePreuve('ما زال الدليل غير مثبّت: ابدأ بما تُظهره الوثيقة، ثم اربطه بالآلية.');
     }
   };
 
@@ -186,7 +204,9 @@ export default function Ecran123({ etat, jeux, titre, onFermer, onTentative }: P
         <section className="carte mt-3 p-4">
           <p className="oeil">2 · بدّل وقارن</p>
           <p className="petit doux mt-1">
-            اثبت الدليل: اختر العبارة التي تلاحظ بها، ثم التي تقارن بها بالشاهد. الباقي يأتي في الخطوة 3.
+            {jeu.structure.includes('comparaison')
+              ? 'اثبت الدليل: اختر العبارة التي تلاحظ بها، ثم التي تقارن بها بالشاهد. الباقي يأتي في الخطوة 3.'
+              : 'اثبت الدليل: اختر العبارة التي تلاحظ بها، ثم التي تفسّر بها. الباقي يأتي في الخطوة 3.'}
           </p>
           <div className="mt-3 space-y-2">
             {jeu.briques
@@ -253,8 +273,8 @@ export default function Ecran123({ etat, jeux, titre, onFermer, onTentative }: P
           />
           <div className="mt-3 rounded-xl border border-line bg-bg px-3 py-2">
             <p className="petit doux">
-              تفضّل تكتب بحرّيتك؟ اكتب جوابك على ورقتك ثم افتح «النص العلمي» — البنية نفسها:
-              ملاحظة، مقارنة، تفسير، استنتاج.
+              تفضّل تكتب بحرّيتك؟ اكتب جوابك على ورقتك ثم افتح «النص العلمي» — البنية نفسها:{' '}
+              {jeu.structure.map((role) => LIBELLE_ROLE[role]).join('، ')}.
             </p>
           </div>
         </div>

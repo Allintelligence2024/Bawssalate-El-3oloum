@@ -23,3 +23,5 @@ node scripts/verifier-drills.mjs
 Contrôle : 4 options distinctes, bonne réponse en position 0, ids uniques, axes cohérents, alerte « tige répétée » et « options proches ».
 
 *16/11 — dépôt 2 niveau 3 : `n029`–`n040` (u8 ×4, u10 ×4, u1/u2/u5 ×1 +1 u5) → 40 items n3, `TOTAL_QCM = 540`, `verifier-drills.mjs` : 660 items, 0 problème. Toutes les 11 unités ont ≥ 2 items n3. Statut inchangé : « à valider » (A-005).*
+
+**État actuel** : 500 QCM de domaines + 80 niveau 3 + 120 définitions = **700 items** (`TOTAL_QCM = 580`, `TOTAL_DEFS = 120`, `TOTAL_ITEMS = 700`). Les chiffres de dépôt antérieurs ci-dessus sont historiques.

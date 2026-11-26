@@ -38,18 +38,22 @@ export const REMEDE_ROLE: Record<Exclude<BriqueRole, 'piege'>, string> = {
 };
 
 export interface EvaluationBriques {
-  /** Tous les rôles de la structure sont présents. */
+  /** Toutes les briques exigées sont présentes (une par critère, pas une par rôle). */
   complete: boolean;
   rolesChoisis: BriqueRole[];
-  /** Rôles exigés par la structure et absents de l'assemblage. */
+  /** Rôles exigés dont il manque au moins une brique (liste de rôles, pas de briques). */
   manquants: Exclude<BriqueRole, 'piege'>[];
   /** Vrai si un rôle arrive après un rôle qui devait le suivre. */
   horsOrdre: boolean;
   /** Briques « piège » retenues par l'élève (diagnostic à afficher, pas de sanction). */
   pieges: BriqueReponse[];
+  /** Briques exigées et non retenues (une entrée par brique, source d'affichage). */
+  briquesManquantes: BriqueReponse[];
+  /** Nombre de briques exigées qui manquent — 0 s'il n'en manque aucune. */
+  criteresManquants: number;
   /** Premier critère manquant, nommé — `null` si l'assemblage est complet. */
   critereNomme: string | null;
-  /** Nombre de critères satisfaits sur le total exigé (base de l'Avant/Après). */
+  /** Nombre de briques exigées satisfaites sur le total exigé (base de l'Avant/Après). */
   score: number;
   total: number;
   /** Message court, en arabe, prêt à afficher. */
@@ -59,6 +63,25 @@ export interface EvaluationBriques {
 /** Rôles exigés par un jeu (le piège est facultatif et hors structure). */
 export function rolesExiges(jeu: JeuBriques): Exclude<BriqueRole, 'piege'>[] {
   return jeu.structure.filter((r): r is Exclude<BriqueRole, 'piege'> => r !== 'piege');
+}
+
+/**
+ * Critères exigés, **brique par brique**.
+ *
+ * Un rôle n'est pas un critère : `rolesDepuisModele(5)` produit deux `observation` et deux
+ * `interpretation` (et les jeux de `u1.ts` portent un `comparaison` de plus). Compter les rôles
+ * distincts laissait donc l'app déclarer « البنية كاملة » alors qu'il manquait la moitié de la
+ * réponse — faux positif mesuré sur 10 des 16 jeux (16 réponses fausses acceptées sur 32
+ * combinaisons possibles). Un critère = une brique exigée.
+ *
+ * Seuls les rôles de `structure` sont exigés : un rôle présent dans les briques mais absent de
+ * la structure (par exemple `comparaison` dans un modèle qui n'en a pas) n'est jamais réclamé.
+ */
+export function briquesExigees(jeu: JeuBriques): BriqueReponse[] {
+  const exigés = rolesExiges(jeu);
+  return jeu.briques.filter(
+    (b) => b.role !== 'piege' && exigés.includes(b.role as Exclude<BriqueRole, 'piege'>),
+  );
 }
 
 /** Ajoute ou retire une brique de l'assemblage (bascule, ordre d'ajout conservé). */
@@ -76,28 +99,44 @@ export function briquesChoisies(jeu: JeuBriques, ids: string[]): BriqueReponse[]
 export function evaluerAssemblage(jeu: JeuBriques, ids: string[]): EvaluationBriques {
   const briques = briquesChoisies(jeu, ids);
   const exigés = rolesExiges(jeu);
-  const rolesChoisis = briques.filter((b) => b.role !== 'piege').map((b) => b.role as Exclude<BriqueRole, 'piege'>);
-  const manquants = exigés.filter((role) => !rolesChoisis.includes(role));
+  const attendues = briquesExigees(jeu);
+  const choisies = briques.filter((b) => b.role !== 'piege');
+  const rolesChoisis = choisies.map((b) => b.role as Exclude<BriqueRole, 'piege'>);
   const pieges = briques.filter((b) => b.role === 'piege');
+
+  // Un critère = une brique exigée présente. Deux observations exigées, une seule posée : il
+  // manque un critère (cf. `briquesExigees`).
+  const briquesManquantes = attendues.filter((b) => !choisies.some((c) => c.id === b.id));
+  const manquants = exigés.filter((role) => briquesManquantes.some((b) => b.role === role));
 
   // Ordre : la suite des rôles retenus doit respecter l'index de la structure.
   const indices = rolesChoisis.map((role) => exigés.indexOf(role));
   const horsOrdre = indices.some((valeur, i) => i > 0 && valeur < indices[i - 1]);
 
-  const score = exigés.length - manquants.length;
-  const complete = manquants.length === 0 && !horsOrdre;
+  const score = attendues.length - briquesManquantes.length;
+  const complete = briquesManquantes.length === 0 && !horsOrdre;
 
   let message: string;
   let critereNomme: string | null = null;
   if (complete) {
-    message = 'البنية كاملة: ملاحظة، مقارنة، تفسير، استنتاج. هذه هي إجابة المصحّح.';
-  } else if (manquants.length > 0) {
+    // Le libellé des rôles est généré depuis la structure : un jeu à 3 rôles ne doit pas
+    // annoncer une comparaison qu'il ne demande pas.
+    const libelles = exigés.map((role) => LIBELLE_ROLE[role]).join('، ');
+    message = `البنية كاملة: ${libelles}. هذه هي إجابة المصحّح.`;
+  } else if (briquesManquantes.length > 0) {
     const premier = manquants[0];
     critereNomme = LIBELLE_ROLE[premier];
-    message = `ناقص: ${LIBELLE_ROLE[premier]} — ${REMEDE_ROLE[premier]}`;
+    const reste = briquesManquantes.filter((b) => b.role === premier).length;
+    message =
+      reste > 1
+        ? `ناقص: ${LIBELLE_ROLE[premier]} (${reste} عناصر) — ${REMEDE_ROLE[premier]}`
+        : `ناقص: ${LIBELLE_ROLE[premier]} — ${REMEDE_ROLE[premier]}`;
   } else {
     critereNomme = 'الترتيب';
-    message = 'العناصر كلها موجودة، لكن الترتيب مقلوب: الملاحظة قبل المقارنة، والاستنتاج في الأخير.';
+    // L'ordre attendu est celui de la structure du jeu, pas un ordre générique : les jeux à
+    // trois rôles ne doivent pas réclamer une comparaison qu'ils n'exigent pas.
+    const ordre = exigés.map((role) => LIBELLE_ROLE[role]).join(' ← ');
+    message = `العناصر كلها موجودة، لكن الترتيب مقلوب. الترتيب الذي يريده المصحّح: ${ordre}.`;
   }
 
   if (pieges.length > 0 && !complete) {
@@ -110,9 +149,11 @@ export function evaluerAssemblage(jeu: JeuBriques, ids: string[]): EvaluationBri
     manquants,
     horsOrdre,
     pieges,
+    briquesManquantes,
+    criteresManquants: briquesManquantes.length,
     critereNomme,
     score,
-    total: exigés.length,
+    total: attendues.length,
     message,
   };
 }

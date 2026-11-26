@@ -32,3 +32,14 @@ describe('corrigés officiels (phase 2)', () => {
     expect(corrigeDe('1999-1')).toBeUndefined();
   });
 });
+
+it('conserve les distinctions scientifiques corrigées dans les annales ciblées', () => {
+  const ex = SUJETS_OFFICIELS.find((s) => s.id === '2016-2')!.exercices[1];
+  expect(ex.unites).toEqual(['u6']);
+  expect(ex.parties[0].contexte).toContain('صانعة خضراء');
+  const texte2021 = JSON.stringify(corrigeDe('2021-2'));
+  expect(texte2021).toContain('استبدال U بـ A');
+  expect(texte2021).not.toContain('استبدال A بـ U في الرامزة 6');
+  const texte2017x = JSON.stringify(corrigeDe('2017x-1'));
+  expect(texte2017x).not.toContain('LT8 تعرّفًا مزدوجًا بفضل TCR على المحدّد المعروض على HLA II');
+});
