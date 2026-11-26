@@ -1,6 +1,6 @@
 // Jeux de briques — sujet Bac pilote 2025-1 (الموضوع الأول، دورة عادية).
 //
-// Chaque brique reprend un fragment **verbatim** des éléments de réponse du corrigé officiel
+// Chaque brique adapte un fragment des éléments de réponse du corrigé officiel
 // (`src/data/corriges/c2025.ts`, A-009) ou du contexte du sujet
 // (`src/data/sujets/s2024_2026.ts`). Rien n'est rédigé de neuf côté science.
 //
@@ -19,22 +19,17 @@ export const JEUX_SUJET_2025_1: JeuBriques[] = [
     document:
       'نصّ قصير: بروتينات RIP تكسر الرابطة بين الأدنين وسكر الريبوز في بعض جزيئات ARN فتفقده بنيته ووظيفته؛ تُستعمل في علاج بعض الأورام السرطانية.',
     question:
-      'اكتب نصًّا علميًّا توضّح فيه دور كلّ نوع من ARN في تركيب البروتين وتأثير بروتينات RIP على الخلايا السرطانية.',
-    // `نصّ علمي` (exercice 1) n'est pas une analyse de document : ses rôles sont
-    // مقدّمة / عرض بالآليات / خاتمة. Tant que `BriqueRole` ne porte pas ces trois rôles
-    // (arbitrage A-009), ce jeu ne peut pas être jugé sur une structure d'observation et de
-    // comparaison au témoin : il reste hors du catalogue servi et attend la relecture.
-    verbe: 'نصّ علمي',
-    attendu: 'مقدّمة · عرض بالآليات وروابطها · خاتمة تجيب عن الإشكال.',
-    // Pas d'entrée dans `structure` : un rôle absent de la structure n'est jamais exigé, donc
-    // l'élève n'est pas jugé sur une grille qui ne correspond pas au verbe de la consigne.
-    // Ce jeu est de toute façon `a_valider_enseignant` (jamais servi sans aperçu).
-    structure: [],
+      'بيِّن دور كلّ نوع من ARN في تركيب البروتين وتأثير بروتينات RIP على الخلايا السرطانية.',
+    // Adaptation en exercice « بيِّن », distincte de la consigne originale de texte scientifique.
+    // L'aperçu ne vaut pas validation de la grille d'un texte scientifique (A-025/A-009).
+    verbe: 'بيِّن',
+    attendu: 'تحديد أدوار أنواع ARN وربط تأثير RIP بتعطّل تركيب البروتين.',
+    structure: ['observation', 'interpretation', 'conclusion'],
     uniteId: 'u1',
     statut: 'a_valider_enseignant',
     briques: [
       brique('jb:2025-1:1:1', 1, 'observation', 'ARNm وARNr وARNt ثلاث جزيئات ARN تشارك في تركيب البروتين؛ RIP يكسر الرابطة أدنين–ريبوز فيفقد ARN بنيته.', 'سند الموضوع · 2025-1', 'a_valider_enseignant'),
-      brique('jb:2025-1:1:1', 2, 'comparaison', 'ARNm ينقل المعلومة، ARNt ينقل الأحماض الأمينية، ARNr مكوّن للريبوزوم بموقعَي قراءة وتحفيز.', SOURCE, 'a_valider_enseignant'),
+      brique('jb:2025-1:1:1', 2, 'interpretation', 'ARNm ينقل المعلومة، ARNt ينقل الأحماض الأمينية، ARNr مكوّن للريبوزوم بموقعَي قراءة وتحفيز.', SOURCE, 'a_valider_enseignant'),
       brique('jb:2025-1:1:1', 3, 'interpretation', 'RIP يستهدف ARN في الخلايا السرطانية → توقّف تركيب البروتين → توقّف تكاثر الخلايا.', SOURCE, 'a_valider_enseignant'),
       brique('jb:2025-1:1:1', 4, 'conclusion', 'الأنواع الثلاثة تشارك في تركيب البروتين، وتفقد وظيفتها بوجود موادّ مثل RIP.', SOURCE, 'a_valider_enseignant'),
       brique('jb:2025-1:1:1', 5, 'piege', 'ARNm وحده كافٍ لتركيب بروتين كامل.', SOURCE, 'a_valider_enseignant'),

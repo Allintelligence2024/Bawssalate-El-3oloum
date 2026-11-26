@@ -372,8 +372,8 @@ rien ne devienne illisible.
 | Unités du programme | **11** |
 | Leçons référencées | **58** |
 | Résumés dorés | **58** (relus : 0) |
-| Sujets officiels structurés | **28** |
-| Sujets avec éléments de réponse | **28** |
+| Sujets officiels structurés | **30** |
+| Sujets avec éléments de réponse | **30** |
 | Axes de drills | **49** |
 | Items de drills | **700** (4 fichiers) |
 | Jeux de briques | **16** (actifs : 4) |

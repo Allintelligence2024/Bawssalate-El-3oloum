@@ -20,3 +20,29 @@ describe('schemas à légender', () => {
     }
   });
 });
+
+it('les séquences codon et anticodons sont explicitement en lecture gauche-droite', () => {
+  const codon = SCHEMAS.find((s) => s.id === 'codon')!;
+  for (const seq of ['AUG', 'GCU', 'UAA', 'UAC', 'CGA']) {
+    const texte = codon.formes.find((f) => f.texte === seq);
+    expect(texte?.attrs.direction, seq).toBe('ltr');
+  }
+});
+
+it('la membrane interne est une boucle fermée et les ATP synthases sont reliées aux crêtes', () => {
+  const mito = SCHEMAS.find((s) => s.id === 'mitochondrie')!;
+  const interne = mito.formes.find((f) => f.type === 'path');
+  expect(String(interne?.attrs.d)).toMatch(/Z$/);
+  const tiges = mito.formes.filter((f) => f.type === 'line');
+  for (const sphere of mito.formes.filter((f) => f.type === 'circle')) {
+    expect(tiges.some((t) => t.attrs.y1 === sphere.attrs.cy && t.attrs.y2 === sphere.attrs.cy &&
+      Math.abs(Number(t.attrs.x2) - Number(sphere.attrs.cx)) === Number(sphere.attrs.r))).toBe(true);
+  }
+});
+
+
+it('les repères du chloroplaste désignent les deux piles', () => {
+  const s = SCHEMAS.find((x) => x.id === 'chloroplaste')!;
+  expect(s.zones.find((z) => z.id === 'granum')).toMatchObject({ x: 95, y: 96 });
+  expect(s.zones.find((z) => z.id === 'thylakoide')).toMatchObject({ x: 215, y: 99 });
+});

@@ -77,3 +77,18 @@ describe('métriques du README', () => {
     expect(fichiers.length).toBeGreaterThan(40);
   });
 });
+
+it('les métriques des sujets et corrigés incluent les sessions exceptionnelles', async () => {
+  const { SUJETS_OFFICIELS } = await import('../data/sujetsOfficiels');
+  const { SUJETS_CORRIGES } = await import('../data/sujetsCorriges');
+  const ids = SUJETS_OFFICIELS.map((s) => s.id);
+  const corriges = SUJETS_CORRIGES.map((s) => s.sujetId);
+  expect(ids).toContain('2017x-1');
+  expect(ids).toContain('2017x-2');
+  expect(new Set(ids).size).toBe(ids.length);
+  expect(new Set(corriges).size).toBe(corriges.length);
+  expect(new Set(ids)).toEqual(new Set(corriges));
+  const readme = lire('README.md');
+  expect(readme).toContain(`| Sujets officiels structurés | **${ids.length}** |`);
+  expect(readme).toContain(`| Sujets avec éléments de réponse | **${corriges.length}** |`);
+});

@@ -1,7 +1,7 @@
 // P1.5 + P-2.1 — items niveau 3 : cohérence avec les axes, chargement par domaine, escalier à 3 marches
 import { describe, it, expect } from 'vitest';
 import { ITEMS_N3 } from '../../data/drills/niveau3';
-import { AXES, TOTAL_QCM } from '../../data/drills/axes';
+import { AXES, TOTAL_QCM, TOTAL_DEFS, TOTAL_ITEMS } from '../../data/drills/axes';
 import { chargerDomaine } from '../drills';
 import { demarrerAdaptatif } from '../adaptatif';
 
@@ -31,6 +31,9 @@ describe('niveau 3', () => {
       expect(axe!.ids, i.id).toContain(i.id);
     }
     expect(TOTAL_QCM).toBe(500 + ITEMS_N3.length);
+    expect(TOTAL_ITEMS).toBe(TOTAL_QCM + TOTAL_DEFS);
+    expect(TOTAL_ITEMS).toBe(700);
+    expect(ITEMS_N3.find((i) => i.id === 'n045')?.a).toBe(6);
     // distribution finale : chaque unité a son effectif cible
     for (const u of Object.keys(DISTRIBUTION_FINALE).map(Number)) {
       expect(ITEMS_N3.filter((i) => i.u === u).length, `u${u}`).toBe(DISTRIBUTION_FINALE[u]);
@@ -52,5 +55,21 @@ describe('niveau 3', () => {
     const e = demarrerAdaptatif(axe15);
     expect(e.min).toBe(1);
     expect(e.max).toBe(3);
+  });
+});
+
+describe('régressions de la relecture méthodologique', () => {
+  it('le diagnostic demande l’opération sans donner le verbe de la réponse', async () => {
+    const { diagnostic } = await import('../../data/methodologie/exercicesUnite1');
+    for (const [question, options, correct, cible] of diagnostic) {
+      expect(question).not.toContain(options[correct]);
+      expect(Object.keys(cible).sort()).toEqual(options.filter((_, i) => i !== correct).sort());
+    }
+  });
+  it('le verbe analyser utilise les données et non le palier d’explication', async () => {
+    const { VERBE_OPERATION } = await import('../../data/methodologie/verbesEtMethodes');
+    const { ATTENDU_PAR_VERBE } = await import('../../data/methodologie/attenduVerbes');
+    expect(VERBE_OPERATION['حلّل']).toBe(0);
+    expect(ATTENDU_PAR_VERBE['حلِّل'].attendu).toContain('دون تفسير');
   });
 });

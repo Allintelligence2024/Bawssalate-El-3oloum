@@ -208,14 +208,25 @@ describe('catalogue et statuts éditoriaux', () => {
 
   it('chaque jeu serti porte au moins un piège et des rôles dans l’ordre canonique', () => {
     for (const jeu of [...JEUX_UNITE1, ...JEUX_SUJET_2025_1]) {
-      // `jb:2025-1:1:1` (نصّ علمي) n'expose pas de structure : un texte scientifique n'a pas de
-      // rôle d'observation ni de comparaison au témoin (arbitrage A-009). Il n'est jamais servi
-      // sans aperçu et n'exige donc aucun critère.
       expect(rolesExiges(jeu)).toEqual(structureCanonique(jeu));
       expect(jeu.briques.filter((b) => b.role === 'piege').length).toBeGreaterThanOrEqual(1);
       // Un bloc reste un bloc : court, lisible au pouce.
       for (const b of jeu.briques) expect(b.texte.length).toBeLessThanOrEqual(140);
     }
+  });
+
+  it('le jeu 2025 adapté est évaluable en aperçu, sans prétendre noter un texte scientifique', () => {
+    const jeu = JEUX_SUJET_2025_1.find((j) => j.id === 'jb:2025-1:1:1')!;
+    expect(jeu.verbe).toBe('بيِّن');
+    expect(jeu.statut).toBe('a_valider_enseignant');
+    expect(jeuActif(jeu)).toBe(false);
+    expect(jeu.structure).toEqual(['observation', 'interpretation', 'conclusion']);
+    const ids = assemblageComplet(jeu);
+    expect(ids).toHaveLength(4);
+    expect(evaluerAssemblage(jeu, []).complete).toBe(false);
+    expect(evaluerAssemblage(jeu, ids).complete).toBe(true);
+    for (const id of ids) expect(evaluerAssemblage(jeu, ids.filter((x) => x !== id)).complete).toBe(false);
+    expect(evaluerAssemblage(jeu, [...ids].reverse()).horsOrdre).toBe(true);
   });
 
   it('les briques ne sont actives que si le jeu l’est (pas de contenu non Relu joué)', () => {
