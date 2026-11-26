@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u4-anticorps-y">
+<rect width="1200" height="760" fill="#ffffff"/>
+<path d="M600 420 L340 150" fill="none" stroke="#a97517" stroke-width="26" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M600 420 L860 150" fill="none" stroke="#a97517" stroke-width="26" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M590 420 L590 690" fill="none" stroke="#a97517" stroke-width="24" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M610 420 L610 690" fill="none" stroke="#a97517" stroke-width="24" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M477.3 330 L321.3 168" fill="none" stroke="#1d4f8f" stroke-width="21" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M722.7 330 L878.7 168" fill="none" stroke="#1d4f8f" stroke-width="21" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="455.2" y1="291.3" x2="437.2" y2="272.5" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="448.7" y1="297.5" x2="430.7" y2="278.8" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="744.8" y1="291.3" x2="762.8" y2="272.5" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="738.3" y1="285" x2="756.3" y2="266.3" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="587" y1="500" x2="613" y2="500" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="587" y1="491" x2="613" y2="491" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="587" y1="534" x2="613" y2="534" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<line x1="587" y1="525" x2="613" y2="525" stroke="#a5312b" stroke-width="3.6" stroke-linecap="round"/>
+<path d="M309.2 154.4 L329.2 134.4 L349.2 154.4" fill="#ffffff" stroke="#1f2d27" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M850.8 154.4 L870.8 134.4 L890.8 154.4" fill="#ffffff" stroke="#1f2d27" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M286 96 L324 104 L330 142 L292 134" fill="#fbeceb" stroke="#a5312b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<g stroke="#a5312b" stroke-width="2.6" fill="none" stroke-linecap="round"><line x1="310" y1="152" x2="330" y2="186"/><path d="M322.7 180.8 L330 186 L329 177.1" stroke-width="2.6"/></g>
+<text x="646" y="600" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#a97517" text-anchor="start" font-weight="700">H</text>
+<text x="330" y="244" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#1d4f8f" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">L</text>
+<text x="628" y="516" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a5312b" text-anchor="start" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">S–S</text>
+<text x="880" y="150" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="18" fill="#1f2d27" text-anchor="start" font-weight="700">Fab</text>
+<text x="600" y="720" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">Fc</text>
+</svg>

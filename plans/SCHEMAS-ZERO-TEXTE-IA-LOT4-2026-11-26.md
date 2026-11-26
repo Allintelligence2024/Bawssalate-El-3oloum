@@ -55,17 +55,21 @@ Les WebP restantes de faible valeur (`phase17_chapitres_33_34`, `phase17_chapitr
 
 | Unité | Leçons | WebP du manuel | Schémas créés | Leçons illustrées |
 |---|---:|---:|---:|---:|
-| u1 → u5 | 28 | 0 | 26 | 25 / 28 |
+| u1 → u5 | 28 | 0 | 29 | **28 / 28** |
 | u6 | 7 | 9 | 2 | 7 / 7 |
 | u7 | 5 | 2 | 3 | 5 / 5 |
 | u8 | 2 | 2 | 1 | 2 / 2 |
 | u9 | 5 | 4 | **3** | **5 / 5** |
 | u10 | 3 | 0 | **4** | **3 / 3** |
 | u11 | 5 | 4 | **2** | **5 / 5** |
-| **Total** | **55** | 21 | **41** | **52 / 55 (94,5 %)** |
+| **Total** | **55** | 21 | **44** | **55 / 55 (100 %)** |
 
-Les 3 leçons encore sans visuel sont exactement, d'après `UNITES` de `src/data/programme.ts` :
-**`phase6_chapitres_11_12`** (u4), **`immunity_memory_response`** (u4) et **`phase9_chapitres_17_18`** (u5). Ce sont les reliquats déjà signalés au Lot 2, laissés à la main de l'enseignant : chacune peut encore recevoir un 2ᵉ schéma sans dépasser le plafond. Les unités **u1 → u3** et **u6 → u11** sont intégralement illustrées.
+**Mise à jour du 2026-11-26 (durcissement de la PR #17)** : les 3 leçons qui restaient à `TOTAL = 0`
+— **`phase6_chapitres_11_12`**, **`immunity_memory_response`** (u4) et **`phase9_chapitres_17_18`** (u5) —
+sont désormais couvertes par trois SVG (`u4-anticorps-y`, `u4-reponse-primaire-secondaire`,
+`u5-synapse-chimique`). **La couverture est de 55 / 55 leçons officielles (100 %)** ; les seules
+lignes encore vides de `TOUTES_LECONS` sont le prérequis 2AS et les 2 leçons d'enrichissement
+`phase22_*`, hors périmètre par le prompt.
 
 > Note de comptage : `CHEMIN` contient **56** items de type `lecon` = les **55** leçons officielles + **1** leçon de prérequis (`prerequis`, ouverte avant sa unité). Les 55 leçons se répartissent en u1 5, u2 4, u3 6, u4 8, u5 5, u6 7, u7 5, u8 2, u9 5, **u10 3**, **u11 5**.
 
@@ -120,5 +124,5 @@ place, prêt si le volume double — la décision sera réexaminée au-delà de 
 ## 6. Ce qui reste ouvert
 
 1. **Relecture nominative de l'enseignant** : les 40 entrées sont en `a_valider_enseignant`. Aucune n'est promue `reviewed: true` — la porte est ouverte, pas franchie.
-2. Trois leçons de u4/u5 sans visuel (§ 3) : u1 → u3 et u6 → u11 sont closes ; **aucun schéma facultatif ne sera ajouté** (décision produit du 2026-11-26 : à 94,5 % de couverture, un 42ᵉ schéma n'apporte rien aux élèves).
+2. ~~Trois leçons de u4/u5 sans visuel~~ — **closes le 2026-11-26** : les 55 leçons officielles sont illustrées.
 3. Les 21 WebP du manuel restent telles quelles ; leur promotion éventuelle est une décision de contenu, hors périmètre des quatre lots.

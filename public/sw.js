@@ -18,8 +18,10 @@ const COQUILLE = [
   '/icons/icon-192.webp',
   '/icons/icon-512.webp',
 ];
+// v0.15 : le chunk des schémas du programme (hors coquille) rejoint le lot « contenu ».
 const contenuValide = u => typeof u === 'string' &&
-  (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));
+  (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+   /^\/assets\/schemasSvt-[a-zA-Z0-9_.-]+\.js$/.test(u) || BOUSSOLE.includes(u));
 const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
 // Phase 2/4 : les visuels de /lecons/img/ (WebP muets du manuel et SVG vectoriels) ne
 // figurent dans aucun précache. Ils sont servis puis mémorisés par le gestionnaire fetch

@@ -21,6 +21,7 @@ import {
   type IllustrationLecon,
 } from '../data/illustrationsTypes';
 import { legendeArSecurisee } from '../utils/illustrations';
+import { chargerSchemasSvt } from '../utils/schemasSvtCharge';
 import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
 
 interface Props {
@@ -33,16 +34,23 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
   // Les schémas créés (libellés arabes) sont chargés à la demande : ils ne pèsent plus sur la
   // coquille de démarrage. Les 21 WebP du manuel, légères, restent disponibles immédiatement.
   const [schemas, setSchemas] = useState<IllustrationLecon[]>([]);
+  const [etat, setEtat] = useState<'chargement' | 'pret' | 'erreur'>('chargement');
 
   useEffect(() => {
     let vivant = true;
-    import('../data/schemasSvt')
-      .then((module) => {
-        if (vivant) setSchemas(module.SCHEMAS_SVT);
+    // Promesse mémorisée par module : les leçons suivantes n'attendent plus rien.
+    chargerSchemasSvt()
+      .then((liste) => {
+        if (!vivant) return;
+        setSchemas(liste);
+        setEtat('pret');
       })
       .catch(() => {
-        // Un schéma manquant ne doit jamais empêcher une leçon de s'afficher.
-        if (vivant) setSchemas([]);
+        // Chunk absent du cache (première ouverture hors ligne) : l'écran le dit au lieu
+        // de faire disparaître la section.
+        if (!vivant) return;
+        setSchemas([]);
+        setEtat('erreur');
       });
     return () => {
       vivant = false;
@@ -102,6 +110,41 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
       declencheur.current?.focus();
     };
   }, [zoom, fermer]);
+
+  // Aucun visuel connu et chargement en cours : on garde une place discrète plutôt que
+  // de faire disparaître la section (les leçons sans WebP du manuel n'ont que des schémas).
+  if (illustrations.length === 0 && etat === 'chargement') {
+    return (
+      <section
+        dir="rtl"
+        aria-label="وثائق الدرس"
+        aria-busy="true"
+        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+      >
+        <p className="eyebrow">وثائق الدرس ومخططاته</p>
+        <div className="mt-3 space-y-2" aria-hidden="true">
+          <div className="h-24 w-full animate-pulse rounded-2xl bg-sage-soft" />
+          <div className="h-3 w-2/3 animate-pulse rounded-full bg-sage-soft" />
+        </div>
+        <p className="sr-only">جارٍ تحميل المخططات…</p>
+      </section>
+    );
+  }
+
+  if (illustrations.length === 0 && etat === 'erreur') {
+    return (
+      <section
+        dir="rtl"
+        aria-label="وثائق الدرس"
+        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+      >
+        <p className="eyebrow">وثائق الدرس ومخططاته</p>
+        <p className="mt-2 text-sm leading-relaxed text-mute" role="status">
+          تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه.
+        </p>
+      </section>
+    );
+  }
 
   if (illustrations.length === 0) return null;
 

@@ -1034,4 +1034,79 @@ export const SCHEMAS_SVT: IllustrationLecon[] = [
     statut: 'a_valider_enseignant',
     reviewed: false,
   },
+  // ───────────────────────────────────────────────────────────────────────────
+  // Couverture 55/55 — les 3 dernières leçons officielles (u4, u4, u5)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 'schema-u4-anticorps-y',
+    lessonId: 'phase6_chapitres_11_12',
+    uniteId: 'u4',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u4-anticorps-y.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'بنية الجسم المضاد: سلسلتان ثقيلتان وسلسلتان خفيفتان',
+    altAr:
+      'جسم مضاد في شكل حرف Y: ذراعان تحملان جزأين متغيرين (Fab) يثبتان محدّد المستضد، وجذع ثابت (Fc) يتعرف عليه البلعم الكبير، وجسور ثنائي الكبريت تربط السلاسل الثقيلة بالخفيفة.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — الجزءان المتغيران يمنحان النوعية تجاه محدّد المستضد، والجزء الثابت يسمح بالتثبت على البلعمية الكبيرة؛ لا يقتل الجسم المضاد المستضد بنفسه.</span>',
+    annotations: [
+      { num: 1, x: 51.7, y: 78.4, labelAr: 'السلسلة الثقيلة H', detailAr: 'سلسلتان ثقيلتان تشكلان الذراعين والجذع' },
+      { num: 2, x: 39.2, y: 44.2, labelAr: 'السلسلة الخفيفة L', detailAr: 'سلسلتان خفيفتان على الحافة الخارجية لكل ذراع' },
+      { num: 3, x: 37.7, y: 37.9, labelAr: 'جسور ثنائي الكبريت S–S', detailAr: 'روابط تكافؤية ثابتة تربط السلاسل' },
+      { num: 4, x: 28.3, y: 19.7, labelAr: 'الجزء المتغير Fab', detailAr: 'موقع تثبيت محدّد المستضد، متغير من جسم لآخر' },
+      { num: 5, x: 50, y: 89.7, labelAr: 'الجزء الثابت Fc', detailAr: 'يُتعرف عليه من البلعمية الكبيرة فقط' },
+      { num: 6, x: 21.5, y: 11.3, labelAr: 'محدّد المستضد', detailAr: 'يُثبَّت نوعيًا على الجزء المتغير' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
+    id: 'schema-u4-reponse-primaire-secondaire',
+    lessonId: 'immunity_memory_response',
+    uniteId: 'u4',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u4-reponse-primaire-secondaire.svg',
+    largeur: 1200,
+    hauteur: 700,
+    titreAr: 'الاستجابة المناعية الأولية مقابل الاستجابة الثانوية',
+    altAr:
+      'منحنى عيار الأجسام المضادة بدلالة الزمن: حقن أول يعطي استجابة ضعيفة قصيرة بعد كمون، وحقن ثانٍ لنفس المستضد يعطي استجابة أقوى وأسرع وأطول بفضل الذاكرة المناعية.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — الاستجابة الثانوية أسرع وأشد وأطول من الأولية لأن الخلايا الذاكرة تنتج فورًا كميات كبيرة من الأجسام المضادة.</span>',
+    annotations: [
+      { num: 1, x: 14.7, y: 8.6, labelAr: 'الحقن الأول للمستضد', detailAr: 'أول تماس مع محدّد المستضد' },
+      { num: 2, x: 21.2, y: 77.6, labelAr: 'مرحلة الكمون', detailAr: 'عدة أيام قبل ظهور الأجسام المضادة' },
+      { num: 3, x: 29.8, y: 65.9, labelAr: 'قمة أولية ضعيفة', detailAr: 'عيار منخفض وقصير الأمد (IgM)' },
+      { num: 4, x: 55.1, y: 8.6, labelAr: 'الحقن الثاني', detailAr: 'نفس المستضد بعد أسابيع' },
+      { num: 5, x: 64.5, y: 15.1, labelAr: 'قمة ثانوية قوية', detailAr: 'استجابة سريعة وعالية (IgG)' },
+      { num: 6, x: 84.7, y: 36.6, labelAr: 'الذاكرة المناعية', detailAr: 'تبقي العيار مرتفعًا مدة أطول' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
+    id: 'schema-u5-synapse-chimique',
+    lessonId: 'phase9_chapitres_17_18',
+    uniteId: 'u5',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u5-synapse-chimique.svg',
+    largeur: 1200,
+    hauteur: 620,
+    titreAr: 'النقل المشبكي الكيميائي: من السيالة إلى الوسيط',
+    altAr:
+      'مشبك كيميائي: زر قبل مشبكي يحتوي حويصلات الأستيل كولين، دخول شوارد الكالسيوم عبر قنوات معتمدة على الجهد، تحرر الوسيط في الفراغ المشبكي، ثم تثبته على مستقبلات الغشاء بعد المشبكي.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — السيالة الكهربائية لا تعبر الفراغ: يدخل Ca²⁺، تتحد الحويصلات بالغشاء وتحرر الأستيل كولين الذي يثبت على المستقبلات ويولّد سيالة جديدة.</span>',
+    annotations: [
+      { num: 1, x: 29.7, y: 18.1, labelAr: 'الزر قبل المشبكي', detailAr: 'نهاية المحور العصبي الحاملة للحويصلات' },
+      { num: 2, x: 61.8, y: 27.1, labelAr: 'حويصلات الأستيل كولين', detailAr: 'مخزون الوسيط الكيميائي' },
+      { num: 3, x: 35, y: 48.4, labelAr: 'قنوات Ca²⁺', detailAr: 'تُفتح عند وصول السيالة، فيدخل الكالسيوم' },
+      { num: 4, x: 63.5, y: 56.5, labelAr: 'الفراغ المشبكي', detailAr: 'مسافة تفصل الغشائين، لا تعبرها السيالة' },
+      { num: 5, x: 56.8, y: 69.4, labelAr: 'مستقبلات ما بعد المشبك', detailAr: 'تثبيت نوعي للوسيط يفتح قنوات شاردية' },
+      { num: 6, x: 55.3, y: 48.4, labelAr: 'تحرر الوسيط', detailAr: 'انصهار الحويصلة بالغشاء وإفراغ المحتوى' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
 ];

@@ -8,7 +8,8 @@ import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 import IllustrationsLecon from './IllustrationsLecon';
-import { useState } from 'react';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtCharge';
+import { useEffect, useState } from 'react';
 
 interface Props {
   lessonId: string;
@@ -19,6 +20,11 @@ interface Props {
 }
 
 export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFavori }: Props) {
+  // Préchauffage silencieux du registre des schémas : le chunk est en cache module avant
+  // que ce même écran (ou la leçon suivante) ne le demande.
+  useEffect(() => {
+    prechaufferSchemasSvt();
+  }, []);
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const aContenu = aContenuLecon(lessonId);

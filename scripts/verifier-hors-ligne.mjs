@@ -46,6 +46,7 @@ const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
 if (!contenu) problemes.push('manifeste : liste « contenu » absente');
 else {
   const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+    /^\/assets\/schemasSvt-[a-zA-Z0-9_.-]+\.js$/.test(u) ||
     ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
   if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
   if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');

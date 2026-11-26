@@ -205,3 +205,46 @@ partout). Reliquats possibles, seulement sur sa demande : un 2ᵉ schéma sur `p
 
 **Budget** : coquille **2,21 Mio / 2,25 Mio (98,2 %)**, contenu 4,19 Mio. Les quatre lots n'ont coûté
 **aucun** octet de coquille : les schémas sont hors précache et hors bundle de démarrage.
+
+# Durcissement PR #17 — fiabilité et couverture 55/55 (2026-11-26)
+
+## 1. Trois planches de plus (les 3 dernières leçons vides)
+
+| Planche | Leçon | Essais | Ce qui a été corrigé après relecture |
+|---|---|---:|---|
+| `u4-anticorps-y` | `phase6_chapitres_11_12` | 3 | chaînes légères remises **à l'extérieur** des deux bras (elles passaient à l'intérieur d'un côté), écart H–L resserré, lettres `L`/`S–S` déplacées, antigène rapproché du site |
+| `u4-reponse-primaire-secondaire` | `immunity_memory_response` | 2 | libellé `IgM` dégagé de la courbe secondaire, hauteur ramenée à 700 px |
+| `u5-synapse-chimique` | `phase9_chapitres_17_18` | 3 | membrane postsynaptique raccourcie, pastilles 1/4/6 déplacées, second `Ca²⁺` retiré (texte coupé par le bord), hauteur 620 px |
+
+## 2. Fiabilité (durcissement demandé pour la PR #17)
+
+| Point | Avant | Après |
+|---|---|---|
+| Chunk `schemasSvt` | hors précache **et** hors lot `contenu` | ajouté au lot **`contenu`** (téléchargement hors ligne sur demande) : `contenu` 4,19 → **4,26 Mio**, coquille **inchangée à 2,21 Mio** |
+| `import()` du registre | relancé à chaque montage, promesse jetée | **cache module** (`src/utils/schemasSvtCharge.ts`), préchauffé à l'entrée de `LecteurLecon` et `ProtocoleRunner` |
+| Chunk en échec hors ligne | `return null` — section muette et invisible | **squelette discret** pendant le chargement, puis message **« تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه »** |
+| Tests | aucun sur ces états | `IllustrationsLecon.etats.test.tsx` (3 tests) + `schemasSvtCharge.test.ts` (3 tests) |
+
+## 3. Totaux après durcissement
+
+| Mesure | Valeur |
+|---|---:|
+| Schémas créés | **44** (39 SVG + 5 WebP annotées) |
+| Illustrations totales | **65** (44 schémas + 21 WebP du manuel) |
+| Leçons officielles illustrées | **55 / 55 (100 %)** |
+| Unités couvertes | 11 / 11 |
+| `reviewed: true` | **0** |
+
+## 4. Porte finale
+
+```
+npm run lint                        → 0 erreur
+npx tsc --noEmit                    → 0 erreur
+npx vitest run                      → 88 fichiers / 735 tests
+npm run build                       → index 497,94 Ko · schemasSvt 72,81 Ko (gzip 18,19), hors coquille
+node scripts/verifier-hors-ligne.mjs→ OK — 65 illustrations, contenu 29 entrées / 4,26 Mio
+node scripts/verifier-deploiement.mjs → OK — coquille 2,21 Mio
+node scripts/sync-metrics.mjs --check → aucune dérive
+node scripts/generer-schemas-svt.mjs --verifier → 39 / 39 identiques
+```
+

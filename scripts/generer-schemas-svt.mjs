@@ -2097,6 +2097,145 @@ planche('u10-zones-ombre', 1200, 760, ({ repere }) => {
   return out;
 });
 
+// ═══ Couverture 55/55 — les 3 dernières leçons officielles ═══════════════════
+
+// ── u4 — structure de l'anticorps (Y) ────────────────────────────────────────
+planche('u4-anticorps-y', 1200, 760, ({ repere }) => {
+  const out = [];
+  const H = [600, 420];
+  const bras = [[340, 150], [860, 150]];
+  const perp = (b) => {
+    const dx = b[0] - H[0];
+    const dy = b[1] - H[1];
+    const n = Math.hypot(dx, dy);
+    const nx = -dy / n;
+    const ny = dx / n;
+    const sens = Math.sign((b[0] - H[0]) * nx) || 1;
+    return { ux: dx / n, uy: dy / n, nx: nx * sens, ny: ny * sens };
+  };
+  // chaînes lourdes : deux bras + pied
+  for (const b of bras) out.push(poly([H, b], { couleur: AMBER, largeur: 26 }));
+  out.push(poly([[590, 420], [590, 690]], { couleur: AMBER, largeur: 24 }));
+  out.push(poly([[610, 420], [610, 690]], { couleur: AMBER, largeur: 24 }));
+  // chaînes légères : moitié extérieure haute de chaque bras
+  const infos = bras.map((b) => ({ b, ...perp(b) }));
+  for (const { b, nx, ny } of infos) {
+    const t0 = 0.40;
+    const p0 = [H[0] + (b[0] - H[0]) * t0 + nx * 26, H[1] + (b[1] - H[1]) * t0 + ny * 26];
+    const p1 = [b[0] + nx * 26, b[1] + ny * 26];
+    out.push(poly([p0, p1], { couleur: BLUE, largeur: 21 }));
+  }
+  // ponts disulfure (S–S) : H–L sur chaque bras, H–H au pied
+  const pont = (x, y, nx, ny) => [
+    ligne(x - nx * 13, y - ny * 13, x + nx * 13, y + ny * 13, { couleur: RED, largeur: 3.6 }),
+    ligne(x - nx * 13 + ny * 9, y - ny * 13 - nx * 9, x + nx * 13 + ny * 9, y + ny * 13 - nx * 9, { couleur: RED, largeur: 3.6 }),
+  ];
+  for (const { b, ux, uy, nx, ny } of infos) {
+    const t = 0.55;
+    out.push(...pont(H[0] + (b[0] - H[0]) * t + nx * 15, H[1] + (b[1] - H[1]) * t + ny * 15, ux, uy));
+  }
+  out.push(...pont(600, 500, 1, 0));
+  out.push(...pont(600, 534, 1, 0));
+  // sites de fixation : encoche au bout de chaque bras
+  for (const { b, nx, ny } of infos) {
+    const cx2 = b[0] + nx * 15;
+    const cy2 = b[1] + ny * 15;
+    out.push(poly([[cx2 - 20, cy2 - 6], [cx2, cy2 - 26], [cx2 + 20, cy2 - 6]], { couleur: INK, largeur: 3, remplissage: PAPER }));
+  }
+  // antigène arrivant sur le bras gauche
+  out.push(poly([[286, 96], [324, 104], [330, 142], [292, 134]], { couleur: RED, largeur: 3, remplissage: RED_FILL }));
+  out.push(fleche(310, 152, 330, 186, RED, 2.6, 9));
+
+  out.push(texte(646, 600, 'H', { taille: 21, couleur: AMBER, ancre: 'start', gras: true }));
+  out.push(texte(330, 244, 'L', { taille: 21, couleur: BLUE, ancre: 'middle', gras: true, halo: true }));
+  out.push(texte(628, 516, 'S–S', { taille: 15, couleur: RED, ancre: 'start', gras: true, halo: true }));
+  out.push(texte(880, 150, 'Fab', { taille: 18, couleur: INK, ancre: 'start', gras: true }));
+  out.push(texte(600, 720, 'Fc', { taille: 19, couleur: INK, ancre: 'middle', gras: true }));
+
+  repere(1, 620, 596);
+  repere(2, 470, 336);
+  repere(3, 452, 288);
+  repere(4, 340, 150);
+  repere(5, 600, 682);
+  repere(6, 258, 86);
+  return out;
+});
+
+// ── u4 — réponse primaire et réponse secondaire ──────────────────────────────
+planche('u4-reponse-primaire-secondaire', 1200, 700, ({ repere }) => {
+  const out = [];
+  const G = { x0: 150, x1: 1120, y0: 110, y1: 620 };
+  const X = (j) => G.x0 + (j / 56) * (G.x1 - G.x0);
+  const Y = (t) => G.y1 - (t / 100) * (G.y1 - G.y0);
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.6 }));
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.6 }));
+  for (const t of [25, 50, 75]) {
+    out.push(ligne(G.x0, Y(t), G.x1, Y(t), { couleur: GRID, largeur: 1.4 }));
+    out.push(texte(G.x0 - 12, Y(t) + 5, String(t), { taille: 14, couleur: MUTE, ancre: 'end' }));
+  }
+  for (const j of [0, 10, 20, 30, 40, 50]) {
+    out.push(texte(X(j), G.y1 + 24, String(j), { taille: 14, couleur: MUTE, ancre: 'middle' }));
+  }
+  const primaire = [[0, 2], [4, 3], [6, 6], [8, 14], [10, 22], [12, 26], [14, 24], [16, 18], [20, 10], [24, 6], [28, 4]];
+  const secondaire = [[28, 4], [29, 10], [30, 30], [31, 55], [33, 80], [35, 92], [38, 95], [42, 90], [48, 80], [56, 62]];
+  out.push(poly(primaire.map(([j, t]) => [X(j), Y(t)]), { couleur: BLUE, largeur: 4.5 }));
+  out.push(poly(secondaire.map(([j, t]) => [X(j), Y(t)]), { couleur: RED, largeur: 4.5 }));
+  for (const j of [0, 28]) {
+    out.push(fleche(X(j), 52, X(j), 96, INK, 2.8, 10));
+    out.push(texte(X(j), 40, 'Ag', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
+  }
+  out.push(texte(X(18), Y(34), 'IgM', { taille: 15, couleur: BLUE, ancre: 'middle', gras: true, halo: true }));
+  out.push(texte(X(41), Y(96) - 14, 'IgG', { taille: 15, couleur: RED, ancre: 'middle', gras: true, halo: true }));
+
+  repere(1, X(0) + 26, 60);
+  repere(2, X(6), Y(10) - 26);
+  repere(3, X(12), Y(26) - 26);
+  repere(4, X(28) + 26, 60);
+  repere(5, X(36), Y(95) - 30);
+  repere(6, X(50), Y(78) + 34);
+  return out;
+});
+
+// ── u5 — synapse chimique ────────────────────────────────────────────────────
+planche('u5-synapse-chimique', 1200, 620, ({ repere }) => {
+  const out = [];
+  out.push(boite(300, 70, 600, 250, { rayon: 80, remplissage: BLUE_FILL, couleur: BLUE, largeur: 3.5 }));
+  out.push(ligne(300, 320, 900, 320, { couleur: BLUE, largeur: 4 }));
+  out.push(boite(300, 372, 600, 170, { rayon: 40, remplissage: GREEN_FILL, couleur: GREEN, largeur: 3.5 }));
+  out.push(ligne(300, 372, 900, 372, { couleur: GREEN, largeur: 4 }));
+  // vésicules d'acétylcholine
+  for (const [x, y, r] of [[400, 150, 24], [500, 120, 20], [700, 140, 22], [780, 200, 18], [470, 240, 22], [640, 235, 20]]) {
+    out.push(rond(x, y, r, { remplissage: PAPER, couleur: AMBER, largeur: 3 }));
+  }
+  // vésicule en exocytose + neuromédiateurs dans la fente
+  out.push(ellipse(620, 318, 26, 22, { remplissage: PAPER, couleur: AMBER, largeur: 3 }));
+  for (const [x, y] of [[600, 300], [640, 300], [610, 340], [640, 348], [660, 332], [580, 350], [700, 344], [730, 352]]) {
+    out.push(rond(x, y, 5.5, { remplissage: AMBER, couleur: AMBER, largeur: 1.4 }));
+  }
+  // canaux calciques voltage-dépendants (deux ouvertures de la membrane présynaptique)
+  for (const x of [420, 812]) {
+    out.push(ligne(x - 18, 320, x - 6, 334, { couleur: RED, largeur: 5 }));
+    out.push(ligne(x + 18, 320, x + 6, 334, { couleur: RED, largeur: 5 }));
+    out.push(fleche(x, 268, x, 306, RED, 2.4, 9));
+    if (x < 600) out.push(texte(x + 26, 300, 'Ca²⁺', { taille: 17, couleur: RED, ancre: 'start', gras: true, halo: true }));
+  }
+  // récepteurs postsynaptiques
+  for (const x of [520, 600, 680, 760]) {
+    out.push(poly([[x - 16, 372], [x - 16, 402], [x, 416], [x + 16, 402], [x + 16, 372]], {
+      couleur: GREEN, largeur: 4,
+    }));
+  }
+  out.push(texte(872, 356, 'ACh', { taille: 17, couleur: AMBER, ancre: 'start', gras: true }));
+
+  repere(1, 356, 112);
+  repere(2, 742, 168);
+  repere(3, 420, 300);
+  repere(4, 762, 350);
+  repere(5, 682, 430);
+  repere(6, 664, 300);
+  return out;
+});
+
 // ───────────────────────────── écriture / vérification ─────────────────────────────
 
 const diff = [];
