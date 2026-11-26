@@ -470,6 +470,107 @@ planche('u2-anfinsen', 1200, 730, ({ repere }) => {
   return out;
 });
 
+// ── 5 bis. u2 — drépanocytose : Glu6 → Val6, polymérisation, hématie falciforme ──
+planche('u2-drepanocytose', 1200, 700, ({ repere }) => {
+  const out = [];
+  const panneau = (x) => boite(x, 80, 300, 540, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 22 });
+  const lettre = (x, y, t) => texte(x, y, t, { taille: 15, couleur: MUTE, ancre: 'middle', gras: true });
+
+  /** Tétramère α2β2 ; `mutation` remplace le groupe chargé de la position 6 par un patch apolaire. */
+  const tetramere = (cx, cy, mutation) => {
+    const s = [];
+    const sousUnite = (dx, dy, l, couleur, fond) => [
+      rond(cx + dx, cy + dy, 50, { remplissage: fond, couleur, largeur: 3 }),
+      texte(cx + dx, cy + dy + 7, l, { taille: 20, couleur, ancre: 'middle', gras: true }),
+    ];
+    s.push(...sousUnite(-42, -36, 'α', BLUE, BLUE_FILL));
+    s.push(...sousUnite(42, -36, 'β', GREEN, GREEN_FILL));
+    s.push(...sousUnite(-42, 36, 'α', BLUE, BLUE_FILL));
+    s.push(...sousUnite(42, 36, 'β', GREEN, GREEN_FILL));
+    // position 6 de la chaîne β : groupement chargé (HbA) ou patch apolaire (HbS)
+    const mx = cx + 42 + 40;
+    const my = cy + 36 + 40;
+    s.push(ligne(cx + 42, cy - 36, mx, my, { couleur: mutation ? AMBER : RED, largeur: 2, pointilles: '5 4' }));
+    s.push(boite(mx - 15, my - 15, 30, 30, {
+      remplissage: mutation ? AMBER_FILL : RED_FILL,
+      couleur: mutation ? AMBER : RED,
+      largeur: 2.5,
+      rayon: 8,
+    }));
+    if (!mutation) s.push(texte(mx, my + 8, '−', { taille: 24, couleur: RED, ancre: 'middle', gras: true }));
+    else {
+      // trois petits traits rayonnants : le patch hydrophobe qui « colle » aux voisins
+      for (const a of [-2.4, -1.57, -0.75]) {
+        s.push(ligne(mx + 18 * Math.cos(a), my + 18 * Math.sin(a),
+          mx + 27 * Math.cos(a), my + 27 * Math.sin(a), { couleur: AMBER, largeur: 3 }));
+      }
+    }
+    return s;
+  };
+
+  /** Hématie normale : disque biconcave (deux ellipses). */
+  const hematieNormale = (cx, cy) => [
+    ellipse(cx, cy, 96, 58, { remplissage: RED_FILL, couleur: RED, largeur: 3 }),
+    ellipse(cx, cy, 44, 24, { remplissage: PAPER, couleur: RED, largeur: 2, pointilles: '6 5' }),
+  ];
+
+  /** Hématie falciforme : croissant (cercle extérieur moins cercle décalé). */
+  const falciforme = (cx, cy) => {
+    const R = 98;
+    const d = 46;
+    const a0 = Math.acos(d / (2 * R));
+    const pts = [];
+    for (let i = 0; i <= 60; i += 1) {
+      const a = a0 + (i / 60) * (Math.PI * 2 - 2 * a0);
+      pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a) * 0.9]);
+    }
+    for (let i = 60; i >= 0; i -= 1) {
+      const a = a0 + (i / 60) * (Math.PI * 2 - 2 * a0);
+      pts.push([cx - d + R * Math.cos(a), cy + R * Math.sin(a) * 0.9]);
+    }
+    return [poly(pts, { remplissage: RED_FILL, couleur: RED, largeur: 3 })];
+  };
+
+  // A — à droite (sens de lecture arabe) : HbA, hématie normale
+  out.push(panneau(840));
+  out.push(lettre(990, 116, 'A'));
+  out.push(...tetramere(990, 262, false));
+  out.push(...hematieNormale(990, 528));
+  out.push(texte(990, 600, 'HbA', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
+
+  // B — au centre : HbS, contact hydrophobe, fibres
+  out.push(panneau(434));
+  out.push(lettre(584, 116, 'B'));
+  out.push(...tetramere(584, 232, true));
+  for (const [i, y] of [452, 492, 532].entries()) {
+    out.push(ligne(742, y + 6, 468, y, { couleur: RED, largeur: 11 }));
+    for (const t of [0.18, 0.5, 0.82]) {
+      out.push(boite(468 + (742 - 468) * t - 9, y - 3 - 9 + 3, 18, 18, {
+        remplissage: AMBER_FILL, couleur: AMBER, largeur: 2, rayon: 4,
+      }));
+    }
+    if (i === 2) out.push(texte(584, 578, 'HbS', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
+  }
+
+  // C — à gauche : hématie falciforme
+  out.push(panneau(60));
+  out.push(lettre(210, 116, 'C'));
+  out.push(...falciforme(240, 330));
+  out.push(texte(210, 520, 'HbS', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
+
+  // Flèches : A → B (mutation) puis B → C (conséquence)
+  out.push(fleche(828, 300, 748, 300, INK, 3));
+  out.push(fleche(424, 300, 372, 300, INK, 3));
+
+  repere(1, 990, 528);
+  repere(2, 884, 200);
+  repere(3, 1112, 338);
+  repere(4, 702, 308);
+  repere(5, 584, 426);
+  repere(6, 215, 330);
+  return out;
+});
+
 // ── 6. u3 — spécificité : amylase, amidon, cellulose ─────────────────────────────
 planche('u3-specificite', 1200, 700, ({ repere }) => {
   const out = [];

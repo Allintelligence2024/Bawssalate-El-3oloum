@@ -195,6 +195,30 @@ export const SCHEMAS_SVT: IllustrationLecon[] = [
     reviewed: false,
   },
   {
+    id: 'schema-u2-drepanocytose',
+    lessonId: 'phase3_chapitres_5_6',
+    uniteId: 'u2',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u2-drepanocytose.svg',
+    largeur: 1200,
+    hauteur: 700,
+    titreAr: 'فقر الدم المنجلي: من استبدال حمض أميني واحد إلى تغيّر شكل الكرية',
+    altAr:
+      'ثلاثة ألواح: هيموغلوبين سليم مع غلوتاميك مشحون وكرية دموية مقعّرة، ثم هيموغلوبين HbS بفالين كاره للماء وألياف متراصة، ثم كرية منجلية مشوّهة.',
+    legendeAr:
+      '<span><strong>المخطط</strong> — استبدال الغلوتاميك بالفالين في الموضع 6 من السلسلة β يخلق رقعة لاصقة؛ تتراص جزيئات HbS في ألياف تشوّه الكرية إلى شكل منجلي.</span>',
+    annotations: [
+      { num: 1, x: 82.5, y: 75.4, labelAr: 'كرية دموية حمراء سليمة', detailAr: 'قرص مقعّر الوجهين، مرن، يمرّ في الشعيرات الدقيقة' },
+      { num: 2, x: 73.7, y: 28.6, labelAr: 'الهيموغلوبين HbA', detailAr: 'أربع تحت وحدات: سلسلتان α وسلسلتان β' },
+      { num: 3, x: 92.7, y: 48.3, labelAr: 'الغلوتاميك Glu6', detailAr: 'حمض أميني مشحون سالبًا على سطح السلسلة β' },
+      { num: 4, x: 58.5, y: 44, labelAr: 'الطفرة: استبدال Glu6 بـ Val6', detailAr: 'الفالين كاره للماء يخلق رقعة لاصقة على سطح الجزيء' },
+      { num: 5, x: 48.7, y: 60.9, labelAr: 'ألياف HbS المتراصة', detailAr: 'تراص الجزيئات المتجاورات يكوّن أليافًا صلبة داخل الكرية' },
+      { num: 6, x: 17.9, y: 47.1, labelAr: 'كرية دموية منجلية', detailAr: 'التشوّه يعيق المرور في الشعيرات ويسبب فقر الدم المنجلي' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
     id: 'schema-u2-electrophorese',
     lessonId: 'amino_acid_behavior',
     uniteId: 'u2',

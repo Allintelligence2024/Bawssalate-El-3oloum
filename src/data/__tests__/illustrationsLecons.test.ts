@@ -25,7 +25,7 @@ const racine = new URL('../../..', import.meta.url).pathname;
 const dossierImages = join(racine, 'public/lecons/img');
 const PLAFOND_OCTETS = 150 * 1024;
 const REPARTITION_LEGACY: Record<string, number> = { u6: 9, u7: 2, u8: 2, u9: 4, u11: 4 };
-const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 4, u3: 6 };
+const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6 };
 
 describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => {
   const legacy = ILLUSTRATIONS_LECONS.filter((i) => typeVisuelDe(i) === 'webp_legacy');
@@ -47,21 +47,25 @@ describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => 
 });
 
 describe('schémas créés — règle « zéro texte IA » (Lots 1 à 3)', () => {
-  it('couvre u1, u2 et u3 avec 15 schémas, un par leçon officielle', () => {
-    expect(SCHEMAS_SVT).toHaveLength(15);
+  it('couvre u1, u2 et u3 avec 16 schémas sur les leçons officielles', () => {
+    expect(SCHEMAS_SVT).toHaveLength(16);
     const parUnite: Record<string, number> = {};
     for (const i of SCHEMAS_SVT) {
       expect(Object.keys(REPARTITION_SCHEMAS)).toContain(i.uniteId);
       parUnite[i.uniteId] = (parUnite[i.uniteId] ?? 0) + 1;
     }
     expect(parUnite).toEqual(REPARTITION_SCHEMAS);
-    // 10 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
-    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(10);
+    // 11 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
+    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(11);
     expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'webp_annote')).toHaveLength(5);
 
-    // Chaque schéma porte sur une leçon distincte du programme officiel.
+    // Les schémas se répartissent sur 15 leçons : `phase3_chapitres_5_6` en porte deux
+    // (Anfinsen + drépanocytose), conformément au plafond de 2 schémas par leçon.
     const lecons = SCHEMAS_SVT.map((i) => i.lessonId);
     expect(new Set(lecons).size).toBe(15);
+    const parLecon = new Map<string, number>();
+    for (const l of lecons) parLecon.set(l, (parLecon.get(l) ?? 0) + 1);
+    expect(Math.max(...parLecon.values())).toBeLessThanOrEqual(2);
     // Aucun schéma pour les deux leçons d'enrichissement hors périmètre.
     expect(lecons).not.toContain('phase22_chapitres_43_44');
     expect(lecons).not.toContain('phase22_chapitres_43_44_2');
@@ -83,10 +87,11 @@ describe('schémas créés — règle « zéro texte IA » (Lots 1 à 3)', () =>
       const nums = (i.annotations ?? []).map((a) => a.num);
       expect(nums, i.id).toEqual(nums.map((_, k) => k + 1));
       for (const a of i.annotations ?? []) {
-        expect(a.x, `${i.id} #${a.num}`).toBeGreaterThanOrEqual(0);
-        expect(a.x, `${i.id} #${a.num}`).toBeLessThanOrEqual(100);
-        expect(a.y, `${i.id} #${a.num}`).toBeGreaterThanOrEqual(0);
-        expect(a.y, `${i.id} #${a.num}`).toBeLessThanOrEqual(100);
+        // Bornes du prompt : une pastille collée au bord est illisible sur mobile.
+        expect(a.x, `${i.id} #${a.num}`).toBeGreaterThanOrEqual(5);
+        expect(a.x, `${i.id} #${a.num}`).toBeLessThanOrEqual(95);
+        expect(a.y, `${i.id} #${a.num}`).toBeGreaterThanOrEqual(5);
+        expect(a.y, `${i.id} #${a.num}`).toBeLessThanOrEqual(95);
         expect(a.labelAr.trim().length, `${i.id} #${a.num}`).toBeGreaterThan(0);
         if (a.detailAr !== undefined) {
           expect(a.detailAr.trim().length, `${i.id} #${a.num} : ${a.detailAr}`).toBeLessThanOrEqual(90);
@@ -125,7 +130,7 @@ describe('registre complet — disque et programme', () => {
       expect(TOUTES_LECONS, `lessonId absent du programme : ${i.lessonId}`).toContain(i.lessonId);
       expect(uniteDeLecon(i.lessonId)?.id, `unité incohérente pour ${i.lessonId}`).toBe(i.uniteId);
     }
-    // 21 documents du manuel (13 leçons) + 15 schémas (15 leçons) = 28 leçons illustrées.
+    // 21 documents du manuel (13 leçons) + 16 schémas (15 leçons) = 28 leçons illustrées.
     expect(new Set(ILLUSTRATIONS_LECONS.map((i) => i.lessonId)).size).toBe(28);
   });
 
@@ -152,13 +157,13 @@ describe('registre complet — disque et programme', () => {
     }
 
     const surDisque = readdirSync(dossierImages).sort();
-    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(36);
+    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(37);
     expect(surDisque.every((f) => f.endsWith('.webp') || f.endsWith('.svg'))).toBe(true);
     expect(surDisque).toEqual([...fichiers].sort());
   });
 
-  it('garde 0 reviewed: true et 36 statuts a_valider_enseignant', () => {
-    expect(ILLUSTRATIONS_LECONS).toHaveLength(36);
+  it('garde 0 reviewed: true et 37 statuts a_valider_enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(37);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.reviewed === true)).toHaveLength(0);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.reviewed === false)).toBe(true);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.statut === 'a_valider_enseignant')).toBe(true);

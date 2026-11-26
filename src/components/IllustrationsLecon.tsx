@@ -15,12 +15,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  aDesAnnotations,
   illustrationsParLecon,
   typeVisuelDe,
   type IllustrationLecon,
 } from '../data/illustrationsLecons';
 import { legendeArSecurisee } from '../utils/illustrations';
-import { LegendeAnnotations, VisuelAnnote } from './SchemaAnnote';
+import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
 
 interface Props {
   lessonId: string;
@@ -33,6 +34,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
   const [zoom, setZoom] = useState<IllustrationLecon | null>(null);
   const boutonFermer = useRef<HTMLButtonElement>(null);
   const declencheur = useRef<HTMLButtonElement | null>(null);
+  const dialogue = useRef<HTMLDivElement>(null);
 
   const fermer = useCallback(() => setZoom(null), []);
 
@@ -42,14 +44,27 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
     document.body.style.overflow = 'hidden';
     boutonFermer.current?.focus();
 
-    // Un seul élément focusable dans la lightbox : Tab reste sur le bouton de fermeture.
+    // Piège de focus : Tab boucle sur les éléments focusables de la lightbox (fermeture,
+    // bouton d'auto-test), sans jamais sortir vers la page en arrière-plan.
     const auClavier = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         fermer();
-      } else if (e.key === 'Tab') {
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = dialogue.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables || focusables.length === 0) return;
+      const premier = focusables[0];
+      const dernier = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === premier) {
         e.preventDefault();
-        boutonFermer.current?.focus();
+        dernier.focus();
+      } else if (!e.shiftKey && document.activeElement === dernier) {
+        e.preventDefault();
+        premier.focus();
       }
     };
     document.addEventListener('keydown', auClavier);
@@ -89,21 +104,42 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             dir="rtl"
             className="overflow-hidden rounded-2xl border border-line bg-paper"
           >
-            {/* Fond neutre clair : les schémas ont des traits noirs, même en thème sombre. */}
-            <button
-              type="button"
-              onClick={(e) => {
-                declencheur.current = e.currentTarget;
-                setZoom(illustration);
-              }}
-              aria-label={`تكبير الوثيقة: ${illustration.titreAr}`}
-              className="fond-schema-clair block w-full cursor-zoom-in border-0 p-0"
-            >
-              <VisuelAnnote illustration={illustration} />
-            </button>
+            {/* Fond neutre clair : les schémas ont des traits noirs, même en thème sombre.
+                Un visuel annoté n'est PAS enveloppé dans un bouton : ses pastilles sont
+                cliquables (HTML valide + navigation clavier naturelle). Le zoom a son
+                propre bouton. */}
+            {aDesAnnotations(illustration) ? (
+              <div className="fond-schema-clair block w-full border-0 p-0">
+                <SchemaAnnoteBloc illustration={illustration} compacte={compacte} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  declencheur.current = e.currentTarget;
+                  setZoom(illustration);
+                }}
+                aria-label={`تكبير الوثيقة: ${illustration.titreAr}`}
+                className="fond-schema-clair block w-full cursor-zoom-in border-0 p-0"
+              >
+                <VisuelAnnote illustration={illustration} />
+              </button>
+            )}
             <figcaption className="border-t border-line px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
               <p dangerouslySetInnerHTML={{ __html: legende(illustration) }} />
-              <LegendeAnnotations illustration={illustration} compacte={compacte} />
+              <div className="mt-1 flex justify-start">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    declencheur.current = e.currentTarget;
+                    setZoom(illustration);
+                  }}
+                  aria-label={`تكبير الصورة: ${illustration.titreAr}`}
+                  className="rounded-lg border border-line bg-paper px-2.5 py-1 text-[11px] font-bold text-forest hover:bg-sage-soft"
+                >
+                  تكبير الصورة
+                </button>
+              </div>
             </figcaption>
             {illustration.statut === 'a_valider_enseignant' && (
               <p className="border-t border-line bg-sage-soft px-3 py-1.5 text-[10px] font-bold text-forest">
@@ -116,6 +152,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
 
       {zoom && (
         <div
+          ref={dialogue}
           role="dialog"
           aria-modal="true"
           aria-label={`عرض مكبّر: ${zoom.titreAr}`}
@@ -136,8 +173,14 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             ✕ إغلاق (Esc)
           </button>
 
-          <div className="fond-schema-clair flex max-h-[78dvh] w-full max-w-5xl items-center justify-center overflow-auto rounded-2xl p-2 shadow-2xl">
-            <VisuelAnnote illustration={zoom} variante="zoom" />
+          <div
+            className="fond-schema-clair flex max-h-[78dvh] w-full max-w-5xl flex-col items-center justify-center overflow-auto rounded-2xl p-2 shadow-2xl"
+          >
+            {aDesAnnotations(zoom) ? (
+              <SchemaAnnoteBloc illustration={zoom} compacte={compacte} variante="zoom" />
+            ) : (
+              <VisuelAnnote illustration={zoom} variante="zoom" />
+            )}
           </div>
 
           <div
@@ -146,9 +189,6 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             className="fond-schema-clair w-full max-w-5xl rounded-xl px-4 py-3 text-center text-sm leading-relaxed shadow-lg"
           >
             <p dangerouslySetInnerHTML={{ __html: legende(zoom) }} />
-            <div className="text-right">
-              <LegendeAnnotations illustration={zoom} />
-            </div>
           </div>
           <p className="fond-schema-clair rounded-lg px-3 py-1 text-[11px] font-bold">
             في انتظار مراجعة أستاذ · لم يُعتمد بعد

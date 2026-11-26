@@ -12,7 +12,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { LegendeAnnotations, VisuelAnnote } from '../SchemaAnnote';
+import { LegendeAnnotations, SchemaAnnoteBloc, VisuelAnnote } from '../SchemaAnnote';
 import { ILLUSTRATIONS_LECONS, type IllustrationLecon } from '../../data/illustrationsLecons';
 import { SCHEMAS_SVT } from '../../data/schemasSvt';
 
@@ -97,7 +97,7 @@ describe('LegendeAnnotations — la parole arabe est dans l’application', () =
     });
   });
 
-  it('rend toutes les légendes des 15 schémas sans exception', async () => {
+  it('rend toutes les légendes des 16 schémas sans exception', async () => {
     for (const illustration of SCHEMAS_SVT) {
       expect(illustration.annotations!.length).toBeGreaterThan(0);
       const zone = await rendre(<LegendeAnnotations illustration={illustration} />);
@@ -118,5 +118,66 @@ describe('LegendeAnnotations — la parole arabe est dans l’application', () =
     const legacy = ILLUSTRATIONS_LECONS.find((i) => i.typeVisuel === 'webp_legacy')!;
     const zone = await rendre(<LegendeAnnotations illustration={legacy} />);
     expect(zone.innerHTML).toBe('');
+  });
+});
+
+describe('SchemaAnnoteBloc — mode auto-test et liaison pastille ↔ légende', () => {
+  const illustration = avecAnnotations('u3-ph.svg');
+
+  it('affiche le bouton d’auto-test et masque les pastilles sur demande', async () => {
+    const zone = await rendre(<SchemaAnnoteBloc illustration={illustration} />);
+    const bouton = [...zone.querySelectorAll('button')].find((b) =>
+      (b.textContent ?? '').includes('إخفاء الأرقام'),
+    );
+    expect(bouton).toBeDefined();
+    expect(bouton!.getAttribute('aria-pressed')).toBe('false');
+
+    const compterPastilles = () =>
+      [...zone.querySelectorAll('span[style]')].filter((s) =>
+        /left:\s*[\d.]+%/.test(s.getAttribute('style') ?? ''),
+      ).length;
+    expect(compterPastilles()).toBe(illustration.annotations!.length);
+
+    await act(async () => bouton!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(compterPastilles()).toBe(0);
+    // La légende arabe reste entièrement lisible : c'est le cœur du mode révision.
+    expect(zone.querySelectorAll('li')).toHaveLength(illustration.annotations!.length);
+    const boutonRetour = [...zone.querySelectorAll('button')].find((b) =>
+      (b.textContent ?? '').includes('إظهار الأرقام'),
+    );
+    expect(boutonRetour).toBeDefined();
+    await act(async () => boutonRetour!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(compterPastilles()).toBe(illustration.annotations!.length);
+  });
+
+  it('surligne la ligne de légende quand on survole une pastille, et inversement', async () => {
+    const zone = await rendre(<SchemaAnnoteBloc illustration={illustration} />);
+    const pastille = [...zone.querySelectorAll('span[style]')].find((s) =>
+      /left:\s*[\d.]+%/.test(s.getAttribute('style') ?? ''),
+    )!;
+    await act(async () => pastille!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true })));
+    const ligneSurlignee = [...zone.querySelectorAll('li')].find((li) =>
+      li.className.includes('bg-sage-soft'),
+    );
+    expect(ligneSurlignee).toBeDefined();
+    expect(ligneSurlignee!.textContent).toContain(illustration.annotations![0].labelAr);
+
+    await act(async () => pastille!.dispatchEvent(new MouseEvent('mouseout', { bubbles: true })));
+    expect(
+      [...zone.querySelectorAll('li')].some((li) => li.className.includes('bg-sage-soft')),
+    ).toBe(false);
+  });
+
+  it('pose le calque de coordonnées en dir="ltr" (placement prévisible sous RTL)', async () => {
+    const zone = await rendre(<SchemaAnnoteBloc illustration={illustration} />);
+    const calque = zone.querySelector('span[aria-hidden="true"]')!;
+    expect(calque.getAttribute('dir')).toBe('ltr');
+  });
+
+  it('ne casse pas l’image seule (sans annotations) — les 21 WebP du manuel', async () => {
+    const legacy = ILLUSTRATIONS_LECONS.find((i) => i.typeVisuel === 'webp_legacy')!;
+    const zone = await rendre(<SchemaAnnoteBloc illustration={legacy} />);
+    expect(zone.querySelector('img')).not.toBeNull();
+    expect(zone.querySelector('button')).toBeNull();
   });
 });

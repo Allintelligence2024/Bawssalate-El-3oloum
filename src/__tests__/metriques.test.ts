@@ -95,8 +95,8 @@ it('les métriques des sujets et corrigés incluent les sessions exceptionnelles
 });
 
 describe('registre des illustrations — 21 WebP du manuel + 15 schémas créés', () => {
-  it('contient 36 visuels, tous à valider par un enseignant', () => {
-    expect(ILLUSTRATIONS_LECONS).toHaveLength(36);
+  it('contient 37 visuels, tous à valider par un enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(37);
     const fichiers = new Set<string>();
     const unites = new Set<string>();
     for (const i of ILLUSTRATIONS_LECONS) {
@@ -111,11 +111,11 @@ describe('registre des illustrations — 21 WebP du manuel + 15 schémas créés
       fichiers.add(i.fichier);
       unites.add(i.uniteId);
     }
-    expect(fichiers.size).toBe(36);
+    expect(fichiers.size).toBe(37);
     // 21 WebP sur 5 unités du manuel + 15 schémas sur u1, u2 et u3.
     expect(unites.size).toBe(8);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.typeVisuel === 'webp_legacy')).toHaveLength(21);
-    expect(ILLUSTRATIONS_LECONS.filter((i) => i.typeVisuel === 'svg_vectoriel')).toHaveLength(10);
+    expect(ILLUSTRATIONS_LECONS.filter((i) => i.typeVisuel === 'svg_vectoriel')).toHaveLength(11);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.typeVisuel === 'webp_annote')).toHaveLength(5);
     expect(illustrationsParLecon('phase10_chapitres_19_20_2').length).toBeGreaterThan(0);
     expect(illustrationsParLecon('u1-lesson-inexistante')).toEqual([]);
