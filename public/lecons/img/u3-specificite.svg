@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" data-schema="u3-specificite">
+<rect width="1200" height="700" fill="#ffffff"/>
+<path d="M760 110 L960 110 L960 290 L760 290 L760 238 L834 200 L760 162" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M230 300 L242.6 303.5 L255.2 306.5 L267.8 308.7 L280.4 310 L293 310.1 L305.7 308.9 L318.3 306.5 L330.9 302.8 L343.5 298 L356.1 292.2 L368.7 285.7 L381.3 278.7 L393.9 271.5 L406.5 264.3 L419.1 257.4 L431.7 251.1 L444.3 245.4 L457 240.7 L469.6 236.9 L482.2 234.1 L494.8 232.3 L507.4 231.4 L520 231.3 L532.6 231.8 L545.2 232.8 L557.8 234 L570.4 235.2 L583 236.3 L595.7 237 L608.3 237.2 L620.9 236.8 L633.5 235.6 L646.1 233.8 L658.7 231.2 L671.3 228 L683.9 224.2 L696.5 219.9 L709.1 215.3 L721.7 210.5 L734.3 205.7 L747 201 L759.6 196.5 L772.2 192.4 L784.8 188.7 L797.4 185.4 L810 182.6" fill="none" stroke="#a97517" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="255.2" cy="306.5" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="305.7" cy="308.9" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="356.1" cy="292.2" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="406.5" cy="264.3" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="457" cy="240.7" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="507.4" cy="231.4" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="557.8" cy="234" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="608.3" cy="237.2" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="658.7" cy="231.2" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="709.1" cy="215.3" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="759.6" cy="196.5" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<circle cx="810" cy="182.6" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<text x="470" y="272" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#a97517" text-anchor="middle" font-weight="700">α-1,4</text>
+<g stroke="#1f6f52" stroke-width="3" fill="none" stroke-linecap="round"><line x1="968" y1="200" x2="1016" y2="200"/><path d="M1006 204.5 L1016 200 L1006 195.5" stroke-width="3"/></g>
+<circle cx="1042" cy="200" r="8" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="1068" cy="200" r="8" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="1055" y="240" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#a97517" text-anchor="middle" font-weight="700">maltose</text>
+<path d="M760 400 L960 400 L960 580 L760 580 L760 528 L834 490 L760 452" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M230 497 L240.9 483 L251.8 497 L262.7 483 L273.6 497 L284.5 483 L295.4 497 L306.3 483 L317.2 497 L328.1 483 L339 497 L349.9 483 L360.8 497 L371.7 483 L382.6 497 L393.5 483 L404.4 497 L415.3 483 L426.2 497 L437.1 483 L448 497 L458.9 483 L469.8 497 L480.7 483 L491.6 497 L502.5 483 L513.4 497 L524.3 483 L535.2 497 L546.1 483 L557 497 L567.9 483 L578.8 497 L589.7 483 L600.6 497 L611.5 483 L622.4 497 L633.3 483 L644.2 497 L655.1 483 L666 497 L676.9 483 L687.8 497 L698.7 483 L709.6 497" fill="none" stroke="#1d4f8f" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="251.8" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="295.4" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="339" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="382.6" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="426.2" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="469.8" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="513.4" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="557" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="600.6" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="644.2" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<circle cx="687.8" cy="497" r="5.5" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<text x="500" y="570" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1d4f8f" text-anchor="middle" font-weight="700">β-1,4</text>
+<text x="742" y="490" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="28" fill="#a5312b" text-anchor="middle" font-weight="700">✗</text>
+</svg>

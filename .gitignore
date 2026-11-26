@@ -39,6 +39,9 @@ plans/screenshots/*.png
 plans/screenshots/*.raw
 plans/captures/*.png
 plans/sources/medias/*.jpg
+# Planches de contrôle des schémas (visuel + pastilles) : preuves QA locales,
+# régénérables par « python scripts/previsualiser-schemas.py ». Le script reste suivi.
+plans/preuves-schemas/*.png
 
 # Maquette de référence (HTML/CSS/JS autonomes, jamais bundlée) : archivée hors Git
 maquettes/

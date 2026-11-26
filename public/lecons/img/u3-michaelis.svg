@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" data-schema="u3-michaelis">
+<rect width="1200" height="800" fill="#ffffff"/>
+<line x1="130" y1="600" x2="1070" y2="600" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="116" y="605" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="end">0</text>
+<line x1="130" y1="488.6" x2="1070" y2="488.6" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="116" y="493.6" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="end">25</text>
+<line x1="130" y1="377.3" x2="1070" y2="377.3" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="116" y="382.3" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="end">50</text>
+<line x1="130" y1="265.9" x2="1070" y2="265.9" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="116" y="270.9" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="end">75</text>
+<line x1="130" y1="154.5" x2="1070" y2="154.5" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="116" y="159.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="end">100</text>
+<line x1="130" y1="90" x2="130" y2="600" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="130" y1="600" x2="1086" y2="600" stroke="#1f2d27" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="130" y1="600" x2="130" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="130" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">0</text>
+<line x1="208.3" y1="600" x2="208.3" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="286.7" y1="600" x2="286.7" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="286.7" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">2</text>
+<line x1="365" y1="600" x2="365" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="443.3" y1="600" x2="443.3" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="443.3" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">4</text>
+<line x1="521.7" y1="600" x2="521.7" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="600" y1="600" x2="600" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="600" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">6</text>
+<line x1="678.3" y1="600" x2="678.3" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="756.7" y1="600" x2="756.7" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="756.7" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">8</text>
+<line x1="835" y1="600" x2="835" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="913.3" y1="600" x2="913.3" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="913.3" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">10</text>
+<line x1="991.7" y1="600" x2="991.7" y2="605" stroke="#1f2d27" stroke-width="1.5" stroke-linecap="round"/>
+<line x1="1070" y1="600" x2="1070" y2="609" stroke="#1f2d27" stroke-width="2" stroke-linecap="round"/>
+<text x="1070" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">12</text>
+<text x="1092" y="630" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="start" font-weight="700">[S]</text>
+<text x="114" y="76" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f2d27" text-anchor="end" font-weight="700">V</text>
+<path d="M130 600 L133.9 589.1 L137.8 578.8 L141.8 568.9 L145.7 559.5 L149.6 550.5 L153.5 541.9 L157.4 533.7 L161.3 525.8 L165.3 518.2 L169.2 510.9 L173.1 503.9 L177 497.2 L180.9 490.7 L184.8 484.5 L188.8 478.5 L192.7 472.7 L196.6 467.1 L200.5 461.8 L204.4 456.5 L208.3 451.5 L212.3 446.6 L216.2 441.9 L220.1 437.4 L224 433 L227.9 428.7 L231.8 424.5 L235.8 420.5 L239.7 416.6 L243.6 412.8 L247.5 409.1 L251.4 405.5 L255.3 402 L259.3 398.6 L263.2 395.3 L267.1 392.1 L271 389 L274.9 386 L278.8 383 L282.8 380.1 L286.7 377.3 L290.6 374.5 L294.5 371.8 L298.4 369.2 L302.3 366.7 L306.3 364.2 L310.2 361.7 L314.1 359.4 L318 357 L321.9 354.7 L325.8 352.5 L329.7 350.3 L333.7 348.2 L337.6 346.1 L341.5 344.1 L345.4 342.1 L349.3 340.2 L353.2 338.2 L357.2 336.4 L361.1 334.5 L365 332.7 L368.9 331 L372.8 329.2 L376.7 327.5 L380.7 325.9 L384.6 324.2 L388.5 322.6 L392.4 321.1 L396.3 319.5 L400.2 318 L404.2 316.5 L408.1 315.1 L412 313.6 L415.9 312.2 L419.8 310.8 L423.7 309.5 L427.7 308.2 L431.6 306.8 L435.5 305.5 L439.4 304.3 L443.3 303 L447.2 301.8 L451.2 300.6 L455.1 299.4 L459 298.2 L462.9 297.1 L466.8 296 L470.7 294.8 L474.7 293.8 L478.6 292.7 L482.5 291.6 L486.4 290.6 L490.3 289.5 L494.2 288.5 L498.2 287.5 L502.1 286.5 L506 285.6 L509.9 284.6 L513.8 283.7 L517.7 282.7 L521.7 281.8 L525.6 280.9 L529.5 280 L533.4 279.1 L537.3 278.3 L541.2 277.4 L545.2 276.6 L549.1 275.8 L553 274.9 L556.9 274.1 L560.8 273.3 L564.7 272.5 L568.7 271.8 L572.6 271 L576.5 270.2 L580.4 269.5 L584.3 268.8 L588.2 268 L592.2 267.3 L596.1 266.6 L600 265.9 L603.9 265.2 L607.8 264.5 L611.7 263.9 L615.7 263.2 L619.6 262.5 L623.5 261.9 L627.4 261.2 L631.3 260.6 L635.2 260 L639.2 259.4 L643.1 258.7 L647 258.1 L650.9 257.5 L654.8 256.9 L658.7 256.4 L662.7 255.8 L666.6 255.2 L670.5 254.6 L674.4 254.1 L678.3 253.5 L682.2 253 L686.2 252.4 L690.1 251.9 L694 251.4 L697.9 250.9 L701.8 250.3 L705.7 249.8 L709.7 249.3 L713.6 248.8 L717.5 248.3 L721.4 247.8 L725.3 247.3 L729.2 246.9 L733.2 246.4 L737.1 245.9 L741 245.5 L744.9 245 L748.8 244.5 L752.7 244.1 L756.7 243.6 L760.6 243.2 L764.5 242.8 L768.4 242.3 L772.3 241.9 L776.2 241.5 L780.2 241 L784.1 240.6 L788 240.2 L791.9 239.8 L795.8 239.4 L799.7 239 L803.7 238.6 L807.6 238.2 L811.5 237.8 L815.4 237.4 L819.3 237 L823.2 236.7 L827.2 236.3 L831.1 235.9 L835 235.5 L838.9 235.2 L842.8 234.8 L846.7 234.4 L850.7 234.1 L854.6 233.7 L858.5 233.4 L862.4 233 L866.3 232.7 L870.3 232.4 L874.2 232 L878.1 231.7 L882 231.3 L885.9 231 L889.8 230.7 L893.8 230.4 L897.7 230 L901.6 229.7 L905.5 229.4 L909.4 229.1 L913.3 228.8 L917.3 228.5 L921.2 228.2 L925.1 227.9 L929 227.6 L932.9 227.3 L936.8 227 L940.8 226.7 L944.7 226.4 L948.6 226.1 L952.5 225.8 L956.4 225.5 L960.3 225.3 L964.3 225 L968.2 224.7 L972.1 224.4 L976 224.1 L979.9 223.9 L983.8 223.6 L987.8 223.3 L991.7 223.1 L995.6 222.8 L999.5 222.6 L1003.4 222.3 L1007.3 222 L1011.3 221.8 L1015.2 221.5 L1019.1 221.3 L1023 221 L1026.9 220.8 L1030.8 220.5 L1034.8 220.3 L1038.7 220.1 L1042.6 219.8 L1046.5 219.6 L1050.4 219.3 L1054.3 219.1 L1058.3 218.9 L1062.2 218.6 L1066.1 218.4" fill="none" stroke="#1f6f52" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="130" y1="154.5" x2="1070" y2="154.5" stroke="#a5312b" stroke-width="2" stroke-dasharray="8 6" stroke-linecap="round"/>
+<text x="1058" y="140.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#a5312b" text-anchor="end" font-weight="700">Vmax</text>
+<line x1="130" y1="377.3" x2="286.7" y2="377.3" stroke="#1d4f8f" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round"/>
+<line x1="286.7" y1="600" x2="286.7" y2="377.3" stroke="#1d4f8f" stroke-width="2" stroke-dasharray="6 5" stroke-linecap="round"/>
+<circle cx="286.7" cy="377.3" r="7" fill="#ffffff" stroke="#1d4f8f" stroke-width="3"/>
+<text x="300.7" y="407.3" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1d4f8f" text-anchor="start" font-weight="700">Km</text>
+<text x="142" y="365.3" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#1d4f8f" text-anchor="start" font-weight="700">Vmax/2</text>
+<circle cx="169.2" cy="510.9" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="208.3" cy="451.7" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="286.7" cy="377.3" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="443.3" cy="302.9" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="600" cy="265.9" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="756.7" cy="243.6" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<circle cx="913.3" cy="228.9" r="5.5" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<rect x="130" y="664" width="950" height="100" rx="16" fill="#e8f2ec" stroke="#1f6f52" stroke-width="2"/>
+<text x="290" y="706" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1f2d27" text-anchor="middle" font-weight="700">[S] ≪ Km</text>
+<text x="290" y="738" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">V ≈ k·[S]</text>
+<text x="590" y="706" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1d4f8f" text-anchor="middle" font-weight="700">[S] = Km</text>
+<text x="590" y="738" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">V = Vmax/2</text>
+<text x="880" y="706" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#a5312b" text-anchor="middle" font-weight="700">[S] ≫ Km</text>
+<text x="880" y="738" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">V → Vmax</text>
+</svg>

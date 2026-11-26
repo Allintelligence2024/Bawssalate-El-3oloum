@@ -1,14 +1,17 @@
 // Phase 2 — résolution centralisée des illustrations de leçons.
 //
-// Les WebP vivent localement dans `public/lecons/img/`. Le jour où ils sont servis
-// depuis Cloudflare R2, il suffit de renseigner `VITE_ILLUSTRATIONS_BASE_URL` :
-// aucun composant ne connaît alors le chemin physique des fichiers.
+// Les visuels (WebP annotés et SVG vectoriels) vivent localement dans `public/lecons/img/`.
+// Le jour où ils sont servis depuis Cloudflare R2, il suffit de renseigner
+// `VITE_ILLUSTRATIONS_BASE_URL` : aucun composant ne connaît alors le chemin physique
+// des fichiers.
 
-const NOM_FICHIER_WEBP = /^[a-zA-Z0-9._-]+\.webp$/;
+// Deux formats seulement, jamais de chemin : les WebP muets du manuel et les SVG
+// vectoriels exacts (courbes, graphiques, schémas géométriques). Aucun JPEG/PNG brut.
+const NOM_FICHIER = /^[a-zA-Z0-9._-]+\.(webp|svg)$/;
 const BALISES_LEGENDE = new Set(['span', 'strong', 'em', 'br']);
 
 /**
- * URL d'une illustration. `fichier` est un simple nom `.webp`, jamais un chemin.
+ * URL d'une illustration. `fichier` est un simple nom `.webp` ou `.svg`, jamais un chemin.
  *
  * - Sans variable d'environnement : `${BASE_URL}lecons/img/<fichier>` (Vite gère le
  *   sous-chemin de déploiement via `BASE_URL`).
@@ -17,8 +20,8 @@ const BALISES_LEGENDE = new Set(['span', 'strong', 'em', 'br']);
  *   navigateur prend le relais, ce qui est le comportement attendu pour un CDN.
  */
 export function urlIllustration(fichier: string): string {
-  if (!NOM_FICHIER_WEBP.test(fichier)) {
-    throw new Error(`Nom d'illustration invalide : ${fichier}`);
+  if (!NOM_FICHIER.test(fichier)) {
+    throw new Error(`Nom d'illustration invalide (attendu : <nom>.webp ou <nom>.svg) : ${fichier}`);
   }
   const distant = import.meta.env.VITE_ILLUSTRATIONS_BASE_URL?.trim();
   if (distant) {

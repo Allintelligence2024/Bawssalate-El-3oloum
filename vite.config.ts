@@ -105,11 +105,11 @@ function precacheManifest(): Plugin {
       const hash = createHash('sha256').update(assets.join('\n'))
         .update(readFileSync('public/sw.js')).update(readFileSync('index.html'));
       for (const f of [...statiques, ...contenu]) hash.update(f).update(readFileSync(join('public', f)));
-      // Phase 2 : les WebP ne sont pas précachés, mais leur empreinte participe à la
-      // version du cache. Remplacer une image invalide donc l'ancien cache au build
-      // suivant, sans ajouter un seul octet à la coquille de démarrage.
+      // Phase 2/4 : les visuels (WebP et SVG) ne sont pas précachés, mais leur empreinte
+      // participe à la version du cache. Remplacer une image invalide donc l'ancien cache
+      // au build suivant, sans ajouter un seul octet à la coquille de démarrage.
       if (existsSync('public/lecons/img')) {
-        for (const f of readdirSync('public/lecons/img').filter(x => x.endsWith('.webp')).sort()) {
+        for (const f of readdirSync('public/lecons/img').filter(x => /\.(webp|svg)$/.test(x)).sort()) {
           hash.update(`lecons/img/${f}`).update(readFileSync(join('public/lecons/img', f)));
         }
       }

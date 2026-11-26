@@ -9,8 +9,9 @@
 //  - sortie unique : `public/lecons/img/<proposedName>.webp`, jamais de JPEG dans Git ;
 //  - WebP largeur max 1200 px, qualité 80, EXIF/métadonnées supprimés, cible ≤ 100 Ko
 //    et plafond d'acceptation ≤ 150 Ko (Phase 3) si aucun palier n'atteint la cible ;
-//  - `src/data/illustrationsLecons.ts` est régénéré avec `statut: 'a_valider_enseignant'`
-//    et `reviewed: false` (jamais promu `true`).
+//  - `src/data/illustrationsLegacy.gen.ts` est régénéré avec `statut: 'a_valider_enseignant'`
+//    et `reviewed: false` (jamais promu `true`) ; un import partiel (`--unites=u6`) conserve
+//    les entrées des autres unités déjà présentes dans le fichier.
 //
 // La conversion s'appuie sur ImageMagick (`convert` + `identify`, délégué WebP présent
 // dans l'environnement de build) : aucune dépendance npm supplémentaire, donc aucun
@@ -24,7 +25,10 @@ import { fileURLToPath } from 'node:url';
 const RACINE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFESTE = join(RACINE, 'plans/inventaire-images-livre.json');
 const INDEX_LOCAL = join(RACINE, 'plans/_travail-images/index.tsv');
-const REGISTRE = join(RACINE, 'src/data/illustrationsLecons.ts');
+// Le registre GÉNÉRÉ ne contient que les 21 WebP du manuel. Les types, la fusion avec les
+// schémas créés et les helpers vivent dans `src/data/illustrationsLecons.ts`, qui n'est
+// JAMAIS réécrit par ce script.
+const REGISTRE = join(RACINE, 'src/data/illustrationsLegacy.gen.ts');
 const DOSSIER_SORTIE = join(RACINE, 'public/lecons/img');
 const LIMITE_OCTETS = 100 * 1024;   // cible historique du pilote U6 : on la garde
 const LIMITE_PLAFOND = 150 * 1024;  // plafond d'acceptation Phase 3, vérifié en CI
@@ -51,7 +55,7 @@ if (aide) {
     'Sans --download, les copies locales sont cherchées dans --source-dir :',
     '  - par nom Drive exact, par proposedName, ou par imgNNN.jpg via l’index TSV.',
     '',
-    'Sorties : public/lecons/img/*.webp + src/data/illustrationsLecons.ts',
+    'Sorties : public/lecons/img/*.webp + src/data/illustrationsLegacy.gen.ts',
   ].join('\n'));
   process.exit(0);
 }
@@ -196,33 +200,63 @@ function legendeAr(entree, docNum) {
   return `<span>${numero}${titre}</span>`;
 }
 
-function ecrireRegistre(entrees) {
+/** Relit le registre généré (format machine stable) pour ne pas perdre les autres unités. */
+function lireEntreesExistantes() {
+  if (!existsSync(REGISTRE)) return [];
+  const source = readFileSync(REGISTRE, 'utf8');
+  const entrees = [];
+  const blocs = source.split(/\n {2}\{\n/).slice(1);
+  for (const bloc of blocs) {
+    const champ = (nom) => {
+      const m = new RegExp(`\\n    ${nom}: ('(?:[^'\\\\]|\\\\.)*'|\\d+),`).exec(bloc);
+      if (!m) return undefined;
+      if (m[1].startsWith("'")) {
+        return m[1].slice(1, -1).replace(/\\'/g, "'").replace(/\\\\/g, '\\');
+      }
+      return Number(m[1]);
+    };
+    const id = champ('id');
+    if (!id) continue;
+    const entree = {
+      id,
+      lessonId: champ('lessonId'),
+      uniteId: champ('uniteId'),
+      docNum: champ('docNum'),
+      fichier: champ('fichier'),
+      largeur: champ('largeur'),
+      hauteur: champ('hauteur'),
+      titreAr: champ('titreAr'),
+      altAr: champ('altAr'),
+      legendeAr: champ('legendeAr'),
+    };
+    if (entree.lessonId && entree.uniteId && entree.fichier) entrees.push(entree);
+  }
+  return entrees;
+}
+
+function ecrireRegistre(fraiches) {
+  // Fusion par `id` : une unité réimportée remplace ses propres entrées, les autres restent.
+  const parId = new Map(lireEntreesExistantes().map((e) => [e.id, e]));
+  for (const e of fraiches) parId.set(e.id, e);
+  const entrees = [...parId.values()].sort(
+    (a, b) => String(a.uniteId).localeCompare(String(b.uniteId)) || String(a.id).localeCompare(String(b.id)),
+  );
   const L = [];
-  L.push('// Généré par `node scripts/importer-images-lecons.mjs`. Ne pas éditer à la main.');
-  L.push('// Illustrations du manuel : copies WebP optimisées, en attente de validation enseignant.');
+  L.push('// GÉNÉRÉ par `node scripts/importer-images-lecons.mjs`. Ne pas éditer à la main.');
+  L.push('// Les WebP `OK` du manuel (Phase 2/3) — copies optimisées, en attente de validation enseignant.');
+  L.push('// Ce fichier ne contient QUE des données : les types, la fusion avec les schémas créés');
+  L.push('// et les helpers vivent dans `src/data/illustrationsLecons.ts`.');
   L.push('');
-  L.push('export interface IllustrationLecon {');
-  L.push('  id: string;');
-  L.push('  lessonId: string;');
-  L.push('  uniteId: string;');
-  L.push('  docNum?: string;');
-  L.push('  fichier: string;        // nom .webp dans public/lecons/img/');
-  L.push('  largeur: number;');
-  L.push('  hauteur: number;');
-  L.push('  titreAr: string;');
-  L.push('  altAr: string;');
-  L.push('  legendeAr?: string;     // légende HTML nette en arabe (RTL)');
-  L.push("  statut: 'a_valider_enseignant' | 'actif';");
-  L.push('  reviewed: boolean;');
-  L.push('}');
+  L.push("import type { IllustrationLecon } from './illustrationsLecons';");
   L.push('');
-  L.push('export const ILLUSTRATIONS_LECONS: IllustrationLecon[] = [');
+  L.push('export const ILLUSTRATIONS_LECONS_LEGACY: IllustrationLecon[] = [');
   for (const e of entrees) {
     L.push('  {');
     L.push(`    id: '${echapperTs(e.id)}',`);
     L.push(`    lessonId: '${echapperTs(e.lessonId)}',`);
     L.push(`    uniteId: '${echapperTs(e.uniteId)}',`);
     if (e.docNum) L.push(`    docNum: '${echapperTs(e.docNum)}',`);
+    L.push(`    typeVisuel: 'webp_legacy',`);
     L.push(`    fichier: '${echapperTs(e.fichier)}',`);
     L.push(`    largeur: ${e.largeur},`);
     L.push(`    hauteur: ${e.hauteur},`);
@@ -235,16 +269,6 @@ function ecrireRegistre(entrees) {
   }
   L.push('];');
   L.push('');
-  L.push('export function illustrationsParLecon(lessonId: string): IllustrationLecon[] {');
-  L.push("  return ILLUSTRATIONS_LECONS.filter((i) => i.lessonId === lessonId)");
-  L.push("    .sort((a, b) => (a.docNum ?? '').localeCompare(b.docNum ?? '') || a.fichier.localeCompare(b.fichier));");
-  L.push('}');
-  L.push('');
-  L.push('export function illustrationsParUnite(uniteId: string): IllustrationLecon[] {');
-  L.push("  return ILLUSTRATIONS_LECONS.filter((i) => i.uniteId === uniteId)");
-  L.push("    .sort((a, b) => a.lessonId.localeCompare(b.lessonId) || a.fichier.localeCompare(b.fichier));");
-  L.push('}');
-  L.push('');
   writeFileSync(REGISTRE, L.join('\n'), 'utf8');
 }
 
@@ -256,6 +280,7 @@ function nettoyerSorties(attendus) {
       problemes.push(`entrée non fichier dans public/lecons/img/ : ${nom}`);
       continue;
     }
+    if (nom.endsWith('.svg')) continue; // schémas vectoriels créés : hors périmètre de l'importeur
     if (!nom.endsWith('.webp')) {
       problemes.push(`fichier brut interdit dans public/lecons/img/ : ${nom}`);
       continue;
