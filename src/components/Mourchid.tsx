@@ -1,8 +1,10 @@
 // «المُرشد الموسّع» (P3.5) — شجرة بالنقر: فرع → سؤال → جواب + «انظر أيضًا». غير متّصل، بلا توليد.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BRANCHES, QUESTIONS, questionParId, questionsDeBranche, type LienMourchid } from '../data/mourchid';
 import { nb } from '../utils/dates';
+import { prechaufferAudioMourchid } from '../utils/audioMourchidChargeur';
+import AudioMourchidBloc from './AudioMourchidBloc';
 import { IcoRetour } from './Icones';
 
 interface Props {
@@ -15,6 +17,10 @@ export default function Mourchid({ onAller, onFermer }: Props) {
   const [questionId, setQuestionId] = useState<string | null>(null);
   const question = questionId ? questionParId(questionId) : undefined;
   const brancheCourante = BRANCHES.find((b) => b.id === (question?.branche ?? branche));
+
+  useEffect(() => {
+    prechaufferAudioMourchid();
+  }, []);
 
   function retour() {
     if (question) setQuestionId(null);
@@ -57,19 +63,27 @@ export default function Mourchid({ onAller, onFermer }: Props) {
                   </li>
                 ))}
               </ul>
+
+              <div className="mt-6">
+                <p className="eyebrow mb-2">كبسولات المُرشد الصوتية في المنهجية</p>
+                <AudioMourchidBloc modeMethodo />
+              </div>
             </>
           )}
 
           {branche && !question && (
-            <ul className="grid gap-2">
-              {questionsDeBranche(branche).map((q) => (
-                <li key={q.id}>
-                  <button type="button" onClick={() => setQuestionId(q.id)} className="card w-full p-4 text-start text-sm font-bold transition-colors hover:border-forest">
-                    {q.question}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-4">
+              <AudioMourchidBloc brancheMourchid={branche} compact />
+              <ul className="grid gap-2">
+                {questionsDeBranche(branche).map((q) => (
+                  <li key={q.id}>
+                    <button type="button" onClick={() => setQuestionId(q.id)} className="card w-full p-4 text-start text-sm font-bold transition-colors hover:border-forest">
+                      {q.question}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {question && (

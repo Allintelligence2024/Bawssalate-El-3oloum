@@ -84,32 +84,50 @@ function precacheManifest(): Plugin {
         /^assets\/supabase-/,
         /^assets\/Methodologie-/,
         /^assets\/ExamBlanc-/,
+        // v0.14 — les schémas du programme (registre arabe) sont un `import()`
+        // déclenché à l'ouverture d'une leçon : jamais dans la coquille de démarrage.
+        // Ils entrent dans `contenu` (hors-ligne sur demande) et restent mis en cache
+        // à la volée par le Service Worker dès la première ouverture.
+        /^assets\/schemasSvt-/,
+        // Phase 3 — le registre « voix du المرشد » (10 capsules + transcriptions arabes)
+        // suit la même discipline : jamais dans la coquille de démarrage, servi dans `contenu`.
+        /^assets\/audioMourchid-/,
       ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))
         .filter((f) => !HORS_PRECACHE.some((r) => r.test(f)))
         .sort().map((f) => `/${f}`);
+      const assetsContenu = Object.keys(bundle)
+        .filter((f) => /^assets\/(schemasSvt|audioMourchid)-[a-zA-Z0-9_.-]+\.js$/.test(f))
+        .sort();
       const statiques = COQUILLE;
-      // `public/lecons/img/*.webp` reste volontairement hors de `statiques` et de `contenu` :
+      // `public/lecons/img/*.{webp,svg}` reste volontairement hors de `statiques` et de `contenu` :
       // chargement lazy + cache à la volée par le Service Worker (voir public/sw.js).
-      const contenu = [...CONTENU_FIXE,
+      const contenuPublic = [...CONTENU_FIXE,
         ...readdirSync('public/lecons').filter(f => f.endsWith('.html')).sort().map(f => `lecons/${f}`)];
+      const contenu = [...contenuPublic, ...assetsContenu];
       const octetsDe = (liste: string[]) => liste.reduce((s, f) => s + statSync(join('public', f)).size, 0);
-      const inclus = new Set(assets.map((a) => a.replace(/^\//, '')));
-      const octetsAssets = Object.entries(bundle)
-        .filter(([f]) => inclus.has(f)).reduce((s, [, item]) =>
+      const octetsDuBundle = (fichiers: Set<string>) => Object.entries(bundle)
+        .filter(([f]) => fichiers.has(f)).reduce((s, [, item]) =>
           s + Buffer.byteLength(item.type === 'asset' ? item.source : item.code), 0);
+      const inclus = new Set(assets.map((a) => a.replace(/^\//, '')));
+      const octetsAssets = octetsDuBundle(inclus);
+      const octetsAssetsContenu = octetsDuBundle(new Set(assetsContenu));
       const octetsCoquille = octetsDe(statiques) + octetsAssets;
-      const octetsContenu = octetsDe(contenu);
+      const octetsContenu = octetsDe(contenuPublic) + octetsAssetsContenu;
 
       const hash = createHash('sha256').update(assets.join('\n'))
         .update(readFileSync('public/sw.js')).update(readFileSync('index.html'));
-      for (const f of [...statiques, ...contenu]) hash.update(f).update(readFileSync(join('public', f)));
-      // Phase 2 : les WebP ne sont pas précachés, mais leur empreinte participe à la
-      // version du cache. Remplacer une image invalide donc l'ancien cache au build
-      // suivant, sans ajouter un seul octet à la coquille de démarrage.
+      for (const f of [...statiques, ...contenuPublic]) hash.update(f).update(readFileSync(join('public', f)));
+      for (const f of assetsContenu) {
+        const item = bundle[f];
+        if (item) hash.update(f).update(item.type === 'asset' ? item.source : item.code);
+      }
+      // Phase 2/4 : les visuels (WebP et SVG) ne sont pas précachés, mais leur empreinte
+      // participe à la version du cache. Remplacer une image invalide donc l'ancien cache
+      // au build suivant, sans ajouter un seul octet à la coquille de démarrage.
       if (existsSync('public/lecons/img')) {
-        for (const f of readdirSync('public/lecons/img').filter(x => x.endsWith('.webp')).sort()) {
+        for (const f of readdirSync('public/lecons/img').filter(x => /\.(webp|svg)$/.test(x)).sort()) {
           hash.update(`lecons/img/${f}`).update(readFileSync(join('public/lecons/img', f)));
         }
       }

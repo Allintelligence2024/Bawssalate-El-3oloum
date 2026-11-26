@@ -42,13 +42,29 @@ const COQUILLE = [...blocCoquille[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
 const coquilleOk = Array.isArray(manifeste.statiques) && manifeste.statiques.length > 0 &&
   manifeste.statiques.every((u) => COQUILLE.includes(u));
 if (!coquilleOk) problemes.push('manifeste : entrées de coquille non conformes à la règle du worker');
+const SCHEMA_CHUNK = /^\/assets\/schemasSvt-[a-zA-Z0-9_.-]+\.js$/;
+const AUDIO_CHUNK = /^\/assets\/audioMourchid-[a-zA-Z0-9_.-]+\.js$/;
+if (Array.isArray(manifeste.assets) && manifeste.assets.some((u) => SCHEMA_CHUNK.test(u))) {
+  problemes.push('manifeste : schemasSvt-*.js ne doit jamais entrer dans la coquille (assets)');
+}
+if (Array.isArray(manifeste.assets) && manifeste.assets.some((u) => AUDIO_CHUNK.test(u))) {
+  problemes.push('manifeste : audioMourchid-*.js ne doit jamais entrer dans la coquille (assets)');
+}
 const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
 if (!contenu) problemes.push('manifeste : liste « contenu » absente');
 else {
   const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+    SCHEMA_CHUNK.test(u) ||
+    AUDIO_CHUNK.test(u) ||
     ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
   if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
   if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
+  if (!contenu.some((u) => SCHEMA_CHUNK.test(u))) {
+    problemes.push('manifeste : schemasSvt-*.js absent du lot « contenu » (hors-ligne sur demande)');
+  }
+  if (!contenu.some((u) => AUDIO_CHUNK.test(u))) {
+    problemes.push('manifeste : audioMourchid-*.js absent du lot « contenu » (hors-ligne sur demande)');
+  }
 }
 // Phase 2 : aucune illustration WebP ne doit entrer dans le précache de démarrage.
 const precisementPrecache = [...manifeste.assets, ...manifeste.statiques, ...(contenu ?? [])];
@@ -77,12 +93,13 @@ const typeOk = (url, res) => {
   if (url.endsWith('.css')) return t.includes('text/css');
   if (url.endsWith('.html') || url === '/') return t.includes('text/html');
   if (url.endsWith('.webp')) return t.includes('image/webp') || t.includes('application/octet-stream');
+  if (url.endsWith('.svg')) return t.includes('image/svg+xml') || t.includes('application/octet-stream');
   return true;
 };
 
 const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...(contenu ?? []), ...manifeste.assets];
 const images = existsSync(DOSSIER_IMAGES)
-  ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp')).sort().map((f) => `/lecons/img/${f}`)
+  ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp') || f.endsWith('.svg')).sort().map((f) => `/lecons/img/${f}`)
   : [];
 let echecs = 0;
 let octets = 0;
@@ -115,17 +132,28 @@ const BUDGET_ILLUSTRATION = 150 * 1024;
 // Plan V2 §8.2 : une image de public/ au-delà de 150 ko est un accident, pas un choix.
 // (Les anciens PNG faisaient 600 ko et 1 Mo : c'est exactement ce que ce seuil interdit.)
 const BUDGET_FICHIER = 150 * 1024;
-// Phase 3 : le dossier des illustrations ne contient QUE des WebP ≤ 150 Ko, et ils
-// n'apparaissent dans aucune liste du précache (vérifié en section 1).
+// Phase 3 / Lot 1 : le dossier des illustrations ne contient QUE des WebP ou des SVG ≤ 150 Ko,
+// et ils n'apparaissent dans aucune liste du précache (vérifié en section 1).
+// Les SVG sont écrits à la main (`scripts/generer-schemas-svt.mjs`) : pas de raster, pas de
+// texte IA incrusté ; leurs libellés arabes viennent du registre TypeScript.
 if (existsSync(DOSSIER_IMAGES)) {
   for (const f of readdirSync(DOSSIER_IMAGES)) {
     const chemin = join(DOSSIER_IMAGES, f);
     if (!statSync(chemin).isFile()) {
       problemes.push(`illustrations : ${f} est un dossier, pas un fichier`);
-    } else if (!f.endsWith('.webp')) {
-      problemes.push(`illustrations : ${f} n'est pas un .webp (aucun JPEG brut dans Git)`);
+    } else if (!f.endsWith('.webp') && !f.endsWith('.svg')) {
+      problemes.push(`illustrations : ${f} doit être un .webp (photo) ou un .svg (schéma vectoriel)`);
     } else if (statSync(chemin).size > BUDGET_ILLUSTRATION) {
       problemes.push(`illustrations : ${f} pèse ${Math.round(statSync(chemin).size / 1024)} ko > 150 ko`);
+    } else if (f.endsWith('.svg')) {
+      const source = readFileSync(chemin, 'utf8');
+      if (!source.startsWith('<svg')) problemes.push(`illustrations : ${f} n'est pas un SVG autonome`);
+      if (source.includes('base64') || /<image[\s>]/.test(source)) {
+        problemes.push(`illustrations : ${f} embarque un raster (interdit : schéma vectoriel)`);
+      }
+      if (/[\u0600-\u06FF]/.test(source)) {
+        problemes.push(`illustrations : ${f} contient du texte arabe incrusté (doit venir de l'app)`);
+      }
     }
   }
 }
@@ -144,12 +172,19 @@ if (contenu) {
 }
 // Plan V2 §8.2 : `public/` entier est concerné, pas seulement ce qui entre en cache.
 // Une image oubliée dans public/ finit toujours par se retrouver dans un précache un jour.
+// Phase 3 : aucun fichier audio (.mp3/.wav/.ogg/.opus/.m4a) ne doit jamais entrer dans public/ ou dist/
+// (les capsules TTS du المرشد sont publiées sur Cloudflare R2, jamais dans Git ni le bundle).
 {
   const lourds = [];
+  const audiosInterdits = [];
   const parcourir = (dir) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const chemin = join(dir, e.name);
       if (e.isDirectory()) { parcourir(chemin); continue; }
+      if (/\.(mp3|wav|ogg|opus|m4a)$/i.test(e.name)) {
+        audiosInterdits.push(chemin);
+        continue;
+      }
       if (/\.(pdf|mp4)$/i.test(e.name)) continue; // vidéo et PDF : exclus par le plan
       if (chemin.includes('/boussole/')) continue;
       const taille = statSync(chemin).size;
@@ -157,7 +192,18 @@ if (contenu) {
     }
   };
   parcourir('public');
+  if (existsSync('dist')) {
+    const parcourirDist = (dir) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const chemin = join(dir, e.name);
+        if (e.isDirectory()) { parcourirDist(chemin); continue; }
+        if (/\.(mp3|wav|ogg|opus|m4a)$/i.test(e.name)) audiosInterdits.push(chemin);
+      }
+    };
+    parcourirDist('dist');
+  }
   for (const f of lourds) problemes.push(`budget : ${f} > ${BUDGET_FICHIER / 1024} ko — convertir ou redimensionner`);
+  for (const f of audiosInterdits) problemes.push(`audio : ${f} interdit dans public/ ou dist/ (déployer sur R2)`);
 }
 
 // ── 3. Rapport ──
@@ -169,7 +215,7 @@ console.log(`contenu (sur demande) : ${(contenu ?? []).length} entrées — ${(m
 const poidsMaxImage = images.length
   ? Math.max(...images.map((u) => statSync(join(DOSSIER_IMAGES, u.slice('/lecons/img/'.length))).size))
   : 0;
-console.log(`illustrations WebP    : ${images.length} — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
+console.log(`illustrations         : ${images.length} fichiers (WebP + SVG) — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
 console.log(`fichiers interrogés   : ${cibles.length + images.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);

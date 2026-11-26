@@ -8,7 +8,10 @@ import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 import IllustrationsLecon from './IllustrationsLecon';
-import { useState } from 'react';
+import AudioMourchidBloc from './AudioMourchidBloc';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
+import { prechaufferAudioMourchid } from '../utils/audioMourchidChargeur';
+import { useEffect, useState } from 'react';
 
 interface Props {
   lessonId: string;
@@ -24,6 +27,11 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
   const aContenu = aContenuLecon(lessonId);
   const [contenuIndisponible, setContenuIndisponible] = useState(false);
   const [motOuvert, setMotOuvert] = useState<string | null>(null);
+
+  useEffect(() => {
+    prechaufferSchemasSvt();
+    prechaufferAudioMourchid();
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
@@ -120,6 +128,9 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
 
           {/* Phase 3 — illustrations WebP (21 documents OK) chargées paresseusement. */}
           <IllustrationsLecon lessonId={lessonId} />
+
+          {/* المرحلة 3 — كبسولة «صوت المُرشد» الموافقة للوحدة (تحميل كسول + نصّ كامل). */}
+          {unite && <AudioMourchidBloc uniteId={unite.id} compact />}
 
           {lecon && (
             <div className="card p-4">

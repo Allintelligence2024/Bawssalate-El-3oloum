@@ -12,6 +12,7 @@ import { nb, formatJourAr } from '../utils/dates';
 import type { Etat } from '../types';
 import { ChoixUnique, Morceau, OptionsMcq } from './Communs';
 import BadgeRelecture from './BadgeRelecture';
+import AudioMourchidBloc from './AudioMourchidBloc';
 import { IcoRetour } from './Icones';
 
 const TXT_LOCKED_TITLE = 'الجسر مقفل';
@@ -272,6 +273,8 @@ return (
                 </div>
               </div>
             )}
+
+            <AudioMourchidBloc uniteId={uniteId} compact />
 
             <Morceau>
               {TXT_UNIT_COMPLETE.replace('{n}', nb(u.numero)).replace('{t}', u.titre).replace('{p}', nb(u.poidsBac))}

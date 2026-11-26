@@ -39,6 +39,9 @@ plans/screenshots/*.png
 plans/screenshots/*.raw
 plans/captures/*.png
 plans/sources/medias/*.jpg
+# Planches de contrôle des schémas (visuel + pastilles) : preuves QA locales,
+# régénérables par « python scripts/previsualiser-schemas.py ». Le script reste suivi.
+plans/preuves-schemas/*.png
 
 # Maquette de référence (HTML/CSS/JS autonomes, jamais bundlée) : archivée hors Git
 maquettes/
@@ -52,6 +55,15 @@ NEW bawssala/
 plans/inventaire-images-livre.json
 plans/_travail-images/
 .cache/
+
+# Phase 3 — capsules audio « voix du المرشد » : jamais versionnées dans Git ni public/
+# (générées dans .cache/audio-mourchid/ et déployées sur Cloudflare R2).
+public/audio/
+public/**/*.mp3
+public/**/*.wav
+public/**/*.ogg
+public/**/*.opus
+public/**/*.m4a
 
 # Exports temporaires d'audit (Blocs E/F) : conservés sur le poste, jamais versionnés.
 audit-v2-*.md

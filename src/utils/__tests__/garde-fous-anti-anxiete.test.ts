@@ -32,6 +32,10 @@ const FICHIERS = [
   'src/components/CarteTropheesTactiques.tsx',
   'src/components/SujetGuide.tsx',
   'src/utils/parcoursSujet.ts',
+  'src/data/audioMourchid.ts',
+  'src/utils/audioMourchid.ts',
+  'src/components/LecteurAudioMourchid.tsx',
+  'src/components/AudioMourchidBloc.tsx',
 ];
 
 /** Code seul : commentaires de ligne et blocs retirés (grossier, suffisant pour un grep-guard). */
@@ -79,6 +83,8 @@ describe('pas de texte latin dans les copies arabes', () => {
     'src/components/ConstructeurReponse.tsx',
     'src/components/Defi60.tsx',
     'src/components/CarteBoucliersSM2.tsx',
+    'src/data/audioMourchid.ts',
+    'src/components/LecteurAudioMourchid.tsx',
   ])('%s', (fichier) => {
     const fautives = code(fichier)
       .split('\n')

@@ -17,6 +17,7 @@ import { ChoixUnique, DiagnosticPieges, Minuteur, Morceau, OptionsMcq, ValveAide
 import EcranCelebration from './Fetes';
 import { IcoRetour, IcoVerifie } from './Icones';
 import { qcmPourLecon } from '../utils/qcm';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
 import IllustrationsLecon from './IllustrationsLecon';
 
 interface Props {
@@ -149,6 +150,12 @@ export default function ProtocoleRunner({
   // Pièges diagnostiques §11 (audit croisé plan de cours SVT2) : en phase 6, avant la
   // synthèse, l'élève confronte 4 représentations erronées fréquentes sanctionnées au Bac.
   const [piegesFaits, setPiegesFaits] = useState(false);
+
+  // Préchauffage discret du registre des schémas dès l'entrée dans la leçon :
+  // quand l'élève atteint la Phase 5 (« الدليل الوثائقي »), les schémas sont déjà en mémoire.
+  useEffect(() => {
+    prechaufferSchemasSvt();
+  }, []);
 
   // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية، وجلسة واحدة لكل فتح.
   //

@@ -19,13 +19,16 @@ const COQUILLE = [
   '/icons/icon-512.webp',
 ];
 const contenuValide = u => typeof u === 'string' &&
-  (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));
+  (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
+   /^\/assets\/(schemasSvt|audioMourchid)-[a-zA-Z0-9_.-]+\.js$/.test(u) ||
+   BOUSSOLE.includes(u));
 const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
-// Phase 2 : les WebP de /lecons/img/ ne figurent dans aucun précache. Ils sont
-// servis puis mémorisés par le gestionnaire fetch à la première ouverture de la
-// leçon. Une base R2 externe sort du périmètre du worker (origine différente).
+// Phase 2/4 : les visuels de /lecons/img/ (WebP muets du manuel et SVG vectoriels) ne
+// figurent dans aucun précache. Ils sont servis puis mémorisés par le gestionnaire fetch
+// à la première ouverture de la leçon. Une base R2 externe sort du périmètre du worker
+// (origine différente) : le cache HTTP du navigateur prend le relais.
 const illustrationValide = u => typeof u === 'string' &&
-  /^\/lecons\/img\/[a-zA-Z0-9_.-]+\.webp$/.test(u);
+  /^\/lecons\/img\/[a-zA-Z0-9_.-]+\.(webp|svg)$/.test(u);
 
 /** `statiques` = coquille (toujours téléchargée). `contenu` = lourd (sur demande explicite). */
 function valideManifeste(m) {
@@ -44,6 +47,8 @@ function typeValide(url, res) {
   if (url.endsWith('.css')) return type.includes('text/css');
   if (url.endsWith('.html') || url === '/') return type.includes('text/html');
   if (url.endsWith('.webp')) return type.includes('image/webp') || type.includes('application/octet-stream');
+  if (url.endsWith('.svg')) return type.includes('image/svg+xml') || type.includes('application/octet-stream');
+  if (/\.(mp3|opus|ogg|m4a)$/.test(url)) return type.startsWith('audio/') || type.includes('application/octet-stream');
   return true;
 }
 

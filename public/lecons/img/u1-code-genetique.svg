@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="790" viewBox="0 0 1200 790" data-schema="u1-code-genetique">
+<rect width="1200" height="790" fill="#ffffff"/>
+<rect x="40" y="40" width="1120" height="470" rx="22" fill="#fdfefd" stroke="#d7dfd9" stroke-width="2"/>
+<rect x="90" y="404" width="1020" height="58" rx="12" fill="#e8f2ec" stroke="#1f6f52" stroke-width="2.5"/>
+<rect x="150" y="414" width="90" height="38" rx="6" fill="#ffffff" stroke="#1f6f52" stroke-width="2"/>
+<text x="195" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">AUG</text>
+<rect x="300" y="414" width="90" height="38" rx="6" fill="#ffffff" stroke="#1f6f52" stroke-width="2"/>
+<text x="345" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">GCU</text>
+<rect x="450" y="414" width="90" height="38" rx="6" fill="#ffffff" stroke="#1f6f52" stroke-width="2"/>
+<text x="495" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">UUC</text>
+<rect x="600" y="414" width="90" height="38" rx="6" fill="#ffffff" stroke="#1f6f52" stroke-width="2"/>
+<text x="645" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">AAA</text>
+<rect x="750" y="414" width="90" height="38" rx="6" fill="#ffffff" stroke="#1f6f52" stroke-width="2"/>
+<text x="795" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">GGU</text>
+<rect x="900" y="414" width="90" height="38" rx="6" fill="#fbeceb" stroke="#a5312b" stroke-width="2"/>
+<text x="945" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#a5312b" text-anchor="middle" font-weight="700">UAA</text>
+<text x="1055" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1f6f52" text-anchor="middle" font-weight="700">3'</text>
+<text x="76" y="440" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1f6f52" text-anchor="middle" font-weight="700">5'</text>
+<path d="M169 352 q0 34 26 34 q26 0 26 -34" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<path d="M187 352 L187 300 L203 300 L203 352" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="165" cy="320" rx="15" ry="12" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<ellipse cx="225" cy="320" rx="15" ry="12" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<ellipse cx="195" cy="294" rx="26" ry="10" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<text x="195" y="378" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1d4f8f" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">UAC</text>
+<circle cx="195" cy="266" r="17" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="195" y="272" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#a97517" text-anchor="middle" font-weight="700">Met</text>
+<line x1="195" y1="283" x2="195" y2="288" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<path d="M469 352 q0 34 26 34 q26 0 26 -34" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<path d="M487 352 L487 300 L503 300 L503 352" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+<ellipse cx="465" cy="320" rx="15" ry="12" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<ellipse cx="525" cy="320" rx="15" ry="12" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<ellipse cx="495" cy="294" rx="26" ry="10" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2.5"/>
+<text x="495" y="378" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1d4f8f" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">AAG</text>
+<circle cx="495" cy="266" r="17" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="495" y="272" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#a97517" text-anchor="middle" font-weight="700">Phe</text>
+<line x1="495" y1="283" x2="495" y2="288" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<rect x="620" y="90" width="490" height="180" rx="18" fill="#ffffff" stroke="#d7dfd9" stroke-width="2"/>
+<circle cx="1050" cy="150" r="20" fill="#fbf1dd" stroke="#a97517" stroke-width="2.5"/>
+<text x="1050" y="156" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#a97517" text-anchor="middle" font-weight="700">aa</text>
+<text x="1010" y="156" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="24" fill="#1f2d27" text-anchor="middle">+</text>
+<rect x="928" y="128" width="62" height="44" rx="8" fill="#e8f2ec" stroke="#1f6f52" stroke-width="2"/>
+<text x="959" y="156" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1f6f52" text-anchor="middle" font-weight="700">ATP</text>
+<g stroke="#1f2d27" stroke-width="3" fill="none" stroke-linecap="round"><line x1="912" y1="150" x2="838" y2="150"/><path d="M848 145.5 L838 150 L848 154.5" stroke-width="3"/></g>
+<ellipse cx="876" cy="178" rx="24" ry="14" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="716" y="126" width="116" height="48" rx="8" fill="#e9eff8" stroke="#1d4f8f" stroke-width="2"/>
+<text x="774" y="156" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#1d4f8f" text-anchor="middle" font-weight="700">aa-ARNt</text>
+<g stroke="#5f6f66" stroke-width="2" fill="none" stroke-linecap="round"><line x1="774" y1="178" x2="774" y2="216"/><path d="M769.5 206 L774 216 L778.5 206" stroke-width="2"/></g>
+<text x="774" y="244" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#5f6f66" text-anchor="middle">AMP + PPi</text>
+<rect x="40" y="540" width="1120" height="210" rx="18" fill="#fbf1dd" stroke="#a97517" stroke-width="2"/>
+<rect x="900" y="578" width="200" height="128" rx="14" fill="#ffffff" stroke="#a97517" stroke-width="2"/>
+<text x="1000" y="640" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="40" fill="#1f2d27" text-anchor="middle" font-weight="700">4</text>
+<text x="1000" y="668" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">bases</text>
+<text x="1000" y="692" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">A  U  G  C</text>
+<rect x="650" y="578" width="200" height="128" rx="14" fill="#ffffff" stroke="#a97517" stroke-width="2"/>
+<text x="750" y="640" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="40" fill="#1f2d27" text-anchor="middle" font-weight="700">4³</text>
+<text x="750" y="668" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">= 64</text>
+<text x="750" y="692" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">codons</text>
+<rect x="390" y="578" width="200" height="128" rx="14" fill="#ffffff" stroke="#a97517" stroke-width="2"/>
+<text x="490" y="640" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="40" fill="#1f2d27" text-anchor="middle" font-weight="700">20</text>
+<text x="490" y="668" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">acides aminés</text>
+<text x="490" y="692" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">redondance</text>
+<rect x="120" y="578" width="200" height="128" rx="14" fill="#ffffff" stroke="#a97517" stroke-width="2"/>
+<text x="220" y="640" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="40" fill="#1f2d27" text-anchor="middle" font-weight="700">3</text>
+<text x="220" y="668" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="middle">codons stop</text>
+<text x="220" y="692" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="12" fill="#5f6f66" text-anchor="middle">UAA  UAG  UGA</text>
+<g stroke="#a97517" stroke-width="3" fill="none" stroke-linecap="round"><line x1="884" y1="642" x2="852" y2="642"/><path d="M860.2 638.3 L852 642 L860.2 645.7" stroke-width="3"/></g>
+<g stroke="#a97517" stroke-width="3" fill="none" stroke-linecap="round"><line x1="634" y1="642" x2="602" y2="642"/><path d="M610.2 638.3 L602 642 L610.2 645.7" stroke-width="3"/></g>
+<g stroke="#a97517" stroke-width="3" fill="none" stroke-linecap="round"><line x1="374" y1="642" x2="342" y2="642"/><path d="M350.2 638.3 L342 642 L350.2 645.7" stroke-width="3"/></g>
+</svg>

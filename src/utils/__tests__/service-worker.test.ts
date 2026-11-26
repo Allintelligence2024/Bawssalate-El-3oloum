@@ -180,4 +180,36 @@ describe('illustrations WebP de leçon (Phase 2)', () => {
     // Un fichier arbitraire sous /lecons/ ne passe plus la règle d'origine.
     expect(await e.demande('/lecons/autre.bin')).toBeUndefined();
   });
+
+  it('place schemasSvt-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/schemasSvt-abc123.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/schemasSvt-abc123.js', 'export const SCHEMAS_SVT = [];', 'text/javascript');
+    await e.lifecycle('install');
+    // Jamais dans la coquille de démarrage.
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/schemasSvt-abc123.js');
+    // Téléchargé dans le lot « contenu » sur demande explicite.
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/schemasSvt-abc123.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/schemasSvt-abc123.js');
+    expect(await chunk!.text()).toContain('SCHEMAS_SVT');
+  });
+
+  it('place audioMourchid-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/audioMourchid-def456.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/audioMourchid-def456.js', 'export const AUDIO_MOURCHID = [];', 'text/javascript');
+    await e.lifecycle('install');
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/audioMourchid-def456.js');
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/audioMourchid-def456.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/audioMourchid-def456.js');
+    expect(await chunk!.text()).toContain('AUDIO_MOURCHID');
+  });
 });
