@@ -76,11 +76,11 @@ export const UNITES: Unite[] = [
     lessonIds: [
       'lecon_representation',
       'phase2_chapitres_3_4_2',
-      'phase3_chapitres_5_6',
       // Leçon centrale de 3AS (ch. 8 du manuel) : charge de l'acide aminé et migration
       // électrophorétique. Elle était rangée en prérequis 2AS de l'unité 3, donc placée AVANT
       // le concept d'enzyme ; sa place est ici, avant la structure-fonction.
       'amino_acid_behavior',
+      'phase3_chapitres_5_6',
     ],
     questionAr: 'لماذا يحدد شكل البروتين الفراغي وظيفته، وكيف يفسر تغيره تغير الوظيفة؟',
     fenetre: { debut: 6, fin: 8 },
@@ -408,7 +408,7 @@ export const TITRES_LECONS: Record<string, string> = {
   phase22_chapitres_43_44_2: 'الموارد الجيولوجية والطاقوية في الجزائر',
   'd3-u11-l1-migmatite': 'المغماتيت وشواهد التقلص',
   // دروس كانت مصنّفة « متطلبات سابقة » وليست كذلك (أعيدت إلى وحداتها)
-  enzyme_inhibitors: 'تثبيط الإنزيمات (آخر درس في الوحدة)',
+  enzyme_inhibitors: 'تثبيط الإنزيمات',
   amino_acid_behavior: 'سلوك الأحماض الأمينية وهجرتها الكهربائية',
 };
 

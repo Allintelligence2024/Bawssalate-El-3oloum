@@ -18,6 +18,7 @@ const sw = readFileSync('dist/sw.js', 'utf8');
 const html = readFileSync('dist/index.html', 'utf8');
 const version = manifeste.version;
 const problemes = [];
+const DOSSIER_IMAGES = 'public/lecons/img';
 
 // ── 1. Cohérence statique du build (règles de valideManifeste + install dans sw.js) ──
 if (sw.includes('__KUNZ_BUILD_ID__')) problemes.push('sw.js : identifiant de version non remplacé');
@@ -49,6 +50,11 @@ else {
   if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
   if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
 }
+// Phase 2 : aucune illustration WebP ne doit entrer dans le précache de démarrage.
+const precisementPrecache = [...manifeste.assets, ...manifeste.statiques, ...(contenu ?? [])];
+for (const u of precisementPrecache) {
+  if (u.startsWith('/lecons/img/')) problemes.push(`précache : ${u} est une illustration, elle doit être chargée à la volée`);
+}
 for (const champ of ['octetsCoquille', 'octetsContenu', 'octets']) {
   if (!Number.isFinite(manifeste[champ]) || manifeste[champ] < 0) problemes.push(`manifeste : ${champ} invalide`);
 }
@@ -70,14 +76,18 @@ const typeOk = (url, res) => {
   if (url.endsWith('.js')) return t.includes('javascript');
   if (url.endsWith('.css')) return t.includes('text/css');
   if (url.endsWith('.html') || url === '/') return t.includes('text/html');
+  if (url.endsWith('.webp')) return t.includes('image/webp') || t.includes('application/octet-stream');
   return true;
 };
 
 const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.statiques, ...(contenu ?? []), ...manifeste.assets];
+const images = existsSync(DOSSIER_IMAGES)
+  ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp')).sort().map((f) => `/lecons/img/${f}`)
+  : [];
 let echecs = 0;
 let octets = 0;
 const lignesEchec = [];
-for (const u of cibles) {
+for (const u of [...cibles, ...images]) {
   try {
     const r = await fetch(BASE + u);
     const corps = await r.arrayBuffer();
@@ -97,11 +107,28 @@ await serveur.close();
 // Seuils volontairement atteignables : ils doivent échouer seulement sur une vraie régression,
 // pas sur un build normal — sinon la CI sera désactivée au bout de trois commits.
 const MIO = 1024 * 1024;
-const BUDGET_COQUILLE = 2.5 * MIO;   // interface + assets, ce que tout élève télécharge
+const BUDGET_COQUILLE = 2.25 * MIO;  // Phase 2 : plafond sacré, ~2,18 Mio mesurés avant pilote
 const BUDGET_CONTENU = 5.0 * MIO;    // leçons + laboratoire + PDF, sur demande explicite
+// Phase 3 : plafond d'acceptation ≤ 150 Ko par WebP de leçon. L'importeur garde une
+// cible plus stricte de 100 Ko ; ce garde-fou est la porte de non-retour de la CI.
+const BUDGET_ILLUSTRATION = 150 * 1024;
 // Plan V2 §8.2 : une image de public/ au-delà de 150 ko est un accident, pas un choix.
 // (Les anciens PNG faisaient 600 ko et 1 Mo : c'est exactement ce que ce seuil interdit.)
 const BUDGET_FICHIER = 150 * 1024;
+// Phase 3 : le dossier des illustrations ne contient QUE des WebP ≤ 150 Ko, et ils
+// n'apparaissent dans aucune liste du précache (vérifié en section 1).
+if (existsSync(DOSSIER_IMAGES)) {
+  for (const f of readdirSync(DOSSIER_IMAGES)) {
+    const chemin = join(DOSSIER_IMAGES, f);
+    if (!statSync(chemin).isFile()) {
+      problemes.push(`illustrations : ${f} est un dossier, pas un fichier`);
+    } else if (!f.endsWith('.webp')) {
+      problemes.push(`illustrations : ${f} n'est pas un .webp (aucun JPEG brut dans Git)`);
+    } else if (statSync(chemin).size > BUDGET_ILLUSTRATION) {
+      problemes.push(`illustrations : ${f} pèse ${Math.round(statSync(chemin).size / 1024)} ko > 150 ko`);
+    }
+  }
+}
 if (manifeste.octetsCoquille > BUDGET_COQUILLE) {
   problemes.push(`budget : coquille ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio > ${BUDGET_COQUILLE / MIO} Mio`);
 }
@@ -139,7 +166,11 @@ console.log(`version du build      : ${version}`);
 console.log(`assets JS/CSS         : ${manifeste.assets.length} — ${demarrage.length} au démarrage, tous dans le manifeste`);
 console.log(`coquille (toujours)   : ${manifeste.statiques.length} entrées — ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio`);
 console.log(`contenu (sur demande) : ${(contenu ?? []).length} entrées — ${(manifeste.octetsContenu / MIO).toFixed(2)} Mio`);
-console.log(`fichiers interrogés   : ${cibles.length} — ${octets} octets non compressés vus par HTTP`);
+const poidsMaxImage = images.length
+  ? Math.max(...images.map((u) => statSync(join(DOSSIER_IMAGES, u.slice('/lecons/img/'.length))).size))
+  : 0;
+console.log(`illustrations WebP    : ${images.length} — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
+console.log(`fichiers interrogés   : ${cibles.length + images.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);
 for (const p of problemes) console.log(`  ✗ ${p}`);

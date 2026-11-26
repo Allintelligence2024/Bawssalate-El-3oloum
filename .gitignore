@@ -45,3 +45,13 @@ maquettes/
 
 # Copie figée du dépôt telle qu'elle a été livrée + captures de contrôle
 NEW bawssala/
+
+# Phase 2/3 — illustrations du manuel : l'inventaire Drive et les copies JPEG brutes
+# ne sont JAMAIS versionnés. Seuls les WebP optimisés de public/lecons/img/ entrent
+# dans Git (contrôlé par scripts/importer-images-lecons.mjs et verifier-hors-ligne.mjs).
+plans/inventaire-images-livre.json
+plans/_travail-images/
+.cache/
+
+# Exports temporaires d'audit (Blocs E/F) : conservés sur le poste, jamais versionnés.
+audit-v2-*.md

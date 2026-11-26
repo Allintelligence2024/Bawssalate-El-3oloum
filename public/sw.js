@@ -21,6 +21,11 @@ const COQUILLE = [
 const contenuValide = u => typeof u === 'string' &&
   (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) || BOUSSOLE.includes(u));
 const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
+// Phase 2 : les WebP de /lecons/img/ ne figurent dans aucun précache. Ils sont
+// servis puis mémorisés par le gestionnaire fetch à la première ouverture de la
+// leçon. Une base R2 externe sort du périmètre du worker (origine différente).
+const illustrationValide = u => typeof u === 'string' &&
+  /^\/lecons\/img\/[a-zA-Z0-9_.-]+\.webp$/.test(u);
 
 /** `statiques` = coquille (toujours téléchargée). `contenu` = lourd (sur demande explicite). */
 function valideManifeste(m) {
@@ -38,6 +43,7 @@ function typeValide(url, res) {
   if (url.endsWith('.js')) return type.includes('javascript');
   if (url.endsWith('.css')) return type.includes('text/css');
   if (url.endsWith('.html') || url === '/') return type.includes('text/html');
+  if (url.endsWith('.webp')) return type.includes('image/webp') || type.includes('application/octet-stream');
   return true;
 }
 
@@ -174,7 +180,11 @@ self.addEventListener('fetch', event => {
     return;
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
-  if (!url.pathname.startsWith('/assets/') && !url.pathname.startsWith('/lecons/') &&
+  // Les illustrations WebP sont explicitement autorisées ici, mais absentes du précache :
+  // elles entrent dans le cache à la volée lors de la première ouverture de la leçon.
+  if (!url.pathname.startsWith('/assets/') &&
+      !/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(url.pathname) &&
+      !illustrationValide(url.pathname) &&
       !BOUSSOLE.includes(url.pathname) && !COQUILLE.includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {

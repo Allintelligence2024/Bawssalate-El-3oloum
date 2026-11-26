@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
@@ -90,6 +90,8 @@ function precacheManifest(): Plugin {
         .filter((f) => !HORS_PRECACHE.some((r) => r.test(f)))
         .sort().map((f) => `/${f}`);
       const statiques = COQUILLE;
+      // `public/lecons/img/*.webp` reste volontairement hors de `statiques` et de `contenu` :
+      // chargement lazy + cache à la volée par le Service Worker (voir public/sw.js).
       const contenu = [...CONTENU_FIXE,
         ...readdirSync('public/lecons').filter(f => f.endsWith('.html')).sort().map(f => `lecons/${f}`)];
       const octetsDe = (liste: string[]) => liste.reduce((s, f) => s + statSync(join('public', f)).size, 0);
@@ -103,6 +105,14 @@ function precacheManifest(): Plugin {
       const hash = createHash('sha256').update(assets.join('\n'))
         .update(readFileSync('public/sw.js')).update(readFileSync('index.html'));
       for (const f of [...statiques, ...contenu]) hash.update(f).update(readFileSync(join('public', f)));
+      // Phase 2 : les WebP ne sont pas précachés, mais leur empreinte participe à la
+      // version du cache. Remplacer une image invalide donc l'ancien cache au build
+      // suivant, sans ajouter un seul octet à la coquille de démarrage.
+      if (existsSync('public/lecons/img')) {
+        for (const f of readdirSync('public/lecons/img').filter(x => x.endsWith('.webp')).sort()) {
+          hash.update(`lecons/img/${f}`).update(readFileSync(join('public/lecons/img', f)));
+        }
+      }
       identifiant = hash.digest('hex').slice(0, 20);
       this.emitFile({ type: 'asset', fileName: 'precache-manifest.json',
         source: JSON.stringify({

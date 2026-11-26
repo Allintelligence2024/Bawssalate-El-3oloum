@@ -7,6 +7,7 @@ import { titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
+import IllustrationsLecon from './IllustrationsLecon';
 import { useState } from 'react';
 
 interface Props {
@@ -116,6 +117,9 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
               </p>
             </div>
           )}
+
+          {/* Phase 3 — illustrations WebP (21 documents OK) chargées paresseusement. */}
+          <IllustrationsLecon lessonId={lessonId} />
 
           {lecon && (
             <div className="card p-4">

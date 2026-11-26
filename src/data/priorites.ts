@@ -1,6 +1,11 @@
-// GÉNÉRÉ par scripts/frequence-bac.py — ne pas éditer à la main (voir plans/analyse-frequence-bac.md).
-// Corpus : 9 épreuves Bac SE à couche texte (2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023).
-// 1 = cœur du Bac (unité ≥ 2/3 des épreuves et leçon citée ≥ 2 fois) · 2 = régulier · 3 = enrichissement / prérequis / absent.
+// Priorités Bac — passe 2 : réalignement manuel sur les 30 sujets SE structurés (2013–2026)
+// et sur le `programme.ts` courant (chemin obligatoire + enrichissements hors chemin).
+// `scripts/frequence-bac.py` reste l'outil d'analyse (9 épreuves à couche texte) : ses sorties
+// brutes ne sont plus la source de vérité, ne pas régénérer ce fichier sans reprendre les
+// arbitrages tracés dans plans/relecture/REGISTRE-ARBITRAGES.md.
+// Les ex-prérequis réintégrés dans U2/U3 (`amino_acid_behavior`, `enzyme_inhibitors`) suivent
+// désormais leur unité ; les deux leçons U11 hors chemin (`phase22_*`) restent à 3.
+// 1 = cœur du Bac (leçons du chemin les plus citées) · 2 = régulier · 3 = enrichissement hors chemin / prérequis / absent.
 
 export type Priorite = 1 | 2 | 3;
 
@@ -10,7 +15,7 @@ export const PRIORITE_LECON: Record<string, Priorite> = {
   'phase1_chapitres_1_2': 1,
   'lecon_transcription': 1,
   'phase1_chapitres_1_2_2': 1,
-  'phase2_chapitres_3_4': 2,
+  'phase2_chapitres_3_4': 1,
   // u2 · البنية والوظيفة — 4/9 épreuves
   'lecon_representation': 2,
   'phase2_chapitres_3_4_2': 2,
@@ -69,12 +74,12 @@ export const PRIORITE_LECON: Record<string, Priorite> = {
   'phase20_chapitres_39_40_2': 2,
   'phase21_chapitres_41_42': 2,
   'phase21_chapitres_41_42_2': 2,
-  'phase22_chapitres_43_44': 2,
-  'phase22_chapitres_43_44_2': 2,
+  'phase22_chapitres_43_44': 3,
+  'phase22_chapitres_43_44_2': 3,
   'd3-u11-l1-migmatite': 2,
   // prérequis hors unités
-  'enzyme_inhibitors': 3,
-  'amino_acid_behavior': 3,
+  'enzyme_inhibitors': 1,
+  'amino_acid_behavior': 2,
 };
 
 /** Priorité d'une leçon ; 2 (régulier) si la leçon est inconnue du corpus. */

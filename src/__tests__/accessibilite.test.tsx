@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import axe from 'axe-core';
 import CarteHorsLigne from '../components/CarteHorsLigne';
 import FigureSujet from '../components/FigureSujet';
+import IllustrationsLecon from '../components/IllustrationsLecon';
 import { FIGURES_SUJETS } from '../data/figuresSujets';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -200,5 +201,52 @@ describe('profil de compétences — accessibilité (§11)', () => {
     );
     const violations = await analyser(rempli);
     expect(violations, JSON.stringify(violations)).toEqual([]);
+  });
+});
+
+describe('illustrations de leçon — accessibilité (Phase 3)', () => {
+  it('charge les WebP en lazy, avec alt arabe, légende RTL et aucune violation axe', async () => {
+    const zone = await rendre(<IllustrationsLecon lessonId="phase10_chapitres_19_20_2" />);
+    const images = zone.querySelectorAll('img');
+    expect(images.length).toBeGreaterThan(0);
+    for (const image of images) {
+      expect(image.getAttribute('loading')).toBe('lazy');
+      expect(image.getAttribute('alt')?.length).toBeGreaterThan(0);
+      expect(image.getAttribute('width')).toBeTruthy();
+      expect(image.getAttribute('height')).toBeTruthy();
+    }
+    expect(zone.querySelector('section[dir="rtl"]')).not.toBeNull();
+    expect(zone.querySelectorAll('figcaption').length).toBe(images.length);
+    const violations = await analyser(zone);
+    expect(violations, JSON.stringify(violations)).toEqual([]);
+  });
+
+  it('ouvre un zoom plein écran nommé, légende arabe dessous, fermeture Échap + bouton', async () => {
+    const zone = await rendre(<IllustrationsLecon lessonId="phase10_chapitres_19_20_2" />);
+    const ouvrir = zone.querySelector<HTMLButtonElement>('button[aria-label^="تكبير الوثيقة"]');
+    expect(ouvrir).not.toBeNull();
+
+    act(() => ouvrir!.click());
+    const dialogue = zone.querySelector<HTMLElement>('[role="dialog"][aria-modal="true"]');
+    expect(dialogue).not.toBeNull();
+    expect(dialogue!.getAttribute('aria-label')!.length).toBeGreaterThan(0);
+    expect(dialogue!.querySelector('img')?.getAttribute('alt')?.length).toBeGreaterThan(0);
+    expect(dialogue!.textContent).toContain('الوثيقة');
+    expect(dialogue!.querySelector('#legende-illustration-zoom')?.getAttribute('dir')).toBe('rtl');
+    expect(document.activeElement?.getAttribute('aria-label')).toBe('إغلاق التكبير');
+    const violations = await analyser(zone);
+    expect(violations, JSON.stringify(violations)).toEqual([]);
+
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(zone.querySelector('[role="dialog"]')).toBeNull();
+
+    act(() => ouvrir!.click());
+    const fermer = zone.querySelector<HTMLButtonElement>('button[aria-label="إغلاق التكبير"]');
+    expect(fermer).not.toBeNull();
+    act(() => fermer!.click());
+    expect(zone.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 });

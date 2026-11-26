@@ -17,6 +17,7 @@ import { ChoixUnique, DiagnosticPieges, Minuteur, Morceau, OptionsMcq, ValveAide
 import EcranCelebration from './Fetes';
 import { IcoRetour, IcoVerifie } from './Icones';
 import { qcmPourLecon } from '../utils/qcm';
+import IllustrationsLecon from './IllustrationsLecon';
 
 interface Props {
   lessonId: string;
@@ -846,6 +847,11 @@ export default function ProtocoleRunner({
                     <p className="text-[11px] font-bold text-forest">الدليل الوثائقي — ما تُصنع به النقطة في البكالوريا</p>
                     <p className="mt-1.5 text-sm leading-relaxed">{lecon.evidenceAr}</p>
                   </div>
+
+                  {/* Phase 3 — وثائق الدرس : les WebP de la leçon, s'il en existe (sinon null).
+                      Jamais précachés : lazy + cache à la volée à la première ouverture. */}
+                  <IllustrationsLecon lessonId={lessonId} compacte />
+
                   <p className="text-xs font-bold text-ink-soft">
                     بوّابة المرحلة: ما الخطوة التي تأتي مباشرة بعد الخطوة {qSequence.indice + 1}؟
                   </p>
