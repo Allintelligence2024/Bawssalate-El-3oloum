@@ -645,12 +645,166 @@ export const SCHEMAS_SVT: IllustrationLecon[] = [
     legendeAr:
       '<span><strong>الوثيقة</strong> — المورفين ← مستقبل أفيوني ← تعطيل قناة Ca²⁺ ← توقف إفراز المادة P ← لا يصل إحساس الألم.</span>',
     annotations: [
-      { num: 1, x: 43, y: 62.5, labelAr: 'المورفين', detailAr: 'جزيء خارجي يُشبه الأفيونات الداخلية' },
-      { num: 2, x: 42.2, y: 57.2, labelAr: 'المستقبل الأفيوني', detailAr: 'مستقبل نوعي على النهاية قبل المشبكية' },
+      { num: 1, x: 42.3, y: 63.3, labelAr: 'المورفين', detailAr: 'جزيء خارجي يُشبه الأفيونات الداخلية' },
+      { num: 2, x: 41.7, y: 55, labelAr: 'المستقبل الأفيوني', detailAr: 'مستقبل نوعي على النهاية قبل المشبكية' },
       { num: 3, x: 56.7, y: 57.2, labelAr: 'قناة Ca²⁺ معطَّلة', detailAr: 'غياب Ca²⁺ يمنع اندماج الحويصلات' },
       { num: 4, x: 50, y: 27.8, labelAr: 'حويصلات المادة P', detailAr: 'تحتوي ناقل الألم ولا تُفرَّغ' },
       { num: 5, x: 53.7, y: 48.9, labelAr: 'توقف الإفراز', detailAr: 'لا تحرّر للناقل العصبي في الشق المشبكي' },
       { num: 6, x: 43.3, y: 72.2, labelAr: 'مستقبلات المادة P', detailAr: 'بعد مشبكية تبقى دون تنبيه، فيغيب الألم' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // U6 — Domaine 2 : photosynthèse (Lot 3)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 'schema-u6-cycle-calvin',
+    lessonId: 'phase12_chapitres_23_24',
+    uniteId: 'u6',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u6-cycle-calvin.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'حلقة كالفن: تثبيت CO₂ ثم إرجاع ثم تجديد',
+    altAr:
+      'مخطط حلقة: RuBP يستقبل ثلاث جزيئات CO₂ فيتكوّن APG، ثم يُرجَع إلى PGAL بفضل ATP وNADPH، ويعود خمسة أسداس PGAL لتجديد RuBP بينما يخرج السدس نحو الغلوكوز.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — التثبيت (RuBP + CO₂ ← APG) ثم الإرجاع (APG + ATP + NADPH ← PGAL) ثم التجديد (5/6 PGAL ← RuBP) مع خروج 1/6 نحو السكريات.</span>',
+    annotations: [
+      { num: 1, x: 82.9, y: 33.7, labelAr: 'مستقبل CO₂ (RuBP، C5)', detailAr: 'جزيء خماسي الكربون يُثبّت الكربون الغازي' },
+      { num: 2, x: 94.5, y: 53.2, labelAr: 'ثلاث جزيئات CO₂', detailAr: 'تدخل الحلقة في مرحلة التثبيت' },
+      { num: 3, x: 78.2, y: 54.7, labelAr: 'حمض APG (C3)', detailAr: 'أول مركّب مستقرّ يحمل الكربون المشعّ في تجربة كالفن' },
+      { num: 4, x: 51.3, y: 54.7, labelAr: 'سكر PGAL (C3)', detailAr: 'ناتج الإرجاع، وهو أصل السكريات في الحلقة' },
+      { num: 5, x: 69.6, y: 71.1, labelAr: 'ATP وNADPH', detailAr: 'طاقة وإرجاع يوفّرهما الغشاء الكيميوضوئي' },
+      { num: 6, x: 80, y: 29.7, labelAr: 'تجديد RuBP', detailAr: 'خمسة أسداس PGAL تعود لتجديد المستقبل' },
+      { num: 7, x: 29.2, y: 54.7, labelAr: 'غلوكوز (C6)', detailAr: 'سُدس واحد يخرج لبناء السكريات' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
+    id: 'schema-u6-calvin-experience',
+    lessonId: 'd2-u6-l3-calvin',
+    uniteId: 'u6',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u6-calvin-experience.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'تجربة كالفن: تتبّع الكربون المشعّ بالزمن',
+    altAr:
+      'منحنى بثلاثة مسارات: النشاط الإشعاعي في APG يبلغ ذروته بعد ثوانٍ قليلة، ثم في PGAL، ثم في السكريات، بعد حقن ¹⁴CO₂ في وسط يحتوي طحلبًا أخضر.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — ظهور APG أولًا ثم PGAL ثم السكريات يثبت أن الكربون يمرّ بهذا الترتيب داخل الحلقة.</span>',
+    annotations: [
+      { num: 1, x: 20.5, y: 19.5, labelAr: 'APG أولًا', detailAr: 'ذروة سريعة بعد خمس ثوانٍ فقط من الحقن' },
+      { num: 2, x: 33.7, y: 32.6, labelAr: 'PGAL ثانيًا', detailAr: 'ذروته بعد عشرين ثانية تقريبًا' },
+      { num: 3, x: 75.5, y: 39.5, labelAr: 'السكريات أخيرًا', detailAr: 'نشاط إشعاعي يتصاعد ببطء دون ذروة واضحة' },
+      { num: 4, x: 9.8, y: 8.7, labelAr: 'حقن ¹⁴CO₂', detailAr: 'لحظة t = 0 في وسط الطحلب الأخضر' },
+      { num: 5, x: 49, y: 61.8, labelAr: 'تحوّل APG', detailAr: 'انخفاض نشاطه يدل على استهلاكه في المراحل الموالية' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // U7 — Domaine 2 : respiration cellulaire (Lot 3)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 'schema-u7-glycolyse',
+    lessonId: 'phase13_chapitres_25_26',
+    uniteId: 'u7',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u7-glycolyse.svg',
+    largeur: 1200,
+    hauteur: 780,
+    titreAr: 'التحلّل السكري: من الغلوكوز إلى حمض البيروفيك',
+    altAr:
+      'مخطط: غلوكوز سداسي الكربون يُفسفَر باستهلاك 2 ATP ثم ينقسم إلى جزيئي PGAL ثلاثي الكربون، وكل واحد يعطي حمض البيروفيك مع إنتاج 4 ATP و2 NADH، والحصيلة الصافية 2 ATP.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — استثمار 2 ATP ثم انقسام C6 إلى جزيئي C3 ثم استخلاص 4 ATP + 2 NADH، أي حصيلة صافية 2 ATP.</span>',
+    annotations: [
+      { num: 1, x: 37.7, y: 17.9, labelAr: 'الغلوكوز (C6)', detailAr: 'يُفكَّك في الهيولى الأساسية دون أكسجين' },
+      { num: 2, x: 33.7, y: 30.8, labelAr: 'فركتوز 1,6 ثنائي الفوسفات', detailAr: 'المرحلة المستهلكة للطاقة: −2 ATP' },
+      { num: 3, x: 23.7, y: 50, labelAr: 'سكر PGAL (C3)', detailAr: 'يتكرّر مرتين بعد انقسام الجزيء الأم' },
+      { num: 4, x: 76.3, y: 50, labelAr: 'الجزيء الثاني من PGAL', detailAr: 'نفس التفاعلات تتكرّر مرتين في الآن نفسه' },
+      { num: 5, x: 22, y: 71.8, labelAr: 'حمض البيروفيك (C3)', detailAr: 'ناتج التحلّل السكري، يدخل الميتوكندري بوجود O₂' },
+      { num: 6, x: 27.5, y: 86.9, labelAr: 'الحصيلة الصافية', detailAr: '2 ATP نافعة + 2 NADH مقابل 4 ATP منتجة إجمالًا' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
+    id: 'schema-u7-cycle-krebs',
+    lessonId: 'phase13_chapitres_25_26_2',
+    uniteId: 'u7',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u7-cycle-krebs.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'حلقة كريبس: أكسدة الأستيل وتحرير النواقل المرجعة',
+    altAr:
+      'حلقة: أستيل-CoA ثنائي الكربون يندمج مع أوكسالوأسيتات رباعي الكربون فيتكوّن حمض الستريك سداسي الكربون، ثم يُحرّر نزعا كربوكسيل جزيئي CO₂ و3 NADH و1 FADH₂ و1 ATP، ويعود المستقبل.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — لكل دورة: 2 CO₂ + 3 NADH + 1 FADH₂ + 1 ATP، مع تجديد المستقبل أوكسالوأسيتات.</span>',
+    annotations: [
+      { num: 1, x: 76.7, y: 43.2, labelAr: 'أوكسالوأسيتات (C4)', detailAr: 'المستقبل الذي يندمج مع جزيء الأستيل' },
+      { num: 2, x: 50, y: 16.8, labelAr: 'حمض الستريك (C6)', detailAr: 'أول مركّب في الحلقة، ستة كربونات' },
+      { num: 3, x: 23.3, y: 43.2, labelAr: 'من C5 إلى C4', detailAr: 'مرحلتا نزع كربوكسيل تُحرّران CO₂' },
+      { num: 4, x: 50, y: 84.2, labelAr: 'تجديد OAA', detailAr: 'يعود المستقبل إلى بداية الدورة' },
+      { num: 5, x: 68.2, y: 19.7, labelAr: 'جزيئا CO₂', detailAr: 'تحرير كامل لكربون الأستيل على شكل غاز' },
+      { num: 6, x: 22.2, y: 31.3, labelAr: 'ثلاثة نواقل NADH', detailAr: 'نواقل مرجعة تنقل الإلكترونات إلى السلسلة التنفسية' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  {
+    id: 'schema-u7-chaine-respiratoire',
+    lessonId: 'phase14_chapitres_27_28',
+    uniteId: 'u7',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u7-chaine-respiratoire.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'الفسفرة التأكسدية: السلسلة التنفسية ومُركّب ATP',
+    altAr:
+      'مخطط غشاء الميتوكندري الداخلي: NADH وFADH₂ يغذّيان الناقلين T1 وT2، وتضخّ T1 وT3 وT4 بروتونات نحو الفراغ بين الغشائي، فيعود H⁺ عبر ATP synthase فيتكوّن ATP، والأكسجين يقبل الإلكترونات فيعطي ماءً.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — نقل الإلكترونات ثم ضخّ H⁺ ثم عودة H⁺ عبر ATP synthase تُنتج ATP، والأكسجين هو المستقبل النهائي للإلكترونات.</span>',
+    annotations: [
+      { num: 1, x: 25, y: 57.9, labelAr: 'الناقل T1', detailAr: 'يتلقّى إلكترونات NADH ويضخّ البروتونات' },
+      { num: 2, x: 45, y: 57.9, labelAr: 'الناقل T2', detailAr: 'يتلقّى إلكترونات FADH₂ دون ضخّ بروتونات' },
+      { num: 3, x: 65.7, y: 43.4, labelAr: 'ضخّ البروتونات', detailAr: 'T1 وT3 وT4 تضخّ H⁺ نحو الفراغ بين الغشائي' },
+      { num: 4, x: 80, y: 57.9, labelAr: 'الناقل T4', detailAr: 'ينقل الإلكترونات إلى الأكسجين' },
+      { num: 5, x: 80, y: 31.6, labelAr: 'الأكسجين', detailAr: 'المستقبل النهائي للإلكترونات، ويتحوّل إلى ماء' },
+      { num: 6, x: 87.5, y: 57.9, labelAr: 'مركّب ATP synthase', detailAr: 'عودة H⁺ تُحرّك تركيب ATP' },
+      { num: 7, x: 87.2, y: 77.9, labelAr: 'ATP المتكوّن', detailAr: 'أكبر رصيد طاقوي تُنتجه الخلية' },
+    ],
+    statut: 'a_valider_enseignant',
+    reviewed: false,
+  },
+  // ───────────────────────────────────────────────────────────────────────────
+  // U8 — Domaine 2 : cycle de la matière et flux d'énergie (Lot 3)
+  // ───────────────────────────────────────────────────────────────────────────
+  {
+    id: 'schema-u8-cycle-matiere-energie',
+    lessonId: 'phase15_chapitres_29_30_2',
+    uniteId: 'u8',
+    typeVisuel: 'svg_vectoriel',
+    fichier: 'u8-cycle-matiere-energie.svg',
+    largeur: 1200,
+    hauteur: 760,
+    titreAr: 'دورة المادة وتدفّق الطاقة بين التركيب الضوئي والتنفس',
+    altAr:
+      'مخططان متقابلان: الصانعة الخضراء تستهلك CO₂ وH₂O وتُنتج غلوكوز وO₂ بفضل الضوء، والميتوكندري يستهلك الغلوكوز وO₂ ويعيد CO₂ وH₂O مع تحرير ATP وحرارة.',
+    legendeAr:
+      '<span><strong>الوثيقة</strong> — المادة تدور في حلقة مغلقة (CO₂، H₂O، O₂، الغلوكوز) بينما الطاقة تتدفّق في اتجاه واحد: ضوء ← ATP ← حرارة متبددة.</span>',
+    annotations: [
+      { num: 1, x: 25.8, y: 34.2, labelAr: 'الصانعة الخضراء', detailAr: 'تحوّل الطاقة الضوئية إلى طاقة كيميائية كامنة' },
+      { num: 2, x: 74.2, y: 34.2, labelAr: 'الميتوكندري', detailAr: 'يحرّر الطاقة الكامنة في الغلوكوز' },
+      { num: 3, x: 50.8, y: 34.5, labelAr: 'ثاني أكسيد الكربون والماء', detailAr: 'ينتقلان من التنفس إلى التركيب الضوئي' },
+      { num: 4, x: 50.8, y: 72.1, labelAr: 'O₂ + الغلوكوز', detailAr: 'ينتقلان من التركيب الضوئي إلى التنفس' },
+      { num: 5, x: 16.3, y: 8.7, labelAr: 'الطاقة الضوئية', detailAr: 'المصدر الأول للطاقة، ولا يعود إلى الشمس' },
+      { num: 6, x: 74.2, y: 84.2, labelAr: 'حرارة متبددة', detailAr: 'الطاقة غير القابلة للاستعمال تخرج من المنظومة' },
     ],
     statut: 'a_valider_enseignant',
     reviewed: false,

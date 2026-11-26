@@ -135,5 +135,16 @@ n'est promu « validé » : cela demande la signature d'un enseignant, poste par
 
 **Porte ouverte** : le Lot 2 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
 729 tests, build OK, `verifier-hors-ligne` **RÉSULTAT : OK** avec 47 illustrations, coquille 2,21 Mio,
-`generer-schemas-svt --verifier` 21/21), mais **les Lots 3 (`u6`–`u8`) et 4 (`u9`–`u11`) ne sont pas
-ouverts** et aucun schéma n'est promu « validé ».
+`generer-schemas-svt --verifier` 21/21), mais **le Lot 4 (`u9`–`u11`) n'est pas ouvert** et aucun
+schéma n'est promu « validé ».
+
+## Schémas « zéro texte IA » — Lot 3 : u6 (photosynthèse), u7 (respiration), u8 (cycle) (2026-11-26)
+
+| N° | Objet | Fichiers | Constat | Arbitrage | Statut | Date |
+| --- | --- | --- | --- | --- | --- | --- |
+| A-071 | **6 schémas créés** sur les leçons restées sans visuel du Domaine 2 | `src/data/schemasSvt.ts`, `scripts/generer-schemas-svt.mjs`, `public/lecons/img/u6-*.svg`, `public/lecons/img/u7-*.svg`, `public/lecons/img/u8-*.svg`, `plans/SCHEMAS-ZERO-TEXTE-IA-LOT3-2026-11-26.md` | `u6`, `u7` et `u8` possédaient déjà **13 WebP du manuel**, mais six leçons n'avaient **aucun document** : le cycle de Calvin et l'expérience de Calvin (`u6`), la glycolyse, le cycle de Krebs et la chaîne respiratoire (`u7`), le cycle de la matière (`u8`). Six schémas vectoriels les couvrent désormais, avec 5 à 7 repères chacun. Le Domaine 2 est **intégralement illustré** (u6 7/7, u7 5/5, u8 2/2). | Les 13 WebP du manuel restent **intactes et non promues**. Premier essai de ce lot rejeté pour une raison de fond : du texte arabe avait été écrit dans les SVG (`تجديد RuBP`, `غلوكوز`), ce que le garde-fou `verifier-hors-ligne.mjs` refuse et que le rastériseur ne rend pas correctement (pas de bidi) — tout l'arabe a été retiré des fichiers, les libellés vivent dans `annotations`/`legendeAr`. Correction scientifique également : le complexe T2 ne pompe pas de protons (la flèche fautive a été supprimée). **Aucune promotion `reviewed: true`.** | `en attente enseignant` — 53 entrées sur 53 en `a_valider_enseignant` ; relecture nominative exigée | 2026-11-26 |
+
+**Porte ouverte** : le Lot 3 est franchi techniquement (ESLint 0 erreur, `tsc` 0 erreur, 86 fichiers /
+729 tests, build OK, `verifier-hors-ligne` **RÉSULTAT : OK** avec 53 illustrations, coquille 2,21 Mio,
+`generer-schemas-svt --verifier` 27/27), mais **le Lot 4 (`u9`–`u11`) n'est pas ouvert** et aucun
+schéma n'est promu « validé ».

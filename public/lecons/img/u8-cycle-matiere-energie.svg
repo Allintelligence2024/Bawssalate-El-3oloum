@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u8-cycle-matiere-energie">
+<rect width="1200" height="760" fill="#ffffff"/>
+<rect x="40" y="40" width="1120" height="680" rx="40" fill="#fcfdfb" stroke="#d7dfd9" stroke-width="2"/>
+<rect x="120" y="170" width="380" height="380" rx="26" fill="#e8f2ec" stroke="#1f6f52" stroke-width="3"/>
+<text x="310" y="214" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#1f6f52" text-anchor="middle" font-weight="700">Chloroplaste</text>
+<rect x="700" y="170" width="380" height="380" rx="26" fill="#fbeceb" stroke="#a5312b" stroke-width="3"/>
+<text x="890" y="214" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="20" fill="#a5312b" text-anchor="middle" font-weight="700">Mitochondrie</text>
+<g stroke="#5f6f66" stroke-width="4" fill="none" stroke-linecap="round"><line x1="696" y1="320" x2="524" y2="320"/><path d="M535 315.1 L524 320 L535 324.9" stroke-width="4"/></g>
+<text x="610" y="296" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#5f6f66" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">CO₂ + H₂O</text>
+<g stroke="#1f6f52" stroke-width="4" fill="none" stroke-linecap="round"><line x1="504" y1="470" x2="696" y2="470"/><path d="M685 474.9 L696 470 L685 465.1" stroke-width="4"/></g>
+<text x="610" y="510" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="17" fill="#1f6f52" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">O₂ + glucose</text>
+<text x="310" y="330" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#1f6f52" text-anchor="middle">CO₂ + H₂O → glucose + O₂</text>
+<text x="890" y="330" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#a5312b" text-anchor="middle">glucose + O₂ → CO₂ + H₂O</text>
+<circle cx="120" cy="96" r="30" fill="#fbf1dd" stroke="#a97517" stroke-width="3"/>
+<line x1="158" y1="96" x2="172" y2="96" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="146.9" y1="122.9" x2="156.8" y2="132.8" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="120" y1="134" x2="120" y2="148" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="93.1" y1="122.9" x2="83.2" y2="132.8" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="82" y1="96" x2="68" y2="96" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="93.1" y1="69.1" x2="83.2" y2="59.2" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="120" y1="58" x2="120" y2="44" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<line x1="146.9" y1="69.1" x2="156.8" y2="59.2" stroke="#a97517" stroke-width="3" stroke-linecap="round"/>
+<g stroke="#a97517" stroke-width="3" fill="none" stroke-linecap="round"><line x1="152" y1="128" x2="182" y2="164"/><path d="M173 159.6 L182 164 L179.3 154.4" stroke-width="3"/></g>
+<text x="214" y="112" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="21" fill="#a97517" text-anchor="start" font-weight="700">hν</text>
+<text x="310" y="500" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">ATP</text>
+<text x="890" y="500" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="19" fill="#1f2d27" text-anchor="middle" font-weight="700">ATP</text>
+<g stroke="#a5312b" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="810" y1="560" x2="810" y2="632"/><path d="M805.9 622.9 L810 632 L814.1 622.9" stroke-width="2.5"/></g>
+<g stroke="#a5312b" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="890" y1="560" x2="890" y2="632"/><path d="M885.9 622.9 L890 632 L894.1 622.9" stroke-width="2.5"/></g>
+<g stroke="#a5312b" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="970" y1="560" x2="970" y2="632"/><path d="M965.9 622.9 L970 632 L974.1 622.9" stroke-width="2.5"/></g>
+<text x="890" y="664" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="16" fill="#a5312b" text-anchor="middle" font-weight="700">chaleur</text>
+</svg>

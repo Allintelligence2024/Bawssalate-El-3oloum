@@ -1317,6 +1317,302 @@ planche('u5-morphine', 1200, 720, ({ repere }) => {
   return out;
 });
 
+// ═══════════════════════════ LOT 3 — u6 (photosynthèse), u7 (respiration), u8 (cycle) ═══════════════════════════
+// Règle « zéro texte IA » : aucun mot arabe dans ces SVG (le garde-fou de verifier-hors-ligne le refuse).
+// Seuls des symboles scientifiques latins (RuBP, PGAL, ATP, NADPH, ¹⁴CO₂, hν…) apparaissent ; les termes
+// arabes viennent du registre (`annotations` + `legendeAr`), rendus par l'application.
+
+/** Flèche coudée : polyligne + pointe sur le dernier segment. */
+function flechePoly(points, o = {}) {
+  const { couleur = INK, largeur = 3, tete = 11 } = o;
+  const [xa, ya] = points[points.length - 2];
+  const [xb, yb] = points[points.length - 1];
+  const angle = Math.atan2(yb - ya, xb - xa);
+  const a1 = angle + Math.PI - 0.42;
+  const a2 = angle + Math.PI + 0.42;
+  return [
+    `<path d="M${points.map(([x, y]) => `${P(x)} ${P(y)}`).join(' L')}" fill="none" stroke="${couleur}" stroke-width="${largeur}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="M${P(xb + Math.cos(a1) * tete)} ${P(yb + Math.sin(a1) * tete)} L${P(xb)} ${P(yb)} L${P(xb + Math.cos(a2) * tete)} ${P(yb + Math.sin(a2) * tete)}" fill="none" stroke="${couleur}" stroke-width="${largeur}" stroke-linecap="round" stroke-linejoin="round"/>`,
+  ];
+}
+
+/** Arc d'ellipse échantillonné entre deux angles (radians). */
+const arcEllipse = (cx, cy, rx, ry, a0, a1, n = 40) => {
+  const pts = [];
+  for (let i = 0; i <= n; i += 1) {
+    const a = a0 + ((a1 - a0) * i) / n;
+    pts.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]);
+  }
+  return pts;
+};
+
+/** Étiquette d'étape : boîte arrondie + libellé latin centré. */
+const etape = (x, y, l, h, couleur, fond, libelle, taille = 21) => [
+  boite(x, y, l, h, { remplissage: fond, couleur, largeur: 3, rayon: 14 }),
+  texte(x + l / 2, y + h / 2 + 7, libelle, { taille, couleur, ancre: 'middle', gras: true }),
+];
+
+// ── 1. u6 — cycle de Calvin : fixation, réduction, régénération ──────────────────
+planche('u6-cycle-calvin', 1200, 760, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 40 }));
+
+  // 1) fixation
+  out.push(...etape(880, 280, 230, 80, AMBER, AMBER_FILL, 'RuBP (C5)'));
+  out.push(...etape(880, 440, 230, 80, GREEN, GREEN_FILL, 'APG (C3)'));
+  out.push(fleche(995, 364, 995, 436, INK, 3));
+  out.push(fleche(1140, 400, 1006, 400, MUTE, 3, 10));
+  out.push(texte(1072, 372, '3 CO₂', { taille: 17, couleur: MUTE, ancre: 'middle', gras: true, halo: true }));
+
+  // 2) réduction
+  out.push(...etape(560, 440, 230, 80, RED, RED_FILL, 'PGAL (C3)'));
+  out.push(fleche(876, 480, 794, 480, INK, 3));
+  out.push(texte(835, 456, 'ATP', { taille: 15, couleur: RED, ancre: 'middle', gras: true, halo: true }));
+  out.push(texte(835, 508, 'NADPH', { taille: 15, couleur: RED, ancre: 'middle', gras: true, halo: true }));
+
+  // 3) régénération : 5/6 du PGAL retournent en RuBP
+  out.push(...flechePoly([[675, 436], [675, 196], [995, 196], [995, 276]], { couleur: AMBER, largeur: 3 }));
+  out.push(texte(836, 176, 'RuBP (5/6)', { taille: 17, couleur: AMBER, ancre: 'middle', gras: true, halo: true }));
+
+  // 4) sortie : 1/6 → glucose
+  out.push(...etape(200, 440, 300, 80, GREEN, '#eaf4ee', 'Glucose (C6)'));
+  out.push(fleche(556, 480, 504, 480, INK, 3));
+
+  repere(1, 995, 256);
+  repere(2, 1134, 404);
+  repere(3, 938, 416);
+  repere(4, 616, 416);
+  repere(5, 835, 540);
+  repere(6, 960, 226);
+  repere(7, 350, 416);
+  return out;
+});
+
+// ── 2. u6 — expérience de Calvin : chronologie du ¹⁴CO₂ ─────────────────────────
+planche('u6-calvin-experience', 1200, 760, ({ repere }) => {
+  const out = [];
+  const G = { x0: 150, x1: 1130, y0: 120, y1: 600 };
+  const T = (s) => G.x0 + (s / 90) * (G.x1 - G.x0);
+  const R = (v) => G.y1 - (v / 100) * (G.y1 - G.y0);
+
+  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.5 }));
+  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.5 }));
+  for (const s of [0, 15, 30, 45, 60, 75, 90]) {
+    out.push(ligne(T(s), G.y1, T(s), G.y1 + 8, { couleur: INK, largeur: 2 }));
+    out.push(texte(T(s), G.y1 + 30, String(s), { taille: 14, couleur: MUTE, ancre: 'middle' }));
+  }
+  out.push(texte(G.x1 + 22, G.y1 + 30, 's', { taille: 15, couleur: MUTE, ancre: 'start', gras: true }));
+  out.push(texte(G.x0 - 14, G.y0 - 18, '¹⁴C', { taille: 17, couleur: INK, ancre: 'start', gras: true }));
+
+  const courbe = (f, couleur) => {
+    const pts = [];
+    for (let s = 0; s <= 90; s += 1.5) pts.push([T(s), R(f(s))]);
+    return poly(pts, { couleur, largeur: 4 });
+  };
+  out.push(courbe((s) => (s <= 5 ? (s / 5) * 96 : 96 * Math.exp(-(s - 5) / 22)), GREEN));
+  out.push(courbe((s) => (s <= 20 ? (s / 20) * 74 : 74 * Math.exp(-(s - 20) / 34)), AMBER));
+  out.push(courbe((s) => 62 * (1 - Math.exp(-s / 26)), RED));
+
+  // injection de ¹⁴CO₂ à t = 0
+  out.push(fleche(150, 44, 168, 96, RED, 3, 10));
+  out.push(texte(196, 60, '¹⁴CO₂', { taille: 17, couleur: RED, ancre: 'start', gras: true }));
+
+  repere(1, 246, 148);
+  repere(2, 404, 248);
+  repere(3, 906, 300);
+  repere(4, 118, 66);
+  repere(5, 588, 470);
+  return out;
+});
+
+// ── 3. u7 — glycolyse : bilan net de 2 ATP ──────────────────────────────────────
+planche('u7-glycolyse', 1200, 780, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 30, 1120, 700, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 40 }));
+
+  out.push(...etape(470, 70, 260, 78, AMBER, AMBER_FILL, 'Glucose (C6)'));
+  out.push(fleche(600, 152, 600, 196, INK, 3));
+  out.push(texte(628, 182, '−2 ATP', { taille: 17, couleur: RED, ancre: 'start', gras: true }));
+
+  out.push(...etape(420, 200, 360, 78, BLUE, BLUE_FILL, 'Fructose-1,6-BP (C6)', 19));
+  out.push(flechePoly([[600, 282], [600, 316], [400, 316], [400, 350]], { couleur: INK, largeur: 3 }));
+  out.push(flechePoly([[600, 316], [800, 316], [800, 350]], { couleur: INK, largeur: 3 }));
+
+  out.push(...etape(300, 354, 200, 70, GREEN, GREEN_FILL, 'PGAL (C3)'));
+  out.push(...etape(700, 354, 200, 70, GREEN, GREEN_FILL, 'PGAL (C3)'));
+
+  out.push(fleche(400, 428, 400, 520, INK, 3));
+  out.push(fleche(800, 428, 800, 520, INK, 3));
+  out.push(texte(430, 470, '+4 ATP', { taille: 16, couleur: RED, ancre: 'start', gras: true }));
+  out.push(texte(770, 470, '2 NADH', { taille: 16, couleur: BLUE, ancre: 'end', gras: true }));
+
+  out.push(...etape(280, 524, 240, 70, RED, RED_FILL, 'Pyruvate (C3)', 18));
+  out.push(...etape(680, 524, 240, 70, RED, RED_FILL, 'Pyruvate (C3)', 18));
+
+  out.push(boite(320, 646, 560, 62, { remplissage: '#eef4ef', couleur: INK, largeur: 2.5, rayon: 14 }));
+  out.push(texte(600, 686, '2 ATP + 2 NADH', { taille: 22, couleur: INK, ancre: 'middle', gras: true }));
+
+  repere(1, 452, 140);
+  repere(2, 404, 240);
+  repere(3, 284, 390);
+  repere(4, 916, 390);
+  repere(5, 264, 560);
+  repere(6, 330, 678);
+  return out;
+});
+
+// ── 4. u7 — cycle de Krebs : décarboxylations et transporteurs réduits ──────────
+planche('u7-cycle-krebs', 1200, 760, ({ repere }) => {
+  const out = [];
+  const cx = 600;
+  const cy = 385;
+  const rx = 320;
+  const ry = 195;
+
+  out.push(poly(arcEllipse(cx, cy, rx, ry, 0, Math.PI * 2), { couleur: GRID, largeur: 3, pointilles: '9 8' }));
+  for (const [a0, a1] of [
+    [-0.35, -Math.PI / 2 + 0.35],
+    [-Math.PI / 2 - 0.35, -Math.PI + 0.35],
+    [-Math.PI - 0.35, -1.5 * Math.PI + 0.35],
+    [-1.5 * Math.PI - 0.35, -2 * Math.PI + 0.35],
+  ]) {
+    out.push(...flechePoly(arcEllipse(cx, cy, rx, ry, a0, a1, 26), { couleur: INK, largeur: 3, tete: 12 }));
+  }
+
+  const noeud = (x, y, l, h, couleur, fond, libelle, taille = 19) => [
+    boite(x - l / 2, y - h / 2, l, h, { remplissage: PAPER, couleur, largeur: 3, rayon: 14 }),
+    texte(x, y + 7, libelle, { taille, couleur, ancre: 'middle', gras: true }),
+  ];
+
+  out.push(...noeud(cx + rx, cy, 240, 76, AMBER, AMBER_FILL, 'OAA (C4)'));
+  out.push(...noeud(cx, cy - ry, 240, 76, GREEN, GREEN_FILL, 'Citrate (C6)'));
+  out.push(...noeud(cx - rx, cy, 220, 76, BLUE, BLUE_FILL, 'C5 → C4'));
+  out.push(...noeud(cx, cy + ry, 240, 76, RED, RED_FILL, 'OAA (C4)'));
+
+  // entrée : acétyl-CoA (C2)
+  out.push(texte(1064, 500, 'Acétyl-CoA (C2)', { taille: 16, couleur: AMBER, ancre: 'middle', gras: true }));
+  out.push(fleche(1064, 474, 1012, 410, AMBER, 3, 10));
+
+  // sorties
+  out.push(fleche(762, 232, 806, 166, MUTE, 2.5, 9));
+  out.push(texte(818, 156, '2 CO₂', { taille: 16, couleur: MUTE, ancre: 'start', gras: true }));
+  out.push(fleche(330, 262, 268, 214, BLUE, 2.5, 9));
+  out.push(texte(258, 202, '3 NADH', { taille: 16, couleur: BLUE, ancre: 'end', gras: true }));
+  out.push(fleche(300, 440, 236, 470, RED, 2.5, 9));
+  out.push(texte(226, 486, '1 FADH₂', { taille: 16, couleur: RED, ancre: 'end', gras: true }));
+  out.push(fleche(724, 560, 790, 560, INK, 2.5, 9));
+  out.push(texte(802, 566, '1 ATP', { taille: 16, couleur: INK, ancre: 'start', gras: true }));
+
+  repere(1, 920, 328);
+  repere(2, 600, 128);
+  repere(3, 280, 328);
+  repere(4, 600, 640);
+  repere(5, 818, 150);
+  repere(6, 266, 238);
+  return out;
+});
+
+// ── 5. u7 — chaîne respiratoire et ATP synthase ─────────────────────────────────
+planche('u7-chaine-respiratoire', 1200, 760, ({ repere }) => {
+  const out = [];
+  const hautM = 400;
+  const basM = 456;
+
+  out.push(boite(40, 60, 1120, 640, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 30 }));
+  out.push(ligne(80, hautM, 1140, hautM, { couleur: INK, largeur: 5 }));
+  out.push(ligne(80, basM, 1140, basM, { couleur: INK, largeur: 5 }));
+  for (let x = 100; x <= 1120; x += 34) {
+    out.push(rond(x, hautM, 4, { remplissage: PAPER, couleur: GREEN, largeur: 2 }));
+    out.push(rond(x, basM, 4, { remplissage: PAPER, couleur: GREEN, largeur: 2 }));
+  }
+
+  const complexe = (x, libelle) => [
+    boite(x - 46, hautM - 34, 92, 124, { remplissage: GREEN_FILL, couleur: GREEN, largeur: 3, rayon: 14 }),
+    texte(x, hautM + 7, libelle, { taille: 16, couleur: GREEN, ancre: 'middle', gras: true }),
+  ];
+  out.push(...complexe(300, 'T1'));
+  out.push(...complexe(540, 'T2'));
+  out.push(...complexe(760, 'T3'));
+  out.push(...complexe(960, 'T4'));
+
+  // NADH / FADH₂ → T1 / T2
+  out.push(texte(300, 660, 'NADH, H⁺', { taille: 17, couleur: BLUE, ancre: 'middle', gras: true }));
+  out.push(fleche(300, 634, 300, 492, BLUE, 3, 10));
+  out.push(texte(540, 660, 'FADH₂', { taille: 17, couleur: RED, ancre: 'middle', gras: true }));
+  out.push(fleche(540, 634, 540, 492, RED, 3, 10));
+
+  // pompes à H⁺ : T1, T3, T4 seulement (T2 n'en pompe pas)
+  for (const x of [300, 760, 960]) out.push(fleche(x + 28, 360, x + 28, 296, GREEN, 2.5, 9));
+  out.push(texte(700, 214, 'H⁺', { taille: 19, couleur: GREEN, ancre: 'middle', gras: true }));
+
+  // O₂ accepteur final → H₂O
+  out.push(texte(960, 232, 'O₂', { taille: 19, couleur: RED, ancre: 'middle', gras: true }));
+  out.push(fleche(960, 252, 960, 330, RED, 3, 10));
+  out.push(fleche(960, 490, 960, 560, BLUE, 3, 10));
+  out.push(texte(960, 590, 'H₂O', { taille: 19, couleur: BLUE, ancre: 'middle', gras: true }));
+
+  // ATP synthase : H⁺ redescend, ATP sort vers la matrice
+  out.push(boite(1084, hautM - 40, 76, 136, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3, rayon: 14 }));
+  out.push(texte(1122, hautM + 3, 'ATP', { taille: 12, couleur: AMBER, ancre: 'middle', gras: true }));
+  out.push(texte(1122, hautM + 20, 'synthase', { taille: 9, couleur: AMBER, ancre: 'middle' }));
+  out.push(fleche(1122, 306, 1122, 356, BLUE, 2.5, 9));
+  out.push(fleche(1122, 500, 1122, 570, AMBER, 3, 10));
+  out.push(texte(1122, 600, 'ATP', { taille: 18, couleur: AMBER, ancre: 'middle', gras: true }));
+
+  repere(1, 300, 440);
+  repere(2, 540, 440);
+  repere(3, 788, 330);
+  repere(4, 960, 440);
+  repere(5, 960, 240);
+  repere(6, 1050, 440);
+  repere(7, 1046, 592);
+  return out;
+});
+
+// ── 6. u8 — cycle de la matière et flux d'énergie ───────────────────────────────
+planche('u8-cycle-matiere-energie', 1200, 760, ({ repere }) => {
+  const out = [];
+  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 40 }));
+
+  out.push(boite(120, 170, 380, 380, { remplissage: GREEN_FILL, couleur: GREEN, largeur: 3, rayon: 26 }));
+  out.push(texte(310, 214, 'Chloroplaste', { taille: 20, couleur: GREEN, ancre: 'middle', gras: true }));
+  out.push(boite(700, 170, 380, 380, { remplissage: RED_FILL, couleur: RED, largeur: 3, rayon: 26 }));
+  out.push(texte(890, 214, 'Mitochondrie', { taille: 20, couleur: RED, ancre: 'middle', gras: true }));
+
+  // échanges : CO₂ + H₂O vers la gauche, O₂ + glucose vers la droite
+  out.push(fleche(696, 320, 524, 320, MUTE, 4, 12));
+  out.push(texte(610, 296, 'CO₂ + H₂O', { taille: 17, couleur: MUTE, ancre: 'middle', gras: true, halo: true }));
+  out.push(fleche(504, 470, 696, 470, GREEN, 4, 12));
+  out.push(texte(610, 510, 'O₂ + glucose', { taille: 17, couleur: GREEN, ancre: 'middle', gras: true, halo: true }));
+
+  // réactions internes
+  out.push(texte(310, 330, 'CO₂ + H₂O → glucose + O₂', { taille: 16, couleur: GREEN, ancre: 'middle' }));
+  out.push(texte(890, 330, 'glucose + O₂ → CO₂ + H₂O', { taille: 16, couleur: RED, ancre: 'middle' }));
+
+  // énergie lumineuse entrante
+  out.push(rond(120, 96, 30, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3 }));
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2;
+    out.push(ligne(120 + Math.cos(a) * 38, 96 + Math.sin(a) * 38, 120 + Math.cos(a) * 52, 96 + Math.sin(a) * 52, { couleur: AMBER, largeur: 3 }));
+  }
+  out.push(fleche(152, 128, 182, 164, AMBER, 3, 10));
+  out.push(texte(214, 112, 'hν', { taille: 21, couleur: AMBER, ancre: 'start', gras: true }));
+
+  // ATP (photosynthèse) et chaleur dissipée (respiration)
+  out.push(texte(310, 500, 'ATP', { taille: 19, couleur: INK, ancre: 'middle', gras: true }));
+  out.push(texte(890, 500, 'ATP', { taille: 19, couleur: INK, ancre: 'middle', gras: true }));
+  for (const x of [810, 890, 970]) out.push(fleche(x, 560, x, 632, RED, 2.5, 10));
+  out.push(texte(890, 664, 'chaleur', { taille: 16, couleur: RED, ancre: 'middle', gras: true }));
+
+  repere(1, 310, 260);
+  repere(2, 890, 260);
+  repere(3, 610, 262);
+  repere(4, 610, 548);
+  repere(5, 196, 66);
+  repere(6, 890, 640);
+  return out;
+});
+
 // ───────────────────────────── écriture / vérification ─────────────────────────────
 
 const diff = [];

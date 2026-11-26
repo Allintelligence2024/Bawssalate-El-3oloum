@@ -102,9 +102,48 @@ npx vitest run                                      → 86 fichiers / 729 tests
 npm run build && node scripts/verifier-hors-ligne.mjs → 47 illustrations, coquille 2,21 Mio, RÉSULTAT : OK
 ```
 
+---
+
+# Lot 3 — `u6` (photosynthèse) + `u7` (respiration) + `u8` (cycle), 2026-11-26
+
+`u6`/`u7`/`u8` avaient déjà 13 WebP du manuel : le lot n'ajoute que les **6 leçons vides**.
+
+## 1. Journal des 6 planches
+
+| # | Slug | Essais | Défaut déclencheur | Correction |
+|---|---|---:|---|---|
+| 1 | `u6-cycle-calvin` | 2 | texte arabe dans le SVG (refusé par le garde-fou, illisible au rastérissage) ; pastilles sur `RuBP`/`APG`/`PGAL` | arabe retiré (symboles latins seuls), pastilles rejetées au-dessus des boîtes |
+| 2 | `u6-calvin-experience` | 2 | libellés arabes d'axes ; pastilles 1 et 4 superposées au coin | axes en `¹⁴C` / `s`, 1 sur le pic APG, 4 près de l'injection |
+| 3 | `u7-glycolyse` | 2 | arabe dans les boîtes, pastilles au centre des libellés | `Glucose`/`Fructose-1,6-BP`/`PGAL`/`Pyruvate`, pastilles hors boîtes |
+| 4 | `u7-cycle-krebs` | 2 | pastilles au centre des 4 nœuds, « 1 ATP » posé sur le nœud bas, flèche CO₂ traversant un coin | repères sortis, sortie ATP déplacée à droite, CO₂ dégagé |
+| 5 | `u7-chaine-respiratoire` | 2 | **erreur scientifique** : flèche de pompe à H⁺ sur T2 ; « ATP » écrit deux fois ; `H⁺` isolé au milieu | pompes limitées à T1/T3/T4, boîte `ATP synthase` + sortie `ATP`, `H⁺` rapproché des pompes |
+| 6 | `u8-cycle-matiere-energie` | 2 | flèches de chaleur dirigées **vers** la mitochondrie (sens inversé) | flèches retournées vers l'extérieur, `chaleur` sous le compartiment |
+
+## 2. Synthèse Lot 3
+
+| Indicateur | Valeur |
+|---|---|
+| Visuels retenus | **6** — 6 SVG, 0 WebP |
+| Essais moyens | 2,0 par visuel |
+| Poids total | **33,4 Ko** (3,5–9,9 Ko pièce) |
+| Repères | 5 à 7 par visuel, tous dans `[5, 95]` |
+| Registre après lot | **32 schémas** (27 SVG + 5 WebP annotées), **53 illustrations** |
+| Couverture | **44 / 55 leçons (80 %)** — Domaine 2 complet |
+| `reviewed: true` | **0** sur 53 |
+
+## 3. Contrôle final
+
+```
+node scripts/generer-schemas-svt.mjs --verifier                 → 27 / 27 identiques
+/tmp/.venv/bin/python scripts/previsualiser-schemas.py u6-… u7-… u8-…   → 6 planches
+/tmp/.venv/bin/python scripts/previsualiser-annotations.py schema-u6-…  → 6 composites
+npx vitest run                                                  → 86 fichiers / 729 tests
+npm run build && node scripts/verifier-hors-ligne.mjs           → 53 illustrations, coquille 2,21 Mio
+```
+
 ## Prochains lots (non commencés)
 
-- **Lot 3** — `u6`/`u7`/`u8` : conserver les 13 WebP, combler les leçons sans visuel (Jagendorf, glycolyse/Krebs/Mitchell-Racker, fermentation, couplage).
+- **Lot 4** — `u9`/`u10`/`u11` : `u10` intégralement (ondes P/S + zones d'ombre, discontinuités, coupe interne).
 - **Lot 4** — `u9`/`u10`/`u11` : `u10` intégralement (ondes P/S + zones d'ombre, discontinuités, coupe interne).
 - **Reliquats u4/u5** (si l'enseignant le demande) : un 2ᵉ schéma possible sur `phase6_chapitres_11_12` (réponse secondaire) et `phase9_chapitres_17_18` (réflexe myotatique) sans dépasser le plafond de 2 par leçon.
 
