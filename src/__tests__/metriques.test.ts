@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
+import { ILLUSTRATIONS_LECONS, illustrationsParLecon } from '../data/illustrationsLecons';
 
 const racine = new URL('../..', import.meta.url).pathname;
 const lire = (p: string) => readFileSync(`${racine}${p}`, 'utf8');
@@ -91,4 +92,29 @@ it('les métriques des sujets et corrigés incluent les sessions exceptionnelles
   const readme = lire('README.md');
   expect(readme).toContain(`| Sujets officiels structurés | **${ids.length}** |`);
   expect(readme).toContain(`| Sujets avec éléments de réponse | **${corriges.length}** |`);
+});
+
+describe('registre des illustrations — 21 images OK (Phase 3)', () => {
+  it('contient exactement les 21 images OK, toutes à valider par un enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(21);
+    const fichiers = new Set<string>();
+    const unites = new Set<string>();
+    for (const i of ILLUSTRATIONS_LECONS) {
+      expect(['u6', 'u7', 'u8', 'u9', 'u11']).toContain(i.uniteId);
+      expect(i.statut).toBe('a_valider_enseignant');
+      expect(i.reviewed).toBe(false);
+      expect(i.fichier).toMatch(/^[a-zA-Z0-9._-]+\.webp$/);
+      expect(i.largeur).toBeGreaterThan(0);
+      expect(i.largeur).toBeLessThanOrEqual(1200);
+      expect(i.hauteur).toBeGreaterThan(0);
+      expect(i.hauteur).toBeLessThanOrEqual(1200);
+      expect(i.altAr.length).toBeGreaterThan(0);
+      fichiers.add(i.fichier);
+      unites.add(i.uniteId);
+    }
+    expect(fichiers.size).toBe(21);
+    expect(unites.size).toBe(5);
+    expect(illustrationsParLecon('phase10_chapitres_19_20_2').length).toBeGreaterThan(0);
+    expect(illustrationsParLecon('u1-lesson-inexistante')).toEqual([]);
+  });
 });

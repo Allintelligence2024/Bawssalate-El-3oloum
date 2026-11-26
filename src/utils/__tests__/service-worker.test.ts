@@ -163,3 +163,21 @@ describe('ressources de la Boussole dans le cache de la classe', () => {
     expect(await e.demande('/boussole/inconnu.pdf')).toBeUndefined();
   });
 });
+
+describe('illustrations WebP de leçon (Phase 2)', () => {
+  it('ne précache pas les WebP mais les mémorise à la première ouverture', async () => {
+    const e = environnement();
+    e.put('/lecons/img/figure.webp', 'webp', 'image/webp');
+    await e.lifecycle('install');
+    // Jamais dans l'installation : la coquille de démarrage reste inchangée.
+    expect(e.demandes).not.toContain('/lecons/img/figure.webp');
+    const premier = await e.demande('/lecons/img/figure.webp');
+    expect(await premier!.text()).toBe('webp');
+    expect(e.cachesData.get('kunz-hors-ligne-test')?.has('/lecons/img/figure.webp')).toBe(true);
+    e.setOnline(false);
+    const horsLigne = await e.demande('/lecons/img/figure.webp');
+    expect(await horsLigne!.text()).toBe('webp');
+    // Un fichier arbitraire sous /lecons/ ne passe plus la règle d'origine.
+    expect(await e.demande('/lecons/autre.bin')).toBeUndefined();
+  });
+});

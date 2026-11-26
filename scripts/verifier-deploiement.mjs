@@ -45,9 +45,9 @@ await attendre('/manifest.webmanifest', { type: 'json' });
 await attendre('/icon.svg', { type: 'svg' });
 await attendre('/boussole/index.html', { type: 'text/html' });
 
-// La coquille doit rester légère : c'est la promesse « Lite ».
+// La coquille doit rester légère : c'est la promesse « Lite » (Phase 2 : plafond 2,25 Mio).
 const MIO = 1024 * 1024;
-const BUDGET_COQUILLE = 2.5 * MIO;
+const BUDGET_COQUILLE = 2.25 * MIO;
 if (manifeste.octetsCoquille > BUDGET_COQUILLE) {
   problemes.push(`coquille ${(manifeste.octetsCoquille / MIO).toFixed(2)} Mio > ${BUDGET_COQUILLE / MIO} Mio`);
 }

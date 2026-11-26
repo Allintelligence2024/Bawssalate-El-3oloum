@@ -116,6 +116,17 @@
 [data-theme='dark'] .bg-sage .text-forest,
 [data-theme='dark'] .hover\:bg-sage:hover { color: #0a1a12; }
 
+/* Illustrations du manuel (WebP) : les schémas sont des recreations à traits noirs
+   sur fond blanc. Même en thème sombre, on garde un fond neutre clair AUTOUR de
+   l'image (object-contain laisse des bandes visibles) et sous la légende du zoom,
+   sinon le texte et les axes du schéma se confondent avec l'arrière-plan sombre.
+   Règle hors @layer : elle prime sur les utilitaires Tailwind, y compris en sombre. */
+.fond-schema-clair,
+[data-theme='dark'] .fond-schema-clair {
+  background-color: #fbfaf3;
+  color: #183d31;
+}
+
 html, body, #root { height: 100%; margin: 0; }
 html { scroll-behavior: smooth; }
 body {
