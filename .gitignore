@@ -56,15 +56,9 @@ plans/inventaire-images-livre.json
 plans/_travail-images/
 .cache/
 
-# Phase 3 — capsules audio « voix du المرشد » : jamais versionnées dans Git ni public/
-# (générées dans plans/_audio-r2/ et déployées sur Cloudflare R2).
+# Phase 3–5 — espace local de prévisualisation/staging R2 (hors Git ; les 65 MP3 intégrés
+# dans l'application vivent dans public/audio/{lecons,mourchid}/, hors précache).
 plans/_audio-r2/
-public/audio/
-public/**/*.mp3
-public/**/*.wav
-public/**/*.ogg
-public/**/*.opus
-public/**/*.m4a
 
 # Exports temporaires d'audit (Blocs E/F) : conservés sur le poste, jamais versionnés.
 audit-v2-*.md

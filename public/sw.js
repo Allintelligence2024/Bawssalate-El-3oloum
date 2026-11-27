@@ -29,6 +29,10 @@ const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
 // (origine différente) : le cache HTTP du navigateur prend le relais.
 const illustrationValide = u => typeof u === 'string' &&
   /^\/lecons\/img\/[a-zA-Z0-9_.-]+\.(webp|svg)$/.test(u);
+// Phase 5 : les 65 MP3 (/audio/lecons/ et /audio/mourchid/) ne figurent dans aucun précache.
+// Ils sont servis à la demande (<audio preload="none">) et mis en cache après la première lecture.
+const audioValide = u => typeof u === 'string' &&
+  /^\/audio\/(lecons|mourchid)\/[a-z0-9._-]+\.(mp3|opus|ogg|m4a)$/.test(u);
 
 /** `statiques` = coquille (toujours téléchargée). `contenu` = lourd (sur demande explicite). */
 function valideManifeste(m) {
@@ -172,11 +176,25 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  // Certains lecteurs PDF demandent une plage. Un 200 intégral déjà vérifié est aussi
-  // une réponse valide ; jamais de 206 partiel dans le cache des fiches.
+  // Certains lecteurs PDF ou audio demandent une plage (Range). Un 200 intégral déjà
+  // vérifié est aussi une réponse valide ; jamais de 206 partiel dans le cache.
   if (request.headers.has('range')) {
-    if (BOUSSOLE.includes(url.pathname) && url.pathname.endsWith('.pdf')) {
-      event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(r => r || fetch(request)));
+    if ((BOUSSOLE.includes(url.pathname) && url.pathname.endsWith('.pdf')) || audioValide(url.pathname)) {
+      event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(cached => {
+        if (cached) return cached;
+        if (audioValide(url.pathname) && typeof event.waitUntil === 'function') {
+          event.waitUntil((async () => {
+            try {
+              const cache = await caches.open(CACHE);
+              const complet = await fetch(url.pathname);
+              if (complet.status === 200 && typeValide(url.pathname, complet)) {
+                await cache.put(url.pathname, complet);
+              }
+            } catch { /* hors ligne ou annulé : on ignore silencieusement */ }
+          })());
+        }
+        return fetch(request);
+      }));
     }
     return;
   }
@@ -185,11 +203,12 @@ self.addEventListener('fetch', event => {
     return;
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
-  // Les illustrations WebP sont explicitement autorisées ici, mais absentes du précache :
-  // elles entrent dans le cache à la volée lors de la première ouverture de la leçon.
+  // Les illustrations WebP et les MP3 du المرشد sont explicitement autorisés ici, mais absents
+  // du précache : ils entrent dans le cache à la volée lors de la première ouverture/lecture.
   if (!url.pathname.startsWith('/assets/') &&
       !/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(url.pathname) &&
       !illustrationValide(url.pathname) &&
+      !audioValide(url.pathname) &&
       !BOUSSOLE.includes(url.pathname) && !COQUILLE.includes(url.pathname)) return;
   // Ne jamais substituer index.html à une leçon ou à un module absent.
   event.respondWith((async () => {
@@ -198,7 +217,7 @@ self.addEventListener('fetch', event => {
     if (cached) return cached;
     try {
       const res = await fetch(request);
-      if (res.ok && typeValide(url.pathname, res) && !request.headers.has('range')) {
+      if (res.status === 200 && typeValide(url.pathname, res) && !request.headers.has('range')) {
         await cache.put(request, res.clone()).catch(() => {});
       }
       return res;

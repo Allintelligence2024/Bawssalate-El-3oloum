@@ -227,4 +227,27 @@ describe('illustrations WebP de leçon (Phase 2)', () => {
     const chunk = await e.demande('/assets/audioLecons-u1pilot.js');
     expect(await chunk!.text()).toContain('AUDIO_LECONS');
   });
+
+  it('ne précache jamais les MP3 /audio/, les mémorise à la première lecture et les sert hors ligne (y compris avec Range)', async () => {
+    const e = environnement();
+    e.put('/audio/lecons/d1-u1-l1-expression-genique.mp3', 'ID3-mp3-lecon', 'audio/mpeg');
+    e.put('/audio/mourchid/mourchid-u1.mp3', 'ID3-mp3-mourchid', 'audio/mpeg');
+    await e.lifecycle('install');
+    expect(e.demandes).not.toContain('/audio/lecons/d1-u1-l1-expression-genique.mp3');
+    expect(e.demandes).not.toContain('/audio/mourchid/mourchid-u1.mp3');
+
+    const first = await e.demande('/audio/lecons/d1-u1-l1-expression-genique.mp3');
+    expect(await first!.text()).toBe('ID3-mp3-lecon');
+    expect(e.cachesData.get('kunz-hors-ligne-test')?.has('/audio/lecons/d1-u1-l1-expression-genique.mp3')).toBe(true);
+
+    const capsule = await e.demande('/audio/mourchid/mourchid-u1.mp3');
+    expect(await capsule!.text()).toBe('ID3-mp3-mourchid');
+
+    e.setOnline(false);
+    const offlineRange = await e.demande('/audio/lecons/d1-u1-l1-expression-genique.mp3', 'cors', true);
+    expect(await offlineRange!.text()).toBe('ID3-mp3-lecon');
+    const offlineMourchid = await e.demande('/audio/mourchid/mourchid-u1.mp3', 'cors', true);
+    expect(await offlineMourchid!.text()).toBe('ID3-mp3-mourchid');
+    expect(await e.demande('/audio/autre/inconnu.mp3')).toBeUndefined();
+  });
 });

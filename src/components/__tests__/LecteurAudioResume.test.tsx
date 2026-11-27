@@ -3,6 +3,8 @@
 // de résumés écrits/audio (Mourchid) et du catalogue complet u1–u11 (55/55 leçons).
 
 import { act } from 'react';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axe from 'axe-core';
@@ -72,11 +74,13 @@ describe('registre audio leçons (src/data/audioLecons.ts) — couverture 55/55 
       expect(p!.statut).toBe('a_valider_enseignant');
       expect(p!.reviewed).toBe(false);
       expect(fichiersVus.has(p!.fichier)).toBe(false);
+      expect(existsSync(join(process.cwd(), 'public/audio/lecons', p!.fichier))).toBe(true);
       fichiersVus.add(p!.fichier);
     }
   });
 
-  it('résout les URL R2 via urlAudioLecon et rejette les chemins invalides', () => {
+  it('résout vers /audio/lecons/ par défaut, accepte un override R2 et rejette les chemins invalides', () => {
+    expect(urlAudioLecon('lecon_transcription.mp3')).toBe('/audio/lecons/lecon_transcription.mp3');
     expect(urlAudioLecon('lecon_transcription.mp3', '')).toBeNull();
     expect(
       urlAudioLecon('lecon_transcription.mp3', 'https://media.bawssala.dz/audio/lecons'),

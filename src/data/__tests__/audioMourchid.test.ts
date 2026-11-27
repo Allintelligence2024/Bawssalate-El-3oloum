@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   AUDIO_MOURCHID,
   audioPourUnite,
@@ -51,6 +53,7 @@ describe('registre « voix du المرشد » (Phase 3)', () => {
       fichiers.add(p.fichier);
 
       expect(p.fichier).toMatch(/^mourchid-[a-z0-9-]+\.mp3$/);
+      expect(existsSync(join(process.cwd(), 'public/audio/mourchid', p.fichier))).toBe(true);
       expect(p.dureeSecondes).toBeGreaterThanOrEqual(60);
       expect(p.dureeSecondes).toBeLessThanOrEqual(120);
       expect(p.tailleKo).toBeGreaterThan(300);
@@ -69,8 +72,9 @@ describe('registre « voix du المرشد » (Phase 3)', () => {
   });
 });
 
-describe('résolveur URL R2 et formatage de durée (Phase 3)', () => {
-  it('retourne null tant que VITE_AUDIO_BASE_URL n’est pas configuré', () => {
+describe('résolveur URL audio (local par défaut + override R2) et formatage de durée', () => {
+  it('résout vers /audio/mourchid/ par défaut et accepte une désactivation explicite par chaîne vide', () => {
+    expect(urlAudioMourchid('mourchid-u1.mp3')).toBe('/audio/mourchid/mourchid-u1.mp3');
     expect(urlAudioMourchid('mourchid-u1.mp3', '')).toBeNull();
     expect(urlAudioMourchid('mourchid-u1.mp3', '   ')).toBeNull();
   });

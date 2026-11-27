@@ -19,6 +19,8 @@ const html = readFileSync('dist/index.html', 'utf8');
 const version = manifeste.version;
 const problemes = [];
 const DOSSIER_IMAGES = 'public/lecons/img';
+const DOSSIER_AUDIO_LECONS = 'public/audio/lecons';
+const DOSSIER_AUDIO_MOURCHID = 'public/audio/mourchid';
 
 // ── 1. Cohérence statique du build (règles de valideManifeste + install dans sw.js) ──
 if (sw.includes('__KUNZ_BUILD_ID__')) problemes.push('sw.js : identifiant de version non remplacé');
@@ -74,10 +76,13 @@ else {
     problemes.push('manifeste : audioLecons-*.js absent du lot « contenu » (hors-ligne sur demande)');
   }
 }
-// Phase 2 : aucune illustration WebP ne doit entrer dans le précache de démarrage.
+// Phase 2 & 5 : aucune illustration ni aucun fichier audio ne doit entrer dans le précache.
 const precisementPrecache = [...manifeste.assets, ...manifeste.statiques, ...(contenu ?? [])];
 for (const u of precisementPrecache) {
   if (u.startsWith('/lecons/img/')) problemes.push(`précache : ${u} est une illustration, elle doit être chargée à la volée`);
+  if (u.startsWith('/audio/') || /\.(mp3|wav|ogg|opus|m4a)$/i.test(u)) {
+    problemes.push(`précache : ${u} est un fichier audio, il doit rester servi à la demande hors précache`);
+  }
 }
 for (const champ of ['octetsCoquille', 'octetsContenu', 'octets']) {
   if (!Number.isFinite(manifeste[champ]) || manifeste[champ] < 0) problemes.push(`manifeste : ${champ} invalide`);
@@ -102,6 +107,7 @@ const typeOk = (url, res) => {
   if (url.endsWith('.html') || url === '/') return t.includes('text/html');
   if (url.endsWith('.webp')) return t.includes('image/webp') || t.includes('application/octet-stream');
   if (url.endsWith('.svg')) return t.includes('image/svg+xml') || t.includes('application/octet-stream');
+  if (/\.(mp3|opus|ogg|m4a)$/.test(url)) return t.startsWith('audio/') || t.includes('application/octet-stream');
   return true;
 };
 
@@ -109,6 +115,13 @@ const cibles = ['/', '/index.html', '/precache-manifest.json', ...manifeste.stat
 const images = existsSync(DOSSIER_IMAGES)
   ? readdirSync(DOSSIER_IMAGES).filter((f) => f.endsWith('.webp') || f.endsWith('.svg')).sort().map((f) => `/lecons/img/${f}`)
   : [];
+const audiosLecons = existsSync(DOSSIER_AUDIO_LECONS)
+  ? readdirSync(DOSSIER_AUDIO_LECONS).filter((f) => f.endsWith('.mp3')).sort().map((f) => `/audio/lecons/${f}`)
+  : [];
+const audiosMourchid = existsSync(DOSSIER_AUDIO_MOURCHID)
+  ? readdirSync(DOSSIER_AUDIO_MOURCHID).filter((f) => f.endsWith('.mp3')).sort().map((f) => `/audio/mourchid/${f}`)
+  : [];
+const audios = [...audiosLecons, ...audiosMourchid];
 let echecs = 0;
 let octets = 0;
 const lignesEchec = [];
@@ -117,6 +130,18 @@ for (const u of [...cibles, ...images]) {
     const r = await fetch(BASE + u);
     const corps = await r.arrayBuffer();
     octets += corps.byteLength;
+    if (!r.ok || !typeOk(u, r)) {
+      echecs++;
+      lignesEchec.push(`${u} — HTTP ${r.status}, type « ${r.headers.get('content-type')} »`);
+    }
+  } catch (e) {
+    echecs++;
+    lignesEchec.push(`${u} — ${e.message}`);
+  }
+}
+for (const u of audios) {
+  try {
+    const r = await fetch(BASE + u, { method: 'HEAD' });
     if (!r.ok || !typeOk(u, r)) {
       echecs++;
       lignesEchec.push(`${u} — HTTP ${r.status}, type « ${r.headers.get('content-type')} »`);
@@ -178,18 +203,33 @@ if (contenu) {
     if (taille > BUDGET_FICHIER) problemes.push(`budget : ${u} pèse ${Math.round(taille / 1024)} ko > ${BUDGET_FICHIER / 1024} ko`);
   }
 }
-// Plan V2 §8.2 : `public/` entier est concerné, pas seulement ce qui entre en cache.
-// Une image oubliée dans public/ finit toujours par se retrouver dans un précache un jour.
-// Phase 3 : aucun fichier audio (.mp3/.wav/.ogg/.opus/.m4a) ne doit jamais entrer dans public/ ou dist/
-// (les capsules TTS du المرشد sont publiées sur Cloudflare R2, jamais dans Git ni le bundle).
+// Plan V2 §8.2 + A-081 : `public/` entier est contrôlé.
+// Les 65 MP3 intégrés vivent exclusivement dans `public/audio/lecons/` (≤ 500 Ko/piste)
+// et `public/audio/mourchid/` (≤ 1024 Ko/capsule), toujours hors précache.
 {
+  const BUDGET_AUDIO_LECON = 500 * 1024;
+  const BUDGET_AUDIO_MOURCHID = 1024 * 1024;
   const lourds = [];
   const audiosInterdits = [];
   const parcourir = (dir) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {
       const chemin = join(dir, e.name);
       if (e.isDirectory()) { parcourir(chemin); continue; }
-      if (/\.(mp3|wav|ogg|opus|m4a)$/i.test(e.name)) {
+      const estAudio = /\.(mp3|wav|ogg|opus|m4a)$/i.test(e.name);
+      if (estAudio) {
+        const taille = statSync(chemin).size;
+        if (chemin.startsWith(`${DOSSIER_AUDIO_LECONS}/`) && e.name.endsWith('.mp3')) {
+          if (taille > BUDGET_AUDIO_LECON) {
+            problemes.push(`audio : ${chemin} pèse ${(taille / 1024).toFixed(1)} ko > 500 ko`);
+          }
+          continue;
+        }
+        if (chemin.startsWith(`${DOSSIER_AUDIO_MOURCHID}/`) && e.name.endsWith('.mp3')) {
+          if (taille > BUDGET_AUDIO_MOURCHID) {
+            problemes.push(`audio : ${chemin} pèse ${(taille / 1024).toFixed(1)} ko > 1024 ko`);
+          }
+          continue;
+        }
         audiosInterdits.push(chemin);
         continue;
       }
@@ -200,18 +240,14 @@ if (contenu) {
     }
   };
   parcourir('public');
-  if (existsSync('dist')) {
-    const parcourirDist = (dir) => {
-      for (const e of readdirSync(dir, { withFileTypes: true })) {
-        const chemin = join(dir, e.name);
-        if (e.isDirectory()) { parcourirDist(chemin); continue; }
-        if (/\.(mp3|wav|ogg|opus|m4a)$/i.test(e.name)) audiosInterdits.push(chemin);
-      }
-    };
-    parcourirDist('dist');
+  if (audiosLecons.length !== 55) {
+    problemes.push(`audio : attendu 55 MP3 dans ${DOSSIER_AUDIO_LECONS}, trouvé ${audiosLecons.length}`);
+  }
+  if (audiosMourchid.length !== 10) {
+    problemes.push(`audio : attendu 10 MP3 dans ${DOSSIER_AUDIO_MOURCHID}, trouvé ${audiosMourchid.length}`);
   }
   for (const f of lourds) problemes.push(`budget : ${f} > ${BUDGET_FICHIER / 1024} ko — convertir ou redimensionner`);
-  for (const f of audiosInterdits) problemes.push(`audio : ${f} interdit dans public/ ou dist/ (déployer sur R2)`);
+  for (const f of audiosInterdits) problemes.push(`audio : ${f} hors dossier autorisé public/audio/{lecons,mourchid}/`);
 }
 
 // ── 3. Rapport ──
@@ -224,7 +260,8 @@ const poidsMaxImage = images.length
   ? Math.max(...images.map((u) => statSync(join(DOSSIER_IMAGES, u.slice('/lecons/img/'.length))).size))
   : 0;
 console.log(`illustrations         : ${images.length} fichiers (WebP + SVG) — max ${(poidsMaxImage / 1024).toFixed(1)} Ko / plafond 150 Ko — servies à la volée, hors précache`);
-console.log(`fichiers interrogés   : ${cibles.length + images.length} — ${octets} octets non compressés vus par HTTP`);
+console.log(`audios intégrés       : ${audiosLecons.length} leçons + ${audiosMourchid.length} capsules المُرشد — servis à la demande, hors précache`);
+console.log(`fichiers interrogés   : ${cibles.length + images.length + audios.length} — ${octets} octets non compressés vus par HTTP`);
 console.log(`manifeste (déclaré)   : ${manifeste.octets} octets non compressés`);
 console.log(`problèmes de cohérence: ${problemes.length}`);
 for (const p of problemes) console.log(`  ✗ ${p}`);

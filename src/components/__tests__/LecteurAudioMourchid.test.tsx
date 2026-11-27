@@ -41,12 +41,12 @@ async function rendre(noeud: React.ReactElement): Promise<HTMLDivElement> {
 describe('LecteurAudioMourchid', () => {
   const pisteU1 = AUDIO_MOURCHID[0];
 
-  it('sans VITE_AUDIO_BASE_URL, affiche un message honnête et ouvre la transcription complète', async () => {
+  it('avec baseUrl="", affiche le repli texte honnête et ouvre la transcription complète', async () => {
     const zone = await rendre(<LecteurAudioMourchid piste={pisteU1} baseUrl="" />);
     expect(zone.querySelector('audio')).toBeNull();
     expect(zone.textContent).toContain(MESSAGE_AUDIO_R2_EN_ATTENTE);
     expect(zone.textContent).toContain('قيد المراجعة التربوية');
-    expect(zone.textContent).toContain('1:28');
+    expect(zone.textContent).toContain('1:33');
 
     const btnTexte = [...zone.querySelectorAll('button')].find((b) =>
       b.textContent?.includes('اقرأ النصّ الكامل'),
@@ -59,6 +59,14 @@ describe('LecteurAudioMourchid', () => {
     });
     expect(btnTexte?.getAttribute('aria-expanded')).toBe('true');
     expect(zone.textContent).toContain('أهلاً بكم أبنائي طلبة البكالوريا في الوحدة الأولى');
+  });
+
+  it('par défaut (sans baseUrl), monte <audio preload="none"> sur /audio/mourchid/', async () => {
+    const zone = await rendre(<LecteurAudioMourchid piste={pisteU1} />);
+    const audio = zone.querySelector('audio') as HTMLAudioElement | null;
+    expect(audio).not.toBeNull();
+    expect(audio?.getAttribute('preload')).toBe('none');
+    expect(audio?.getAttribute('src')).toBe('/audio/mourchid/mourchid-u1.mp3');
   });
 
   it('avec une base R2, monte <audio preload="none">, gère lecture/pause, vitesse et erreur hors ligne', async () => {
