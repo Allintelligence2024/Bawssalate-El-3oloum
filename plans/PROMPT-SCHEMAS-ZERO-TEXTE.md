@@ -192,5 +192,4 @@ Vérifie en plus dans `src/data/__tests__/illustrationsLecons.test.ts` que :
 | § 5 règles scientifiques par unité | **appliquées** ; 3 erreurs corrigées en relecture (pompe T2 en u7, axe des profondeurs en u10, `SIAL`/`SIMA` hors disque en u10) | journal + registre A-071/A-072/A-073 |
 | § 6 lots et arrêts | **fait** : Étape 0, puis Lots 1 → 4, chacun clos à sa porte | `plans/SCHEMAS-ZERO-TEXTE-IA-LOT1..4-2026-11-26.md` |
 | § 7 chaîne CI | **fait** aux portes des Lots 1–3 et du Lot 4 (`lint`, `tsc`, `vitest`, `build`, `verifier-hors-ligne`, `sync-metrics --check`, `generer-schemas-svt --verifier`) ; `verifier-drills.mjs` a été ajouté à la **porte finale**, pas aux portes intermédiaires | rapports de lot |
-| § 6 couverture | **100 %** : les 55 leçons officielles ont un visuel depuis le 2026-11-26 (3 derniers SVG u4/u5) | `plans/JOURNAL-CREATION-SCHEMAS.md` § 4 |
 | § 2.3 routage Type A / Type B | **partiel, assumé** : 36 SVG(Type A) + 5 WebP muettes annotées (Type B, u1×3, u2×1, u3×1) ; les schémas des Lots 2 à 4 sont tous vectoriels (voir A-069/A-070) | registre |

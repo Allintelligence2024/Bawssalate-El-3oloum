@@ -7,7 +7,7 @@
 //
 // Depuis le Lot 1, deux familles cohabitent :
 //  - 21 WebP `webp_legacy` du manuel (u6, u7, u8, u9, u11) — jamais modifiées ;
-//  - 44 schémas créés (u1 → u11) — 39 SVG écrits à la main, 5 WebP muettes annotées.
+//  - 48 schémas créés (u1 → u11) — 31 SVG écrits à la main, 17 WebP muettes annotées (Lots 1–4 + Lot A + Lot B).
 
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -19,13 +19,13 @@ import {
   typeVisuelDe,
 } from '../illustrationsLecons';
 import { SCHEMAS_SVT } from '../schemasSvt';
-import { TOUTES_LECONS, uniteDeLecon } from '../programme';
+import { TOUTES_LECONS, UNITES, uniteDeLecon } from '../programme';
 
 const racine = new URL('../../..', import.meta.url).pathname;
 const dossierImages = join(racine, 'public/lecons/img');
 const PLAFOND_OCTETS = 150 * 1024;
 const REPARTITION_LEGACY: Record<string, number> = { u6: 9, u7: 2, u8: 2, u9: 4, u11: 4 };
-const REPARTITION_SCHEMAS: Record<string, number> = { u1: 5, u2: 5, u3: 6, u4: 8, u5: 5, u6: 2, u7: 3, u8: 1, u9: 3, u10: 4, u11: 2 };
+const REPARTITION_SCHEMAS: Record<string, number> = { u1: 6, u2: 5, u3: 6, u4: 9, u5: 5, u6: 2, u7: 3, u8: 1, u9: 3, u10: 5, u11: 3 };
 
 describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => {
   const legacy = ILLUSTRATIONS_LECONS.filter((i) => typeVisuelDe(i) === 'webp_legacy');
@@ -47,26 +47,41 @@ describe('registre des 21 illustrations du manuel (u6, u7, u8, u9, u11)', () => 
   });
 });
 
-describe('schémas créés — règle « zéro texte IA » (Lots 1 à 4)', () => {
-  it('couvre u1 → u11 avec 44 schémas sur les leçons officielles', () => {
-    expect(SCHEMAS_SVT).toHaveLength(44);
+describe('schémas créés — règle « zéro texte IA » (Lots 1 à 4 + Lot A + Lot B)', () => {
+  it('couvre u1 → u11 avec 48 schémas sur les leçons officielles', () => {
+    expect(SCHEMAS_SVT).toHaveLength(48);
     const parUnite: Record<string, number> = {};
     for (const i of SCHEMAS_SVT) {
       expect(Object.keys(REPARTITION_SCHEMAS)).toContain(i.uniteId);
       parUnite[i.uniteId] = (parUnite[i.uniteId] ?? 0) + 1;
     }
     expect(parUnite).toEqual(REPARTITION_SCHEMAS);
-    // 39 schémas vectoriels écrits à la main + 5 WebP muettes annotées.
-    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(39);
-    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'webp_annote')).toHaveLength(5);
+    // 31 schémas vectoriels écrits à la main + 17 WebP muettes annotées.
+    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'svg_vectoriel')).toHaveLength(31);
+    expect(SCHEMAS_SVT.filter((i) => typeVisuelDe(i) === 'webp_annote')).toHaveLength(17);
 
-    // Les schémas se répartissent sur 39 leçons : `phase3_chapitres_5_6` en porte deux
-    // (Anfinsen + drépanocytose), conformément au plafond de 2 schémas par leçon.
+    // Les schémas se répartissent sur 43 leçons (dont `phase17_chapitres_33_34_2` qui conserve son
+    // webp_legacy intact pour un total de 2 visuels), conformément au plafond de 2 schémas par leçon.
     const lecons = SCHEMAS_SVT.map((i) => i.lessonId);
-    expect(new Set(lecons).size).toBe(42);
+    expect(new Set(lecons).size).toBe(43);
     const parLecon = new Map<string, number>();
     for (const l of lecons) parLecon.set(l, (parLecon.get(l) ?? 0) + 1);
     expect(Math.max(...parLecon.values())).toBeLessThanOrEqual(2);
+    // Vérifie aussi que les 10 leçons Lot B restent toutes à ≤ 2 visuels au total (legacy + créés).
+    for (const id of [
+      'phase2_chapitres_3_4',
+      'phase3_chapitres_5_6',
+      'phase6_chapitres_11_12_2',
+      'phase7_chapitres_13_14',
+      'immunity_hiv_aids',
+      'phase10_chapitres_19_20',
+      'phase14_chapitres_27_28',
+      'phase16_chapitres_31_32_2',
+      'phase20_chapitres_39_40',
+      'phase17_chapitres_33_34_2',
+    ]) {
+      expect(illustrationsParLecon(id).length, id).toBeLessThanOrEqual(2);
+    }
     // Aucun schéma pour les deux leçons d'enrichissement hors périmètre.
     expect(lecons).not.toContain('phase22_chapitres_43_44');
     expect(lecons).not.toContain('phase22_chapitres_43_44_2');
@@ -126,13 +141,18 @@ describe('schémas créés — règle « zéro texte IA » (Lots 1 à 4)', () =>
 });
 
 describe('registre complet — disque et programme', () => {
-  it('rattache chaque lessonId à une leçon existante de programme.ts', () => {
+  it('rattache chaque lessonId à une leçon existante de programme.ts et couvre 55/55 leçons officielles', () => {
     for (const i of ILLUSTRATIONS_LECONS) {
       expect(TOUTES_LECONS, `lessonId absent du programme : ${i.lessonId}`).toContain(i.lessonId);
       expect(uniteDeLecon(i.lessonId)?.id, `unité incohérente pour ${i.lessonId}`).toBe(i.uniteId);
     }
-    // 21 documents du manuel (13 leçons) + 44 schémas (42 leçons) = 55 leçons illustrées.
-    expect(new Set(ILLUSTRATIONS_LECONS.map((i) => i.lessonId)).size).toBe(55);
+    // 21 documents du manuel (13 leçons) + 48 schémas (43 leçons, 1 chevauchement U11) = 55/55 leçons officielles illustrées.
+    const leconsCouvertes = new Set(ILLUSTRATIONS_LECONS.map((i) => i.lessonId));
+    expect(leconsCouvertes.size).toBe(55);
+    const leconsOfficielles = UNITES.flatMap((u) => u.lessonIds);
+    expect(leconsOfficielles).toHaveLength(55);
+    const manquantes = leconsOfficielles.filter((id) => !leconsCouvertes.has(id));
+    expect(manquantes, `leçons officielles sans visuel : ${manquantes.join(', ')}`).toEqual([]);
   });
 
   it('ne référence que des fichiers réellement présents sur disque, ≤ 150 Ko', () => {
@@ -158,13 +178,13 @@ describe('registre complet — disque et programme', () => {
     }
 
     const surDisque = readdirSync(dossierImages).sort();
-    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(65);
+    expect(surDisque, 'aucun JPEG/PNG brut ni fichier étranger dans public/lecons/img/').toHaveLength(69);
     expect(surDisque.every((f) => f.endsWith('.webp') || f.endsWith('.svg'))).toBe(true);
     expect(surDisque).toEqual([...fichiers].sort());
   });
 
-  it('garde 0 reviewed: true et 65 statuts a_valider_enseignant', () => {
-    expect(ILLUSTRATIONS_LECONS).toHaveLength(65);
+  it('garde 0 reviewed: true et 69 statuts a_valider_enseignant', () => {
+    expect(ILLUSTRATIONS_LECONS).toHaveLength(69);
     expect(ILLUSTRATIONS_LECONS.filter((i) => i.reviewed === true)).toHaveLength(0);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.reviewed === false)).toBe(true);
     expect(ILLUSTRATIONS_LECONS.every((i) => i.statut === 'a_valider_enseignant')).toBe(true);

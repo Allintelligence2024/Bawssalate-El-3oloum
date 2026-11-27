@@ -8,7 +8,11 @@ import { aContenuLecon, urlLecon } from '../data/leconsPassives';
 import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 import IllustrationsLecon from './IllustrationsLecon';
-import { prechaufferSchemasSvt } from '../utils/schemasSvtCharge';
+import AudioMourchidBloc from './AudioMourchidBloc';
+import LecteurAudioResume from './LecteurAudioResume';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
+import { prechaufferAudioMourchid } from '../utils/audioMourchidChargeur';
+import { prechaufferAudioLecons } from '../utils/audioLeconsChargeur';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -20,16 +24,17 @@ interface Props {
 }
 
 export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFavori }: Props) {
-  // Préchauffage silencieux du registre des schémas : le chunk est en cache module avant
-  // que ce même écran (ou la leçon suivante) ne le demande.
-  useEffect(() => {
-    prechaufferSchemasSvt();
-  }, []);
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const aContenu = aContenuLecon(lessonId);
   const [contenuIndisponible, setContenuIndisponible] = useState(false);
   const [motOuvert, setMotOuvert] = useState<string | null>(null);
+
+  useEffect(() => {
+    prechaufferSchemasSvt();
+    prechaufferAudioMourchid();
+    prechaufferAudioLecons();
+  }, []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
@@ -127,10 +132,18 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
           {/* Phase 3 — illustrations WebP (21 documents OK) chargées paresseusement. */}
           <IllustrationsLecon lessonId={lessonId} />
 
+          {/* المرحلة 3 — كبسولة «صوت المُرشد» الموافقة للوحدة (تحميل كسول + نصّ كامل). */}
+          {unite && <AudioMourchidBloc uniteId={unite.id} compact />}
+
           {lecon && (
             <div className="card p-4">
               <p className="eyebrow">الملخّص الذهبي</p>
               <h2 className="font-naskh mt-1 text-lg font-bold">{titreLecon(lessonId)}</h2>
+
+              {/* المرحلة 3 / 5.3 — مشغّل الملخّص الصوتي للدرس في أعلى الملخّص الذهبي */}
+              <div className="mt-3">
+                <LecteurAudioResume lessonId={lessonId} />
+              </div>
 
               <p className="mt-3 text-[11px] font-bold text-forest">الخطوات السببية</p>
               <div className="mt-2 space-y-2">

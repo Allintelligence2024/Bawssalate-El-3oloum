@@ -206,45 +206,53 @@ partout). Reliquats possibles, seulement sur sa demande : un 2ᵉ schéma sur `p
 **Budget** : coquille **2,21 Mio / 2,25 Mio (98,2 %)**, contenu 4,19 Mio. Les quatre lots n'ont coûté
 **aucun** octet de coquille : les schémas sont hors précache et hors bundle de démarrage.
 
-# Durcissement PR #17 — fiabilité et couverture 55/55 (2026-11-26)
+---
 
-## 1. Trois planches de plus (les 3 dernières leçons vides)
+# Phase 1 — Lot A : Couverture 100 % (55/55) + Ajustement induit U3 (2026-11-26)
 
-| Planche | Leçon | Essais | Ce qui a été corrigé après relecture |
-|---|---|---:|---|
-| `u4-anticorps-y` | `phase6_chapitres_11_12` | 3 | chaînes légères remises **à l'extérieur** des deux bras (elles passaient à l'intérieur d'un côté), écart H–L resserré, lettres `L`/`S–S` déplacées, antigène rapproché du site |
-| `u4-reponse-primaire-secondaire` | `immunity_memory_response` | 2 | libellé `IgM` dégagé de la courbe secondaire, hauteur ramenée à 700 px |
-| `u5-synapse-chimique` | `phase9_chapitres_17_18` | 3 | membrane postsynaptique raccourcie, pastilles 1/4/6 déplacées, second `Ca²⁺` retiré (texte coupé par le bord), hauteur 620 px |
+## 1. Journal des 4 visuels (Lot A)
 
-## 2. Fiabilité (durcissement demandé pour la PR #17)
+| # | Visuel | Leçon cible | Type | Poids | Repères | Essais | Contrôle visuel |
+|---|---|---|---|---:|---:|---:|---|
+| 1 | `u4-anticorps-plasmocyte.webp` | `phase6_chapitres_11_12` (u4) | `webp_annote` (1200×896) | 62,0 Ko | 9 | 1 | PASS — 0 texte IA, Y complet (H, L, S–S, Fab + épitope, Fc + récepteur balaa) + plasmocyte (REG, Golgi, exocytose), 9 pastilles centrées |
+| 2 | `u5-transmission-synaptique.webp` | `phase9_chapitres_17_18` (u5) | `webp_annote` (1200×896) | 54,9 Ko | 7 | 1 | PASS — 0 texte IA, bouton présynaptique, canaux Ca²⁺, exocytose, fente, 2 ACh sur récepteurs-canaux Na⁺ ouverts vs fermés, enzyme AChE scindant le neuromédiateur |
+| 3 | `u4-memoire-immunitaire.svg` | `immunity_memory_response` (u4) | `svg_vectoriel` (1200×760) | 11,2 Ko | 7 | 2 | PASS — 0 arabe dans SVG, courbes lissées `Ac anti-A` (primaire + secondaire durable) et `Ac anti-B` (primaire, spécificité), latences `Δt₁` vs `Δt₂` corrigées au 2ᵉ essai |
+| 4 | `u3-complexe-enzyme-substrat.webp` | `phase3_chapitres_5_6_2` (u3) | `webp_annote` (1200×805) | 18,9 Ko | 6 | 1 | PASS — 0 texte IA, remplace l'ancienne WebP rigide par 3 vignettes montrant réellement le changement de conformation du site actif (`التوافق المحرّض`), complexe ES, libération des 2 produits et retour intact |
 
-| Point | Avant | Après |
-|---|---|---|
-| Chunk `schemasSvt` | hors précache **et** hors lot `contenu` | ajouté au lot **`contenu`** (téléchargement hors ligne sur demande) : `contenu` 4,19 → **4,26 Mio**, coquille **inchangée à 2,21 Mio** |
-| `import()` du registre | relancé à chaque montage, promesse jetée | **cache module** (`src/utils/schemasSvtCharge.ts`), préchauffé à l'entrée de `LecteurLecon` et `ProtocoleRunner` |
-| Chunk en échec hors ligne | `return null` — section muette et invisible | **squelette discret** pendant le chargement, puis message **« تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه »** |
-| Tests | aucun sur ces états | `IllustrationsLecon.etats.test.tsx` (3 tests) + `schemasSvtCharge.test.ts` (3 tests) |
+## 2. Bilan après Phase 1
 
-## 3. Totaux après durcissement
+- **Couverture officielle** : **55 / 55 leçons (100 %)** — `0` leçon officielle sans visuel.
+- **Registre** : **65 entrées** (`21` WebP legacy intactes + `44` schémas créés : `37` SVG + `7` WebP muettes annotées), **0 `reviewed: true`**.
+- **Volume local** : `public/lecons/img/` = **2,11 Mio** (< 4 Mio).
+- **Budget hors-ligne** : coquille **2,21 Mio / 2,25 Mio** (inchangée) ; contenu **4,26 Mio / 5,0 Mio** (inclut `schemasSvt-*.js`).
+- **Arbitrage** : consigné en **A-076** dans `plans/relecture/REGISTRE-ARBITRAGES.md` (supplante les 3 SVG provisoires de A-075).
 
-| Mesure | Valeur |
-|---|---:|
-| Schémas créés | **44** (39 SVG + 5 WebP annotées) |
-| Illustrations totales | **65** (44 schémas + 21 WebP du manuel) |
-| Leçons officielles illustrées | **55 / 55 (100 %)** |
-| Unités couvertes | 11 / 11 |
-| `reviewed: true` | **0** |
+---
 
-## 4. Porte finale
+# Phase 2 — Lot B : 10 scènes riches muettes (2026-11-26)
 
-```
-npm run lint                        → 0 erreur
-npx tsc --noEmit                    → 0 erreur
-npx vitest run                      → 88 fichiers / 735 tests
-npm run build                       → index 497,94 Ko · schemasSvt 72,81 Ko (gzip 18,19), hors coquille
-node scripts/verifier-hors-ligne.mjs→ OK — 65 illustrations, contenu 29 entrées / 4,26 Mio
-node scripts/verifier-deploiement.mjs → OK — coquille 2,21 Mio
-node scripts/sync-metrics.mjs --check → aucune dérive
-node scripts/generer-schemas-svt.mjs --verifier → 39 / 39 identiques
-```
+## 1. Journal des 10 visuels (Lot B)
+
+| # | Visuel (`1200×896`) | Leçon cible | Mode | Poids | Repères | Essais | Contrôle visuel (raw + composite annoté) |
+|---|---|---|---|---:|---:|---:|---|
+| 1 | `u1-polysome.webp` | `phase2_chapitres_3_4` (u1) | Enrichi (2/2 — garde `u1-traduction.webp`) | 28,1 Ko | 7 | 1 | PASS — 0 texte IA, 5 ribosomes sur ARNm, chaînes polypeptidiques croissantes vers 3′, protéine repliée + sous-unités dissociées |
+| 2 | `u2-drepanocytose.webp` | `phase3_chapitres_5_6` (u2) | Remplace `u2-drepanocytose.svg` (2/2) | 55,3 Ko | 6 | 1 | PASS — 0 texte IA, GR biconcave + `HbA` soluble vs GR falciforme + fibres polymérisées `HbS` (patch `Val6` emboîté) |
+| 3 | `u4-phagocytose.webp` | `phase6_chapitres_11_12_2` (u4) | Remplace `u4-phagocytose.svg` (1/1) | 46,2 Ko | 7 | 1 | PASS — 0 texte IA, complexe immun → récepteurs `Fc` → pseudopodes → phagosome + lysosomes → digestion → exocytose |
+| 4 | `u4-ltc-perforine.webp` | `phase7_chapitres_13_14` (u4) | Remplace `u4-ltc-perforine.svg` (1/1) | 52,7 Ko | 8 | 3 | PASS — 0 texte IA ; essais 1–2 rejetés (2 `CMH-I` + endocytose puis 2 flèches sortantes), essai 3 exact : 1 seul `CMH-I` + `TCR` + `CD8` latéral, exocytose perforine/granzyme, 6 pores à flux d'eau entrant + lyse |
+| 5 | `u4-cycle-vih.webp` | `immunity_hiv_aids` (u4) | Enrichi (2/2 — garde courbe `u4-vih.svg`) | 67,9 Ko | 8 | 2 | PASS — 0 texte IA ; essai 1 rejeté (flèche court-circuit), essai 2 exact : `gp120/CD4` → entrée → rétrotranscription → intégration nucléaire → assemblage → bourgeonnement |
+| 6 | `u5-morphine.webp` | `phase10_chapitres_19_20` (u5) | Remplace `u5-morphine.svg` (1/1) | 41,4 Ko | 7 | 1 | PASS — 0 texte IA, morphine sur récepteur opioïde présynaptique → fermeture canal `Ca²⁺` → blocage vésicules `Substance P` → fente vide et récepteurs fermés (pastille 7 recentrée) |
+| 7 | `u7-chaine-respiratoire.webp` | `phase14_chapitres_27_28` (u7) | Remplace `u7-chaine-respiratoire.svg` (1/1) | 56,8 Ko | 8 | 1 | PASS — 0 texte IA, coupe mitochondriale + zoom crête : `T1/T3/T4` pompent `H⁺` (pas `T2`, conforme A-071), réduction `O₂ → H₂O`, `ATP synthase` tête `F₁` côté matrice |
+| 8 | `u9-expansion-oceanique.webp` | `phase16_chapitres_31_32_2` (u9) | Remplace `u9-expansion-oceanique.svg` (1/1) | 47,3 Ko | 7 | 1 | PASS — 0 texte IA, dorsale 3D : convection, chambre magmatique, basaltes en coussins, bandes magnétiques parfaitement symétriques, sédiments s'épaississant loin de l'axe |
+| 9 | `u10-coupe-terre-3d.webp` | `phase20_chapitres_39_40` (u10) | Enrichi (2/2 — garde géotherme `u10-modelisation-terre.svg`) | 47,1 Ko | 9 | 1 | PASS — 0 texte IA, quartier 3D complet : croûte, Moho, lithosphère, asthénosphère ductile, manteau inférieur, Gutenberg (2900 km), noyau externe liquide, Lehmann (5100 km), graine solide (pastille 3 recalée sur lithosphère) |
+| 10 | `u11-subduction-3d.webp` | `phase17_chapitres_33_34_2` (u11) | Enrichi (2/2 — garde `webp_legacy` doc11 intact) | 33,9 Ko | 8 | 1 | PASS — 0 texte IA, bloc 3D subduction : plaque plongeante, fosse, prisme d'accrétion, déshydratation `H₂O`, fusion partielle du coin mantellique, pluton granodioritique, volcan andésitique explosif (pastilles 2 & 8 recalées) |
+
+## 2. Bilan après Phase 2
+
+- **Couverture officielle** : **55 / 55 leçons (100 %)** — plafond **≤ 2 visuels** respecté sur les 10 leçons Lot B.
+- **Registre** : **69 entrées** (`21` WebP legacy intactes + `48` schémas créés : `31` SVG + `17` WebP muettes annotées), **0 `reviewed: true`**.
+- **Poids Lot B** : **476,7 Ko** (`0,47 Mio`) pour les 10 scènes (`28,1–67,9 Ko`, toutes `≤ 100 Ko`).
+- **Volume local** : `public/lecons/img/` = **69 fichiers / 2,54 Mio** (`2 597,0 Ko` < `4,0 Mio`).
+- **Budget hors-ligne** : coquille **2,21 Mio / 2,25 Mio** (inchangée) ; contenu **4,27 Mio / 5,0 Mio** (`schemasSvt` = `88,46 Ko` brut / `21,72 Ko` gzip).
+- **Arbitrage** : consigné en **A-077** dans `plans/relecture/REGISTRE-ARBITRAGES.md`.
+
 

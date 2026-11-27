@@ -470,106 +470,7 @@ planche('u2-anfinsen', 1200, 730, ({ repere }) => {
   return out;
 });
 
-// ── 5 bis. u2 — drépanocytose : Glu6 → Val6, polymérisation, hématie falciforme ──
-planche('u2-drepanocytose', 1200, 700, ({ repere }) => {
-  const out = [];
-  const panneau = (x) => boite(x, 80, 300, 540, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 22 });
-  const lettre = (x, y, t) => texte(x, y, t, { taille: 15, couleur: MUTE, ancre: 'middle', gras: true });
-
-  /** Tétramère α2β2 ; `mutation` remplace le groupe chargé de la position 6 par un patch apolaire. */
-  const tetramere = (cx, cy, mutation) => {
-    const s = [];
-    const sousUnite = (dx, dy, l, couleur, fond) => [
-      rond(cx + dx, cy + dy, 50, { remplissage: fond, couleur, largeur: 3 }),
-      texte(cx + dx, cy + dy + 7, l, { taille: 20, couleur, ancre: 'middle', gras: true }),
-    ];
-    s.push(...sousUnite(-42, -36, 'α', BLUE, BLUE_FILL));
-    s.push(...sousUnite(42, -36, 'β', GREEN, GREEN_FILL));
-    s.push(...sousUnite(-42, 36, 'α', BLUE, BLUE_FILL));
-    s.push(...sousUnite(42, 36, 'β', GREEN, GREEN_FILL));
-    // position 6 de la chaîne β : groupement chargé (HbA) ou patch apolaire (HbS)
-    const mx = cx + 42 + 40;
-    const my = cy + 36 + 40;
-    s.push(ligne(cx + 42, cy - 36, mx, my, { couleur: mutation ? AMBER : RED, largeur: 2, pointilles: '5 4' }));
-    s.push(boite(mx - 15, my - 15, 30, 30, {
-      remplissage: mutation ? AMBER_FILL : RED_FILL,
-      couleur: mutation ? AMBER : RED,
-      largeur: 2.5,
-      rayon: 8,
-    }));
-    if (!mutation) s.push(texte(mx, my + 8, '−', { taille: 24, couleur: RED, ancre: 'middle', gras: true }));
-    else {
-      // trois petits traits rayonnants : le patch hydrophobe qui « colle » aux voisins
-      for (const a of [-2.4, -1.57, -0.75]) {
-        s.push(ligne(mx + 18 * Math.cos(a), my + 18 * Math.sin(a),
-          mx + 27 * Math.cos(a), my + 27 * Math.sin(a), { couleur: AMBER, largeur: 3 }));
-      }
-    }
-    return s;
-  };
-
-  /** Hématie normale : disque biconcave (deux ellipses). */
-  const hematieNormale = (cx, cy) => [
-    ellipse(cx, cy, 96, 58, { remplissage: RED_FILL, couleur: RED, largeur: 3 }),
-    ellipse(cx, cy, 44, 24, { remplissage: PAPER, couleur: RED, largeur: 2, pointilles: '6 5' }),
-  ];
-
-  /** Hématie falciforme : croissant (cercle extérieur moins cercle décalé). */
-  const falciforme = (cx, cy) => {
-    const R = 98;
-    const d = 46;
-    const a0 = Math.acos(d / (2 * R));
-    const pts = [];
-    for (let i = 0; i <= 60; i += 1) {
-      const a = a0 + (i / 60) * (Math.PI * 2 - 2 * a0);
-      pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a) * 0.9]);
-    }
-    for (let i = 60; i >= 0; i -= 1) {
-      const a = a0 + (i / 60) * (Math.PI * 2 - 2 * a0);
-      pts.push([cx - d + R * Math.cos(a), cy + R * Math.sin(a) * 0.9]);
-    }
-    return [poly(pts, { remplissage: RED_FILL, couleur: RED, largeur: 3 })];
-  };
-
-  // A — à droite (sens de lecture arabe) : HbA, hématie normale
-  out.push(panneau(840));
-  out.push(lettre(990, 116, 'A'));
-  out.push(...tetramere(990, 262, false));
-  out.push(...hematieNormale(990, 528));
-  out.push(texte(990, 600, 'HbA', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
-
-  // B — au centre : HbS, contact hydrophobe, fibres
-  out.push(panneau(434));
-  out.push(lettre(584, 116, 'B'));
-  out.push(...tetramere(584, 232, true));
-  for (const [i, y] of [452, 492, 532].entries()) {
-    out.push(ligne(742, y + 6, 468, y, { couleur: RED, largeur: 11 }));
-    for (const t of [0.18, 0.5, 0.82]) {
-      out.push(boite(468 + (742 - 468) * t - 9, y - 3 - 9 + 3, 18, 18, {
-        remplissage: AMBER_FILL, couleur: AMBER, largeur: 2, rayon: 4,
-      }));
-    }
-    if (i === 2) out.push(texte(584, 578, 'HbS', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
-  }
-
-  // C — à gauche : hématie falciforme
-  out.push(panneau(60));
-  out.push(lettre(210, 116, 'C'));
-  out.push(...falciforme(240, 330));
-  out.push(texte(210, 520, 'HbS', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
-
-  // Flèches : A → B (mutation) puis B → C (conséquence)
-  out.push(fleche(828, 300, 748, 300, INK, 3));
-  out.push(fleche(424, 300, 372, 300, INK, 3));
-
-  repere(1, 990, 528);
-  repere(2, 884, 200);
-  repere(3, 1112, 338);
-  repere(4, 702, 308);
-  repere(5, 584, 426);
-  repere(6, 215, 330);
-  return out;
-});
+// ── 5 bis. u2-drepanocytose : remplacé en Phase 2 (Lot B) par u2-drepanocytose.webp (webp_annote) ──
 
 // ── 6. u3 — spécificité : amylase, amidon, cellulose ─────────────────────────────
 planche('u3-specificite', 1200, 700, ({ repere }) => {
@@ -977,99 +878,7 @@ planche('u4-groupes-abo', 1200, 780, ({ repere }) => {
   return out;
 });
 
-// ── L3. u4 — phagocytose : du complexe immun à la digestion ──────────────────────
-planche('u4-phagocytose', 1200, 720, ({ repere }) => {
-  const out = [];
-  const panneau = (x) => boite(x, 80, 260, 400, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 20 });
-  const macro = (cx, cy) =>
-    organique(cx, cy, (a) => 96 + 14 * Math.sin(a * 3), {
-      couleur: INK, largeur: 3, remplissage: GREEN_FILL,
-    });
-
-  // 1 — complexe immun (antigène entouré d'anticorps)
-  out.push(panneau(60));
-  out.push(rond(190, 250, 34, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3 }));
-  for (const angle of [-135, -90, -45]) {
-    const ax = 190 + 52 * Math.cos((angle * Math.PI) / 180);
-    const ay = 250 + 52 * Math.sin((angle * Math.PI) / 180);
-    out.push(anticorps(ax, ay, 32, { couleur: RED, largeur: 3, rotation: angle + 90 }));
-  }
-  out.push(texte(190, 430, 'Ag–Ac', { taille: 16, couleur: INK, ancre: 'middle', gras: true }));
-
-  // 2 — fixation du Fc sur le récepteur du macrophage
-  out.push(panneau(340));
-  out.push(macro(470, 300));
-  out.push(rond(357, 300, 22, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5 }));
-  out.push(anticorps(392, 296, 24, { couleur: RED, largeur: 3, rotation: 0 }));
-  out.push(poly([[384, 316], [398, 340], [370, 340]], { couleur: INK, largeur: 3, remplissage: PAPER }));
-
-  // 3 — invagination : la membrane englobe, la vésicule se referme
-  out.push(panneau(620));
-  out.push(macro(750, 300));
-  out.push(rond(750, 300, 34, { remplissage: AMBER_FILL, couleur: RED, largeur: 3, pointilles: '6 5' }));
-  out.push(texte(750, 306, 'Ag', { taille: 13, couleur: AMBER, ancre: 'middle', gras: true }));
-
-  // 4 — lysosomes : digestion du contenu
-  out.push(panneau(900));
-  out.push(macro(1030, 300));
-  out.push(rond(1015, 286, 26, { remplissage: RED_FILL, couleur: RED, largeur: 2.5 }));
-  for (const [dx, dy] of [[-12, 4], [4, -8], [10, 10]]) {
-    out.push(rond(1015 + dx, 286 + dy, 5, { remplissage: AMBER, couleur: AMBER, largeur: 1 }));
-  }
-  for (const a of [0.4, 1.6, 2.8]) {
-    out.push(rond(1015 + 44 * Math.cos(a), 286 + 44 * Math.sin(a), 15, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2 }));
-  }
-  for (const [x1, x2] of [[322, 336], [602, 616], [882, 896]]) out.push(fleche(x1, 280, x2, 280, INK, 3));
-
-  repere(1, 190, 250);
-  repere(2, 190, 188);
-  repere(3, 410, 300);
-  repere(4, 672, 306);
-  repere(5, 762, 350);
-  repere(6, 1082, 334);
-  return out;
-});
-
-// ── L4. u4 — LTc : double reconnaissance et perforine ────────────────────────────
-planche('u4-ltc-perforine', 1200, 700, ({ repere }) => {
-  const out = [];
-  const panneau = (x) => boite(x, 60, 540, 560, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 22 });
-
-  // A — double reconnaissance : TCR + peptide/CMH-I, et CD8 + CMH-I
-  out.push(panneau(60));
-  out.push(boite(120, 200, 380, 180, { remplissage: '#eef2ec', couleur: INK, largeur: 3, rayon: 16 }));
-  out.push(ellipse(200, 292, 54, 46, { remplissage: PAPER, couleur: BLUE, largeur: 2.5 }));
-  out.push(boite(408, 350, 36, 30, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5, rayon: 4 }));
-  out.push(texte(392, 344, 'CMH-I', { taille: 14, couleur: GREEN, ancre: 'end', gras: true }));
-  out.push(rond(426, 470, 64, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 3 }));
-  out.push(anticorps(426, 404, 30, { couleur: BLUE, largeur: 3 }));
-  out.push(boite(462, 408, 34, 22, { remplissage: PAPER, couleur: RED, largeur: 2.5, rayon: 5 }));
-  out.push(texte(479, 424, 'CD8', { taille: 11, couleur: RED, ancre: 'middle', gras: true }));
-
-  // B — perforine : pores, entrée d'eau, lyse
-  out.push(panneau(620));
-  out.push(boite(668, 196, 440, 230, { remplissage: '#f6f8f5', couleur: RED, largeur: 2.5, rayon: 20, pointilles: '8 7' }));
-  out.push(boite(700, 216, 380, 170, { remplissage: '#eef2ec', couleur: INK, largeur: 3, rayon: 16 }));
-  out.push(rond(680, 470, 64, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 3 }));
-  out.push(texte(680, 476, 'LTc', { taille: 13, couleur: BLUE, ancre: 'middle', gras: true }));
-  // granules de perforine libérés dans la fente
-  for (const [x, y] of [[706, 418], [724, 400], [740, 384]]) {
-    out.push(rond(x, y, 6, { remplissage: RED_FILL, couleur: RED, largeur: 2 }));
-  }
-  for (const x of [800, 880, 960]) {
-    out.push(rond(x, 216, 10, { remplissage: PAPER, couleur: RED, largeur: 3 }));
-    out.push(fleche(x, 236, x, 286, BLUE, 2.5, 8));
-  }
-  out.push(texte(880, 330, 'H₂O', { taille: 15, couleur: BLUE, ancre: 'middle', gras: true }));
-
-  repere(1, 426, 470);
-  repere(2, 396, 400);
-  repere(3, 508, 404);
-  repere(4, 426, 352);
-  repere(5, 662, 430);
-  repere(6, 1040, 404);
-  return out;
-});
+// ── L3–L4. u4-phagocytose & u4-ltc-perforine : remplacés en Phase 2 (Lot B) par leurs versions .webp (webp_annote) ──
 
 // ── L5. u4 — coopération LT4 → IL-2 → LB / LTc ──────────────────────────────────
 planche('u4-cooperation-lt4', 1200, 780, ({ repere }) => {
@@ -1143,6 +952,101 @@ planche('u4-vih', 1200, 760, ({ repere }) => {
   repere(3, X(9.3), G.y0 + 30);
   repere(4, X(6.4), Y(200) + 18);
   repere(5, X(9.7), Y(52) - 34);
+  return out;
+});
+
+// ── L6 bis. u4 — mémoire immunitaire : réponse primaire vs secondaire (Ag A / Ag B) ──
+planche('u4-memoire-immunitaire', 1200, 760, ({ repere }) => {
+  const out = [];
+  const G = { x0: 145, x1: 1120, y0: 92, y1: 580 };
+  const X = (j) => G.x0 + (j / 70) * (G.x1 - G.x0);
+  const Y = (logAc) => G.y1 - (logAc / 4.25) * (G.y1 - G.y0);
+
+  // Quadrillage horizontal (échelle logarithmique 10⁰ → 10⁴ UA)
+  const ticksY = [[0, '10⁰'], [1, '10¹'], [2, '10²'], [3, '10³'], [4, '10⁴']];
+  for (const [v, lib] of ticksY) {
+    out.push(ligne(G.x0, Y(v), G.x1, Y(v), { couleur: GRID, largeur: 1.5, pointilles: '5 6' }));
+    out.push(texte(G.x0 - 16, Y(v) + (v === 0 ? -2 : 4), lib, { taille: 14, couleur: MUTE, ancre: 'end', gras: true }));
+  }
+  for (let j = 0; j <= 70; j += 7) {
+    out.push(ligne(X(j), G.y1, X(j), G.y1 + 7, { couleur: INK, largeur: 1.8 }));
+    out.push(texte(X(j), G.y1 + 24, String(j), { taille: 13, couleur: MUTE, ancre: 'middle' }));
+  }
+
+  // Repère vertical du 2ᵉ contact (t = 35 j)
+  out.push(ligne(X(35), G.y0, X(35), G.y1, { couleur: AMBER, largeur: 1.8, pointilles: '6 6' }));
+
+  // Axes
+  out.push(fleche(G.x0, G.y1, G.x0, G.y0 - 24, INK, 2.5, 10));
+  out.push(fleche(G.x0, G.y1, G.x1 + 24, G.y1, INK, 2.5, 10));
+  out.push(texte(G.x0 + 12, G.y0 - 24, 'Ac (UA)', { taille: 15, couleur: INK, ancre: 'start', gras: true }));
+  out.push(texte(G.x1 + 28, G.y1 + 5, 'j', { taille: 15, couleur: INK, ancre: 'start', gras: true }));
+
+  // Modèle lisse (type gamma) pour une courbe biologique réaliste sans cassure polygonale
+  const picGamma = (t, t0, amp, tau, k) => {
+    if (t <= t0) return 0;
+    const u = (t - t0) / tau;
+    return amp * Math.pow(u, k) * Math.exp(k * (1 - u));
+  };
+
+  // Courbe 1 : Ac anti-A — réponse primaire (latence 6 j, pic modeste ~10^1.65 à j=14)
+  // puis réponse secondaire à j=35 (latence 2 j, pic ~10^3.85 à j=43, plateau durable)
+  const ptsA = [];
+  for (let j = 0; j <= 70; j += 0.5) {
+    const prim = picGamma(j, 6, 1.62, 8, 2.4);
+    const sec = j <= 37 ? 0 : 3.55 * (1 - Math.exp(-Math.pow((j - 37) / 3.4, 2.1))) * Math.exp(-(Math.max(0, j - 43)) / 65);
+    const residuel = j >= 14 ? 0.34 * Math.exp(-Math.max(0, j - 14) / 55) : 0;
+    const val = Math.min(3.88, 0.05 + Math.max(prim, residuel) + sec);
+    ptsA.push([X(j), Y(val)]);
+  }
+  out.push(poly(ptsA, { couleur: GREEN, largeur: 5 }));
+
+  // Courbe 2 : Ac anti-B — 1ᵉʳ contact à j=35 (latence 6 j, pic primaire ~10^1.55 à j=49)
+  const ptsB = [];
+  for (let j = 35; j <= 70; j += 0.5) {
+    const primB = picGamma(j, 41, 1.54, 8, 2.4);
+    const residuelB = j >= 49 ? 0.28 * Math.exp(-Math.max(0, j - 49) / 55) : 0;
+    const val = 0.05 + Math.max(primB, residuelB);
+    ptsB.push([X(j), Y(val)]);
+  }
+  out.push(poly(ptsB, { couleur: BLUE, largeur: 4.5, pointilles: '10 6' }));
+
+  // Temps de latence Δt₁ (long : ~6 j) et Δt₂ (très court : ~2 j)
+  const yLat1 = Y(0.54);
+  out.push(ligne(X(0), yLat1, X(6), yLat1, { couleur: AMBER, largeur: 2.5 }));
+  out.push(ligne(X(0), yLat1 - 8, X(0), yLat1 + 8, { couleur: AMBER, largeur: 2.5 }));
+  out.push(ligne(X(6), yLat1 - 8, X(6), yLat1 + 8, { couleur: AMBER, largeur: 2.5 }));
+  out.push(texte(X(3), yLat1 - 14, 'Δt₁', { taille: 15, couleur: AMBER, ancre: 'middle', gras: true, halo: true }));
+
+  const yLat2 = Y(1.06);
+  out.push(ligne(X(35), yLat2, X(37.2), yLat2, { couleur: RED, largeur: 2.5 }));
+  out.push(ligne(X(35), yLat2 - 8, X(35), yLat2 + 8, { couleur: RED, largeur: 2.5 }));
+  out.push(ligne(X(37.2), yLat2 - 8, X(37.2), yLat2 + 8, { couleur: RED, largeur: 2.5 }));
+  out.push(texte(X(33.8), yLat2 + 4, 'Δt₂', { taille: 15, couleur: RED, ancre: 'end', gras: true, halo: true }));
+
+  // Flèches des contacts antigéniques sous l'axe X
+  out.push(fleche(X(0), G.y1 + 92, X(0), G.y1 + 36, GREEN, 3.5, 10));
+  out.push(texte(X(0), G.y1 + 114, 'Ag A (1)', { taille: 15, couleur: GREEN, ancre: 'middle', gras: true }));
+
+  out.push(fleche(X(35), G.y1 + 92, X(35), G.y1 + 36, AMBER, 3.5, 10));
+  out.push(texte(X(35) - 10, G.y1 + 114, 'Ag A (2)', { taille: 15, couleur: GREEN, ancre: 'end', gras: true }));
+  out.push(texte(X(35) + 10, G.y1 + 114, '+ Ag B (1)', { taille: 15, couleur: BLUE, ancre: 'start', gras: true }));
+
+  // Légende minimale des deux courbes (symboles uniquement, en haut à gauche)
+  out.push(boite(G.x0 + 28, G.y0 + 12, 224, 86, { remplissage: PAPER, couleur: GRID, largeur: 1.8, rayon: 12 }));
+  out.push(ligne(G.x0 + 46, G.y0 + 40, G.x0 + 102, G.y0 + 40, { couleur: GREEN, largeur: 5 }));
+  out.push(texte(G.x0 + 116, G.y0 + 42, 'Ac anti-A', { taille: 15, couleur: GREEN, ancre: 'start', gras: true }));
+  out.push(ligne(G.x0 + 46, G.y0 + 74, G.x0 + 102, G.y0 + 74, { couleur: BLUE, largeur: 4.5, pointilles: '10 6' }));
+  out.push(texte(G.x0 + 116, G.y0 + 76, 'Ac anti-B', { taille: 15, couleur: BLUE, ancre: 'start', gras: true }));
+
+  // 7 repères espacés hors textes et hors courbes
+  repere(1, X(2.6), G.y1 + 66);
+  repere(2, X(3.0), Y(1.06));
+  repere(3, X(14), Y(2.08));
+  repere(4, X(32.2), G.y1 + 66);
+  repere(5, X(32.7), Y(1.48));
+  repere(6, X(45.5), Y(4.06));
+  repere(7, X(49), Y(1.96));
   return out;
 });
 
@@ -1277,45 +1181,7 @@ planche('u5-integration', 1200, 720, ({ repere }) => {
   return out;
 });
 
-// ── L10. u5 — morphine et enképhaline : inhibition présynaptique ────────────────
-planche('u5-morphine', 1200, 720, ({ repere }) => {
-  const out = [];
-  // terminaison présynaptique
-  out.push(organique(600, 250, (a) => 172 + 20 * Math.sin(a * 3), {
-    couleur: INK, largeur: 3.5, remplissage: GREEN_FILL,
-  }));
-  // vésicules de substance P
-  for (const [x, y] of [[520, 200], [600, 176], [676, 208], [560, 288], [652, 292]]) {
-    out.push(rond(x, y, 22, { remplissage: PAPER, couleur: GREEN, largeur: 2.5 }));
-    out.push(texte(x, y + 5, 'P', { taille: 13, couleur: GREEN, ancre: 'middle', gras: true }));
-  }
-  // récepteur opioïde + morphinique
-  out.push(boite(536, 378, 46, 58, { remplissage: PAPER, couleur: AMBER, largeur: 3, rayon: 8 }));
-  out.push(boite(546, 392, 26, 26, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 2.5, rayon: 6 }));
-  // canal Ca²⁺ fermé
-  out.push(boite(660, 392, 40, 42, { remplissage: PAPER, couleur: BLUE, largeur: 3, rayon: 8 }));
-  out.push(ligne(654, 386, 706, 440, { couleur: RED, largeur: 4 }));
-  out.push(ligne(654, 440, 706, 386, { couleur: RED, largeur: 4 }));
-  out.push(texte(756, 452, 'Ca²⁺', { taille: 14, couleur: BLUE, ancre: 'middle', gras: true }));
-  // fente synaptique + membrane postsynaptique
-  out.push(ligne(300, 470, 900, 470, { couleur: INK, largeur: 3 }));
-  out.push(ligne(300, 520, 900, 520, { couleur: INK, largeur: 3 }));
-  for (const x of [400, 520, 640, 760]) {
-    out.push(boite(x - 18, 512, 36, 18, { remplissage: PAPER, couleur: RED, largeur: 2.5, rayon: 6 }));
-  }
-  out.push(texte(860, 500, 'P', { taille: 14, couleur: MUTE, ancre: 'middle', gras: true }));
-  // flèche barrée : pas d'exocytose
-  out.push(fleche(600, 340, 600, 400, MUTE, 3));
-  out.push(ligne(578, 352, 622, 392, { couleur: RED, largeur: 4 }));
-
-  repere(1, 508, 456);
-  repere(2, 500, 396);
-  repere(3, 680, 412);
-  repere(4, 600, 200);
-  repere(5, 644, 352);
-  repere(6, 520, 520);
-  return out;
-});
+// ── L10. u5-morphine : remplacé en Phase 2 (Lot B) par u5-morphine.webp (webp_annote) ──
 
 // ═══════════════════════════ LOT 3 — u6 (photosynthèse), u7 (respiration), u8 (cycle) ═══════════════════════════
 // Règle « zéro texte IA » : aucun mot arabe dans ces SVG (le garde-fou de verifier-hors-ligne le refuse).
@@ -1512,62 +1378,7 @@ planche('u7-cycle-krebs', 1200, 760, ({ repere }) => {
   return out;
 });
 
-// ── 5. u7 — chaîne respiratoire et ATP synthase ─────────────────────────────────
-planche('u7-chaine-respiratoire', 1200, 760, ({ repere }) => {
-  const out = [];
-  const hautM = 400;
-  const basM = 456;
-
-  out.push(boite(40, 60, 1120, 640, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 30 }));
-  out.push(ligne(80, hautM, 1140, hautM, { couleur: INK, largeur: 5 }));
-  out.push(ligne(80, basM, 1140, basM, { couleur: INK, largeur: 5 }));
-  for (let x = 100; x <= 1120; x += 34) {
-    out.push(rond(x, hautM, 4, { remplissage: PAPER, couleur: GREEN, largeur: 2 }));
-    out.push(rond(x, basM, 4, { remplissage: PAPER, couleur: GREEN, largeur: 2 }));
-  }
-
-  const complexe = (x, libelle) => [
-    boite(x - 46, hautM - 34, 92, 124, { remplissage: GREEN_FILL, couleur: GREEN, largeur: 3, rayon: 14 }),
-    texte(x, hautM + 7, libelle, { taille: 16, couleur: GREEN, ancre: 'middle', gras: true }),
-  ];
-  out.push(...complexe(300, 'T1'));
-  out.push(...complexe(540, 'T2'));
-  out.push(...complexe(760, 'T3'));
-  out.push(...complexe(960, 'T4'));
-
-  // NADH / FADH₂ → T1 / T2
-  out.push(texte(300, 660, 'NADH, H⁺', { taille: 17, couleur: BLUE, ancre: 'middle', gras: true }));
-  out.push(fleche(300, 634, 300, 492, BLUE, 3, 10));
-  out.push(texte(540, 660, 'FADH₂', { taille: 17, couleur: RED, ancre: 'middle', gras: true }));
-  out.push(fleche(540, 634, 540, 492, RED, 3, 10));
-
-  // pompes à H⁺ : T1, T3, T4 seulement (T2 n'en pompe pas)
-  for (const x of [300, 760, 960]) out.push(fleche(x + 28, 360, x + 28, 296, GREEN, 2.5, 9));
-  out.push(texte(700, 214, 'H⁺', { taille: 19, couleur: GREEN, ancre: 'middle', gras: true }));
-
-  // O₂ accepteur final → H₂O
-  out.push(texte(960, 232, 'O₂', { taille: 19, couleur: RED, ancre: 'middle', gras: true }));
-  out.push(fleche(960, 252, 960, 330, RED, 3, 10));
-  out.push(fleche(960, 490, 960, 560, BLUE, 3, 10));
-  out.push(texte(960, 590, 'H₂O', { taille: 19, couleur: BLUE, ancre: 'middle', gras: true }));
-
-  // ATP synthase : H⁺ redescend, ATP sort vers la matrice
-  out.push(boite(1084, hautM - 40, 76, 136, { remplissage: AMBER_FILL, couleur: AMBER, largeur: 3, rayon: 14 }));
-  out.push(texte(1122, hautM + 3, 'ATP', { taille: 12, couleur: AMBER, ancre: 'middle', gras: true }));
-  out.push(texte(1122, hautM + 20, 'synthase', { taille: 9, couleur: AMBER, ancre: 'middle' }));
-  out.push(fleche(1122, 306, 1122, 356, BLUE, 2.5, 9));
-  out.push(fleche(1122, 500, 1122, 570, AMBER, 3, 10));
-  out.push(texte(1122, 600, 'ATP', { taille: 18, couleur: AMBER, ancre: 'middle', gras: true }));
-
-  repere(1, 300, 440);
-  repere(2, 540, 440);
-  repere(3, 788, 330);
-  repere(4, 960, 440);
-  repere(5, 960, 240);
-  repere(6, 1050, 440);
-  repere(7, 1046, 592);
-  return out;
-});
+// ── 5. u7-chaine-respiratoire : remplacé en Phase 2 (Lot B) par u7-chaine-respiratoire.webp (webp_annote) ──
 
 // ── 6. u8 — cycle de la matière et flux d'énergie ───────────────────────────────
 planche('u8-cycle-matiere-energie', 1200, 760, ({ repere }) => {
@@ -1664,60 +1475,7 @@ planche('u9-limites-plaques', 1200, 760, ({ repere }) => {
   return out;
 });
 
-// ── 2. u9 — expansion océanique et bandes magnétiques ──────────────────────────
-planche('u9-expansion-oceanique', 1200, 760, ({ repere }) => {
-  const out = [];
-  const cx = 600;
-  out.push(boite(40, 40, 1120, 680, { remplissage: '#fcfdfb', couleur: GRID, largeur: 2, rayon: 36 }));
-
-  // profil du fond océanique : dorsale au centre, plaines abyssales de part et d'autre
-  const fond = (x) => {
-    const d = Math.abs(x - cx);
-    if (d < 90) return 300 - 70 * Math.cos((d / 90) * (Math.PI / 2));
-    return 300 + Math.min(60, ((d - 90) / 420) * 60);
-  };
-  const pts = [];
-  for (let x = 90; x <= 1110; x += 6) pts.push([x, fond(x)]);
-  out.push(poly([...pts, [1110, 420], [90, 420]], { couleur: INK, largeur: 3, remplissage: '#e8e4dc' }));
-  out.push(poly(pts, { couleur: INK, largeur: 3 }));
-  // eau
-  out.push(boite(90, 120, 1020, 108, { remplissage: BLUE_FILL, couleur: BLUE, largeur: 2, rayon: 8 }));
-  out.push(texte(120, 176, 'H₂O', { taille: 17, couleur: BLUE, ancre: 'start', gras: true }));
-
-  // axe de la dorsale
-  out.push(ligne(cx, 228, cx, 620, { couleur: RED, largeur: 3, pointilles: '9 8' }));
-  out.push(texte(cx, 654, '0', { taille: 16, couleur: RED, ancre: 'middle', gras: true }));
-
-  // bandes magnétiques symétriques
-  const largeur = 46;
-  for (let i = 0; i < 11; i += 1) {
-    const normale = i % 2 === 0;
-    const couleur = normale ? '#4a5a52' : '#ffffff';
-    for (const sens of [-1, 1]) {
-      const x = cx + sens * (14 + i * largeur);
-      out.push(boite(sens < 0 ? x : x - largeur, 470, largeur, 92, {
-        remplissage: couleur, couleur: GRID, largeur: 1.5, rayon: 0,
-      }));
-    }
-  }
-  out.push(texte(cx + 24, 452, 'N', { taille: 17, couleur: INK, ancre: 'middle', gras: true, halo: true }));
-  out.push(texte(cx + 24 + largeur, 452, 'R', { taille: 17, couleur: MUTE, ancre: 'middle', gras: true, halo: true }));
-
-  // coupe lithosphérique sous les bandes
-  out.push(ligne(90, 580, 1110, 580, { couleur: INK, largeur: 2, pointilles: '6 6' }));
-  out.push(texte(1120, 634, 'Ma', { taille: 16, couleur: MUTE, ancre: 'end', gras: true }));
-  for (const [dx, libelle] of [[-440, '5'], [-220, '2.5'], [220, '2.5'], [440, '5']]) {
-    out.push(texte(cx + dx, 632, libelle, { taille: 15, couleur: MUTE, ancre: 'middle' }));
-  }
-
-  repere(1, cx, 246);
-  repere(2, cx + 46, 552);
-  repere(3, cx + 92, 552);
-  repere(4, 200, 296);
-  repere(5, cx - 300, 512);
-  repere(6, cx, 600);
-  return out;
-});
+// ── 2. u9-expansion-oceanique : remplacé en Phase 2 (Lot B) par u9-expansion-oceanique.webp (webp_annote) ──
 
 // ── 3. u9 — énergie interne : désintégration, conduction, convection ────────────
 planche('u9-energie-interne', 1200, 760, ({ repere }) => {
@@ -2094,145 +1852,6 @@ planche('u10-zones-ombre', 1200, 760, ({ repere }) => {
   repere(5, cx + Math.cos(ang(160, 1)) * (R - 36), cy + Math.sin(ang(160, 1)) * (R - 36));
   repere(6, cx + Math.cos(ang(25, 1)) * rc, cy + Math.sin(ang(25, 1)) * rc);
 
-  return out;
-});
-
-// ═══ Couverture 55/55 — les 3 dernières leçons officielles ═══════════════════
-
-// ── u4 — structure de l'anticorps (Y) ────────────────────────────────────────
-planche('u4-anticorps-y', 1200, 760, ({ repere }) => {
-  const out = [];
-  const H = [600, 420];
-  const bras = [[340, 150], [860, 150]];
-  const perp = (b) => {
-    const dx = b[0] - H[0];
-    const dy = b[1] - H[1];
-    const n = Math.hypot(dx, dy);
-    const nx = -dy / n;
-    const ny = dx / n;
-    const sens = Math.sign((b[0] - H[0]) * nx) || 1;
-    return { ux: dx / n, uy: dy / n, nx: nx * sens, ny: ny * sens };
-  };
-  // chaînes lourdes : deux bras + pied
-  for (const b of bras) out.push(poly([H, b], { couleur: AMBER, largeur: 26 }));
-  out.push(poly([[590, 420], [590, 690]], { couleur: AMBER, largeur: 24 }));
-  out.push(poly([[610, 420], [610, 690]], { couleur: AMBER, largeur: 24 }));
-  // chaînes légères : moitié extérieure haute de chaque bras
-  const infos = bras.map((b) => ({ b, ...perp(b) }));
-  for (const { b, nx, ny } of infos) {
-    const t0 = 0.40;
-    const p0 = [H[0] + (b[0] - H[0]) * t0 + nx * 26, H[1] + (b[1] - H[1]) * t0 + ny * 26];
-    const p1 = [b[0] + nx * 26, b[1] + ny * 26];
-    out.push(poly([p0, p1], { couleur: BLUE, largeur: 21 }));
-  }
-  // ponts disulfure (S–S) : H–L sur chaque bras, H–H au pied
-  const pont = (x, y, nx, ny) => [
-    ligne(x - nx * 13, y - ny * 13, x + nx * 13, y + ny * 13, { couleur: RED, largeur: 3.6 }),
-    ligne(x - nx * 13 + ny * 9, y - ny * 13 - nx * 9, x + nx * 13 + ny * 9, y + ny * 13 - nx * 9, { couleur: RED, largeur: 3.6 }),
-  ];
-  for (const { b, ux, uy, nx, ny } of infos) {
-    const t = 0.55;
-    out.push(...pont(H[0] + (b[0] - H[0]) * t + nx * 15, H[1] + (b[1] - H[1]) * t + ny * 15, ux, uy));
-  }
-  out.push(...pont(600, 500, 1, 0));
-  out.push(...pont(600, 534, 1, 0));
-  // sites de fixation : encoche au bout de chaque bras
-  for (const { b, nx, ny } of infos) {
-    const cx2 = b[0] + nx * 15;
-    const cy2 = b[1] + ny * 15;
-    out.push(poly([[cx2 - 20, cy2 - 6], [cx2, cy2 - 26], [cx2 + 20, cy2 - 6]], { couleur: INK, largeur: 3, remplissage: PAPER }));
-  }
-  // antigène arrivant sur le bras gauche
-  out.push(poly([[286, 96], [324, 104], [330, 142], [292, 134]], { couleur: RED, largeur: 3, remplissage: RED_FILL }));
-  out.push(fleche(310, 152, 330, 186, RED, 2.6, 9));
-
-  out.push(texte(646, 600, 'H', { taille: 21, couleur: AMBER, ancre: 'start', gras: true }));
-  out.push(texte(330, 244, 'L', { taille: 21, couleur: BLUE, ancre: 'middle', gras: true, halo: true }));
-  out.push(texte(628, 516, 'S–S', { taille: 15, couleur: RED, ancre: 'start', gras: true, halo: true }));
-  out.push(texte(880, 150, 'Fab', { taille: 18, couleur: INK, ancre: 'start', gras: true }));
-  out.push(texte(600, 720, 'Fc', { taille: 19, couleur: INK, ancre: 'middle', gras: true }));
-
-  repere(1, 620, 596);
-  repere(2, 470, 336);
-  repere(3, 452, 288);
-  repere(4, 340, 150);
-  repere(5, 600, 682);
-  repere(6, 258, 86);
-  return out;
-});
-
-// ── u4 — réponse primaire et réponse secondaire ──────────────────────────────
-planche('u4-reponse-primaire-secondaire', 1200, 700, ({ repere }) => {
-  const out = [];
-  const G = { x0: 150, x1: 1120, y0: 110, y1: 620 };
-  const X = (j) => G.x0 + (j / 56) * (G.x1 - G.x0);
-  const Y = (t) => G.y1 - (t / 100) * (G.y1 - G.y0);
-  out.push(ligne(G.x0, G.y1, G.x1, G.y1, { couleur: INK, largeur: 2.6 }));
-  out.push(ligne(G.x0, G.y0, G.x0, G.y1, { couleur: INK, largeur: 2.6 }));
-  for (const t of [25, 50, 75]) {
-    out.push(ligne(G.x0, Y(t), G.x1, Y(t), { couleur: GRID, largeur: 1.4 }));
-    out.push(texte(G.x0 - 12, Y(t) + 5, String(t), { taille: 14, couleur: MUTE, ancre: 'end' }));
-  }
-  for (const j of [0, 10, 20, 30, 40, 50]) {
-    out.push(texte(X(j), G.y1 + 24, String(j), { taille: 14, couleur: MUTE, ancre: 'middle' }));
-  }
-  const primaire = [[0, 2], [4, 3], [6, 6], [8, 14], [10, 22], [12, 26], [14, 24], [16, 18], [20, 10], [24, 6], [28, 4]];
-  const secondaire = [[28, 4], [29, 10], [30, 30], [31, 55], [33, 80], [35, 92], [38, 95], [42, 90], [48, 80], [56, 62]];
-  out.push(poly(primaire.map(([j, t]) => [X(j), Y(t)]), { couleur: BLUE, largeur: 4.5 }));
-  out.push(poly(secondaire.map(([j, t]) => [X(j), Y(t)]), { couleur: RED, largeur: 4.5 }));
-  for (const j of [0, 28]) {
-    out.push(fleche(X(j), 52, X(j), 96, INK, 2.8, 10));
-    out.push(texte(X(j), 40, 'Ag', { taille: 17, couleur: INK, ancre: 'middle', gras: true }));
-  }
-  out.push(texte(X(18), Y(34), 'IgM', { taille: 15, couleur: BLUE, ancre: 'middle', gras: true, halo: true }));
-  out.push(texte(X(41), Y(96) - 14, 'IgG', { taille: 15, couleur: RED, ancre: 'middle', gras: true, halo: true }));
-
-  repere(1, X(0) + 26, 60);
-  repere(2, X(6), Y(10) - 26);
-  repere(3, X(12), Y(26) - 26);
-  repere(4, X(28) + 26, 60);
-  repere(5, X(36), Y(95) - 30);
-  repere(6, X(50), Y(78) + 34);
-  return out;
-});
-
-// ── u5 — synapse chimique ────────────────────────────────────────────────────
-planche('u5-synapse-chimique', 1200, 620, ({ repere }) => {
-  const out = [];
-  out.push(boite(300, 70, 600, 250, { rayon: 80, remplissage: BLUE_FILL, couleur: BLUE, largeur: 3.5 }));
-  out.push(ligne(300, 320, 900, 320, { couleur: BLUE, largeur: 4 }));
-  out.push(boite(300, 372, 600, 170, { rayon: 40, remplissage: GREEN_FILL, couleur: GREEN, largeur: 3.5 }));
-  out.push(ligne(300, 372, 900, 372, { couleur: GREEN, largeur: 4 }));
-  // vésicules d'acétylcholine
-  for (const [x, y, r] of [[400, 150, 24], [500, 120, 20], [700, 140, 22], [780, 200, 18], [470, 240, 22], [640, 235, 20]]) {
-    out.push(rond(x, y, r, { remplissage: PAPER, couleur: AMBER, largeur: 3 }));
-  }
-  // vésicule en exocytose + neuromédiateurs dans la fente
-  out.push(ellipse(620, 318, 26, 22, { remplissage: PAPER, couleur: AMBER, largeur: 3 }));
-  for (const [x, y] of [[600, 300], [640, 300], [610, 340], [640, 348], [660, 332], [580, 350], [700, 344], [730, 352]]) {
-    out.push(rond(x, y, 5.5, { remplissage: AMBER, couleur: AMBER, largeur: 1.4 }));
-  }
-  // canaux calciques voltage-dépendants (deux ouvertures de la membrane présynaptique)
-  for (const x of [420, 812]) {
-    out.push(ligne(x - 18, 320, x - 6, 334, { couleur: RED, largeur: 5 }));
-    out.push(ligne(x + 18, 320, x + 6, 334, { couleur: RED, largeur: 5 }));
-    out.push(fleche(x, 268, x, 306, RED, 2.4, 9));
-    if (x < 600) out.push(texte(x + 26, 300, 'Ca²⁺', { taille: 17, couleur: RED, ancre: 'start', gras: true, halo: true }));
-  }
-  // récepteurs postsynaptiques
-  for (const x of [520, 600, 680, 760]) {
-    out.push(poly([[x - 16, 372], [x - 16, 402], [x, 416], [x + 16, 402], [x + 16, 372]], {
-      couleur: GREEN, largeur: 4,
-    }));
-  }
-  out.push(texte(872, 356, 'ACh', { taille: 17, couleur: AMBER, ancre: 'start', gras: true }));
-
-  repere(1, 356, 112);
-  repere(2, 742, 168);
-  repere(3, 420, 300);
-  repere(4, 762, 350);
-  repere(5, 682, 430);
-  repere(6, 664, 300);
   return out;
 });
 

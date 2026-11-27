@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" data-schema="u4-memoire-immunitaire">
+<rect width="1200" height="760" fill="#ffffff"/>
+<line x1="145" y1="580" x2="1120" y2="580" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="129" y="578" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">10⁰</text>
+<line x1="145" y1="465.2" x2="1120" y2="465.2" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="129" y="469.2" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">10¹</text>
+<line x1="145" y1="350.4" x2="1120" y2="350.4" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="129" y="354.4" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">10²</text>
+<line x1="145" y1="235.5" x2="1120" y2="235.5" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="129" y="239.5" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">10³</text>
+<line x1="145" y1="120.7" x2="1120" y2="120.7" stroke="#d7dfd9" stroke-width="1.5" stroke-dasharray="5 6" stroke-linecap="round"/>
+<text x="129" y="124.7" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="14" fill="#5f6f66" text-anchor="end" font-weight="700">10⁴</text>
+<line x1="145" y1="580" x2="145" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="145" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">0</text>
+<line x1="242.5" y1="580" x2="242.5" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="242.5" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">7</text>
+<line x1="340" y1="580" x2="340" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="340" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">14</text>
+<line x1="437.5" y1="580" x2="437.5" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="437.5" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">21</text>
+<line x1="535" y1="580" x2="535" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="535" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">28</text>
+<line x1="632.5" y1="580" x2="632.5" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="632.5" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">35</text>
+<line x1="730" y1="580" x2="730" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="730" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">42</text>
+<line x1="827.5" y1="580" x2="827.5" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="827.5" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">49</text>
+<line x1="925" y1="580" x2="925" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="925" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">56</text>
+<line x1="1022.5" y1="580" x2="1022.5" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="1022.5" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">63</text>
+<line x1="1120" y1="580" x2="1120" y2="587" stroke="#1f2d27" stroke-width="1.8" stroke-linecap="round"/>
+<text x="1120" y="604" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="13" fill="#5f6f66" text-anchor="middle">70</text>
+<line x1="632.5" y1="92" x2="632.5" y2="580" stroke="#a97517" stroke-width="1.8" stroke-dasharray="6 6" stroke-linecap="round"/>
+<g stroke="#1f2d27" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="145" y1="580" x2="145" y2="68"/><path d="M149.1 77.1 L145 68 L140.9 77.1" stroke-width="2.5"/></g>
+<g stroke="#1f2d27" stroke-width="2.5" fill="none" stroke-linecap="round"><line x1="145" y1="580" x2="1144" y2="580"/><path d="M1134.9 584.1 L1144 580 L1134.9 575.9" stroke-width="2.5"/></g>
+<text x="157" y="68" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f2d27" text-anchor="start" font-weight="700">Ac (UA)</text>
+<text x="1148" y="585" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f2d27" text-anchor="start" font-weight="700">j</text>
+<path d="M145 574.3 L152 574.3 L158.9 574.3 L165.9 574.3 L172.9 574.3 L179.8 574.3 L186.8 574.3 L193.8 574.3 L200.7 574.3 L207.7 574.3 L214.6 574.3 L221.6 574.3 L228.6 574.3 L235.5 572 L242.5 563.9 L249.5 550.7 L256.4 533.9 L263.4 514.9 L270.4 495.1 L277.3 475.6 L284.3 457.2 L291.3 440.6 L298.2 426.2 L305.2 414 L312.1 404.3 L319.1 397 L326.1 392 L333 389.2 L340 388.2 L347 389.1 L353.9 391.4 L360.9 395.1 L367.9 399.9 L374.8 405.5 L381.8 411.9 L388.8 418.7 L395.7 426 L402.7 433.5 L409.6 441.2 L416.6 448.8 L423.6 456.5 L430.5 464 L437.5 471.3 L444.5 478.4 L451.4 485.2 L458.4 491.7 L465.4 497.9 L472.3 503.8 L479.3 509.4 L486.3 514.6 L493.2 519.6 L500.2 524.2 L507.1 528.4 L514.1 532.4 L521.1 536.1 L528 539.5 L535 542.6 L542 544.3 L548.9 544.5 L555.9 544.8 L562.9 545.1 L569.8 545.3 L576.8 545.6 L583.8 545.9 L590.7 546.1 L597.7 546.4 L604.6 546.6 L611.6 546.9 L618.6 547.1 L625.5 547.4 L632.5 547.6 L639.5 547.9 L646.4 548.1 L653.4 548.3 L660.4 548.6 L667.3 541.6 L674.3 519 L681.3 482.3 L688.2 435.5 L695.2 383.4 L702.1 331.3 L709.1 283.4 L716.1 242.6 L723 210.2 L730 186.2 L737 169.6 L743.9 158.7 L750.9 155.1 L757.9 154.4 L764.8 155.6 L771.8 157.7 L778.8 160.4 L785.7 163.4 L792.7 166.5 L799.6 169.6 L806.6 172.7 L813.6 175.8 L820.5 178.9 L827.5 181.9 L834.5 185 L841.4 188 L848.4 191 L855.4 193.9 L862.3 196.9 L869.3 199.8 L876.3 202.7 L883.2 205.5 L890.2 208.4 L897.1 211.2 L904.1 214 L911.1 216.8 L918 219.6 L925 222.3 L932 225.1 L938.9 227.8 L945.9 230.4 L952.9 233.1 L959.8 235.7 L966.8 238.4 L973.8 241 L980.7 243.5 L987.7 246.1 L994.6 248.6 L1001.6 251.1 L1008.6 253.6 L1015.5 256.1 L1022.5 258.6 L1029.5 261 L1036.4 263.4 L1043.4 265.8 L1050.4 268.2 L1057.3 270.6 L1064.3 272.9 L1071.3 275.3 L1078.2 277.6 L1085.2 279.9 L1092.1 282.2 L1099.1 284.4 L1106.1 286.7 L1113 288.9 L1120 291.1" fill="none" stroke="#1f6f52" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M632.5 574.3 L639.5 574.3 L646.4 574.3 L653.4 574.3 L660.4 574.3 L667.3 574.3 L674.3 574.3 L681.3 574.3 L688.2 574.3 L695.2 574.3 L702.1 574.3 L709.1 574.3 L716.1 574.3 L723 572.1 L730 564.4 L737 551.9 L743.9 535.9 L750.9 517.8 L757.9 499 L764.8 480.5 L771.8 463 L778.8 447.2 L785.7 433.5 L792.7 421.9 L799.6 412.7 L806.6 405.8 L813.6 401 L820.5 398.3 L827.5 397.4 L834.5 398.2 L841.4 400.5 L848.4 403.9 L855.4 408.5 L862.3 413.8 L869.3 419.9 L876.3 426.4 L883.2 433.3 L890.2 440.5 L897.1 447.7 L904.1 455 L911.1 462.3 L918 469.4 L925 476.4 L932 483.1 L938.9 489.6 L945.9 495.8 L952.9 501.7 L959.8 507.3 L966.8 512.6 L973.8 517.6 L980.7 522.3 L987.7 526.6 L994.6 530.7 L1001.6 534.5 L1008.6 538 L1015.5 541.2 L1022.5 544.2 L1029.5 547 L1036.4 549.5 L1043.4 550 L1050.4 550.2 L1057.3 550.4 L1064.3 550.7 L1071.3 550.9 L1078.2 551.1 L1085.2 551.3 L1092.1 551.5 L1099.1 551.7 L1106.1 551.9 L1113 552.1 L1120 552.3" fill="none" stroke="#1d4f8f" stroke-width="4.5" stroke-dasharray="10 6" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="145" y1="518" x2="228.6" y2="518" stroke="#a97517" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="145" y1="510" x2="145" y2="526" stroke="#a97517" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="228.6" y1="510" x2="228.6" y2="526" stroke="#a97517" stroke-width="2.5" stroke-linecap="round"/>
+<text x="186.8" y="504" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a97517" text-anchor="middle" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">Δt₁</text>
+<line x1="632.5" y1="458.3" x2="663.1" y2="458.3" stroke="#a5312b" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="632.5" y1="450.3" x2="632.5" y2="466.3" stroke="#a5312b" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="663.1" y1="450.3" x2="663.1" y2="466.3" stroke="#a5312b" stroke-width="2.5" stroke-linecap="round"/>
+<text x="615.8" y="462.3" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#a5312b" text-anchor="end" font-weight="700" stroke="#ffffff" stroke-width="5" paint-order="stroke" stroke-linejoin="round">Δt₂</text>
+<g stroke="#1f6f52" stroke-width="3.5" fill="none" stroke-linecap="round"><line x1="145" y1="672" x2="145" y2="616"/><path d="M149.1 625.1 L145 616 L140.9 625.1" stroke-width="3.5"/></g>
+<text x="145" y="694" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f6f52" text-anchor="middle" font-weight="700">Ag A (1)</text>
+<g stroke="#a97517" stroke-width="3.5" fill="none" stroke-linecap="round"><line x1="632.5" y1="672" x2="632.5" y2="616"/><path d="M636.6 625.1 L632.5 616 L628.4 625.1" stroke-width="3.5"/></g>
+<text x="622.5" y="694" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f6f52" text-anchor="end" font-weight="700">Ag A (2)</text>
+<text x="642.5" y="694" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1d4f8f" text-anchor="start" font-weight="700">+ Ag B (1)</text>
+<rect x="173" y="104" width="224" height="86" rx="12" fill="#ffffff" stroke="#d7dfd9" stroke-width="1.8"/>
+<line x1="191" y1="132" x2="247" y2="132" stroke="#1f6f52" stroke-width="5" stroke-linecap="round"/>
+<text x="261" y="134" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1f6f52" text-anchor="start" font-weight="700">Ac anti-A</text>
+<line x1="191" y1="166" x2="247" y2="166" stroke="#1d4f8f" stroke-width="4.5" stroke-dasharray="10 6" stroke-linecap="round"/>
+<text x="261" y="168" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="15" fill="#1d4f8f" text-anchor="start" font-weight="700">Ac anti-B</text>
+</svg>

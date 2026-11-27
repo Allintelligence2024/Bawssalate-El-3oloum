@@ -44,6 +44,8 @@ await attendre('/precache-manifest.json', { type: 'json' });
 await attendre('/manifest.webmanifest', { type: 'json' });
 await attendre('/icon.svg', { type: 'svg' });
 await attendre('/boussole/index.html', { type: 'text/html' });
+await attendre('/audio/lecons/d1-u1-l1-expression-genique.mp3', { type: 'audio/' });
+await attendre('/audio/mourchid/mourchid-u1.mp3', { type: 'audio/' });
 
 // La coquille doit rester légère : c'est la promesse « Lite » (Phase 2 : plafond 2,25 Mio).
 const MIO = 1024 * 1024;

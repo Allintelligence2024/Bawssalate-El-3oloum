@@ -56,5 +56,9 @@ plans/inventaire-images-livre.json
 plans/_travail-images/
 .cache/
 
+# Phase 3–5 — espace local de prévisualisation/staging R2 (hors Git ; les 65 MP3 intégrés
+# dans l'application vivent dans public/audio/{lecons,mourchid}/, hors précache).
+plans/_audio-r2/
+
 # Exports temporaires d'audit (Blocs E/F) : conservés sur le poste, jamais versionnés.
 audit-v2-*.md

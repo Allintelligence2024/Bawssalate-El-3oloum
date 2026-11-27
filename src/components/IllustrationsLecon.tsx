@@ -21,8 +21,11 @@ import {
   type IllustrationLecon,
 } from '../data/illustrationsTypes';
 import { legendeArSecurisee } from '../utils/illustrations';
-import { chargerSchemasSvt } from '../utils/schemasSvtCharge';
+import { chargerSchemasSvt, lireSchemasSvtCache } from '../utils/schemasSvtChargeur';
 import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
+
+export const MESSAGE_HORS_LIGNE_SCHEMAS =
+  'تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه';
 
 interface Props {
   lessonId: string;
@@ -31,26 +34,32 @@ interface Props {
 }
 
 export default function IllustrationsLecon({ lessonId, compacte = false }: Props) {
-  // Les schémas créés (libellés arabes) sont chargés à la demande : ils ne pèsent plus sur la
-  // coquille de démarrage. Les 21 WebP du manuel, légères, restent disponibles immédiatement.
-  const [schemas, setSchemas] = useState<IllustrationLecon[]>([]);
-  const [etat, setEtat] = useState<'chargement' | 'pret' | 'erreur'>('chargement');
+  // Les schémas créés (libellés arabes) sont chargés à la demande et mis en cache au niveau
+  // module : ils ne pèsent pas sur la coquille de démarrage et ne clignotent plus sur les
+  // leçons suivantes. Les 21 WebP du manuel, légères, restent disponibles immédiatement.
+  const [schemas, setSchemas] = useState<IllustrationLecon[]>(() => lireSchemasSvtCache() ?? []);
+  const [etat, setEtat] = useState<'chargement' | 'pret' | 'erreur'>(() =>
+    lireSchemasSvtCache() !== null ? 'pret' : 'chargement',
+  );
 
   useEffect(() => {
+    const dejaEnCache = lireSchemasSvtCache();
+    if (dejaEnCache !== null) {
+      setSchemas(dejaEnCache);
+      setEtat('pret');
+      return;
+    }
     let vivant = true;
-    // Promesse mémorisée par module : les leçons suivantes n'attendent plus rien.
     chargerSchemasSvt()
       .then((liste) => {
-        if (!vivant) return;
-        setSchemas(liste);
-        setEtat('pret');
+        if (vivant) {
+          setSchemas(liste);
+          setEtat('pret');
+        }
       })
       .catch(() => {
-        // Chunk absent du cache (première ouverture hors ligne) : l'écran le dit au lieu
-        // de faire disparaître la section.
-        if (!vivant) return;
-        setSchemas([]);
-        setEtat('erreur');
+        // Un échec réseau hors ligne ne bloque jamais la leçon ; on informe sobrement l'élève.
+        if (vivant) setEtat('erreur');
       });
     return () => {
       vivant = false;
@@ -111,42 +120,38 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
     };
   }, [zoom, fermer]);
 
-  // Aucun visuel connu et chargement en cours : on garde une place discrète plutôt que
-  // de faire disparaître la section (les leçons sans WebP du manuel n'ont que des schémas).
-  if (illustrations.length === 0 && etat === 'chargement') {
-    return (
-      <section
-        dir="rtl"
-        aria-label="وثائق الدرس"
-        aria-busy="true"
-        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
-      >
-        <p className="eyebrow">وثائق الدرس ومخططاته</p>
-        <div className="mt-3 space-y-2" aria-hidden="true">
-          <div className="h-24 w-full animate-pulse rounded-2xl bg-sage-soft" />
-          <div className="h-3 w-2/3 animate-pulse rounded-full bg-sage-soft" />
-        </div>
-        <p className="sr-only">جارٍ تحميل المخططات…</p>
-      </section>
-    );
+  if (illustrations.length === 0) {
+    if (etat === 'chargement') {
+      return (
+        <section
+          dir="rtl"
+          aria-label="وثائق الدرس"
+          aria-busy="true"
+          className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+        >
+          <p className="eyebrow">وثائق الدرس ومخططاته</p>
+          <p role="status" className="mt-2 text-xs text-mute">
+            جارٍ تحميل المخطّطات…
+          </p>
+        </section>
+      );
+    }
+    if (etat === 'erreur') {
+      return (
+        <section
+          dir="rtl"
+          aria-label="وثائق الدرس"
+          className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
+        >
+          <p className="eyebrow">وثائق الدرس ومخططاته</p>
+          <p role="status" className="mt-2 text-xs leading-relaxed text-mute">
+            {MESSAGE_HORS_LIGNE_SCHEMAS}
+          </p>
+        </section>
+      );
+    }
+    return null;
   }
-
-  if (illustrations.length === 0 && etat === 'erreur') {
-    return (
-      <section
-        dir="rtl"
-        aria-label="وثائق الدرس"
-        className={compacte ? 'rounded-2xl border border-line p-3' : 'card p-4'}
-      >
-        <p className="eyebrow">وثائق الدرس ومخططاته</p>
-        <p className="mt-2 text-sm leading-relaxed text-mute" role="status">
-          تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه.
-        </p>
-      </section>
-    );
-  }
-
-  if (illustrations.length === 0) return null;
 
   const legende = (illustration: IllustrationLecon) =>
     legendeArSecurisee(illustration.legendeAr ?? illustration.titreAr);
@@ -165,6 +170,11 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
       {contientSchemaCree && (
         <p className="mt-1 text-[11px] leading-relaxed text-mute">
           المخططات المُعادة الرسم: كل الأرقام والوحدات والعناوين مكتوبة داخل التطبيق باتجاه عربي سليم، ولا يوجد أي نص مولّد داخل الصورة.
+        </p>
+      )}
+      {etat === 'erreur' && (
+        <p role="status" className="mt-2 rounded-xl border border-line bg-cream/60 px-3 py-2 text-xs leading-relaxed text-mute">
+          {MESSAGE_HORS_LIGNE_SCHEMAS}
         </p>
       )}
 

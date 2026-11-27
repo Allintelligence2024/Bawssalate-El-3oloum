@@ -180,4 +180,74 @@ describe('illustrations WebP de leçon (Phase 2)', () => {
     // Un fichier arbitraire sous /lecons/ ne passe plus la règle d'origine.
     expect(await e.demande('/lecons/autre.bin')).toBeUndefined();
   });
+
+  it('place schemasSvt-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/schemasSvt-abc123.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/schemasSvt-abc123.js', 'export const SCHEMAS_SVT = [];', 'text/javascript');
+    await e.lifecycle('install');
+    // Jamais dans la coquille de démarrage.
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/schemasSvt-abc123.js');
+    // Téléchargé dans le lot « contenu » sur demande explicite.
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/schemasSvt-abc123.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/schemasSvt-abc123.js');
+    expect(await chunk!.text()).toContain('SCHEMAS_SVT');
+  });
+
+  it('place audioMourchid-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/audioMourchid-def456.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/audioMourchid-def456.js', 'export const AUDIO_MOURCHID = [];', 'text/javascript');
+    await e.lifecycle('install');
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/audioMourchid-def456.js');
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/audioMourchid-def456.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/audioMourchid-def456.js');
+    expect(await chunk!.text()).toContain('AUDIO_MOURCHID');
+  });
+
+  it('place audioLecons-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/audioLecons-u1pilot.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/audioLecons-u1pilot.js', 'export const AUDIO_LECONS = [];', 'text/javascript');
+    await e.lifecycle('install');
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/audioLecons-u1pilot.js');
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/audioLecons-u1pilot.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/audioLecons-u1pilot.js');
+    expect(await chunk!.text()).toContain('AUDIO_LECONS');
+  });
+
+  it('ne précache jamais les MP3 /audio/, les mémorise à la première lecture et les sert hors ligne (y compris avec Range)', async () => {
+    const e = environnement();
+    e.put('/audio/lecons/d1-u1-l1-expression-genique.mp3', 'ID3-mp3-lecon', 'audio/mpeg');
+    e.put('/audio/mourchid/mourchid-u1.mp3', 'ID3-mp3-mourchid', 'audio/mpeg');
+    await e.lifecycle('install');
+    expect(e.demandes).not.toContain('/audio/lecons/d1-u1-l1-expression-genique.mp3');
+    expect(e.demandes).not.toContain('/audio/mourchid/mourchid-u1.mp3');
+
+    const first = await e.demande('/audio/lecons/d1-u1-l1-expression-genique.mp3');
+    expect(await first!.text()).toBe('ID3-mp3-lecon');
+    expect(e.cachesData.get('kunz-hors-ligne-test')?.has('/audio/lecons/d1-u1-l1-expression-genique.mp3')).toBe(true);
+
+    const capsule = await e.demande('/audio/mourchid/mourchid-u1.mp3');
+    expect(await capsule!.text()).toBe('ID3-mp3-mourchid');
+
+    e.setOnline(false);
+    const offlineRange = await e.demande('/audio/lecons/d1-u1-l1-expression-genique.mp3', 'cors', true);
+    expect(await offlineRange!.text()).toBe('ID3-mp3-lecon');
+    const offlineMourchid = await e.demande('/audio/mourchid/mourchid-u1.mp3', 'cors', true);
+    expect(await offlineMourchid!.text()).toBe('ID3-mp3-mourchid');
+    expect(await e.demande('/audio/autre/inconnu.mp3')).toBeUndefined();
+  });
 });

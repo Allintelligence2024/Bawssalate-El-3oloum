@@ -17,8 +17,10 @@ import { ChoixUnique, DiagnosticPieges, Minuteur, Morceau, OptionsMcq, ValveAide
 import EcranCelebration from './Fetes';
 import { IcoRetour, IcoVerifie } from './Icones';
 import { qcmPourLecon } from '../utils/qcm';
+import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
+import { prechaufferAudioLecons } from '../utils/audioLeconsChargeur';
 import IllustrationsLecon from './IllustrationsLecon';
-import { prechaufferSchemasSvt } from '../utils/schemasSvtCharge';
+import LecteurAudioResume from './LecteurAudioResume';
 
 interface Props {
   lessonId: string;
@@ -110,10 +112,6 @@ export default function ProtocoleRunner({
   onFermer,
   onAllerMethodo,
 }: Props) {
-  // Préchauffage silencieux des schémas (Phase 5) : évite le squelette à l'ouverture.
-  useEffect(() => {
-    prechaufferSchemasSvt();
-  }, []);
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
   const qcmLecon = qcmPourLecon(lessonId, lecon);
@@ -154,6 +152,13 @@ export default function ProtocoleRunner({
   // Pièges diagnostiques §11 (audit croisé plan de cours SVT2) : en phase 6, avant la
   // synthèse, l'élève confronte 4 représentations erronées fréquentes sanctionnées au Bac.
   const [piegesFaits, setPiegesFaits] = useState(false);
+
+  // Préchauffage discret du registre des schémas dès l'entrée dans la leçon :
+  // quand l'élève atteint la Phase 5 (« الدليل الوثائقي »), les schémas sont déjà en mémoire.
+  useEffect(() => {
+    prechaufferSchemasSvt();
+    prechaufferAudioLecons();
+  }, []);
 
   // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية، وجلسة واحدة لكل فتح.
   //
@@ -605,6 +610,7 @@ export default function ProtocoleRunner({
                 <p className="text-[11px] font-bold text-forest">إشكالية الدرس</p>
                 <p className="mt-1.5 text-sm font-bold leading-relaxed">{lecon.missionAr}</p>
               </div>
+              <LecteurAudioResume lessonId={lessonId} compact />
               <button
                 type="button"
                 onClick={onLireLecon}
@@ -803,6 +809,8 @@ export default function ProtocoleRunner({
                   📖 أعد قراءة الدرس بانتباه للعلاقات (قراءة موجَّهة)
                 </button>
               )}
+
+              <LecteurAudioResume lessonId={lessonId} compact />
 
               {/* سلّم الفهم — من الظاهري إلى الجزيئي (audit F2 : matérialiser macro→micro). */}
               <Echelle
