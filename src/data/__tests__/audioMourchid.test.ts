@@ -43,9 +43,10 @@ describe('registre « voix du المرشد » (Phase 3)', () => {
     }
   });
 
-  it('garantit des identifiants et noms de fichiers uniques, des métadonnées valides et 0 reviewed: true', () => {
+  it('garantit des identifiants et noms de fichiers uniques, un accueil darija algérienne et le statut actif/reviewed', () => {
     const ids = new Set<string>();
     const fichiers = new Set<string>();
+    const accueilDarija = /(واش راكم|واش حوالكم)/;
     for (const p of AUDIO_MOURCHID) {
       expect(ids.has(p.id)).toBe(false);
       expect(fichiers.has(p.fichier)).toBe(false);
@@ -59,8 +60,9 @@ describe('registre « voix du المرشد » (Phase 3)', () => {
       expect(p.tailleKo).toBeGreaterThan(300);
       expect(p.tailleKo).toBeLessThan(1000);
       expect(p.texteAr.length).toBeGreaterThan(400);
-      expect(p.statut).toBe('a_valider_enseignant');
-      expect(p.reviewed).toBe(false);
+      expect(accueilDarija.test(p.texteAr.slice(0, 120)), `Accueil darija manquant dans ${p.id}`).toBe(true);
+      expect(p.statut).toBe('actif');
+      expect(p.reviewed).toBe(true);
 
       // Qualité éditoriale arabe : aucun emoji, aucun latin collé, aucune note /20.
       expect(p.titreAr).not.toMatch(EMOJI);

@@ -8,7 +8,10 @@ import { join } from 'node:path';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import axe from 'axe-core';
-import LecteurAudioResume, { STATUT_AUDIO_RESUME } from '../LecteurAudioResume';
+import LecteurAudioResume, {
+  STATUT_AUDIO_RESUME,
+  STATUT_AUDIO_RESUME_VALIDE,
+} from '../LecteurAudioResume';
 import BibliothequeResumesLecons from '../BibliothequeResumesLecons';
 import { AUDIO_LECONS, audioPourLecon } from '../../data/audioLecons';
 import { UNITES } from '../../data/programme';
@@ -52,7 +55,7 @@ async function rendre(noeud: React.ReactElement): Promise<HTMLDivElement> {
 }
 
 describe('registre audio leçons (src/data/audioLecons.ts) — couverture 55/55 officielle', () => {
-  it('couvre exactement les 55 leçons officielles (u1–u11) avec durées 30–90 s, tailles ≤ 500 Ko, script 100 % arabe et 0 reviewed', () => {
+  it('couvre exactement les 55 leçons officielles (u1–u11) avec durées 30–90 s, tailles ≤ 500 Ko, script 100 % arabe et statut actif/reviewed', () => {
     const leconsOfficielles = UNITES.flatMap((u) =>
       u.lessonIds.map((id) => ({ id, unite: u.id })),
     );
@@ -71,8 +74,8 @@ describe('registre audio leçons (src/data/audioLecons.ts) — couverture 55/55 
       expect(p!.texteAr.length).toBeGreaterThan(400);
       expect(/[A-Za-z]/.test(p!.texteAr), `Latin dans ${id}`).toBe(false);
       expect(p!.texteAr.includes('/20'), `/20 dans ${id}`).toBe(false);
-      expect(p!.statut).toBe('a_valider_enseignant');
-      expect(p!.reviewed).toBe(false);
+      expect(p!.statut).toBe('actif');
+      expect(p!.reviewed).toBe(true);
       expect(fichiersVus.has(p!.fichier)).toBe(false);
       expect(existsSync(join(process.cwd(), 'public/audio/lecons', p!.fichier))).toBe(true);
       fichiersVus.add(p!.fichier);
@@ -101,7 +104,8 @@ describe('LecteurAudioResume — contrôles, résumé écrit hors-ligne et acces
       />,
     );
 
-    expect(zone.textContent).toContain(STATUT_AUDIO_RESUME);
+    expect(zone.textContent).toContain(STATUT_AUDIO_RESUME_VALIDE);
+    expect(zone.textContent).not.toContain(STATUT_AUDIO_RESUME);
     expect(zone.textContent).toContain('0:55');
     expect(zone.querySelector('img[src="/mascotte.webp"]')).not.toBeNull();
     expect(zone.querySelector('[data-etat-lecture]')?.getAttribute('data-etat-lecture')).toBe('repos');
@@ -162,6 +166,21 @@ describe('LecteurAudioResume — contrôles, résumé écrit hors-ligne et acces
       rules: HORS_PERIMETRE_AXE,
     });
     expect(audit.violations).toEqual([]);
+  });
+
+  it('affiche encore « قيد مراجعة الأستاذ » pour une piste non validée (reviewed: false)', async () => {
+    const pisteNonValidee = {
+      ...AUDIO_LECONS[0],
+      statut: 'a_valider_enseignant' as const,
+      reviewed: false,
+    };
+    reinitialiserChargeurAudioLeconsPourTests(async () => ({ AUDIO_LECONS: [pisteNonValidee] }));
+
+    const zone = await rendre(
+      <LecteurAudioResume lessonId={pisteNonValidee.lessonId} />,
+    );
+    expect(zone.textContent).toContain(STATUT_AUDIO_RESUME);
+    expect(zone.textContent).not.toContain(STATUT_AUDIO_RESUME_VALIDE);
   });
 
   it('en mode hors-ligne sans cache, affiche le résumé écrit complet, désactive l’audio sans erreur console et garde 0 violation axe', async () => {

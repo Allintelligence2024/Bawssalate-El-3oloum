@@ -23,6 +23,7 @@ import {
 } from '../utils/audioUrl';
 
 export const STATUT_AUDIO_RESUME = 'ملخّص صوتي — قيد مراجعة الأستاذ';
+export const STATUT_AUDIO_RESUME_VALIDE = 'ملخّص صوتي بصوت المُرشد';
 
 interface Props {
   lessonId: string;
@@ -308,7 +309,7 @@ export default function LecteurAudioResume({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] font-bold text-forest-deep">
-              {STATUT_AUDIO_RESUME}
+              {piste.reviewed ? STATUT_AUDIO_RESUME_VALIDE : STATUT_AUDIO_RESUME}
             </span>
             <span
               className="rounded-full bg-paper px-2 py-0.5 text-[10px] font-bold tabular-nums text-mute"

@@ -57,11 +57,11 @@ describe('LecteurAudioMourchid', () => {
   const pisteU1 = AUDIO_MOURCHID[0];
   const pisteU2 = AUDIO_MOURCHID[1];
 
-  it('avec baseUrl="", affiche le repli texte honnête et ouvre la transcription complète', async () => {
+  it('avec baseUrl="", masque le badge de révision sur piste validée et ouvre la transcription avec accueil darija', async () => {
     const zone = await rendre(<LecteurAudioMourchid piste={pisteU1} baseUrl="" />);
     expect(zone.querySelector('audio')).toBeNull();
     expect(zone.textContent).toContain(MESSAGE_AUDIO_R2_EN_ATTENTE);
-    expect(zone.textContent).toContain('قيد المراجعة التربوية');
+    expect(zone.textContent).not.toContain('قيد المراجعة التربوية');
     expect(zone.textContent).toContain('1:33');
 
     const btnTexte = [...zone.querySelectorAll('button')].find((b) =>
@@ -74,7 +74,14 @@ describe('LecteurAudioMourchid', () => {
       btnTexte!.click();
     });
     expect(btnTexte?.getAttribute('aria-expanded')).toBe('true');
-    expect(zone.textContent).toContain('أهلاً بكم أبنائي طلبة البكالوريا في الوحدة الأولى');
+    expect(zone.textContent).toContain('السلام عليكم يا أبطال الباك، واش راكم؟');
+  });
+
+  it('affiche le badge « قيد المراجعة التربوية » uniquement si piste.reviewed est false', async () => {
+    const zone = await rendre(
+      <LecteurAudioMourchid piste={{ ...pisteU1, statut: 'a_valider_enseignant', reviewed: false }} baseUrl="" />,
+    );
+    expect(zone.textContent).toContain('قيد المراجعة التربوية');
   });
 
   it('par défaut (sans baseUrl), monte <audio preload="none"> sur /audio/mourchid/', async () => {
@@ -150,7 +157,7 @@ describe('LecteurAudioMourchid', () => {
       audio!.dispatchEvent(new Event('error'));
     });
     expect(zone.querySelector('[role="status"]')?.textContent).toBe(MESSAGE_AUDIO_HORS_LIGNE);
-    expect(zone.textContent).toContain('أهلاً بكم أبنائي طلبة البكالوريا في الوحدة الأولى');
+    expect(zone.textContent).toContain('السلام عليكم يا أبطال الباك، واش راكم؟');
   });
 
   it('en mode hors-ligne sans cache, désactive les contrôles et ouvre la transcription automatiquement', async () => {
@@ -158,7 +165,7 @@ describe('LecteurAudioMourchid', () => {
     const btnLecture = zone.querySelector('button[aria-label="تشغيل صوت المُرشد"]') as HTMLButtonElement;
     expect(btnLecture.disabled).toBe(true);
     expect(zone.querySelector('[role="status"]')?.textContent).toBe(MESSAGE_AUDIO_HORS_LIGNE);
-    expect(zone.textContent).toContain('أهلاً بكم أبنائي طلبة البكالوريا في الوحدة الأولى');
+    expect(zone.textContent).toContain('السلام عليكم يا أبطال الباك، واش راكم؟');
   });
 
   it('verrou audio unique : lancer une capsule ou un résumé de leçon met automatiquement l’autre en pause', async () => {
