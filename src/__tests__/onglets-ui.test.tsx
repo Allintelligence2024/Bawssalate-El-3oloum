@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Cinq portes : la décision du 2026-11-27 (« الرئيسية » séparée de « كويست ») est un
-// contrat. Ce test la protège : si quelqu'un change la barre du bas, il casse ici.
+// Quatre portes, pas cinq : la décision du 2026-11-24 (architecture A) est un contrat.
+// Ce test la protège : si quelqu'un rajoute un onglet, il casse ici.
 import { afterEach, describe, expect, it } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -23,12 +23,11 @@ function vider(ms = 0) {
 }
 
 function boutons(): HTMLButtonElement[] {
-  // Uniquement la barre du bas (les liens rapides de الرئيسية ont aussi un <nav>).
-  return [...zone!.querySelectorAll('nav[aria-label="أبواب البوصلة"] button')] as HTMLButtonElement[];
+  return [...zone!.querySelectorAll('nav button')] as HTMLButtonElement[];
 }
 
-describe('les cinq portes de la boussole', () => {
-  it('affiche exactement cinq onglets et ouvre الباك depuis la barre', async () => {
+describe('les quatre portes de la boussole', () => {
+  it('affiche exactement quatre onglets et ouvre الباك depuis la barre', async () => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     const { etatVierge } = await import('../types');
     const email = 'portes@example.invalid';
@@ -48,22 +47,22 @@ describe('les cinq portes de la boussole', () => {
     await vider(30);
 
     const libelles = boutons().map((b) => b.textContent?.trim());
-    expect(libelles).toEqual(['الرئيسية', 'مساري', 'كويست', 'الباك', 'أنا']);
-    // الرئيسية (« main ») est la porte d'entrée par défaut.
-    expect(boutons()[0].getAttribute('aria-current')).toBe('page');
+    expect(libelles).toEqual(['مساري', 'كويست', 'الباك', 'أنا']);
+    // كويست est la porte d'entrée par défaut.
+    expect(boutons()[1].getAttribute('aria-current')).toBe('page');
 
     // On pré-charge le morceau différé : en jsdom, Suspense ne se résout pas seul.
     await act(async () => { await import('../components/Bac'); });
-    await act(async () => { boutons()[3].click(); });
+    await act(async () => { boutons()[2].click(); });
     await vider(60);
     // الباك est chargée en différé : on attend son contenu réel.
     expect(zone.textContent).toContain('كيفاش تخدم موضوع');
     expect(zone.textContent).toContain('الأفعال اللي تتكرّر');
-    expect(boutons()[3].getAttribute('aria-current')).toBe('page');
-
-    await act(async () => { boutons()[2].click(); });
-    await vider(30);
     expect(boutons()[2].getAttribute('aria-current')).toBe('page');
-    expect(boutons()[3].getAttribute('aria-current')).toBeNull();
+
+    await act(async () => { boutons()[1].click(); });
+    await vider(30);
+    expect(boutons()[1].getAttribute('aria-current')).toBe('page');
+    expect(boutons()[2].getAttribute('aria-current')).toBeNull();
   });
 });

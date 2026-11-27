@@ -16,8 +16,6 @@ interface Props {
   compact?: boolean;
   tone?: 'forest' | 'gold' | 'paper';
   humeur?: HumeurGuide;
-  /** Masque le portrait quand la mascotte est déjà visible ailleurs sur l'écran. */
-  sansPortrait?: boolean;
 }
 
 export const HUMEUR_GUIDE: Record<HumeurGuide, { etiquette: string; ton: 'forest' | 'gold' | 'paper' }> = {
@@ -28,7 +26,7 @@ export const HUMEUR_GUIDE: Record<HumeurGuide, { etiquette: string; ton: 'forest
   victoire: { etiquette: 'يفرح معك', ton: 'gold' },
 };
 
-export default function MascotteKunz({ message, compact = false, tone, humeur = 'accueil', sansPortrait = false }: Props) {
+export default function MascotteKunz({ message, compact = false, tone, humeur = 'accueil' }: Props) {
   const tonalite = tone ?? HUMEUR_GUIDE[humeur].ton;
   const tones = {
     forest: 'border-sage bg-sage-soft text-forest-deep',
@@ -40,23 +38,19 @@ export default function MascotteKunz({ message, compact = false, tone, humeur = 
       className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl border p-3 shadow-[0_6px_18px_-14px_rgba(20,61,46,0.5)] ${tones[tonalite]}`}
       dir="rtl"
     >
-      {!sansPortrait && (
-        <>
-          {/* هالة ذهبية خفيفة تتبع الشخصية */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -bottom-6 h-20 w-20 rounded-full bg-gold/20 blur-2xl transition-opacity duration-300 group-hover:opacity-100 sm:opacity-70"
-            style={{ insetInlineStart: '0.25rem' }}
-          />
-          <img
-            src="/mascotte.webp"
-            alt="مستكشف بوصلة العلوم"
-            className={`${
-              compact ? 'h-14 w-14' : 'h-20 w-20'
-            } relative shrink-0 object-contain transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105`}
-          />
-        </>
-      )}
+      {/* هالة ذهبية خفيفة تتبع الشخصية */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-6 h-20 w-20 rounded-full bg-gold/20 blur-2xl transition-opacity duration-300 group-hover:opacity-100 sm:opacity-70"
+        style={{ insetInlineStart: '0.25rem' }}
+      />
+      <img
+        src="/mascotte.webp"
+        alt="مستكشف بوصلة العلوم"
+        className={`${
+          compact ? 'h-14 w-14' : 'h-20 w-20'
+        } relative shrink-0 object-contain transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105`}
+      />
       <div className="relative min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <p className="truncate text-[10px] font-extrabold tracking-wide opacity-70">

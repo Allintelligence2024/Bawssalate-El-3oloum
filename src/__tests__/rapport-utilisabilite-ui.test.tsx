@@ -11,7 +11,6 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import Inscription from '../components/Inscription';
 import Aujourdhui from '../components/Aujourdhui';
-import Principal from '../components/Principal';
 import SujetGuide from '../components/SujetGuide';
 import { migrerEtat } from '../utils/etat';
 import { parcoursSujet } from '../utils/parcoursSujet';
@@ -117,27 +116,7 @@ describe('B1 — un invité entre vraiment dans l’application', () => {
 });
 
 describe('B2 — une seule action principale sur l’accueil', () => {
-  it('la mission du jour passe en premier sur الرئيسية et une seule entrée commence par « ابدأ »', async () => {
-    const etat = migrerEtat({});
-    await monter(
-      <Principal
-        etat={etat}
-        onOuvrirItem={() => {}}
-        onVoirUnite={() => {}}
-        onDemarrerRevision={() => {}}
-      />,
-    );
-
-    const texte = (zone!.textContent ?? '').replace(/\s+/g, ' ');
-    expect(texte.indexOf('مهمّة اليوم'), 'carte mission absente').toBeGreaterThan(-1);
-    expect(texte, 'le quiz vit sur son propre onglet كويست').not.toContain('كويست اليوم');
-
-    const demarrages = boutons().filter((b) => (b.textContent ?? '').trim().startsWith('ابدأ'));
-    expect(demarrages).toHaveLength(1);
-    expect(demarrages[0].textContent).toMatch(/ابدأ \d+ دقائق/);
-  });
-
-  it('le quiz du jour vit sur la porte كويست, jamais sur الرئيسية', async () => {
+  it('la mission du jour passe en premier et une seule entrée commence par « ابدأ »', async () => {
     const etat = migrerEtat({});
     await monter(
       <Aujourdhui
@@ -153,12 +132,20 @@ describe('B2 — une seule action principale sur l’accueil', () => {
     );
 
     const texte = (zone!.textContent ?? '').replace(/\s+/g, ' ');
-    expect(texte.indexOf('كويست اليوم'), 'carte kouest absente').toBeGreaterThan(-1);
+    const mission = texte.indexOf('مهمّة اليوم');
+    const quete = texte.indexOf('كويست اليوم');
+    expect(mission, 'carte mission absente').toBeGreaterThan(-1);
+    expect(quete, 'carte kouest absente').toBeGreaterThan(-1);
+    expect(mission, 'la mission doit précéder le quiz').toBeLessThan(quete);
+
+    const demarrages = boutons().filter((b) => (b.textContent ?? '').trim().startsWith('ابدأ'));
+    expect(demarrages).toHaveLength(1);
+    expect(demarrages[0].textContent).toMatch(/ابدأ \d+ دقائق/);
   });
 });
 
 describe('B3 — phase 2 : aucun écran de démarrage, aucun compte obligatoire', () => {
-  it('une installation neuve ouvre الرئيسية avec la carte du guide, sans péage', async () => {
+  it('une installation neuve ouvre كويست avec la carte du guide, sans péage', async () => {
     localStorage.clear();
     sessionStorage.clear();
     const { readFileSync } = await import('node:fs');

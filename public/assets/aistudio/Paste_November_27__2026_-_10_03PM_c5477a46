@@ -1,0 +1,2278 @@
+# AUDIT FORENSIQUE DE CODE — 20 TRANCHES · Bawssalate-El-3oloum (بوصلة العلوم Lite)
+
+> **Fichier consolidé** — réunit l'intégralité des livrables du MODE A :
+> l'index maître (`00-INDEX.md`) et les 20 prompts de tranche autonomes (`01-*.md` … `20-*.md`),
+> tels que générés le 2026-11-27 sur la branche `arena/1c3e77c2-bawssalate-el-3oloum`.
+>
+> - **Loi fondamentale** : le code réel est la seule source de vérité ; README/plans/commentaires
+>   sont traités comme affirmations hostiles (`DRIFT` avec `fichier:ligne` en cas de contradiction).
+> - **Statut** : ceci est la *cartographie et les cadrages d'audit* (MODE A). Les rapports
+>   d'exécution de tranche (MODE B, format §6 : `SXX-F001`…) se génèrent ensuite, tranche par
+>   tranche, dans `audit/reports/`.
+> - Toutes les métriques citées ont été **exécutées** dans l'environnement (voir §1 de l'index) ;
+>   toute zone non exécutable y est marquée `[STATIQUE UNIQUEMENT]`.
+
+## Table des matières
+
+0. [00-INDEX — Audit forensique en 20 tranches · Bawssalate-El-3oloum (بوصلة العلوم Lite)](audit/00-INDEX.md)
+1. [TRANCHE 01 — Authentification, Sessions, Identités & Tokens](audit/01-auth-sessions-identites-tokens.md)
+2. [TRANCHE 02 — Autorisation, Matrice des Rôles & Isolation Multi-Tenant](audit/02-autorisation-matrice-roles-multitenant.md)
+3. [TRANCHE 03 — Sécurité Base de Données, Privilèges & Exécution Privilégiée](audit/03-securite-bdd-privileges-definer.md)
+4. [TRANCHE 04 — Surfaces Publiques, Anti-Abus & Sécurité Web](audit/04-surfaces-publiques-anti-abus-web.md)
+5. [TRANCHE 05 — Moteurs de Calcul, Précision Numérique & Règles Métier](audit/05-calculs-precision-regles-metier.md)
+6. [TRANCHE 06 — Machines à États, Workflows & Invariants Métier](audit/06-machines-etats-workflows-invariants.md)
+7. [TRANCHE 07 — Concurrence, Verrous, Isolation SQL & Idempotence](audit/07-concurrence-verrous-isolation-idempotence.md)
+8. [TRANCHE 08 — Modèle de Données, Contraintes, Fuseaux & Intégrité Référentielle](audit/08-modele-donnees-contraintes-fuseaux.md)
+9. [TRANCHE 09 — Contrats API, Validation d'Entrées & Sérialisation](audit/09-contrats-api-validation-serialization.md)
+10. [TRANCHE 10 — État Client, Hydratation, Caches & Cohérence UI↔Serveur](audit/10-etat-client-hydration-coherence-ui.md)
+11. [TRANCHE 11 — Mode Hors-Ligne, PWA, Files d'Attente & Stockage Local (côté SW/PWA)](audit/11-hors-ligne-pwa-files-stockage-local.md)
+12. [TRANCHE 12 — Fichiers, Médias, Imports/Exports & Contenu Externe](audit/12-fichiers-medias-imports-export-contenu.md)
+13. [TRANCHE 13 — Fiabilité Runtime, Gestion d'Erreurs & Reprise sur Panne](audit/13-fiabilite-erreurs-reprise-panne.md)
+14. [TRANCHE 14 — Performance Applicative, Complexité & Ressources](audit/14-performance-applicative-complexite.md)
+15. [TRANCHE 15 — Performance Base de Données & Scalabilité](audit/15-performance-bdd-scalabilite.md)
+16. [TRANCHE 16 — Architecture, Maintenabilité, Typage & Code Mort](audit/16-architecture-maintenabilite-typage-code-mort.md)
+17. [TRANCHE 17 — Build, Configuration, Secrets & Supply Chain](audit/17-build-config-secrets-supply-chain.md)
+18. [TRANCHE 18 — CI/CD, Migrations, Sauvegarde, Restauration & Rollback](audit/18-cicd-migrations-rollback.md)
+19. [TRANCHE 19 — Observabilité, Auditabilité, PII & Exploitation](audit/19-observabilite-audit-pii-exploitation.md)
+20. [TRANCHE 20 — Méta-Audit des Tests & Dérive Code ↔ Documentation](audit/20-meta-audit-tests-derive-doc.md)
+
+---
+
+
+<!-- ═══════ SOURCE : audit/00-INDEX.md ═══════ -->
+
+# 00-INDEX — Audit forensique en 20 tranches · Bawssalate-El-3oloum (بوصلة العلوم Lite)
+
+> **MODE A — Cartographie & Découpage.** Toutes les métriques ci-dessous sont **extraites du code
+> réel ou exécutées dans cet environnement le 2026-11-27**. Les README/plans sont traités comme
+> affirmations non fiables (voir §5).
+
+---
+
+## 1. Empreinte factuelle du dépôt
+
+| Fait | Valeur | Preuve (exécution/ commande) |
+| --- | --- | --- |
+| Fichiers suivis git | **705** | `git ls-files \| wc -l` |
+| Répartition | src 287 · public 172 · plans 93 · modules 55 · android 53 · scripts 21 · supabase 9 · racine 15 | `find`/`cut` agrégé |
+| LOC TypeScript dans `src/` | **52 283** | `find src -name '*.ts*' \| xargs wc -l` |
+| dont composants React | 19 819 (82 fichiers `.tsx`) | `wc -l src/components/*.tsx` |
+| dont utilitaires | 13 081 (54 prod + 58 tests) | `wc -l src/utils/*.ts` |
+| dont données pédagogiques | 14 610 (59 fichiers) | `find src/data -name '*.ts'` |
+| Tests UI racine `src/__tests__` | 2 694 LOC (26 fichiers) | `wc -l` |
+| SQL total | **8 fichiers · 523 lignes** | `wc -l supabase/**/*.sql scripts/queries-admin.sql` |
+| Migrations Supabase | **2** (`202611210001`, `202611210002`) | `ls supabase/migrations` |
+| CI | **1 workflow · 184 lignes** | `wc -l .github/workflows/ci.yml` |
+| Fichiers `plans/` (docs non fiables) | 93 | `git ls-files plans/ \| wc -l` |
+| Dépendances racine (déclarées) | 10 prod + 14 dev, ranges `^`, lockfile v3 avec **386** `resolved` | `package.json`, `package-lock.json` |
+| Sous-projet `modules/boussole` | React **18.3.1** + esbuild + lockfile séparé (racine : React **19.3.0**) | `modules/boussole/package.json:16-25` vs `package.json:36-44` |
+
+### Exécutions réelles de cet audit (2026-11-27, node v22.22.3, npm 10.9.8)
+
+| Commande | Résultat brut |
+| --- | --- |
+| `npm ci --no-audit --no-fund` | OK (0 erreur) |
+| `npx vitest run` | **90 fichiers · 785 tests · tous verts · 35,52 s** |
+| `node --test scripts/verifier-inventaire-boussole.test.mjs` | **5/5 pass** |
+| `npm run lint` | **0 problème** — mais `eslint.config.mjs:47-49` ignore `**/*.ts` et `**/*.tsx` : le lint ne voit que JS/SW/scripts |
+| `npm run build` (`tsc -b && vite build`) | OK en 1,14 s (vite). Chunk principal `index-*.js` **498,09 ko (gzip 150,67)** ; `sujetsCorriges` 370,10 ; `supabase` 214,16 ; `Methodologie` 139,90 |
+| `npm run verifier:deploiement` | exit 0 — « coquille 2,23 Mio (plafond 2,25) · contenu 4,36 Mio · problèmes 0 » |
+| `npm run verifier:metriques` | exit 0 — « README à jour : aucune dérive de métriques » |
+| `node scripts/verifier-parite-rls.mjs` (sans source) | **exit 2** (honnête : « la parité n'a donc PAS été vérifiée ») |
+| `node scripts/verifier-parite-rls.mjs --fichier …fixture…` | exit 0 — compare le dépôt à un JSON **figé au 2026-11-22** |
+| `SUPABASE_DB_URL=… node scripts/verifier-parite-rls.mjs` | **exit 1 — `ERR_MODULE_NOT_FOUND: package 'postgres'`** : le pilote live n'est **pas une dépendance déclarée** (`package.json` ne contient pas `postgres`) |
+| Boussole : `npm test` / `test:integration` (modules/boussole) | **NON EXÉCUTÉS** — nécessitent Chromium/Playwright (non installé ici). `[STATIQUE UNIQUEMENT]` pour ces 6 fichiers de tests |
+| Base Supabase réelle, navigateur, émulateur Android | **absents** — tout ce qui les exige est marqué `[STATIQUE UNIQUEMENT]` |
+
+### Compteurs de défauts (méthode : grep explicite, reproductible)
+
+| Compteur | Total | Productif (hors tests) | Ancres |
+| --- | --- | --- | --- |
+| `catch {}` / catch vide commenté | 5 (+ artefact minifié) | `src/App.tsx:792`, `src/utils/storage.ts:206`, `public/sw.js:193` | + `modules/boussole/src/bridge.ts:35`, `explore.ts:166` |
+| `as any` | 27 | **6** — tous `src/components/GamifiedOverlay.tsx:30-45` | tests = 21 |
+| `as unknown as` | 9 | **1** — `src/utils/son.ts:12` | |
+| `eslint-disable` | 7 | 4 commentaires `react-hooks/exhaustive-deps` dans des `.tsx` (`App.tsx:371,379`, `Communs.tsx:296`, `ProtocoleRunner.tsx:212`) — **inertes** : TS non linté et plugin `react-hooks` absent de la config | |
+| `@ts-ignore` | 0 | 0 | |
+| Validation `zod` | 2 fichiers uniquement : `src/utils/backup.ts`, `src/types/boussoleBridge.ts` | | |
+| `.pyc` suivi par git | **1** : `scripts/__pycache__/frequence-bac.cpython-311.pyc` | | |
+| Artefact de build commité | `public/boussole/index.html` = **1 206 255 o** (bundle minifié React) | | |
+
+### Faits saillants déjà prouvés (servent d'ancres aux hypothèses)
+
+1. **`postgres` absent** → le seul chemin « base réelle » de la parité RLS est cassé ; en CI, soit le
+   secret `SUPABASE_DB_URL` est absent (parité jamais vérifiée en vrai, témoin figé seulement,
+   `ci.yml:51-58`), soit il est présent et l'étape échoue à chaque run.
+2. **`temoin_generation` n'apparaît nulle part dans `src/`** (grep vide) → le client n'envoie jamais
+   le témoin de la migration `0002`, et cette migration n'accroche `eleves_generation_a_jour`
+   à **aucune policy** (`supabase/migrations/202611210002_generation_suppression.sql:53-73` commente
+   l'intention, aucune `ALTER POLICY` suit).
+3. **`supabase/schema.sql` ne contient ni colonne `generation` ni trigger** (drift avec la migration
+   0002 : lignes 17-51 de cette dernière).
+4. **CI : blocs Playwright/intégration dupliqués** (`ci.yml:72-96` ≈ `ci.yml:123-168`).
+5. **`eslint.config.mjs:9` affirme « 285 tests » ; l'exécution réelle en montre 785** (drift de commentaire).
+
+---
+
+## 2. Matrice de propriété exclusive
+
+**Règle** : chaque fichier du dépôt appartient à **exactement une** tranche. Les fichiers partagés
+sont découpés par **symbole** (§2.3). Les tranches non propriétaires peuvent **lire** les fichiers
+d'autrui à titre de contexte, jamais les auditer en propre.
+
+### 2.1 Règles globales (globs exclusifs)
+
+| Glob | Tranche | Nb |
+| --- | --- | --- |
+| `android/**` | **17** | 53 |
+| `.github/workflows/ci.yml` | **18** | 1 |
+| `supabase/migrations/**` | **18** | 2 |
+| `supabase/tests/**` (+ `tests/fixtures/`) | **18** | 4 |
+| `supabase/schema.sql` | **03** (voir découpage §2.3) | 1 |
+| `supabase/propositions/**` | **03** | 3 |
+| `scripts/queries-admin.sql` | **15** | 1 |
+| `scripts/verifier-parite-rls.mjs` | **03** | 1 |
+| `scripts/verifier-deploiement.mjs`, `scripts/annoter-echec-integration.mjs` | **18** | 2 |
+| `scripts/sync-metrics.mjs` | **20** | 1 |
+| `scripts/verifier-inventaire-boussole.mjs`, `scripts/verifier-inventaire-boussole.test.mjs` | **16** | 2 |
+| `scripts/{analyser,importer,verifier}-drills*`, `scripts/drills-rapport.md`, `scripts/frequence-bac.py` | **05** | 5 |
+| `scripts/{generer-icones}.mjs`, `scripts/verifier-hors-ligne.mjs` | **11** | 2 |
+| `scripts/{generer-schemas-svt,importer-images-lecons,recolorer-svg}.mjs`, `scripts/previsualiser-{annotations,schemas}.py` | **12** | 5 |
+| `scripts/exporter-relecture-svt.mjs` | **12** | 1 |
+| `scripts/__pycache__/**` (artefact) | **17** | 1 |
+| `plans/**` | **20** (corpus d'affirmations à confronter) | 93 |
+| `README.md`, `vitest.config.ts` | **20** | 2 |
+| `package.json`, `package-lock.json`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`, `vercel.json`, `capacitor.config.ts`, `.env.example`, `.gitignore`, `LICENSE`, `src/vite-env.d.ts` | **17** | 11 |
+| `eslint.config.mjs` | **16** | 1 |
+| `index.html` | **04** | 1 |
+| `public/sw.js`, `public/manifest.webmanifest`, `public/icon.svg`, `public/mascotte.webp`, `public/guide-*.webp`, `public/icons/**` | **11** | 12 |
+| `public/boussole/**` | **16** (artefact du sous-projet) | 3 |
+| `public/lecons/**` (94 HTML/images leçons) | **12** | 94 |
+| `public/audio/**` | **12** | 65 |
+| `modules/boussole/**` (src, tests, scripts, assets, lock) | **16** | 55 |
+| `src/App.tsx`, `src/main.tsx`, `src/index.css` | **10** (symboles partagés §2.3) | 3 |
+| `src/types.ts`, `src/config/annee.ts` | **08** | 2 |
+| `src/hooks/useBoussoleBridge.ts`, `src/types/boussoleBridge.ts` | **16** | 2 |
+| `src/data/**` — défaut | **08** | 52 |
+| `src/data/drills/**`, `src/data/briques/**` | **05** | 11 |
+| `src/data/figuresSujets.ts`, `src/data/audioLecons.ts`, `src/data/audioMourchid.ts`, `src/data/illustrationsLecons.ts`, `src/data/illustrationsLegacy.gen.ts`, `src/data/illustrationsTypes.ts` | **12** | 6 |
+
+### 2.2 Listes nommées (composants, utilitaires, tests)
+
+**Composants `src/components/*.tsx` (82) :**
+
+| Tranche | Fichiers |
+| --- | --- |
+| **01** | `Inscription.tsx` |
+| **05** | `Bac.tsx`, `BacPasAPas.tsx`, `BaguetteXp.tsx`, `CarteBadges.tsx`, `CarteBoucliersSM2.tsx`, `CarteForcesFaiblesses.tsx`, `CarteStats.tsx`, `CarteTropheesTactiques.tsx`, `ExamBlanc.tsx`, `Exercices.tsx`, `Fakh.tsx`, `SimulationEpreuve.tsx` |
+| **06** | `AtelierCadre.tsx`, `AtelierDesign.tsx`, `AtelierDomaine1.tsx`, `AtelierImmunite.tsx`, `AtelierOrogenese.tsx`, `AtelierStructureTerre.tsx`, `CarteDefi.tsx`, `CarteDiagnosticFavoris.tsx`, `ChoixSynthese.tsx`, `Defi60.tsx`, `Diagnostic.tsx`, `Ecran123.tsx`, `EcranBriques.tsx`, `EcranFierte.tsx`, `EntraineurSujet.tsx`, `Flashcards.tsx`, `JalonUnite.tsx`, `JourneeReparation.tsx`, `Kouest.tsx`, `MicroNoeuds.tsx`, `ProtocoleRunner.tsx`, `ReglagesParcours.tsx`, `SessionRevision.tsx`, `SujetGuide.tsx`, `SujetsOfficiels.tsx`, `SyntheseLibre.tsx` |
+| **07** | `CarteSync.tsx` |
+| **08** | `CarteExamens.tsx`, `Fetes.tsx`, `FicheEleve.tsx`, `ReglageRappel.tsx` |
+| **09** | `ConstructeurReponse.tsx`, `EssaiSyncVerifiee.tsx`, `VerificationSync.tsx` |
+| **10** | `Ana.tsx`, `Aujourdhui.tsx`, `BibliothequeResumesLecons.tsx`, `Boussole.tsx`, `Communs.tsx`, `GamifiedOverlay.tsx`, `GuideAccueil.tsx`, `GuideIndice.tsx`, `Icones.tsx`, `Masari.tsx`, `MascotteKunz.tsx`, `Methodologie.tsx`, `Mindmap.tsx`, `Recherche.tsx`, `TiroirBoussole.tsx` |
+| **11** | `CarteHorsLigne.tsx` |
+| **12** | `AudioMourchidBloc.tsx`, `FigureSujet.tsx`, `IllustrationsLecon.tsx`, `LecteurAudioMourchid.tsx`, `LecteurAudioResume.tsx`, `LecteurLecon.tsx`, `Mourchid.tsx`, `SchemaALegender.tsx`, `SchemaAnnote.tsx`, `methodologie/SchemaUnite1.tsx` |
+| **16** | `BadgeRelecture.tsx`, `CarteLecon.tsx` (affichage progression du bridge/boussole — voir §2.3 si conflit, priorité 16 pour le couplage bridge) |
+| **19** | `CarteMesurePilote.tsx`, `Confidentialite.tsx` |
+
+> Vérification : 1 + 12 + 26 + 1 + 3 + 3 + 15 + 1 + 9 + 2 + 2 = **75** ; les 7 restants
+> (`CarteProfilCompetences.tsx`, `MascotteKunz` déjà compté… → liste réelle complète tenue dans le
+> tableau ci-dessus ; tout fichier non listé ici **reste à la tranche 10** par défaut composant,
+> et l'exécuteur de tranche doit signaler tout fichier non couvert comme `GAP-MATRICE`).
+
+**Utilitaires `src/utils/*.ts` (54 prod) :**
+
+| Tranche | Fichiers |
+| --- | --- |
+| **01** | `compte.ts` |
+| **04** | `identiteSync.ts` |
+| **05** | `adaptatif.ts`, `amelioration.ts`, `bacPasAPas.ts`, `drills.ts`, `fakh.ts`, `pointsCarteLecon.ts`, `qcm.ts`, `simulation.ts`, `srs.ts`, `stats.ts`, `statsUnite.ts`, `xp.ts` |
+| **06** | `accesSujets.ts`, `briques.ts`, `defis.ts`, `diagnostic.ts`, `diagnosticQuestions.ts`, `entrainement.ts`, `flashcards.ts`, `kouest.ts`, `microNoeuds.ts`, `moteur.ts`, `parcoursSujet.ts`, `planDuJour.ts`, `revueCroisee.ts` |
+| **07** | `coherenceStockage.ts`, `storage.ts`, `sync.ts` |
+| **08** | `accents.ts`, `dates.ts`, `etat.ts`, `rappels.ts` |
+| **09** | `protocoleSyncVerifiee.ts` |
+| **10** | `dialogue.ts` |
+| **11** | `pwa.ts` |
+| **12** | `audioLeconsChargeur.ts`, `audioMourchidChargeur.ts`, `audioUrl.ts`, `backup.ts`, `illustrations.ts`, `schemasSvtChargeur.ts`, `son.ts` |
+| **13** | `echecsStockage.ts` |
+| **14** | `melange.ts`, `recherche.ts` |
+| **16** | `boussoleAdapter.ts`, `bridge.ts`, `bridgeAdapter.ts`, `carnetBoussole.ts`, `profil.ts` |
+| **19** | `evenements.ts`, `telemetrie.ts` |
+
+**Tests — règle** : chaque fichier de test appartient à la tranche du code qu'il teste.
+
+| Dossier | Affectation |
+| --- | --- |
+| `src/utils/__tests__/*.test.ts` (58) | tranche du utilitaire testé — table : `acces-sujets`→06, `adaptatif`→05, `amelioration`→05, `annee`→08, `bridge`→16, `briques`→06, `briques-gabarit`→06, `carnet-boussole`→16, `coherence-stockage`→07, `compte-securite`→01, `dates`→08, `defis`→06, `diagnostic`→06, `entrainement`→06, `figuresSujets`→12, `flashcards`→06, `garde-fous-anti-anxiete`→06, `glossaire`→08, `identiteSync`→04, `micro-noeuds`→06, `migration-etat`→08, `moteur`→06, `mourchid`→12, `niveau3`→05, `parcours`→06, `parcours-sujet`→06, `phase5-integration`→06, `plan-du-jour`→06, `profil`→16, `programme-coherence`→08, `protocole`→06, `protocoleSyncVerifiee`→09, `pwa`→11, `rappels`→08, `recherche`→14, `restauration-atomique`→07, `resumes-langue`→08, `revueCroisee`→06, `sauvegarde-champs`→12, `sauvegarde-compat`→12, `sauvegarde-entraineur`→12, `schemas`→08, `seance-comptage`→05, `service-worker`→11, `simulation`→05, `son-vibrations`→12, `srs`→05, `stats-lecture`→13, `statsUnite`→05, `storage`→07, `sujetsCorriges`→08, `sujetsOfficiels`→08, `suppression-durable`→07, `sync-timeout`→07, `sync`→07, `syntheses`→08, `telemetrie`→19, `verifier-drills`→05 |
+| `src/components/__tests__/*` (4) | `IllustrationsLecon`, `LecteurAudioMourchid`, `LecteurAudioResume`, `SchemaAnnote` → **12** |
+| `src/data/__tests__/*` (2) | `audioMourchid`, `illustrationsLecons` → **12** |
+| `src/__tests__/*` (26) | `accessibilite`, `ana-volets-ui`, `guide-accueil-ui`, `onglets-ui`, `premier-ecran-ui` → **10** ; `aide-boussole-ui` → **16** ; `bac-pas-a-pas`, `fakh` → **05** ; `briques-apreciation-ui`, `ecran-fierte-ui`, `fierte-parcours-ui`, `kouest`, `sujet-guide-entree-ui`, `sujet-guide-ui` → **06** ; `confidentialite-accessibilite`, `rapport-utilisabilite-ui` → **19** ; `essai-sync-verifiee`, `verification-sync-ui` → **09** ; `fiche-eleve` → **08** ; `lint`, `metriques` → **20** ; `pwa-icones` → **11** ; `sauvegarde-ui` → **12** ; `stockage-ui`, `sync-etat-illisible` → **13** ; `sync-stockage-ui` → **07** |
+
+### 2.3 Fichiers partagés — découpage par symbole (exclusive par symbole)
+
+| Fichier | Symbole / lignes | Tranche propriétaire |
+| --- | --- | --- |
+| `supabase/schema.sql` | `create index` (l.35-37) | **15** |
+| `supabase/schema.sql` | table, `eleves_jeton_autorise`, policies, GRANT implicites (l.6-32, 42-96) | **03** |
+| `src/App.tsx` | handlers session/compte : `onCompteValide` l.398-412, `onDeconnexion` l.429-436, `onSupprimerCompte` l.437-446, `EcranConsentementSync` l.163-217 | **01** |
+| `src/App.tsx` | déclencheurs sync : effet l.511-531, `stockageCourantPourSync` l.500-509, décision consentement l.761-767 | **07** |
+| `src/App.tsx` | import/sauvegarde : `paquetExportComplet`/import l.786-795+, `AlerteStockage` l.218-234 | **12** |
+| `src/App.tsx` | reste (hydratation, navigation, thème, onglets, stock event l.468-480) | **10** |
+| `vite.config.ts` | plugin `precacheManifest` (l.55-160 environ) | **11** (lecture) ; propriété **17** |
+| `src/utils/stats.ts` | compteurs/taux | **05** ; écriture multi-clés sous `CLE_STATS` | **07** (lecture croisée obligatoire) |
+
+---
+
+## 3. Périmètre « non auditable tel quel » (limites d'environnement)
+
+- **Base Supabase réelle** : absente. Toute affirmation sur le comportement réel des policies est
+  `[STATIQUE UNIQUEMENT]` (lecture SQL) sauf exécution PGlite locale possible pour la tranche 03/18
+  (`supabase/tests/02-fixture.sql` déclare explicitement « PostgreSQL/PGlite jetable »).
+- **Navigateur / E2E** : Chromium Playwright non installé → tests d'intégration boussole
+  (`modules/boussole/tests/{integration,recovery,account}.cjs`) et tout E2E `[STATIQUE UNIQUEMENT]`.
+- **Émulateur Android** : absent → `android/**` `[STATIQUE UNIQUEMENT]`.
+- **Vercel/production** : inaccessible → headers réels servis non vérifiables ici.
+
+---
+
+## 4. Ordre de fusion des 20 rapports (MODE C)
+
+Séquence imposée par les dépendances de preuve (une tranche peut citer un constat déjà fusionné) :
+
+```
+01 → 03 → 02 → 04 → 08 → 05 → 06 → 07 → 09 → 12 → 10 → 11 → 13 → 15 → 14 → 16 → 17 → 18 → 19 → 20
+```
+
+Rationnel : 01 (identités) et 03 (verrou DB) nourrissent 02 (autorisation réelle) ; 08 (modèle/
+fuseaux) précède toute logique métier 05/06/07 ; 09 puis 12 traitent les contrats sortants avant
+l'état client 10/11 ; 15 avant 14 (les coût DB conditionnent le budget perf) ; 16-19 après le
+fonctionnel ; **20 en dernier** pour confronter docs/tests à l'ensemble des constats fusionnés.
+
+Chaque fichier de tranche : `audit/NN-*.md` (ci-dessous). Rapports de sortie : `audit/reports/SNN-*.md`
+(format §6 du prompt maître).
+
+| # | Fichier |
+| --- | --- |
+| 01 | `audit/01-auth-sessions-identites-tokens.md` |
+| 02 | `audit/02-autorisation-matrice-roles-multitenant.md` |
+| 03 | `audit/03-securite-bdd-privileges-definer.md` |
+| 04 | `audit/04-surfaces-publiques-anti-abus-web.md` |
+| 05 | `audit/05-calculs-precision-regles-metier.md` |
+| 06 | `audit/06-machines-etats-workflows-invariants.md` |
+| 07 | `audit/07-concurrence-verrous-isolation-idempotence.md` |
+| 08 | `audit/08-modele-donnees-contraintes-fuseaux.md` |
+| 09 | `audit/09-contrats-api-validation-serialization.md` |
+| 10 | `audit/10-etat-client-hydration-coherence-ui.md` |
+| 11 | `audit/11-hors-ligne-pwa-files-stockage-local.md` |
+| 12 | `audit/12-fichiers-medias-imports-export-contenu.md` |
+| 13 | `audit/13-fiabilite-erreurs-reprise-panne.md` |
+| 14 | `audit/14-performance-applicative-complexite.md` |
+| 15 | `audit/15-performance-bdd-scalabilite.md` |
+| 16 | `audit/16-architecture-maintenabilite-typage-code-mort.md` |
+| 17 | `audit/17-build-config-secrets-supply-chain.md` |
+| 18 | `audit/18-cicd-migrations-rollback.md` |
+| 19 | `audit/19-observabilite-audit-pii-exploitation.md` |
+| 20 | `audit/20-meta-audit-tests-derive-doc.md` |
+
+---
+
+## 5. Statuts des sources (loi « zéro confiance documentation »)
+
+| Source | Statut |
+| --- | --- |
+| `README.md` (1 029 lignes, bloc METRICS l.366+) | Assertion non fiable — partiellement outillée par `sync-metrics.mjs --check` (exécuté, vert) : seules les métriques **comptées par ce script** sont présomptivement justes ; tout le reste (promesses fonctionnelles) relève de la tranche 20 |
+| `plans/**` (93 fichiers : audits antérieurs, QA, phases) | Corpus d'affirmations hostile — confronter au code (tranche 20) |
+| Commentaires JSDoc/inline du code | Affirmations non fiables ; ex. `verifier-parite-rls.mjs:11-12` (vérifié exact), `eslint.config.mjs:9` (« 285 tests » → **faux : 785**), `migration 0002:53-59` (« La policy UPDATE doit désormais refuser » → **aucune alteration dans le fichier**) |
+| `public/boussole/index.html` | Artefact minifié **sans source dans ce fichier** — source = `modules/boussole/**` (CI vérifie sha256) |
+
+---
+
+## 6. Hypothèses globales à confronter en priorité (feeders)
+
+1. **Autorisation = connaissance du `jeton`** (bearer statique en localStorage, header
+   `x-kunz-jeton`, policies `using (true)` sous policy restrictive) — `supabase/schema.sql:66-96`,
+   `src/utils/sync.ts:136-147`. Tout le modèle de confiance repose sur ce secret unique, jamais
+   rotatif, jamais révoqué côté serveur.
+2. **Double fail-open de la migration 0002** : `eleves_generation_a_jour` retourne `true` si le
+   témoin est absent (`…0002…sql:66-72`) et n'est référencé par aucune policy ; le client n'envoie
+   jamais `temoin_generation` (grep vide dans `src/`).
+3. **Parité RLS réelle impossible en l'état** : `postgres` non installé (prouvé, exit 1) + fallback
+   témoin figé (`ci.yml:51-58`).
+4. **Écriture last-write-wins sans verrou applicatif** : upsert upsert `onConflict: 'email'`
+   (`sync.ts:204-233`) sans `Prefer` ni comparaison de génération → pertes inter-appareils possibles
+   malgré le trigger DB.
+5. **Aucune couche serveur applicative** (statique + Supabase anon) : pas de rate-limit possible
+   côté app ; les garde-fous anti-abus sont 100 % policies SQL + validation client.
+
+---
+
+*Fin de l'index MODE A. Exécution des tranches : MODE B `XX/20`, en respectant le protocole §5 et
+le format §6 du prompt maître, sans modifier le code produit.*
+
+---
+
+
+<!-- ═══════ SOURCE : audit/01-auth-sessions-identites-tokens.md ═══════ -->
+
+# TRANCHE 01 — Authentification, Sessions, Identités & Tokens
+
+> MODE B : n'auditer QUE le périmètre ci-dessous. Zéro modification produit. Protocole §5 et
+> format §6 du prompt maître obligatoires. Les README/commentaires sont des hypothèses hostiles.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/utils/compte.ts` (117 l.) — hachage, jeton, session
+- `src/components/Inscription.tsx` (333 l.) — inscription/connexion
+- `src/utils/__tests__/compte-securite.test.ts` (tests)
+- `src/utils/identiteSync.ts` **NON** (→ 04). `src/utils/__tests__/identiteSync.test.ts` → 04.
+
+**Symboles partagés (autres propriétaires, lecture seule ici) :**
+- `src/App.tsx:163-217` (`EcranConsentementSync`), `:398-412` (`onCompteValide`), `:429-446`
+  (déconnexion/suppression) — propriétaire 01 pour ces symboles, 10 pour le reste du fichier.
+- `src/types.ts:148-156` (`interface Compte` : `motDePasse`, `jeton`) — propriétaire 08.
+- `src/utils/sync.ts:116-118` (`jetonUtilisable`), `:136-147` (en-tête `x-kunz-jeton`) — propriétaire 07.
+
+**Hors périmètre :** RLS/policies SQL (03), redirect de vérification (04), consentement sync
+fonctionnel (07), stockage du compte dans localStorage (07/10).
+
+## 2. Tests à auditer (anti-tautologie)
+
+- `src/utils/__tests__/compte-securite.test.ts` — 9 tests **exécutés verts** (dans les 785).
+  Questions à mordre : *un hash legacy 16-hex accepté par `verifierMdp` — le test couvre-t-il le
+  refus d'un format inconnu (64 octets non-hex) ? l'égalité `===` sur SHA-256 est-elle testée avec
+  un faux positif de longueur ?*
+- Aucun test d'`Inscription.tsx` (pas de `Inscription.test.*` dans le dépôt) → **comportement de
+  connexion/soumission sans couverture directe**.
+- Aucun test de session (`ouvrirSession`/`sessionOuverte`/`fermerSession` non couverts par un test
+  dédié — grep : aucun `session` dans `src/**/__tests__`).
+
+## 3. Hypothèses techniques pré-remplies (ancrées sur le code réel)
+
+- **H01-01 — KDF absent, sel absent.** `src/utils/compte.ts:19-32` : `SHA-256("kunz::" + mdp)`,
+  préfixe constant, une passe, pas de sel ni de work factor. Tous les comptes partagent le même
+  sel → table de correspondance réutilisable. Vérifier : y a-t-il une migration de format prévue ?
+  Impact : faille de dictionnaire sur `localStorage` volé (XSS/extension/ appareil partagé).
+- **H01-02 — Chemin legacy 16-hex permanent.** `compte.ts:51-52` : tout hash de 16 caractères
+  hex est vérifié par `ancienHachage` (FNV-like 2×32 bits, `compte.ts:34-45`) — 64 bits de
+  sortie, non-cryptographique. Un ancien compte n'est **jamais** rehauché à la connexion
+  (`Inscription.tsx:70` ne rehauche que `length === 16` **après** validation, mais rien ne force
+  la réécriture de la colonne à chaque login si l'utilisateur ne change pas de mdp — vérifier le
+  flux exact l.60-90). Test mordant : injecter un hash 16-hex connu, prouver que `verifierMdp`
+  l'accepte.
+- **H01-03 — Jeton = bearer stocké en clair.** `compte.ts:60-70` (`nouveauJeton` : UUID v4 ou
+  16 octets hex) stocké dans `etat.compte.jeton` → `localStorage['murajih_svt_v1']`. Quiconque
+  lisant le stockage (XSS, autre profil navigateur, extension) obtient le droit d'écriture/lecture
+  serveur complet. Vérifier s'il existe une rotation/révocation côté serveur (grep
+  `revoke|rotate|rotation` dans `supabase/**` → absent attendu).
+- **H01-04 — Repli sans crypto = sync silencieusement désactivée.** `compte.ts:66-69` : sans
+  `crypto.getRandomValues`, `nouveauJeton()` retourne `undefined` → `jetonUtilisable` faux
+  (`sync.ts:116-118`) → aucun envoi, sans message utilisateur. Vérifier que l'UI affiche bien
+  « sync inactive » dans ce cas (recherche `jetonUtilisable` dans les composants).
+- **H01-05 — Session = simple témoin `sessionStorage`, sans lien au jeton.** `compte.ts:75-90` :
+  `kunz_session_v1` contient l'email seul ; `sessionOuverte(email)` compare l'email. Un onglet
+  partagé qui ouvre une session avec l'email A puis bascule sur le compte B (sans déconnexion —
+  `App.tsx:398-412` `onCompteValide` écrase le compte) laisse le témoin à A ou B selon l'ordre :
+  tracer la séquence exacte et l'état du sessionStorage. Fixation de session : l'email est
+  prévisible, le témoin n'a pas d'entropie.
+- **H01-06 — Déconnexion n'efface pas le hash ni le jeton.** `App.tsx:429-436` (à confirmer par
+  lecture) : que fait `onDeconnexion` exactement — `fermerSession()` + quoi ? Si
+  `etat.compte` persiste dans `localStorage`, la « déconnexion » laisse le secret d'écriture
+  serveur sur le disque. Séquence d'attaque : poste partagé → déconnexion → autre élève →
+  rechargement → accès au jeton de l'ancien compte.
+- **H01-07 — Aucun rate-limit local sur la vérification de mot de passe.**
+  `Inscription.tsx:60-72` : boucle de vérification sans délai/counter ; un script XSS ou un
+  utilisateur local peut brute-forcer un hash legacy 16-hex (2^32 pour la sortie réelle FNV
+  dégradée) hors ligne en plus. Vérifier l'absence de backoff (grep `setTimeout` dans
+  `Inscription.tsx`).
+- **H01-08 — Comparaison non constant-time.** `compte.ts:52-53` : `===` sur hex — pertinent
+  seulement si le hash quitte le poste (non : reste local) → probablement **réfutable**, à
+  documenter en 2 lignes si l'analyse confirme que `hacher` ne sert qu'en local.
+- **H01-09 — Égalité de longueur comme garde.** `compte.ts:50-51` rejette longueurs inconnues —
+  vérifier qu'un hash SHA-256 tronqué (ex. 63 chars) est bien refusé et ne tombe pas dans un
+  chemin par défaut.
+
+## 4. Ce que cette tranche ne doit PAS faire
+
+- Critiquer RLS/`eleves` (03), le header sync (07), ou la politique de consentement (07/19).
+- Juger la beauté des messages d'erreur (`messageCompte`) : uniquement leur exactitude de flux.
+
+## 5. Limites d'environnement
+
+- Aucun navigateur réel : le comportement `sessionStorage`/`crypto` est `[STATIQUE UNIQUEMENT]`
+  sauf test unitaire exécutable via `npx vitest run src/utils/__tests__/compte-securite.test.ts`
+  (autorisé : exécution non destructive).
+- Les 9 tests de la tranche ont été exécutés verts le 2026-11-27 (contexte index).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/02-autorisation-matrice-roles-multitenant.md ═══════ -->
+
+# TRANCHE 02 — Autorisation, Matrice des Rôles & Isolation Multi-Tenant
+
+> MODE B — périmètre exclusif ci-dessous. Protocole §5 / format §6 obligatoires.
+
+## 1. Périmètre (propriété exclusive)
+
+Ce dépôt n'a **pas** de couche applicative serveur : la matrice d'autorisation est la matrice
+**RLS Postgres + en-têtes PostgREST**. Propriétaire des **vues d'ensemble de la matrice**, en
+lecture croisée des fichiers détenus par 01/03/07 (jamais d'audit en propre sur eux).
+
+**Fichiers propriétaires :**
+- `src/utils/__tests__/suppression-durable.test.ts` (parité client du garde-fou inter-appareils)
+- `src/components/CarteSync.tsx` (affichage des droits/états de sync à l'utilisateur)
+- Vue transverse : tout fichier `supabase/**`, `src/utils/sync.ts`, `src/utils/compte.ts` en
+  **lecture seule** pour reconstituer la matrice réelle.
+
+**Hors périmètre (audit en propre ailleurs) :** définition des policies (03), mécanique
+d'envoi/coalescence (07), écran d'inscription (01), surfaces publiques (04).
+
+## 2. Tests à auditer
+
+- `src/utils/__tests__/suppression-durable.test.ts` (exécuté vert) — mord-il vraiment ?
+  Scénario BUG-002 : appareil A supprime, appareil B réécrit. Le test simule-t-il le **réseau qui
+  revient** avec la génération, ou moque-t-il uniquement le client ? Si le client n'envoie jamais
+  `temoin_generation` (grep : absent de `src/`), le test ne peut prouver que le comportement
+  **client** — il est nécessaire de vérifier qu'il n'asserte pas un invariants serveur absent.
+- Aucun test exécutant les policies SQL dans CI (`ci.yml` ne lance jamais
+  `supabase/tests/02-cycle.sql`) → **aucune couverture exécutée de la matrice serveur**.
+
+## 3. Hypothèses pré-remplies
+
+- **H02-01 — Modèle = bearer jeton unique, pas de sujet authentifié.** `supabase/schema.sql:66-68`
+  (policy RESTRICTIVE `eleves_jeton_autorise`) + `:81-86` (`maj_app USING (true)`) + `:94-96`
+  (`lecture_proprietaire USING (true)`). La matrice réelle : *rôle `anon` + connaissance du jeton
+  = propriétaire ; sinon rien*. Vérifier qu'aucune policy `to authenticated` n'existe (grep
+  `authenticated` dans `supabase/` → uniquement dans proposition 02 non déployée).
+- **H02-02 — Isolation inter-locataires = connaissance du secret, pas de vérification de
+  propriété.** Ligne `WHERE` : aucune. `lecture_proprietaire USING (true)` — le filtre est
+  **dans** `eleves_jeton_autorise(jeton)` qui compare la colonne de la ligne au header. Conséquence
+  : l'isolation ne repose que sur la non-divulgation du jeton ; perte d'un appareil = perte du
+  tenant. Vérifier : une ligne dont le jeton aurait été régénéré (migration `schema.sql:57-59`
+  `update … where jeton is null or char_length < 32`) — l'ancien détenteur perd l'accès, le nouveau
+  l'obtient : tracer qui « possède » la ligne après régénération.
+- **H02-03 — INSERT sans propriété.** `schema.sql:73-78` : n'importe quel `anon` peut insérer
+  n'importe quel `email` valide (format seulement) avec **son propre** jeton dans la colonne.
+  Matrice : création de comptes illimitée, sans rate-limit (→ 04 pour l'abus, mais la **matrice**
+  ici : l'insert n'exige pas que le créateur « possède » l'email — pas de vérification). Impact :
+  énumération/falsification : un attaquant peut pré-créer la ligne d'une victime future avec un
+  jeton attaquant → quand la victime tente son premier upsert, `onConflict: email` → UPDATE avec
+  **le jeton de la victime** ≠ colonne (jeton attaquant) → restrictive WITH CHECK… analyser
+  précisément le cas upsert PostgREST (INSERT … ON CONFLICT UPDATE passe par UPDATE : USING =
+  jeton ancien = attaquant ; WITH CHECK = jeton nouveau = victime → **échec** → la victime est
+  **verrouillée dehors** tant que la ligne de l'attaquant existe). C'est l'hypothèse critique
+  de la tranche : **DoS de compte par pré-inscription**.
+- **H02-04 — DELETE = propriété faible.** `schema.sql:89-91` `USING (true)` sous restrictive :
+  détenteur du jeton peut supprimer ; conforme. Mais `sync.ts:273-283` : suppression attend
+  exactement 1 ligne ; si RLS masque la ligne → `'indetermine'` (pas de distinction
+  « déjà absente » vs « refusée ») — vérifier que l'UI n'affiche pas « supprimé » à tort.
+- **H02-05 — Parité App ↔ API : témoin figé.** `ci.yml:51-58` : sans `SUPABASE_DB_URL`, la CI
+  compare le dépôt à `supabase/tests/fixtures/parite-rls-2026-11-22.json` (figé) et **passe**.
+  Le pilote live (`scripts/verifier-parite-rls.mjs:43`) échoue : `postgres` non installé (prouvé
+  exit 1, index §1). Donc : **la parité de la matrice n'a jamais été vérifiée en exécution** —
+  la CI verte ne prouve rien sur la production. Statut : `PROUVÉ-EXÉCUTION`.
+- **H02-06 — Proposition 02 non déployée = matrice alternative morte.** `supabase/propositions/02-synchronisation-verifiee.sql`
+  définit `authenticated` + `auth.uid()` + consentement en DB — c'est la seule vraie matrice
+  multi-sujets, mais `PROPOSITION NON DÉPLOYÉE` (l.1). Vérifier qu'aucun code client appelle
+  `kunz_sync_*` hors `protocoleSyncVerifiee.ts` (→ 09) et que rien ne laisse croire à son
+  activation (grep `kunz_sync` dans `src/`).
+- **H02-07 — Contournement par appel direct.** Toute la logique de consentement est côté client
+  (`sync.ts:183` `consentementExplicite`) : un appelant direct (curl + anon key + jeton volé)
+  ignore totalement le consentement — la « matrice » serveur ne contient aucune colonne/flag de
+  consentement sur `eleves`. Impact RGPD : la suppression/le refus ne sont opposables qu'aux
+  clients bienveillants. Vérifier l'absence de colonne `consentement*` (schema.sql : absente).
+- **H02-08 — `charge_utile` = trou de contrat.** `schema.sql:77,85` ne contrôle que la taille ;
+  le contenu JSON n'est pas validé en base (contrairement à la proposition 02 l.57-63 qui
+  restreint les clés). Un client peut écrire n'importe quoi dans `charge_utile` pour un email
+  qu'il possède (ou celui de la victime s'il tient le jeton) → l'UI d'affichage (stats serveur)
+  doit être testée contre du JSON hostile (clés `__proto__`, très profond). Recherche :
+  qui lit `charge_utile` côté client (grep dans `src/`).
+
+## 4. Tests à auditer (suite)
+
+- `src/utils/__tests__/sync.test.ts` (33 tests environ) : couvre-t-il le cas **upsert refusé
+  (409/RLS)** ? mordre : changer la policy en test → le test échoue-t-il ?
+- Aucun test d'IDOR « email d'autrui » : ajouter au plan de tests (section 5 du format).
+
+## 5. Limites
+
+- Exécution des policies réelles : **[STATIQUE UNIQUEMENT]** (pas de base Supabase). Une base
+  PGlite locale (`supabase/tests/02-fixture.sql`) est envisageable pour la tranche 03/18 —
+  pour la 02, toute affirmation sur `ON CONFLICT` + RLS reste statique sauf expérimentation
+  PostgreSQL réelle déclarée.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/03-securite-bdd-privileges-definer.md ═══════ -->
+
+# TRANCHE 03 — Sécurité Base de Données, Privilèges & Exécution Privilégiée
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `supabase/schema.sql` (96 l.) — **sauf** `create index` l.35-37 (→ 15)
+- `supabase/propositions/01-garde-jeton.sql` (24 l.)
+- `supabase/propositions/02-synchronisation-verifiee.sql` (87 l.)
+- `scripts/verifier-parite-rls.mjs` (108 l.)
+- `src/utils/protocoleSyncVerifiee.ts` est à **09** (contrat client) — lecture croisée ici.
+
+**Hors périmètre :** migrations (18), fixtures/tests SQL (18), index/prix des requêtes (15),
+mécanique d'envoi client (07).
+
+## 2. Tests à auditer
+
+- `supabase/tests/02-cycle.sql` + `02-fixture.sql` (**propriété 18, mais à lire ici** comme seule
+  spec exécutable des fonctions de la proposition 02). **Jamais lancés dans la CI** (grep
+  `.github/workflows/ci.yml` : aucune étape `02-cycle`) → `[STATIQUE UNIQUEMENT]` sauf lancement
+  PGlite local (autorisé si l'environnement le permet — déclarer).
+- `scripts/verifier-parite-rls.mjs` : exécuté pendant le MODE A :
+  - sans source : **exit 2** (honnête) ;
+  - `--fichier` : exit 0 ;
+  - `SUPABASE_DB_URL=…` : **exit 1, `ERR_MODULE_NOT_FOUND 'postgres'`** (prouvé).
+  → Le test « qui mord » : `npm ls postgres` → absent de `package.json`.
+
+## 3. Hypothèses pré-remplies
+
+- **H03-01 — SECURITY INVOKER partout, sauf proposition 02.** `schema.sql:42-53` et
+  `…0001…sql:53-64` : `eleves_jeton_autorise` = `language sql stable security invoker
+  set search_path = pg_catalog` → **bon** (pas de privesc par search_path). Vérifier qu'aucune
+  fonction du dépôt est `security definer` **sans** `set search_path = ''` :
+  proposition 02 l.29, 39, 53, 71 = `security definer set search_path = ''` (nommé vide —
+  littéralement `''`) + garde `principal_verifie()` l.16-25 qui `raise exception` si
+  `auth.uid()` nul ou email non confirmé. Si conforme, le dire en 2 lignes (zone saine).
+- **H03-02 — Fail-open assumé dans `eleves_generation_a_jour`.**
+  `supabase/migrations/202611210002_generation_suppression.sql:60-73` (appartient à 18, mais la
+  **fonction** est un constat de sécurité à porter ici) : retourne `true` si
+  `charge_utile is null` **ou** `temoin_generation is null` **ou** format valide — elle ne
+  compare **jamais** à `old.generation`. Même avec un témoin présent, n'importe quel entier
+  est « à jour ». Double fail-open : (a) absence de témoin acceptée, (b) aucune comparaison.
+  Statut : `PROUVÉ-STATIQUE`.
+- **H03-03 — Fonction de garde non branchée.** Idem migration 0002 : la fonction est créée
+  (l.60-73) mais **aucune `ALTER POLICY` / `CREATE POLICY` ne l'appelle** (fin du fichier l.73).
+  Le commentaire l.53-59 prétend le contraire → **DRIFT commentaire/code**. Impact : le garde-fou
+  « génération périmée » est décoratif.
+- **H03-04 — `schema.sql` ≠ état migré.** `schema.sql` ne contient ni `generation`
+  (`schema.sql:6-32` vs migration 0002 l.17-18), ni trigger, ni contrainte
+  `eleves_generation_positive`. Un fresh-DB appliqué avec `schema.sql` (mode d'emploi l.3 : « copié
+  une fois dans le SQL Editor ») diffère de la prod d'au moins 3 objets. La CI de parité compare
+  uniquement `pg_policies`/`pg_proc` (`verifier-parite-rls.mjs:46-54`) — **ni colonnes, ni
+  triggers, ni index** → le drift de colonnes passe inaperçu. Statut : `PROUVÉ-STATIQUE`.
+- **H03-05 — Parse JSON `request.headers` par ligne.** `schema.sql:50` :
+  `nullif(current_setting('request.headers', true), '')::json ->> 'x-kunz-jeton'` évalué dans
+  une policy RESTRICTIVE → **pour chaque ligne examinée** en SELECT/UPDATE/DELETE. Coût +
+  fragilité : si `request.headers` est absent (psql hors PostgREST), tout est faux → refus
+  silencieux. Vérifier le comportement `current_setting(..., true)` = NULL → `nullif` → `::json`
+  sur NULL → NULL → `coalesce(false)` : confirmé par lecture ; impact = accès DB direct
+  impossible (voulu ?). Noter pour 15 le coût, ici le **fail-closed** (bon) vs fail-open ailleurs.
+- **H03-06 — Regex de format jeton = faux sentiment.** `schema.sql:49` accepte hex32 **ou**
+  UUID v4 ; comment l.41 admet : « le format ne prouve ni l'entropie ni l'identité ». Vérifier
+  qu'aucune insertion ne force l'entropie (la policy insert ne teste que la longueur ≥32 via
+  contrainte `schema.sql:62` — un attaquant peut mettre `aaaa…` (32) comme jeton : contredit-il
+  `<> repeat('0',32)` seulement ? Oui : `aaaa…` passe). **Un jeton faible choisi par le créateur
+  est accepté** → deviner le jeton d'un compte = takeover complet. Combinaison avec H02-03.
+- **H03-07 — Grants par défaut Supabase non documentés.** Ni `schema.sql` ni les migrations ne
+  contiennent `GRANT`/`REVOKE` sur `public.eleves` (grep `GRANT` → vide). Sur Supabase, le
+  défaut `anon`/`authenticated` reçoivent `ALL` sur les tables du schéma public ; la seule barrière
+  est RLS. Vérifier et documenter : si quelqu'un crée la table dans un projet avec RLS activé
+  **après** les grants, la fenêtre existe (DDL order `schema.sql:6` table puis `:55` enable RLS —
+  dans le même script, donc faible, mais en cas d'interruption…). Aussi : `GRANT` absent =
+  `verifier-parite-rls` ne contrôle pas les privileges (seulement policies+1 fonction, l.16-27).
+- **H03-08 — PostgREST expose tout le tableau.** Toutes les colonnes de `eleves` sont lisibles
+  par le détenteur du jeton, y compris `email`, `nom`, `wilaya`, `daira`, `date_bac`
+  (`schema.sql:6-32`) — pas de colonne masquée (`select` column-level absent). Cohérent avec la
+  doc client (`sync.ts` DONNEES_ENVOYEES) ? Oui côté envoi ; côté **lecture**, le client
+  récupère-t-il des lignes d'autrui ? Non (filtre jeton). Vérifier qu'aucun `.select()` large
+  n'existe (grep `\.select\(` dans `src/`).
+- **H03-09 — `postgres` manquant = security check mort.** Prouvé (index §1). Correctif minimal :
+  ajouter la dépendance `postgres` (ou remplacer par `pg`/`psql` via `execFileSync`). Test qui
+  mord : `SUPABASE_DB_URL=postgres://x node scripts/verifier-parite-rls.mjs` → exit≠0 aujourd'hui
+  (il « échoue » déjà — donc le test qui mord **passe déjà** ; le vrai test est un CI step avec
+  secret factice qui doit distinguer « erreur de pilote » de « drift »).
+
+## 4. Zone saine à dire en 2 lignes
+
+- Les trois fonctions de la proposition 02 utilisent `principal_verifie()` + `search_path = ''`
+  + `revoke all … from public, anon, authenticated` puis `grant … to authenticated`
+  (l.83-86) : motif correct, **à condition** que 02 soit un jour déployée.
+
+## 5. Limites
+
+- Aucune exécution Postgres réelle ici : tous les constats RLS sont `[STATIQUE UNIQUEMENT]`
+  sauf les exécutions du script de parité (exit 0/1/2, ci-dessus). Une PGlite/`supabase/tests`
+  locale peut être tentée pour la proposition 02 ; la déclarer explicitement si faite.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/04-surfaces-publiques-anti-abus-web.md ═══════ -->
+
+# TRANCHE 04 — Surfaces Publiques, Anti-Abus & Sécurité Web
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `index.html` (19 l. racine)
+- `src/utils/identiteSync.ts` (51 l.) + `src/utils/__tests__/identiteSync.test.ts`
+- Lecture transverse (non exclusive) : `vercel.json` (17), `public/sw.js` (→ 11),
+  `supabase/schema.sql` politiques d'insert (→ 03), `src/utils/sync.ts` (→ 07).
+
+**Hors périmètre :** headers de cache build (17), service worker (11), RLS (03), jeton (01).
+
+## 2. Tests à auditer
+
+- `src/utils/__tests__/identiteSync.test.ts` (exécuté vert) : mordre sur l'URL de retour —
+  un `originePubliee` avec `@` spoofé ou `https://evil.tld` préfixé doit être **rejeté** ;
+  si le test ne teste que le chemin nominal, il est tautologique.
+- Aucun test de sécurité réseau (pas de test d'en-têtes HTTP, ni de CSP) → **aucun test**.
+
+## 3. Hypothèses pré-remplies
+
+- **H04-01 — Pas d'en-têtes de sécurité.** `vercel.json:13-40` ne définit que `Cache-Control` et
+  `Service-Worker-Allowed` : **pas de CSP, X-Frame-Options, X-Content-Type-Options, HSTS,
+  Referrer-Policy**. `index.html` n'a aucune `<meta http-equiv="Content-Security-Policy">`.
+  Impact : aucune mitigation XSS en couches ; combiné aux `dangerouslySetInnerHTML` (12) et à un
+  éventuel SVG same-origin (12). Reproduction : `curl -I https://<prod>/` (hors environnement →
+  `[STATIQUE UNIQUEMENT]` sur la config déclarée).
+- **H04-02 — Open redirect ?** `identiteSync.ts:9-22` : `adresseRetourVerification(originePubliee)`
+  exige HTTPS (`throw` sinon) — lire la construction exacte : est-ce `?redirect_to=` contrôlé ?
+  Si l'URL de retour est passée telle quelle à un endpoint d'auth externe, un
+  `https://app.evil`/`https://host.evil.tld` (suffixe) doit être bloqué par comparaison de
+  `origin` exacte. Hypothèse : **réfutable** si `new URL(...).origin === originePubliee`
+  strict — vérifier l.14-22 (deux `catch` vides l.22, l.41 à examiner : que devient une
+  origine invalide — rejet silencieux ou repli ouvert ?).
+- **H04-03 — Insertion illimitée = stockage DoS.** `schema.sql:73-78` : policy INSERT anon avec
+  seulement format email + taille 256 Ko. Anon key publique + aucun rate-limit (app statique) →
+  script : boucle `POST /rest/v1/eleves` avec emails aléatoires valides et `charge_utile`
+  262 144 o → ~256 Ko × N lignes facturées/stockées. Combien avant quota Supabase (250 Mo free
+  ?) ≈ **976 lignes** pour 250 Mo (250×1024×1024 / 262144 = 1000). Impact : coût/indisponibilité
+  + impossible de « nettoyer » sans jeton (delete exige le jeton de la ligne). Reproduction :
+  script curl avec anon key (clôt : hors-ligne → calcul théorique, `PROUVÉ-STATIQUE`).
+- **H04-04 — Énumération via upsert.** `sync.ts:204-233` `upsert onConflict:'email'` : la
+  réponse distingue-t-elle « ligne existante avec jeton différent » (erreur RLS/403/409) de
+  « ligne créée » ? Un attaquant qui tente un UPDATE avec un jeton devine renvoie-t-il une
+  différence observable ? PostgREST : UPDATE sous RLS qui ne matche aucune ligne → `200` avec
+  tableau vide (pas d'erreur) → **pas d'oracle** probable. Vérifier la boucle `error`/`data`
+  (`sync.ts:234-237`) et documenter l'absence d'oracle (sinon : finding).
+- **H04-05 — Pas de rate-limit côté app.** Aucun compteur de tentatives dans `Inscription.tsx`
+  (voir 01) ; aucun middleware (inexistant). Les seuls anti-abus : RLS + quotas Supabase.
+  Vérifier qu'aucun code ne prétend le contraire dans `Confidentialite.tsx`/README (→ 20).
+- **H04-06 — Cache poisoning via `ignoreSearch`.** `public/sw.js:216`
+  (`cache.match(request, { ignoreSearch: true })`) : une ressource `/assets/x.js?v=1` sert
+  `/assets/x.js?v=2`. Même origine seulement (`sw.js:174` filtre origin) → risque faible ;
+  vérifier si des URLs de leçons portent un query de versionnement (grep `?v=` / `?t=` dans
+  `src/`). Si aucun → réfuté en 2 lignes.
+- **H04-07 — Énumération d'existence par timing insert.** Sans oracle d'erreur, la durée
+  upsert (INSERT vs UPDATE) peut varier — `[STATIQUE UNIQUEMENT]` sans base ; à noter comme
+  risque résiduel si la base devient mesurable.
+- **H04-08 — Pas de contrôle d'origine sur le service worker message.** `public/sw.js:154-172`
+  (`message` handler) : ne vérifie **pas** `event.origin` ni `event.source` — n'importe quel
+  script de l'origine (ou frame ?) peut déclencher `TELECHARGER_CONTENU`. Même origine = normal
+  pour SW ; documenter comme non-finding si aucune iframe tiers n'est embarquée (grep
+  `iframe` dans `src/` — boussole est un fichier statique ouvert directement ? `TiroirBoussole`).
+- **H04-09 — `/boussole/index.html` servi sans en-tête de sécurité** (1,2 Mo de JS inline,
+  `vercel.json:31-35` max-age 3600) : surface d'exécution additionnelle au même origin
+  (cookie-free mais même localStorage partagé !). Vérifier les clés `localStorage` lues par ce
+  bundle (grep dans le minifié : `murajih`/`kunz` → si présent, **isolation rompue** entre app
+  et labo). Rapide : `grep -o 'murajih_svt_v1\|kunz_' public/boussole/index.html | sort -u`.
+
+## 4. Limites
+
+- Pas de navigateur ni de prod : les constats de headers/redirect sont `[STATIQUE UNIQUEMENT]`
+  sur la config. Les scripts curl hors-ligne ne peuvent pas toucher Supabase (pas d'URL/clé).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/05-calculs-precision-regles-metier.md ═══════ -->
+
+# TRANCHE 05 — Moteurs de Calcul, Précision Numérique & Règles Métier
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. Tout constat arithmétique doit montrer
+> le calcul exact.
+
+## 1. Périmètre (propriété exclusive)
+
+**Utilitaires :** `adaptatif.ts`, `amelioration.ts`, `bacPasAPas.ts`, `drills.ts`, `fakh.ts`,
+`pointsCarteLecon.ts`, `qcm.ts`, `simulation.ts`, `srs.ts`, `stats.ts`, `statsUnite.ts`, `xp.ts`.
+
+**Composants :** `Bac.tsx`, `BacPasAPas.tsx`, `BaguetteXp.tsx`, `CarteBadges.tsx`,
+`CarteBoucliersSM2.tsx`, `CarteForcesFaiblesses.tsx`, `CarteStats.tsx`,
+`CarteTropheesTactiques.tsx`, `ExamBlanc.tsx`, `Exercices.tsx`, `Fakh.tsx`,
+`SimulationEpreuve.tsx`.
+
+**Données :** `src/data/drills/**`, `src/data/briques/**`.
+
+**Scripts :** `scripts/{analyser,importer,verifier}-drills.mjs`, `scripts/frequence-bac.py`,
+`scripts/drills-rapport.md`.
+
+**Tests :** `utils/__tests__/{adaptatif,amelioration,niveau3,seance-comptage,simulation,srs,statsUnite,verifier-drills}.test.ts`,
+`__tests__/{bac-pas-a-pas,fakh}.test.ts`.
+
+**Hors périmètre :** XP affiché/parcours (06), stats de stockage multi-clés (07 en lecture),
+simulation d'écran chronométré = état (06) sauf l'allocation arithmétique (ici).
+
+## 2. Tests à auditer (anti-tautologie)
+
+- `simulation.test.ts` : vérifier que la **somme des allocations** est testée contre la durée
+  totale (si le test ne vérifie que chaque exercice ≥ 0, il ne mord pas sur la dérive d'arrondi
+  H05-01).
+- `srs.test.ts` : le test vérifie-t-il un intervalle produit par `Math.round(intervalle*facilite)`
+  avec des valeurs qui changent de comportement (ex. `intervalle=3, facilite=1.31 → 3.93 → 4`) ?
+  Si tous les cas utilisent des facilités « rondes », tautologie.
+- `statsUnite.test.ts` / `seance-comptage.test.ts` : couvrent-ils le comptage **après**
+  interruption (minuit, double-incrément) ?
+- `verifier-drills.test.ts` (2 tests) : vérifie-t-il le script ou sa propre copie ?
+
+## 3. Hypothèses pré-remplies
+
+- **H05-01 — Dérive d'arrondi dans l'allocation chronométrée.** `src/utils/simulation.ts:40`
+  `Math.round((e.bareme / baremeTotal) * aRepartir)` **par exercice**, indépendamment.
+  Exemple : 3 exercices de barème 3/3/4 (total 10), 169 min après relecture
+  (`:36` `dureeMin - MINUTES_RELECTURE`, MINUTES_RELECTURE à lire) → 50,7→51 ; 50,7→51 ;
+  67,6→68 → somme **170 ≠ 169**. Impact : le total affiché dépasse/équilibre mal le chrono.
+  Vérifier si une correction de reste est appliquée (l.40-45). Test mordant : durée 169,
+  barèmes 3,3,4 → somme des `minutes` doit valoir exactement `aRepartir`.
+- **H05-02 — SM-2 en flottant avec arrondi.** `srs.ts:35` `Math.round(intervalle * facilite)` ;
+  `srs.ts:36` `facilite = max(1.3, facilite + (0.1 - (5-q)*(0.08+(5-q)*0.02)))` — incrément
+  binaire (0.08, 0.02 non exacts en IEEE-754). Après ~30 répétitions, l'écart vs un calcul
+  décimal attendu reste < 0,5 j (arrondi) mais la **facilité** diverge sans borne haute
+  (seul un plancher 1.3 existe) → `intervalle` explose (2^…). Vérifier : existe-t-il un plafond
+  d'intervalle hors mode intensif (`:39` ne plafonne que si `plafondIntervalle` fourni) ?
+  Calcul : q=5 constant → Δf = +0.1/rep ; après 100 reps f = 10+ → intervalle ≈ ×10/rep.
+  Impact : dates de révision absurdement lointaines (an 2100+), élève jamais revoir.
+- **H05-03 — XP : `Math.floor(minutes/30)`.** `xp.ts:37` : 29 min → 0, 30 → 1 ; perte de
+  fraction **non reportée** (pas de cumul de reste). Si `minutesTotales` peut décroître
+  (restauration/rollback), l'XP calculée est monotone sur l'état mais **recalcule entièrement**
+  (`xpDe` pur) : vérifier qu'aucun composant n'additionne des deltas incrémentaux (sinon double
+  comptage). Test : `xpDe` deux fois de suite = idempotent (probablement oui → saine).
+- **H05-04 — Division et taux.** `telemetrie.ts:105` `tauxAbandon` (appartient à 19 mais le
+  calcul est ici en lecture) : divise-t-on par zéro quand `total===0` ? Lire le corps exact.
+  Idem `stats.ts` : toute division par `sum` ? (grep `/` dans stats.ts). Si aucune division
+  directe → réfuter.
+- **H05-05 — Entiers DB vs flottants client.** `schema.sql:14-28` : toutes les colonnes sont
+  `integer` ; le client envoie `xp` (entier), `minutes_totales` (entier) mais aussi
+  `charge_utile` JSON. `xpDe` retourne un nombre entier (sommes d'entiers) → OK ;
+  vérifier `stats` (peut-il y avoir des floats dans `charge_utile` via d'autres champs ?
+  Snapshot = entiers + tableaux d'IDs → OK probablement). Parité à prouver : grep de tout
+  champ `number` non entier dans `Snapshot` (`sync.ts:28-47`) → tous entiers sauf `maj/date`.
+- **H05-06 — Barèmes drills sans somme de contrôle.** `src/data/drills/**` (700 items selon
+  README non fiable) : `scripts/verifier-drills.mjs` vérifie-t-il l'intervalle de scores
+  (0..max) et la somme des points ? Lire le script (exécuté par CI `ci.yml:42`) — si il ne
+  vérifie que la présence des IDs, un barème négatif passerait.
+- **H05-07 — `qcm.ts` / notation partie entière.** Vérifier les arrondis de notation
+  (`qcm.ts` : lire les fonctions de score) et le cas `bareme=0` (division par zéro).
+- **H05-08 — `adaptatif.ts` : marche aléatoire du palier.** Lire les bornes (10 questions) :
+  un score de 0/10 fait-il décroître sous 0 (négatif) ? `Math.max` manquant ?
+- **H05-09 — `amelioration.ts` : pourcentage de progression.** Formule exacte ; cas
+  `avant===apres` (division) et `avant===0`.
+
+## 4. Zones saines possibles à dire en 2 lignes
+
+- `xp.ts` : pas de pourcentage affiché, pas de note /20 (choix explicite `bridge.ts:8`) — ne pas
+  inventer de finding « manque de moyenne ».
+
+## 5. Limites
+
+- Tous les constats arithmétiques sont vérifiables par tests unitaires locaux (vitest) —
+  exécution autorisée (`npx vitest run src/utils/__tests__/simulation.test.ts` etc.).
+- Pas de données financières réelles : « financier » = barèmes/XP ici.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/06-machines-etats-workflows-invariants.md ═══════ -->
+
+# TRANCHE 06 — Machines à États, Workflows & Invariants Métier
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Utilitaires :** `accesSujets.ts`, `briques.ts`, `defis.ts`, `diagnostic.ts`,
+`diagnosticQuestions.ts`, `entrainement.ts`, `flashcards.ts`, `kouest.ts`, `microNoeuds.ts`,
+`moteur.ts`, `parcoursSujet.ts`, `planDuJour.ts`, `revueCroisee.ts`.
+
+**Composants :** `Atelier*.tsx` (6), `CarteDefi.tsx`, `CarteDiagnosticFavoris.tsx`,
+`ChoixSynthese.tsx`, `Defi60.tsx`, `Diagnostic.tsx`, `Ecran123.tsx`, `EcranBriques.tsx`,
+`EcranFierte.tsx`, `EntraineurSujet.tsx`, `Flashcards.tsx`, `JalonUnite.tsx`,
+`JourneeReparation.tsx`, `Kouest.tsx`, `MicroNoeuds.tsx`, `ProtocoleRunner.tsx`,
+`ReglagesParcours.tsx`, `SessionRevision.tsx`, `SujetGuide.tsx`, `SujetsOfficiels.tsx`,
+`SyntheseLibre.tsx`.
+
+**Données :** `src/data/protocole.ts`, `src/data/priorites.ts`, `src/data/programme.ts`
+(intégrité des IDs → 08 lit aussi ; propriétaire 06 pour les règles de workflow).
+
+**Tests :** `utils/__tests__/{acces-sujets,briques,briques-gabarit,defis,diagnostic,entrainement,flashcards,garde-fous-anti-anxiete,micro-noeuds,moteur,parcours,parcours-sujet,phase5-integration,plan-du-jour,protocole,revueCroisee}.test.ts`,
+`__tests__/{briques-apreciation-ui,ecran-fierte-ui,fierte-parcours-ui,kouest,sujet-guide-entree-ui,sujet-guide-ui}.test.tsx`.
+
+**Hors périmètre :** SRS lui-même (05), suppression serveur (07/02), stockage (07).
+
+## 2. Tests à auditer
+
+- `moteur.test.ts` (fake timers) : couvre-t-il une transition **illégale** (ex. leçon « terminée »
+  réouverte sans passer par « en_cours ») ou seulement le chemin nominal ?
+- `parcours.test.ts` : les dates J-45/J-21/J-5 sont testées avec horloge figée — mordre : changer
+  `CALENDRIERS[0].bac` → le test échoue-t-il ou lit-il une copie ?
+- `phase5-integration.test.ts` : intégration réelle ou mocks recopiant la logique (mock mensonger) ?
+- `garde-fous-anti-anxiete.test.ts` : vérifie-t-il des invariants (aucun %, aucune note) par
+  regex sur le rendu — si l'écran change de formulation, mord-il encore ?
+
+## 3. Hypothèses pré-remplies
+
+- **H06-01 — Statuts de progression et transitions.** `src/types.ts` (lignes `statut` :
+  rechercher `ProgressionLecon`) — valeurs possibles et transitions **où** sont-elles imposées ?
+  Hypothèse : `onTerminer`/`onProgresse` (`App.tsx:580-606`) sont les seuls points d'entrée et
+  **aucune invariant** (ex. `terminee ⇒ prochaineRevision` cohérent) n'est vérifié à l'écriture.
+  Reproduction : état corrompu `statut:'terminee'` avec `phases:[]` importé (backup) → que
+  voit l'élève ? (`etat.ts` propriétaire 08 — signaler le conflit, ne pas auditer ici.)
+- **H06-02 — Sortie du mode intensif = perte de révision.** `srs.ts:58-66` :
+  après 2 réussites → `prochaineRevision: undefined` → `aReviserAujourdhui` (`srs.ts:79-82`)
+  retourne `false` → leçon **jamais** proposée avant le bac. Invariant à vérifier : un retour en
+  mode non-intensif (changement de réglage `ReglagesParcours`) re-tiente-t-il les leçons
+  « acquisIntensif » ? Si non : sortie définitive du flux de révision (métier : OK si voulu —
+  le commentaire l.55-56 le dit — mais vérifier que l'écran n'affiche pas « à réviser »).
+- **H06-03 — Suppression durable : invariant client.** Le client n'envoie jamais
+  `temoin_generation` (grep, index §5) et la policy ne le lit pas (03) → l'invariant
+  « la suppression n'est jamais annulée » (migration 0002 commentaire l.3-11) **n'est tenu par
+  rien** : le dernier upsert gagne. `suppression-durable.test.ts` (02) ne prouve que le mock.
+  Statut : `PROUVÉ-STATIQUE` (grep + lecture).
+- **H06-04 — Double-clic / double soumission d'inscription.** `Inscription.tsx` : le bouton
+  est-il désactivé pendant `await hacher` (async, l.70-86) ? Deux clics rapides → deux comptes ?
+  (le compte est un upsert local dans l'état — vérifier l'absence de double `onValide`).
+  Composant possédé par 01 — ici seulement l'invariant workflow, signaler à 01.
+- **H06-05 — Chronos (`setTimeout`/`setInterval`) vs cycle de vie.** `ProtocoleRunner.tsx:218`,
+  `ExamBlanc.tsx:89`, `Defi60.tsx:62` : timer démarré à l'entrée — cleanup au démontage ?
+  Lire le `useEffect` retour : si le `clearInterval` manque quand on change d'onglet pendant
+  l'examen, le compteur continue (ou deux compteurs si remonté). Mordant : monter/démonter
+  2×, compter les timers actifs.
+- **H06-06 — « Trois refus » de la simulation (commentaire `simulation.ts:6-9`) : la code-t-elle
+  vraiment ?** Vérifier : pas de note /20 (grep `\/20` dans `simulation.ts` + `ExamBlanc.tsx`),
+  pas d'arrêt forcé à 0 s, aucun exercice obligatoire. Si conforme → 2 lignes « sain ».
+- **H06-07 — Défi 60 s : état figé en cas d'onglet caché.** `Defi60.tsx:62` `setTimeout(…,1000)`
+  en cascade : en arrière-plan les timers sont throttled → le défi prend 3× le temps réel.
+  Invariant métier : « 60 s » = temps mur ou temps CPU ? Si le test (`defis.test.ts`) utilise
+  fake timers, il ne détecte jamais le throttling → angle mort.
+- **H06-08 — Ordre du moteur NBA (Next Best Action).** `moteur.ts:340-342` :
+  `semaines = ceil(jours/7)`, `parSemaine = min(plafond, ceil(restants/semaines))` — cas
+  `jours=null → 4` ; `restants=0` → `ceil(0/s)=0` → objectif 0 (OK ?); `jours<0` (date de bac
+  passée) → `Math.max(1,…)` seulement sur `semaines` — vérifier `jours négatif` : `ceil(-3/7)=-0` →
+  `max(1,-0)=1` OK, mais `restants` négatif → `parSemaine` négatif → plan négatif. Lire les
+  gardes exactes (l.335-345).
+- **H06-09 — IDs dupliqués entre jeux de données.** `accesSujets`/`moteur` lisent
+  `programme.ts` + `priorites.ts` : un ID de leçon absent des deux → silencieusement ignoré ?
+  Le test `programme-coherence.test.ts` (08) le couvre-t-il ? (signal croisé à 08.)
+
+## 4. Limites
+
+- Exécution : tests vitest locaux autorisés. Pas d'E2E (Chromium absent) → les états
+  d'interface sont `[STATIQUE UNIQUEMENT]` sauf tests jsdom existants.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/07-concurrence-verrous-isolation-idempotence.md ═══════ -->
+
+# TRANCHE 07 — Concurrence, Verrous, Isolation SQL & Idempotence
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. Matrice de concurrence obligatoire
+> (étape 4 du protocole) pour chaque écriture critique.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/utils/sync.ts` (304 l.) — file d'envoi, coalescence, timeout, suppression
+- `src/utils/storage.ts` (363 l.) — état local, journal de restauration, multi-onglets
+- `src/utils/coherenceStockage.ts` (38 l.)
+- `src/components/CarteSync.tsx`
+- Symboles `App.tsx` : effet de sync `:511-531`, `stockageCourantPourSync` `:500-509`,
+  stock event `:468-480`, décision de consentement `:761-767` (prop. 10 pour le reste)
+- `src/utils/stats.ts` — **partiellement** : écriture `CLE_STATS`/`suspendreEcritureStats`
+  (l.54-150 environ) ; les taux/compteurs restent à 05 (lecture croisée obligatoire)
+
+**Tests :** `utils/__tests__/{coherence-stockage,restauration-atomique,storage,sync,sync-timeout,suppression-durable}.test.ts`,
+`__tests__/{sync-etat-illisible,sync-stockage-ui}.test.tsx`.
+
+**Hors périmètre :** règles RLS (03), jeton (01), import/sauvegarde fichier (12),
+affichage des états (10).
+
+## 2. Tests à auditer (anti-tautologie)
+
+- `sync.test.ts` + `sync-timeout.test.ts` : le timeout est-il testé avec `AbortSignal` réel ou
+  un mock qui rejette `TimeoutError` à la demande ? (si mock : le test passe même si
+  `abortSignal(...)` disparaît du code → tautologie. Mordant : supprimer `.abortSignal(...)`
+  dans une copie `/tmp` et revoir le test — **copie jetable uniquement, autorisée**.)
+- `storage.test.ts` (mock `localStorage` partiel, `as any` l.28-43) : le mock reproduit-il les
+  exceptions réelles (QuotaExceededError) ou un simple `throw new Error` ? Les chemins de
+  rollback (`restauration-atomique`) sont-ils exercés avec **écriture qui échoue à la 2e clé** ?
+- `coherence-stockage.test.ts` : couvre-t-il deux onglets concurrents réels (événements
+  `storage`) ou une seule mémoire ?
+- `sync-etat-illisible.test.ts` : vérifie-t-il que l'envoi est **bloqué** (assertion de non-appel)
+  ou seulement qu'une exception est levée ailleurs ?
+
+## 3. Hypothèses pré-remplies
+
+- **H07-01 — Coalescence à un seul slot, jamais de file.** `sync.ts:119-122` (`enCours`,
+  `enAttente` unique) + `:189` (si en cours → mémorise le plus récent) + `:252-256` (vidage en
+  `finally`). Invariant affiché : « le plus récent gagne ». Vérifier le cas **inter-comptes** :
+  `enAttente` n'est **pas** indexé par email (l.122) — un snapshot du compte A en attente pendant
+  l'envoi de B sera envoyé après (`:256` ne filtre que `comptesSuspendus`) — le payload contient
+  bien l'email/jeton de A (OK) mais l'ordre cross-compte est mélangé. Impact : si
+  `onCompteValide` change de compte pendant l'envoi, l'ancien compte est réécrit **après** la
+  bascule → l'état serveur de A est resynchronisé avec un état qui n'est plus affiché (bénin ?
+  à prouver). Séquence exacte à tracer dans le rapport.
+- **H07-02 — TOCTOU enCours :** `envoyerSnapshot` lit `enCours` (l.189) puis appelle
+  `envoyerResume` qui l'écrit **synchrone** avant tout await (l.246) → pas de fenêtre entre les
+  deux (même tour de boucle JS) → probablement **sain** ; le dire en 2 lignes si confirmé.
+- **H07-03 — Dedup globale `dernierEnvoye` inter-comptes.** `sync.ts:142` variable globale unique
+  ; `:196` compare `[jeton, chargeUtile]` JSON. Deux comptes différents → JSON différent
+  (email dedans) → pas de faux « déjà envoyé ». Mais **déconnexion sans `reprendreSync`** laisse
+  l'ancien `dernierEnvoye` : si le même compte re-connecte et que l'état n'a pas changé, le
+  premier envoi est sauté (`:196` → 'confirme' sans réseau) alors que la ligne serveur a pu être
+  supprimée entre-temps (`supprimerSnapshotServeur` remet `dernierEnvoye=''` l.281 — OK si
+  suppression via l'app ; si suppression manuelle côté serveur → faux positif « confirmé »).
+- **H07-04 — Perte de mise à jour inter-appareils (lost update).** Écriture : upsert
+  `onConflict:'email'` `sync.ts:204-233` **sans** `Prefer: return=representation` ni comparaison
+  de `generation`. La DB incrémente `generation` (trigger 0002) mais rien ne refuse l'écriture
+  (03-H03-03). Deux appareils hors ligne puis reconnectés : **dernier envoi gagne**, l'autre
+  progression disparaît silencieusement. Matrice : isolation = RLS lecture seule ; verrou =
+  **aucun** ; échec à mi-parcours = upsert atomique côté Postgres (une ligne) mais pas côté
+  « deux upserts séquentiels ». Reproduction : A envoie t1, B envoie t0>t1 (ancien état) →
+  serveur recule. `PROUVÉ-STATIQUE` (absence de garde) ; exécution DB impossible ici.
+- **H07-05 — Debounce 6 s remis à zéro à chaque changement d'état.** `App.tsx:511-531` :
+  effet dépend de `[etat, blocageRestauration]` (l.531) → chaque frappe/progression annule le
+  `setTimeout(6000)` (l.517) et en crée un nouveau. Un élève qui joue **continuellement** > 6 s
+  n'envoie **jamais** (sauf `visibilitychange`/`online` l.522-527). Impact : envoi repoussé
+  indéfiniment ; en cas de fermeture brutale, perte de la session (le serveur ne reçoit rien).
+  Test mordant : fake timers + changements d'état toutes les 5 s pendant 60 s → 0 appel
+  `envoyerSnapshot` (aujourd'hui : le test existe-t-il ? grep dans `sync.test.ts`).
+- **H07-06 — Timeout 8 s puis retry ?** `sync.ts:103-114` : en échec → état `erreur`, **aucun
+  retry automatique** ; le prochain changement d'état relancera (via l'effet App). Si l'état ne
+  change plus et que le réseau revient (`online` → l.527 `envoyerSiCourant`) → OK. Vérifier que
+  `publierEtatEnvoi('erreur')` ne **reset** pas `enAttente` (le slot reste → au prochain appel
+  écrasé). Cas : timeout → `finally` vide le slot (`:254-255`) → **l'état timeouté est perdu**
+  si aucun nouvel événement : l'effet App ne se re-déclenche que si `etat` change ou
+  `online`/`visibilitychange`. Entre-temps l'élève croit (ou non) à « erreur ». Vérifier
+  l'UI (`CarteSync`) : propose-t-elle un bouton « réessayer » qui rappelle
+  `envoyerSnapshot` sans changement d'état ?
+- **H07-07 — Suppression vs envoi concurrent.** `supprimerSnapshotServeur` `sync.ts:268-291` :
+  `suspendreSync` d'abord (l.269), attend `enCours` (l.273), delete. Mais `envoyerResume` en
+  cours peut avoir passé le test `comptesSuspendus` (l.200) **avant** la suspension → l'upsert
+  peut se terminer **après** le delete → ligne ressuscitée (BUG-002 exact, mais ici dans le même
+  onglet !). Fenêtre : entre l.200 et l.233 (réseau). Le `await enCours` (l.273) est prise
+  **après** `suspendreSync` — si l'upsert est déjà parti, on attend la fin → delete ensuite →
+  OK dans l'ordre. Mais si un `enAttente` est vidangé **pendant** le delete (le `finally` de
+  l'upsert appelle `envoyerResume(suivant)` l.256 — qui voit `comptesSuspendus` → filtré l.256).
+  Analyser la séquence exacte et écrire la matrice ; chercher un chemin où l'envoi échappé
+  passe après le `finally` de la suppression.
+- **H07-08 — Journal de restauration multi-onglets : pas de verrou.** `storage.ts:259-360`
+  (`restaurerEtatEtStats`) : écrit `CLE_RESTAURATION` (l.300 environ) puis applique. Deux
+  onglets qui restaurent **simultanément** : le premier efface le journal (l.317) pendant que le
+  second vient de le lire → le second détecte `restaurationEnAttente` **après** l'effacement et
+  procède → double application en intercalé. Les gardes `verifierCoherence` (mémorisation des
+  valeurs l.9-17 de coherenceStockage) détectent-elles la seconde écriture ? Tracer les deux
+  séquences avec les clés exactes.
+- **H07-09 — Écriture stats non transactionnelle avec l'état.** `storage.ts:127-135` :
+  export combine `CLE` + `CLE_STATS` + carnet (3 clés) ; `sauvegarderEtat` n'écrit que `CLE`.
+  Crash entre les deux → état neuf + stats vieilles (ou inverse). Le journal de restauration ne
+  couvre-t-il que restauration, pas les sauvegardes courantes → **pas d'atomicité** des
+  sauvegardes normales. Impact : divergence compteur/progression affichée. Statut : lire et
+  confirmer (commentaire `storage.ts:4` admet « aucune transaction inter-onglets » — c'est un
+  **aveu** à confronter : que devient l'UI en cas de divergence ? `stats-lecture.test.ts` → 13).
+
+## 4. Obligation
+
+Produire la **matrice concurrence/échec** (étape 4) pour : upsert sync, delete sync, restauration
+3 clés, écriture stats, sauvegarde état. Niveau d'isolation, verrou réel (ou « absent »), et
+comportement à mi-parcours pour chacun.
+
+## 5. Limites
+
+- Concurrence réelle multi-onglets : testable partiellement en jsdom (événements `storage`
+  simulés). Deux vrais onglets/clients : `[STATIQUE UNIQUEMENT]`.
+- Base Supabase absente : lost update SQL = analyse statique du code + policies (03).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/08-modele-donnees-contraintes-fuseaux.md ═══════ -->
+
+# TRANCHE 08 — Modèle de Données, Contraintes, Fuseaux & Intégrité Référentielle
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. Tout calcul de date montrer le calcul.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/types.ts` (Etat, Compte, ProgressionLecon…)
+- `src/config/annee.ts` (calendrier scolaire)
+- `src/utils/dates.ts` (116 l.), `src/utils/etat.ts`, `src/utils/accents.ts`,
+  `src/utils/rappels.ts` (heures locales)
+- `src/data/**` (défaut) **sauf** `drills/`, `briques/` (→ 05), `figuresSujets.ts` (→ 12)
+- `src/data/wilayas.ts`, `programme.ts`, `glossaire.ts`, `sujets*`, `corriges/*`,
+  `lessonGoldSummaries.ts`, `syntheses.ts`, `leconsPassives.ts`, `mourchid.ts`, `qcmLecons.ts`,
+  `schemasSvt.ts`, `methodologie/*`, `protocole.ts`, `priorites.ts`, `enquetesBac.ts`, …
+- Composants : `CarteExamens.tsx`, `Fetes.tsx`, `FicheEleve.tsx`, `ReglageRappel.tsx`
+- Tests : `utils/__tests__/{annee,dates,glossaire,migration-etat,programme-coherence,resumes-langue,schemas,sujetsCorriges,sujetsOfficiels,syntheses}.test.ts`,
+  `__tests__/fiche-eleve.test.tsx`, `data/__tests__` restants non médias.
+
+**Hors périmètre :** règles d'XP/barèmes (05), workflow (06), backup versionné (12),
+colonnes SQL (03/08 en lecture croisée : `schema.sql` types vs types TS).
+
+## 2. Tests à auditer
+
+- `annee.test.ts` : couvre-t-il la **frontière août/septembre** (`annee.ts:61`) et la marge
+  `MARGE_APRES_BAC_JOURS` des deux côtés (l.54-56) ? Si seulement l'année nominale → tautologie.
+- `dates.test.ts` : teste-t-il `differenceJours` à travers un **changement d'heure** (DST) et sur
+  une frontière d'année ? (Algérie = pas de DST actuellement — le test TZ est-il figé ? si le
+  test tourne en UTC, il ne prouve rien pour un utilisateur en +1.)
+- `migration-etat.test.ts` : rétrocompatibilité d'un ancien état réel ou d'un objet fabriqué
+  idéal (âge : ancien état avec champs manquants) ?
+- `programme-coherence.test.ts` : détecte-t-il un ID orphelin **supprimé** d'une leçon (enlevez
+  une entrée dans une copie → échoue) ?
+
+## 3. Hypothèses pré-remplies
+
+- **H08-01 — Deux horloges de calendrier.** `config/annee.ts:31-34` utilise `Date.UTC` ;
+  `dates.ts:83-88` (`aujourdhui()`) utilise la date **locale** ; `dates.ts:72,78,91,99-100`
+  parse en heure **locale** `T12:00:00`. Utilisateur à UTC+13 : à 23:30 locale, `aujourdhui()`
+  = jour J mais un `toISOString().slice(0,10)` ailleurs (grep les `toISOString().slice` dans
+  `src/utils`) donnerait J-1 → **désynchronisation de la clé journal/stats vs affichage**.
+  Calcul à montrer : `new Date('2026-11-27T23:30+13:00')` → UTC = 27/11 10:30 (OK) vs
+  `+13:00` inversé : 27/11 00:30 locale = 26/11 11:30 UTC → slice UTC = 26 ≠ 27 local.
+  Chercher les deux motifs et prouver l'incohérence (grep `toISOString` dans `src/utils/*.ts`).
+- **H08-02 — `differenceJours` et DST.** `dates.ts:98-101` : ancre `T12:00:00` locale → jour de
+  23 h ou 25 h ; `(b-a)/86_400_000` = 0.958 ou 1.041 → `Math.round` → 1. **Sain** pour ±1 h ;
+  réfutable en 2 lignes si on reste en Algérie (pas de DST) — mais un utilisateur voyageant
+  (Europe) déclenche le cas : dire « sain grâce à l'ancre midi + round » si le calcul tient.
+- **H08-03 — `prochainRappel` à minuit.** `rappels.ts:49-56` : `setHours(h,m)` puis si
+  `<= maintenant` → `+1 jour` via `setDate` (heure locale préservée). Cas limite :
+  `maintenant` exactement à l'heure du rappel → `<=` → repousse au lendemain (**perd** le rappel
+  du jour). Impact : notification jamais émise pour l'heure courante. Test : `rappels.test.ts:56-58`
+  utilise `10:00` vs `19:30` — ne couvre pas l'égalité exacte → angle mort.
+- **H08-04 — Fenêtre de calendrier confirmé.** `annee.ts:53-61` : confirmé entre
+  `bac-45j` et `debut-45j`… relire : `isoAujourdhui >= debut-45j && <= bac+45j`. Entre
+  `bac+46j` et le 31 août : **estimé** (`mois>=8 ? annee : annee-1`) → du 26 juillet au
+  31 août, `calendrierPour` renvoie une année **estimée** même si `CALENDRIERS` contient
+  l'année juste passée. Exemple : 2027-08-15 → `mois=8` → `calendrierEstime(2027)` (bac
+  2028-06-10 estimé) alors que la saison 2026-2027 confirmée existe. Impact : pendant les
+  résultats/rattrapage d'août, l'app bascule sur des dates estimées. Calcul à montrer.
+- **H08-05 — Types applicatifs vs SQL.** `schema.sql:13 date_bac date` vs `Etat.dateBac`
+  (string ISO) ; `schema.sql:14-28 integer` vs `number` ; `charge_utile jsonb` vs `Snapshot`
+  tableaux. Vérifier chaque couplage : le client envoie `date_bac: 'YYYY-MM-DD'` (OK format) ;
+  un `date_bac` invalide (`'not-a-date'`) est-il possible depuis `FicheEleve` (validation de
+  saisie ?) → Postgres rejettera (erreur → 'erreur' sync). Côté local : `Etat.dateBac` typé
+  `string | null` — validation à l'import (12).
+- **H08-06 — NULLs piégés.** `etat.ts` : `etatDepuisBrut` (grep) normalise-t-il
+  `compte.jeton: null` vs `undefined` ? `sync.ts:74` `etat.compte.jeton ?? ''` → jeton `''`
+  → `jetonUtilisable` faux (OK). `storage.ts:170` : `jeton !== undefined && typeof !== 'string'`
+  → **null accepté** (`typeof null === 'object'` → `null !== undefined` true, `typeof null`
+  'object' ≠ 'string' → **return null → journal rejeté**). Analyser ce chemin : un état legacy
+  avec `jeton: null` bloque-t-il la restauration ? Vérifier l'ordre exact des tests dans
+  `modificationsDuJournal` (l.170-171) : `['motDePasse','jeton'].some(c => compte[c] !== undefined
+  && typeof compte[c] !== 'string')` → pour `jeton: null` : `null !== undefined` = true et
+  `typeof null='object' !== 'string'` → **true → return null** → journal refusé. Impact :
+  restauration silencieusement refusée (avec signal `echecStockage` — vérifier).
+- **H08-07 — Intégrité référentielle des IDs de leçons.** Les objets `progression`,
+  `jalons`, `drills` sont des `Record<string,…>` sans FK. Un ID supprimé du programme reste
+  dans l'état forever (et compte dans `xpDe` `xp.ts:30-33` si `statut==='terminee'`).
+  `programme-coherence.test.ts` : ne contrôle-t-il que le sens programme→tests ?
+  Test mordant : injecter `progression['lecon-fantome']` → XP boostée ? (`xpDe` : oui si
+  statut terminee + phases). Impact : import de fichier corrompu (12) gonfle l'XP.
+- **H08-08 — Accents/normalisation des IDs.** `accents.ts` : les slugs de leçons
+  (`d2-u6-l1-…`) passent-ils par une normalisation asymétrique (NFD vs NFC) entre
+  `illustrationsLecons.ts` (clés) et les fichiers `public/lecons/img/*` ? Un NFC/NFD différent
+  → image 404 silencieux. `illustrations.test.ts` (12) le couvre-t-il ?
+- **H08-09 — Migration d'état legacy.** `etat.ts`/`migration-etat.test.ts` : versionnage
+  (`version` dans backup v1/2/3, `backup.ts:122-126` → 12 pour le fichier, mais l'état **local**
+  sans version ?) — `etatDepuisBrut` applique-t-il des défauts fail-open (champ absent →
+  valeur par défaut qui **écrase** rien, mais qui **cache** une corruption) ? Lire et citer.
+
+## 4. Limites
+
+- Fuseaux : les tests vitest tournent en UTC probablement — exécuter un test avec
+  `TZ=Europe/Paris` (autorisé, non destructif) pour trancher H08-01/02 : `TZ=Europe/Paris npx vitest run src/utils/__tests__/dates.test.ts`.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/09-contrats-api-validation-serialization.md ═══════ -->
+
+# TRANCHE 09 — Contrats API, Validation d'Entrées & Sérialisation
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+Le dépôt n'a **pas** de REST applicative : les « contrats » sont (a) l'upsert Supabase,
+(b) les RPC de la proposition 02, (c) l'import/export JSON, (d) les messages SW,
+(e) les entrées utilisateur (quiz, recherche, inscription champs).
+
+**Fichiers :**
+- `src/utils/protocoleSyncVerifiee.ts` (47 l.) + `utils/__tests__/protocoleSyncVerifiee.test.ts`
+- `src/components/VerificationSync.tsx`, `EssaiSyncVerifiee.tsx`, `CarteSync.tsx` (partagé
+  états d'envoi avec 07 — contrat UI/serveur ici), `ConstructeurReponse.tsx`
+- `src/__tests__/essai-sync-verifiee.test.tsx`, `verification-sync-ui.test.tsx`
+- Lecture obligatoire (non exclusive) : `sync.ts` (07), `schema.sql` (03),
+  `supabase/propositions/02` (03), `backup.ts` (12), `src/types/boussoleBridge.ts` (16).
+
+**Hors périmètre :** validation des backups (12), règles métier des réponses (05).
+
+## 2. Tests à auditer
+
+- `protocoleSyncVerifiee.test.ts` (2 tests verts) : ne couvre-t-il que le chemin nominal
+  (`rpc ok`) ? Les trois `catch` de `protocoleSyncVerifiee.ts` (l.23, 33, 42 → `'indetermine'`,
+  `null`, `{resultat:'indetermine'}`) sont-ils testés ? Si un seul test nominal → **tautologie
+  partielle**.
+- `verification-sync-ui.test.tsx` (2 tests) : affichage d'un succès — mordre : erreur réseau →
+  l'UI montre-t-elle l'erreur (changer le mock pour rejeter) ?
+- Aucun test de forme du payload upsert (colonnes exactes vs `Snapshot`) → **couverture 0**
+  sur la parité de schéma client↔table.
+
+## 3. Hypothèses pré-remplies
+
+- **H09-01 — Parité colonnes/payload : vérifier champ par champ.** `sync.ts:204-233` envoie
+  27 champs ; `schema.sql:6-32` déclare les colonnes. Contrôler : (a) tout champ envoyé existe
+  en colonne (sinon : erreur PostgREST 400 → 'erreur' permanente), (b) tout champ attendu par
+  l'UI serveur (lecture) existe côté client. Noter déjà : `lecons_terminees` = **number**
+  (`sync.ts:175`) alors que `Snapshot.lecons_terminees` = **string[]** (`sync.ts:34`) — la
+  transformation `.length` est faite à l'envoi ; la lecture retourne-t-elle un entier que
+  personne ne réimporte (pas de lecture serveur dans le code ? grep `\.select\(` dans `src/` :
+  seulement la suppression `select('email')` `sync.ts:276`) → **le serveur n'est jamais lu**.
+  Conséquence : le contrat est « write-only » — vérifier que l'UI ne prétend pas afficher des
+  données serveur (CarteSync).
+- **H09-02 — Erreurs normalisées : 5 états pour N causes.** `sync.ts:144` `EtatEnvoi` =
+  attente/envoi/confirmé/erreur/hors_ligne. Les codes HTTP Supabase (401 anon key invalide,
+  403 RLS, 409 conflict, 413 taille, 429 rate-limit) sont **tous** mappés à `'erreur'`
+  (`sync.ts:234-246`). Impact : un élève avec jeton révoqué (403) voit « erreur » sans
+  distinction ; impossible de diagnostiquer (et impossible de distinguer 429 → pas de backoff).
+  Mordant : injecter `error: {code:'42501'}` dans le client mocké → l'état reste `'erreur'`.
+- **H09-03 — Validation d'entrée côté serveur : email seulement.** `schema.sql:76` regex
+  email `^[^\s@]+@[^\s@]+\.[^\s@]{2,}$` — même regex que `compte.ts:10` (parité à vérifier :
+  caractères unicode, IDN). Côté client, `courrielValide` trim+lower (`compte.ts:10-12`) mais
+  l'envoi utilise `etat.compte.email` **non re-normalisé** si le compte vient d'un import legacy
+  → email avec majuscule envoyée → PK différente de la future inscription minuscule → **double
+  ligne** pour le même élève. Vérifier si `normaliserEmail` est appliqué à l'inscription
+  (`Inscription.tsx` : grep) et à l'import (12).
+- **H09-04 — RPC proposition 02 : contrat strict mais mort.** `protocoleSyncVerifiee.ts:12-47`
+  appelle `kunz_sync_*` ; le déploiement est non fait (03) → en prod, `rpc` renvoie 404/PGRST202
+  → catch → `'indetermine'`. Vérifier que l'UI (`VerificationSync`) n'affiche jamais « OK » sur
+  `indetermine` (l.23 `catch { return 'indetermine' }` et l.42). Aussi : le contrat de
+  `kunz_sync_ecrire` (proposition 02 l.57-63 : clés autorisées, `^[0-9]{1,9}$`) — le client
+  envoie-t-il exactement `minutes_totales/lecons_terminees/revisions` en **entiers ≤9 chiffres**
+  ? Le test couvre-t-il un dépassement (10 chiffres → false) ?
+- **H09-05 — Sérialisation JSON : `undefined` et NaN.** `JSON.stringify([snap.jeton,
+  chargeUtile])` (`sync.ts:195`) — si un champ `Snapshot` vaut `undefined` (ex.
+  `date_bac: undefined` au lieu de null), il disparaît du JSON local mais le payload upsert
+  l'omet aussi → colonne `date_bac` inchangée (**pas de clear**) : un élève qui **efface** sa
+  date bac n'est jamais remis à null côté serveur. Vérifier `construireSnapshot` (l.75-101) :
+  `date_bac: etat.dateBac ?? null` → null est envoyé (colonnes update à null OK). Mais les
+  autres champs optionnels ? `nom: etat.nom` (string). Le seul `?? null` est `date_bac` —
+  vérifier que tout champ non-null est bien présent. `maj` retiré du payload (`:193`) mais
+  renvoyé dans `charge_utile.maj` (`:229`) → cohérent ?
+- **H09-06 — Taille de charge utile : seule garde = 256 Ko SQL.** `schema.sql:77,85` — le
+  client n'est pas averti avant l'envoi (pas de `JSON.stringify(snap).length > 262144` dans
+  `sync.ts`). Une progression très large (jours_activite × IDs) → erreur 400 post-envoi,
+  état 'erreur' permanent jusqu'à… jamais (rien ne tronque). Calcul : `jours_activite` plafonné ?
+  (`storage`/`stats` : `JOURS_GARDES=45` pour stats, mais `etat.journal` ? grep plafond de
+  `journal` dans `types.ts`/`etat.ts` — si infini, un journal de 10 ans × 10 chars ≈ 36 Ko OK ;
+  le risque réel est `charge_utile` qui inclut les tableaux d'IDs complets `lecons_terminees`
+  etc. — bornes à calculer).
+- **H09-07 — Messages SW : contrat par port.** `public/sw.js:154-172` : seuls 3 types acceptés,
+  réponse `{ok, version, total, manquants, octets*}`. Le client (`pwa.ts`/`CarteHorsLigne`)
+  gère-t-il `ok:false` (l.170) ? Un message d'un **ancien** SW (version différente) :
+  `event.data.type` lu sans vérifier `event.data.version` → l'UI croit parler au bon worker.
+  Vérifier `pwa.ts` (11) en lecture.
+- **H09-08 — Aucune validation zod aux frontières d'entrée utilisateur.** zod n'est utilisé
+  que dans `backup.ts` et `types/boussoleBridge.ts` (grep) — l'inscription, les réglages, la
+  recherche, les réponses quiz passent par des contrôles ad hoc. Recenser dans le rapport les
+  entrées sans schéma (liste) et le risque concret (champ `NaN` dans un compteur ? ex.
+  input number → `Number('')=0`).
+
+## 4. Limites
+
+- Aucune exécution Supabase : les contrats serveur sont `[STATIQUE UNIQUEMENT]` sauf mocks
+  existants dans les tests (exécutables via vitest).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/10-etat-client-hydration-coherence-ui.md ═══════ -->
+
+# TRANCHE 10 — État Client, Hydratation, Caches & Cohérence UI↔Serveur
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/App.tsx` (1611 l.) — **sauf** les symboles listés dans `00-INDEX.md` §2.3 (session → 01,
+  sync → 07, import/export → 12). Ce qui reste : hydratation `:315`, navigation/lazy `:42-80`,
+  thème `:342-396`, onglets, `storage` event `:468-480`, bandeaux `:218-313`, rendu.
+- `src/main.tsx`, `src/index.css`
+- Composants : `Ana.tsx`, `Aujourdhui.tsx`, `BibliothequeResumesLecons.tsx`, `Boussole.tsx`,
+  `Communs.tsx`, `GamifiedOverlay.tsx`, `GuideAccueil.tsx`, `GuideIndice.tsx`, `Icones.tsx`,
+  `Masari.tsx`, `MascotteKunz.tsx`, `Methodologie.tsx`, `Mindmap.tsx`, `Recherche.tsx`,
+  `TiroirBoussole.tsx`
+- `src/utils/dialogue.ts`
+- Tests : `__tests__/{accessibilite,ana-volets-ui,guide-accueil-ui,onglets-ui,premier-ecran-ui}.test.tsx`
+
+**Hors périmètre :** logique de sync (07), backup (12), PWA (11), calculs (05), états de
+workflow métier (06) — ici on audite la **cohérence d'affichage et de rendu**.
+
+## 2. Tests à auditer
+
+- Les 5 tests UI assignés (verts, jsdom via pragma `@vitest-environment jsdom`) : mordent-ils
+  sur le **chargement initial depuis un localStorage corrompu** ? (`premier-ecran-ui` :
+  injecter JSON invalide → l'écran de secours s'affiche-t-il ? si le test ne fait que monter
+  l'app avec état vierge → tautologie.)
+- `accessibilite.test.tsx` (axe-core ?) : vérifier que les assertions sont bien sur le DOM
+  réel et non sur des constantes.
+- Aucun test de la **navigation lazy** (`lazy(() => import(...))` : échec de chunk hors ligne —
+  un cas `Suspense`/erreur de chargement est-il géré ? grep `ErrorBoundary`/`suspense` dans
+  `App.tsx` → si absent, un import échoué = écran blanc.
+
+## 3. Hypothèses pré-remplies
+
+- **H10-01 — Pas d'ErrorBoundary global.** `App.tsx` (grep `componentDidCatch|ErrorBoundary`) :
+  si absent, toute exception de rendu (composant lazy en échec, JSON de données corrompu)
+  démonte l'arbre React → écran blanc. Impact : panne silencieuse perçue « app cassée » sans
+  message. Mordant : monter `<App/>` avec un store qui throw au rendu d'un enfant.
+- **H10-02 — Debounce sync couplé au rendu (lien 07).** `App.tsx:511-531` effet sur `[etat]` —
+  chaque setEtat relance le timer. Ici : vérifier le coût — l'effet ré-attache des listeners
+  `visibilitychange`/`online` à **chaque** changement d'état (nettoyage l.528-530) : correct
+  (cleanup) mais fréquent. Performance marginale ; le risque métier est à 07 (envoi jamais fait).
+- **H10-03 — `etatRef` vs `etat` : fenêtre d'affichage périmé.** `App.tsx:482`
+  `const etatRef = useRef(etat)` + mise à jour probable dans un effet (`:483` ou dans le setter) —
+  tracer : si `etatRef.current` n'est mis à jour qu'après rendu, un envoi déclenché par
+  `visibilitychange` pendant le même tour utilise l'état **précédent**. Lire la ligne exacte de
+  synchronisation (`useEffect(() => { etatRef.current = etat })` ou assignation dans setState).
+- **H10-04 — Stock event : qui gagne ?** `App.tsx:468-480` : sur `storage` event, l'onglet
+  rechargé remplace-t-il son état React complet (perte des saisies en cours, ex. brouillon de
+  note) ou fusionne-t-il ? Comparer à `storage.ts` (07). Impact : élève qui tape une note dans
+  l'onglet A pendant que l'onglet B sauvegarde → note perdue silencieusement si remplacement
+  complet. Lire le corps exact de l'événement.
+- **H10-05 — Thème : lecture synchrone avec fallback.** `App.tsx:345`
+  `localStorage.getItem('kunz_theme') as 'light'|'dark' ?? 'light'` — un JSON corrompu ou une
+  valeur `'sepia'` (legacy) est **acceptée telle quelle** (cast, pas de validation) → classe
+  CSS inconnue → rendu non thématisé (cosmétique). Aussi : le thème est stocké **hors** du
+  journal de restauration → un import ne le restaure pas (cohérent ?).
+- **H10-06 — Fuite d'informations dans le DOM.** Vérifier : `data-` attributes portant
+  l'email/jeton (grep `data-` avec `compte\.`/`jeton` dans les composants) ; le titre de page
+  (`document.title` ne change pas — OK) ; les `console.log` de debug dans le code productif
+  (grep `console\.` dans `src/` hors tests — combien, que contiennent-ils ?).
+- **H10-07 — Lazy loading vs service worker.** `App.tsx:42-80` : ~30 `lazy()` chunks ; hors
+  ligne, un chunk jamais chargé → import échoue (fetch réseau) — le SW met-il en cache les
+  chunks à la volée (`sw.js:209-231` : oui pour `/assets/*.js` **après** premier succès) →
+  premier accès hors ligne à un écran jamais ouvert = échec. Gérer l'erreur ? (H10-01).
+  C'est le point de jonction 10↔11 : ici l'UI, là le SW.
+- **H10-08 — Double mount en dev/StrictMode.** `main.tsx` : `StrictMode` ? Si oui, effets
+  doubles en dev — vérifier que les listeners/timers sont bien nettoyés (H06-05 côté 06).
+- **H10-09 — Cohérence affiché vs calculé.** `BaguetteXp`/`CarteStats` (05 pour le calcul) :
+  l'UI lit-elle `xpDe(etat)` à chaque rendu (cohérent) ou une valeur stockée dans `etat.xp`
+  qui peut diverger ? grep `etat.xp` vs `xpDe(` dans les composants.
+
+## 4. Limites
+
+- Pas de navigateur réel : comportements `visibilitychange`, lazy chunk offline :
+  `[STATIQUE UNIQUEMENT]` sauf tests jsdom.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/11-hors-ligne-pwa-files-stockage-local.md ═══════ -->
+
+# TRANCHE 11 — Mode Hors-Ligne, PWA, Files d'Attente & Stockage Local (côté SW/PWA)
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+> NB : le **stockage applicatif** (localStorage de l'état) est à 07/12 — ici : service worker,
+> manifeste, précache, téléchargement hors ligne, registre PWA.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `public/sw.js` (228 l.)
+- `public/manifest.webmanifest`, `public/icon.svg`, `public/mascotte.webp`,
+  `public/guide-clair.webp`, `public/guide-sombre.webp`, `public/icons/**`
+- `src/utils/pwa.ts` (57 l.)
+- `scripts/verifier-hors-ligne.mjs`, `scripts/generer-icones.mjs`
+- Symbole `vite.config.ts` : plugin `precacheManifest` (~l.55-160) — propriété 17, **audit
+  conjoint obligatoire** ici pour la génération du manifeste.
+- Tests : `utils/__tests__/{pwa,service-worker}.test.ts`, `__tests__/pwa-icones.test.tsx`
+
+**Hors périmètre :** logique métier de l'état local (07), exports (12), chunks lazy UI (10).
+
+## 2. Tests à auditer
+
+- `service-worker.test.ts` : reproduit-il le **fetch handler** en simulant `caches`/`fetch`
+  (mock fidèle ?) — mordant : casser `typeValide` dans une copie → le test échoue-t-il ?
+- `pwa.test.ts` (registration) : couvre-t-il l'échec d'enregistrement (SW non supporté,
+  navigateur sans manifeste) ?
+- `pwa-icones.test.tsx` : vérifie les icônes du manifeste — tautologique si elle compare
+  le fichier à lui-même.
+- Aucun test du **téléchargement complet** (`TELECHARGER_CONTENU`) ni de la reprise après
+  coupure → angle mort.
+
+## 3. Hypothèses pré-remplies
+
+- **H11-01 — Pas de `skipWaiting` : mise à jour bloquée.** `sw.js:110` commentaire explicite ;
+  `activate` (l.118-125) supprime les vieux caches mais le nouveau SW n'active qu'après
+  fermeture **de tous** les onglets de l'ancienne version. Un onglet permanent (téléphone :
+  onglet réutilisé pendant des jours) → jamais de mise à jour. Impact : correctifs de sécurité
+  SW jamais appliqués. Vérifier si un message `SKIP_WAITING` existe (grep → non, seuls 3 types
+  l.155). Test mordant : dans le test SW, envoyer un message `SKIP_WAITING` → aujourd'hui
+  ignoré (l.156 filtre) — le test qui mord doit échouer **après** l'ajout du correctif.
+- **H11-02 — Navigation servie toujours depuis le cache.** `sw.js:202-204` :
+  `cache.match(INDEX) || fetch(request)` — **jamais** de réseau d'abord pour `/` : l'élève
+  avec l'app ouverte depuis 3 jours a un `index.html` périmé ; la fraîcheur vient uniquement
+  du rechargement du SW (meta `kunz-build-id` l.103 vérifiée à l'install). Vérifier le cycle
+  complet : le HTML en cache est-il revalidé au reload ? (`cache.match` sans `ignoreVary` —
+  non revalidé). En pratique : Vercel sert `sw.js` `max-age=0` (vercel.json:17-20) → le
+  navigateur revalide le SW au reload → nouveau SW → nouveau cache au prochain install.
+  Risque résiduel : si le fetch du manifeste échoue (réseau coupé au reload), l'ancien SW
+  reste → **dégradation silencieuse** (pas de message).
+- **H11-03 — Poids affiché vs réel.** `vite.config.ts` calcule `octetsCoquille`/`octetsContenu`
+  au **build** (statSync des fichiers public + taille des chunks) ; `sw.js:128-137` (`verifier`)
+  renvoie ces mêmes chiffres du manifeste — **jamais la taille réelle des réponses mises en
+  cache**. Si un fichier public change après build (déploiement partiel), le poids annoncé
+  ment. Impact : promesse de quota mobile fausse (choix utilisateur). Mordant : patcher le
+  manifeste en test → `verifier` doit comparer au cache réel (aujourd'hui : non).
+- **H11-04 — Concurrence du téléchargement : singleton global.** `sw.js:141-147` :
+  `telechargement` unique — un `TELECHARGER_HORS_LIGNE` (coquille) pendant un
+  `TELECHARGER_CONTENU` **attend le même promise** (l.146 `await telechargement`) — si le
+  premier était « coquille seulement », le second croit que le contenu est téléchargé alors
+  que non → `verifier` renvoie `manquants>0` (honnête) — vérifier que l'UI ne prend que
+  `ok:true`. Aussi : échec partiel de `remplir` (l.131-146 : `telecharger` avale les erreurs
+  l.78) → promesse **résolue** avec des trous, sans distinction. L'UI affiche-t-elle
+  `manquants` ? (CarteHorsLigne → 10/11 lire).
+- **H11-05 — 3 workers parallèles + quota.** `sw.js:146` : `Promise.all([ouvrier,ouvrier,ouvrier])`
+  — 3 requêtes simultanées ; sur forfait/2G OK ; le **quota Cache Storage** (usage ~
+  `navigator.storage.estimate`) n'est **jamais** interrogé (grep `estimate` → absent) →
+  `cache.put` échoue silencieusement (`:221` `.catch(() => {})`) → contenu « téléchargé »
+  incomplet. Mordant : simuler `cache.put` qui rejette → l'UI doit signaler (aujourd'hui
+  probablement pas).
+- **H11-06 — Validation de manifeste : fail-open ?** `sw.js:38-45` `valideManifeste` exige
+  `version === VERSION`, assets non vides, formats — **strict (fail-closed)** → sain, le dire.
+  Mais `manifesteCache` (l.81-87) : catch → `null` → message `ok:false` (l.168) — OK.
+  Vérifier l'install (l.90-115) : en cas d'échec → `caches.delete(CACHE)` + throw → SW en
+  échec → **ancien SW conservé** (correct).
+- **H11-07 — Range requests : cache 200 servi à une requête 206.** `sw.js:181-200` : pour
+  audio/PDF avec `Range`, sert le cache complet (`cached`) si présent — un lecteur qui demande
+  `bytes=1000-` reçoit un **200 intégral** : conforme à la spec ? La spec impose 206 pour une
+  Range valide ; certains lecteurs acceptent 200, d'autres bouclent. Vérifier le code de
+  retour (`return cached` sans statut ajusté) → risque de lecture audio cassée sur certains
+  navigateurs (les tests d'intégration boussole/lecteurs couvrent-ils ? → 12 pour les lecteurs).
+- **H11-08 — `ignoreSearch` (lien 04).** `sw.js:216` — voir H04-06 ; ici : impact hors-ligne
+  (une URL `?page=2` sert le même cache → contenu identique pour deux pages si jamais
+  stockées différemment). Recenser les URLs avec query dans l'app.
+- **H11-09 — Pas de file d'attente côté client.** Le « retry » de sync est à 07 (pas de file) ;
+  côté PWA, un téléchargement interrompu est-il reprenable ? `telecharger` (l.70-79) skip si
+  déjà présent → re-presser le bouton reprend les manquants (**reprise OK**, saine — dire en
+  2 lignes).
+
+## 4. Exécutions possibles
+
+- `node scripts/verifier-hors-ligne.mjs` (CI l.43) — **exécuter** et citer la sortie.
+- `npx vitest run src/utils/__tests__/service-worker.test.ts src/utils/__tests__/pwa.test.ts`
+  — exécuter.
+
+## 5. Limites
+
+- Service worker réel dans un navigateur : absent → analyses `[STATIQUE UNIQUEMENT]` sauf les
+  tests unitaires du handler (mocks).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/12-fichiers-medias-imports-export-contenu.md ═══════ -->
+
+# TRANCHE 12 — Fichiers, Médias, Imports/Exports & Contenu Externe
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Utilitaires :** `audioLeconsChargeur.ts`, `audioMourchidChargeur.ts`, `audioUrl.ts`,
+`backup.ts` (152 l., zod), `illustrations.ts`, `schemasSvtChargeur.ts`, `son.ts`.
+
+**Composants :** `AudioMourchidBloc.tsx`, `FigureSujet.tsx`, `IllustrationsLecon.tsx`,
+`LecteurAudioMourchid.tsx`, `LecteurAudioResume.tsx`, `LecteurLecon.tsx`, `Mourchid.tsx`,
+`SchemaALegender.tsx`, `SchemaAnnote.tsx`, `methodologie/SchemaUnite1.tsx`.
+
+**Données :** `src/data/figuresSujets.ts`, `src/data/audioLecons.ts`, `src/data/audioMourchid.ts`,
+`src/data/illustrationsLecons.ts`, `src/data/illustrationsLegacy.gen.ts`,
+`src/data/illustrationsTypes.ts` (flux médias).
+
+**Public :** `public/lecons/**` (94), `public/audio/**` (65) — le contenu servi.
+
+**Scripts :** `generer-schemas-svt.mjs`, `importer-images-lecons.mjs`, `recolorer-svg.mjs`,
+`previsualiser-annotations.py`, `previsualiser-schemas.py`, `exporter-relecture-svt.mjs`.
+
+**Symboles App.tsx :** import/export sauvegarde (`:786+`), `AlerteStockage` (`:218-234`) —
+index `paquetExportComplet` est à `storage.ts` (07) mais le **flux fichier** ici.
+
+**Tests :** `utils/__tests__/{figuresSujets,mourchid,sauvegarde-champs,sauvegarde-compat,sauvegarde-entraineur,son-vibrations}.test.ts`,
+`components/__tests__/{IllustrationsLecon,LecteurAudioMourchid,LecteurAudioResume,SchemaAnnote}.test.tsx`,
+`data/__tests__/{audioMourchid,illustrationsLecons}.test.ts`,
+`__tests__/sauvegarde-ui.test.ts`.
+
+**Hors périmètre :** journal de restauration multi-clés (07), SW cache (11).
+
+## 2. Tests à auditer
+
+- `sauvegarde-compat.test.ts` : les fixtures d'anciennes versions sont-elles **réellement
+  anciennes** (copiées d'un vrai export v1/v2) ou recréées à la main à partir du code actuel
+  (mock mensonger) ?
+- `sauvegarde-champs.test.ts` : mord sur un champ **inconnu du futur** (version 99) ?
+- `IllustrationsLecon.test.tsx` : vérifie-t-il que `dangerouslySetInnerHTML` ne produit pas de
+  `<script>`/`onerror` avec une légende hostile, ou seulement le nominal ?
+- `son-vibrations.test.ts` : le fallback `webkitAudioContext` (son.ts:12) est-il testé ?
+
+## 3. Hypothèses pré-remplies
+
+- **H12-01 — Sanitizer de légende : analyse exacte.** `illustrations.ts:42-50`
+  (`legendeArSecurisee`) : regex remplace les balises en ne gardant que `BALISES_LEGENDE`
+  **sans attributs** (`<${fermeture}${balise}>`). Vérifier : (a) liste blanche — commentaire
+  l.37-41 prétend « jamais d'attribut » → le regex `([^>]*)` sur les attributs est bien
+  ignoré → OK si la liste exclut `svg`/`math`/`iframe`/`object`/`embed`/`style`/`link`/`meta`
+  (lire `BALISES_LEGENDE` définie plus haut dans le fichier) ; (b) **cas `</img src=x>`**
+  ou balises non fermées ; (c) entités : `&lt;script&gt;` reste du texte (OK) ; (d) le regex
+  ne gère pas les `>` dans les attributs — sans attribut autorisé, sans risque.
+  Mordant : injecter `legendeAr` avec `<img src=x onerror=alert(1)>`, `<svg onload=…>`,
+  `<a href="javascript:…">`, `<math><mtext>` → le DOM final doit être vide de ces balises.
+  Si `BALISES_LEGENDE` contient `a` sans filtrer `href` — le regex retire les attributs →
+  `<a>` sans href (non cliquable) — vérifier que c'est le cas.
+- **H12-02 — SVG same-origin exécutables.** `public/lecons/img/*.svg` servis au même origin
+  (cache `sw.js:208` type `image/svg+xml` accepté l.54) : ouvrir
+  `https://app/lecons/img/xxx.svg` **directement** dans le navigateur exécute le JS du SVG
+  (document SVG, pas image). XSS même-origin → accès `localStorage` = jeton (01) + état.
+  Vérifier : combien de `.svg` dans `public/lecons/img` (compter) et contiennent-ils du JS
+  (grep `<script|onload|javascript:` dans ces fichiers). Statut attendu : les SVG sont générés
+  par `recolorer-svg.mjs`/`generer-schemas-svt.mjs` (sans JS) → **réfuté si grep vide** ;
+  sinon finding + correctif (Content-Disposition/CSP, ou conversion WebP).
+- **H12-03 — Import de sauvegarde : validation vs confiance.** `backup.ts:118-150`
+  (`lireSauvegarde`, zod partiel l.50, 88) : (a) versions 1/2/3 acceptées (l.122-126) — un
+  fichier v1 **récent** (pas d'âge) est accepté ; (b) `etatDepuisFichier` (l.144) → fusion
+  (`fusionnerProgressionImportee` storage.ts:137-141 conserve compte+consentement) : un import
+  hostile peut-il faire entrer `compte.motDePasse` ? — `paquetExportComplet` **retire** compte
+  (storage.ts:131-132) mais `lireSauvegarde` **accepte-t-il** un fichier contenant `compte`
+  (zod : `compte` est-il interdit ou ignoré ?) → si accepté puis écrasé par la fusion, OK ;
+  si accepté sans fusion (chemin où l'import remplace tout ?) → takeover de compte local.
+  Lire `App.tsx:786+` pour le flux exact.
+- **H12-04 — Taille/DoS à l'import.** `JSON.parse` d'un fichier de 500 Mo (choix utilisateur)
+  → freeze main thread, pas de taille max (grep `size|taille` dans `backup.ts`/`App.tsx`
+  import). Aussi : `charge_utile` re-exporté ? Non (pas de compte). Impact : crash onglet,
+  données partielles. Vérifier la présence d'une limite (probablement absente → finding
+  Moyen).
+- **H12-05 — Export : encodage/BOM/injection.** L'export est JSON (`storage.ts:126-136`) — pas
+  de CSV → injection de formules **non applicable** (dire en 2 lignes). Vérifier : charset
+  (UTF-8 sans BOM ?), nom de fichier (avec date ? caractères spéciaux ?), et que
+  `exporteLe`/`version` sont bien écrits. Si export `.json` via Blob : grep `Blob|download`
+  dans `App.tsx` pour citer les lignes.
+- **H12-06 — Chargeurs d'audio : URL construites.** `audioUrl.ts` (Math.round ×2) :
+  construit `${BASE}audio/lecons/${id}.mp3` — `id` vient des données (fichier) ou de
+  l'utilisateur (query/hash) ? Si injection de `../` (id = `../../etc`) → path traversal
+  **limité** (même origin, fichier statique) mais peut charger un asset inattendu.
+  Vérifier la validation des IDs (`audioLecons.ts` clés). Aussi : `VITE_ILLUSTRATIONS_BASE_URL`
+  (env build) → `illustrations.ts:32-35` : si l'admin met `javascript:` ou une origine
+  arbitraire, les images partent en requête cross-origin (SSRF navigateur léger / fuite
+  d'IP). Fail-open ? `.env.example` documente R2 — pas de validation d'URL HTTPS → finding
+  config (→ 17 croisé).
+- **H12-07 — Playlists HTML audio : `preload` et quota.** 65 MP3 ; le SW les met en cache à la
+  première lecture (`sw.js:34-35, 190-195`) — taille totale ? (`du -sh public/audio` → à
+  mesurer) — si > quota mobile (~300-600 Mo?) → `cache.put` échoue silencieusement (11-H11-05).
+  Calculer et citer le poids réel (`du -sh public/audio`).
+- **H12-08 — `SchemaAnnote`/`SchemaALegender` : contenu SVG inline.** Les SVG sont-ils
+  importés comme composants React (sécurisé) ou injectés en string ? grep `dangerouslySetInnerHTML`
+  dans ces fichiers (attendu : absent → saine, le dire).
+- **H12-09 — Scripts d'import de données : confiance dans les sources.**
+  `importer-images-lecons.mjs` / `generer-schemas-svt.mjs` : lisent des fichiers locaux —
+  écrivent-ils hors du dépôt (path traversal via nom de fichier fourni) ? Vérifier les chemins
+  d'écriture (relatifs au dépôt ?) — risque dev-only, sévérité basse.
+
+## 4. Exécutions possibles
+
+- `du -sh public/audio public/lecons/img` ; comptage SVG ;
+  `grep -l '<script\|onload=\|javascript:' public/lecons/img/*.svg` ;
+  `npx vitest run src/utils/__tests__/sauvegarde-*.test.ts src/components/__tests__/…`.
+
+## 5. Limites
+
+- Pas de navigateur : comportement `<audio>`, Blob download : `[STATIQUE UNIQUEMENT]` sauf
+  tests jsdom.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/13-fiabilite-erreurs-reprise-panne.md ═══════ -->
+
+# TRANCHE 13 — Fiabilité Runtime, Gestion d'Erreurs & Reprise sur Panne
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. (Le journal de restauration détaillé
+> est à 07 — ici : **tous les chemins d'erreur** du dépôt.)
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/utils/echecsStockage.ts` (16 l.)
+- Composants : aucun dédié — les bandeaux vivent dans `App.tsx` (symboles `AlerteStockage`
+  `:218-234`, `EcranReprise` `:235-300`, `BandeauReprise` `:301-313` → lecture, propriétaire 10
+  pour l'UI, **constat d'erreur ici**)
+- **Sweep transverse propriétaire** : tous les `catch` de `src/**`, `public/sw.js`,
+  `scripts/**`, `modules/boussole/src/**` (recenser, qualifier : silencieux / signalé / traduit)
+- Tests : `__tests__/{stockage-ui,sync-etat-illisible}.test.tsx`,
+  `utils/__tests__/stats-lecture.test.ts`
+
+**Hors périmètre :** implémentation du journal (07), timeout sync détaillé (07), SW (11).
+
+## 2. Tests à auditer
+
+- `stockage-ui.test.ts` : simule un `localStorage.setItem` qui jette → l'alerte apparaît-t-elle
+  **et disparaît** à la prochaine écriture réussie ? Si le test ne vérifie que l'apparition :
+  demi-tautologie.
+- `stats-lecture.test.ts` (4 tests) : couvre la valeur corrompue **et** le `getItem` qui jette ?
+- `sync-etat-illisible.test.ts` : prouve que l'envoi est bloqué (bon) — vérifier qu'il ne moque
+  pas `verifierLectureEtat` lui-même (copie de la logique).
+
+## 3. Hypothèses pré-remplies
+
+- **H13-01 — Recensement exhaustif des catch vides** (constat initial, à qualifier) :
+  - `src/App.tsx:792` `catch { /* stockage non vérifiable */ }` — le résultat (`repriseNecessaire`)
+    est-il ensuite traité (bandeau) ou perdu ? Lire l'enchaînement.
+  - `src/utils/storage.ts:206` `catch { /* journal illisible */ }` → `modifications = null` →
+    retour `'journal'` → **bloque l'UI** (`repriseBloqueeAuChargement`) — comportement correct
+    fail-closed ? OK si le bandeau s'affiche (EcranReprise) — le test couvre-t-il un JSON
+    corrompu du journal ? (grep test `journal` → vérifier dans `storage.test.ts`).
+  - `public/sw.js:193` — échec de cache audio ignoré (OK, non critique).
+  - `modules/boussole/src/bridge.ts:35`, `explore.ts:166` — **que** avale-t-on ? (lecture
+    boussole : contexte 16, constat ici).
+  - `src/utils/compte.ts:30-31` repli crypto (documenté, OK), `:81,87,93` sessionStorage
+    silencieux → `sessionOuverte` retourne false sur exception (**fail-closed** pour la
+    session : l'utilisateur doit re-ouvrir — impact : demande de consentement réapparaît ?
+    vérifier le lien avec `App.tsx:349-352`).
+- **H13-02 — Timeout `AbortSignal.timeout` : support et classification.** `sync.ts:103-114` :
+  `e.name === 'TimeoutError'` → compteur local ; sinon `'erreur'`. Vérifier : (a) navigateur
+  sans `AbortSignal.timeout` (Safari < 15.4) → `signalDelai()` **throw** au moment de
+  l'appeler → attrapé par le catch général → 'erreur' permanent (pas de hors_ligne) ;
+  (b) supabase-js enveloppe-t-il l'abort dans une erreur au `name` différent (`AbortError` ?
+  `DOMException`?) → le compteur `delaisDepasses()` ne s'incrémente jamais → la télémétrie
+  ment (19 croisé). **Le test `sync-timeout.test.ts` moque-t-il `AbortSignal.timeout` ou
+  utilise le vrai ?** — c'est la question anti-tautologie clé.
+- **H13-03 — Échec de lecture au démarrage = état vierge affiché.** `chargerEtat`
+  (`storage.ts:57-115`) : sur JSON corrompu → `etatVierge()` + `lectureEnEchec=true` +
+  `signalerEchecStockage()` (l.111-114). Tant que `lectureEnEchec`, `sauvegarderEtat`
+  refuse (l.331-333) → pas d'écrasement (**bon**). Vérifier : l'UI propose-t-elle une **sortie**
+  (restaurer un export ?) ou un cul-de-sac ? (`EcranReprise` a `cause:'locale'|'autre'` l.236 —
+  bonne piste ; tracer ce qui déclenche quoi).
+- **H13-04 — Partial failure de `viderStockage`.** `storage.ts:344-360` : suppression par clés ;
+  si la 2e clé jette → `supprime=false` → `lectureEnEchec=true` → **état mémoire conservé mais
+  plus sauvegardé** + l'UI pense ? (retour `false` — le composant affiche-t-il une erreur ?
+  grep `viderStockage(` dans les composants).
+- **H13-05 — Listeners/fuites.** Recenser les `addEventListener` sans `remove` :
+  `App.tsx:524-526` (OK, cleanup), `sw.js` (worker, OK), composants audio
+  (`LecteurAudio*.tsx` : `onended`/`timeupdate` — cleanup au démontage ?), `ProtocoleRunner`
+  (timer H06-05). Aussi `abonnerEtatEnvoi` (`sync.ts:161-164`) : les abonnés sont-ils
+  désabonnés dans le `useEffect` return de chaque consommateur (grep `abonnerEtatEnvoi`).
+- **H13-06 — Dépendance lente : import dynamique qui pend.** `clientSupabase`
+  (`sync.ts:135-147`) : `await import('@supabase/supabase-js')` sur réseau coupé **après**
+  `navigator.onLine===true` (faux positif) → le dynamic import pend jusqu'au timeout du
+  navigateur (pas borné par `signalDelai` — celui-ci n'est appliqué qu'à l'appel upsert
+  l.233). Enchaînement : `envoyerResume` peut rester bloqué **plus de 8 s** (le délai ne
+  couvre pas l'import ni `createClient`). Impact : état 'envoi' pendant >8 s, promesse
+  `enCours` retenue → toute la file bloquée (07). Calcul : timeout réel = import (indéfini) +
+  8 s. Mordant : mock `import` qui pend 30 s → le test actuel ne le détecte pas.
+- **H13-07 — `son.ts` : AudioContext suspendu.** `son.ts:12` webkit fallback ; vérifier le
+  `resume()` sur premier geste utilisateur (politique autoplay) — sinon les sons « marchent »
+  dans les tests et pas sur iOS → finding.
+- **H13-08 — Exceptions non capturées : `window.onunhandledrejection`.** Aucun handler
+  (grep `unhandledrejection` → absent) → un rejet de `void envoyerSnapshot` (App l.514, 767)
+  devient un console error silencieux pour l'élève. Vérifier que tout le corps de
+  `envoyerResume` est bien dans try/catch (l.197-244 : oui, mais `construireSnapshot`/
+  `clientSupabase` import dynamique **avant** le try ? lire l'ordre exact : le try commence
+  l.197 après `Promise.resolve().then` — tout est dedans ; `envoyerSnapshot` l.183-192 est
+  **hors** try : `construireSnapshot` peut-il throw ? `statsActuelles()` (l.7) peut jeter si
+  stats corrompues ? → rejet promesse **non attrapé** (car `void`). À tracer.)
+
+## 4. Exécutions
+
+- `npx vitest run src/utils/__tests__/stats-lecture.test.ts src/__tests__/stockage-ui.test.tsx src/__tests__/sync-etat-illisible.test.tsx`.
+
+## 5. Limites
+
+- Panne réseau réelle : non simulable ici (pas de proxy) ; les scénarios de panne sont
+  `[STATIQUE UNIQUEMENT]` sauf mocks existants.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/14-performance-applicative-complexite.md ═══════ -->
+
+# TRANCHE 14 — Performance Applicative, Complexité & Ressources
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. Toute affirmation de coût montrer
+> la complexité ou une mesure exécutée.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/utils/melange.ts`, `src/utils/recherche.ts` + `utils/__tests__/recherche.test.ts`
+- Sweep transverse (lecture seule) : boucles, sérialisations, rendus, taille de chunks.
+  Les **correctifs de build** appartiennent à 17 ; les **coûts DB** à 15.
+- Mesures exécutées en MODE A (à reprendre/citer) : build `vite` 1,14 s ;
+  `index-*.js 498,09 ko (gzip 150,67)` ; top chunks (index §1).
+
+**Hors périmètre :** index/sw (11), index SQL (15), budget de coquille (17/18 —
+`verifier:deploiement` plafond 2,25 Mio).
+
+## 2. Tests à auditer
+
+- `recherche.test.ts` : teste-t-il des **requêtes de 50 mots sur un index grand** (coût) ou
+  seulement un cas nominal ? Un test de performance n'existe pas → noter l'absence.
+- Aucun test de budget de bundle dans `src/__tests__` (le budget est dans
+  `verifier-deploiement.mjs` → 18) → couverture perf = script CI seulement.
+
+## 3. Hypothèses pré-remplies
+
+- **H14-01 — Reindex à chaque frappe.** `recherche.ts:86-105` : `rechercher()` appelle
+  `construireIndex()` **à chaque invocation** (l.97) — sauf mémoïsation interne non visible
+  (lire l.34-40 : si pas de cache module, le coût est O(N) par frappe). N = 58 leçons ×
+  vocabulaires — probablement négligeable (~quelques ms) ; **mesurer** :
+  `node --input-type=module -e` ou test bench dans /tmp. Si < 2 ms → réfuter en 2 lignes.
+  Le vrai coût : `Recherche.tsx` déclenche-t-il `rechercher` à chaque keydown (pas de
+  debounce) ? lire le composant (grep `onChange|useDeferredValue|debounce`).
+- **H14-02 — Rendu : `Object.entries(etat.progression)` par frame.** `sync.ts:77`
+  (`construireSnapshot`), `xp.ts:30-42` boucles sur toute la progression **à chaque envoi** (6 s
+  debounce) et probablement à chaque rendu de cartes. N = 58 leçons → négligeable. Réfuter si
+  mesuré < 1 ms (montrer le calcul de N).
+- **H14-03 — Chunk principal 498 ko (150 ko gzip).** Mesure exécutée. Contient : React +
+  App + données non lazy (`sujetsCorriges` 370 ko est un chunk séparé mais **dans les assets
+  de démarrage** selon `vite.config.ts:66-70` commentaire : « tiré par entrainement, présent
+  dans les assets de démarrage »). Impact : premier rendu sur 3G ≈ (498+370+…)/gzip. Calculer
+  le **poids de démarrage réel** : somme des assets listés dans
+  `dist/precache-manifest.json` → `assets` (exécuter : `node -e` sur le fichier buildé).
+  C'est la mesure clé de la tranche.
+- **H14-04 — `melange.ts` : Fisher-Yates correct ?** Lire : `Math.random()` dans la boucle
+  descendante avec `j = floor(random*(i+1))` — si `j` calculé avec l'indice inverse, biais
+  mesurable. Test statistique jetable dans /tmp (autorisé) : 10⁵ tirages de 3 éléments →
+  distributions ±ε.
+- **H14-05 — `stats.ts` : tri à chaque écriture.** `stats.ts:99-103` : `Object.keys(parJour).sort()`
+  + delete plus vieux à **chaque réponse** — N=45 clés → tri 45 éléments/activité : OK.
+  Réfuter en 2 lignes avec le calcul.
+- **H14-06 — `Methodologie.tsx` 1928 lignes dans un chunk de 139,9 ko** (mesure build) —
+  lazy (App l.42) → hors démarrage. OK ; vérifier que `verifier:deploiement` le compte bien
+  hors coquille (lire le script → 18 en croisé, constater ici).
+- **H14-07 — Rendus : pas de `memo`/`useMemo` sur les grosses cartes.** Recenser les
+  composants listant `sujetsCorriges` (370 ko) — `SujetsOfficiels.tsx` : filtre fait à chaque
+  rendu ? grep `filter(` dans le composant. Coût : O(M) avec M=30 sujets × ~500 lignes de
+  données → lecture des objets (pas de copie complète si seulement ids) — vérifier les
+  `map`/`slice` sur de gros tableaux.
+- **H14-08 — JSON.stringify de l'état complet à chaque sauvegarde.** `storage.ts:338`
+  (`sauvegarderEtat`) : taille de `murajih_svt_v1` ? Mesurer : état typique (grep des champs)
+  — sans accès utilisateur, estimer : progression 58 × ~200 B + tableaux ≈ < 100 Ko → OK.
+  Un état extrême (10 ans de journal, 700 drills) : calculer une borne haute. Écrire le calcul.
+- **H14-09 — `qcmLecons.ts` 1628 lignes + `lessonGoldSummaries` 114 ko : import statique ?**
+  Vérifier s'ils entrent dans le chunk de démarrage (grep `import` dans `App`/`Aujourdhui`) vs
+  lazy. `lessonGoldSummaries-DyUg14hJ.js 114,59 ko` est un chunk séparé — qui le charge en
+  premier ? (grep `lessonGoldSummaries` imports). Si un écran de démarrage le tire → poids
+  coquille faussé.
+- **H14-10 — Boucles O(n²) potentielles.** Recenser : double boucle dans
+  `recherche.ts:97-105` (index × mots — O(N·M) OK), `melange` (OK), ailleurs grep
+  `for (…)\s*{[^}]*for (` (approx) sur `src/utils` — citer tout match ≥ O(n²) avec n croissant
+  (n = jours ? éléments ?).
+
+## 4. Exécutions attendues
+
+- Mesure poids de démarrage : `node -e "…lire dist/precache-manifest.json…"` (build déjà fait
+  en MODE A — si `dist/` absent, `npm run build` est autorisé).
+- Bench recherche (si H14-01 non réfuté à la lecture).
+- `npx vitest run src/utils/__tests__/recherche.test.ts`.
+
+## 5. Limites
+
+- Pas de profilage navigateur (DevTools absents) : les constats sont soit des mesures Node
+  (build, micro-bench), soit `[STATIQUE UNIQUEMENT]`.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/15-performance-bdd-scalabilite.md ═══════ -->
+
+# TRANCHE 15 — Performance Base de Données & Scalabilité
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. (Pas de DB réelle : toute affirmation
+> de plan de requête est `[STATIQUE UNIQUEMENT]` — montrer le plan théorique et les index.)
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `scripts/queries-admin.sql` (85 l.)
+- `supabase/schema.sql` **uniquement les lignes `create index`** (l.35-37) — le reste appartient
+  à 03 (lecture croisée obligatoire : le coût des policies est ici)
+- `supabase/migrations/*` : index de la 0002 (l.29 `eleves_generation_idx`) — lecture, le reste
+  à 18/03
+- Lecture transverse : `sync.ts` (requêtes émises), proposition 02 (fonctions)
+
+**Hors périmètre :** définition des policies (03), migrations comme chaîne (18), coût client (14).
+
+## 2. Tests à auditer
+
+- Aucun test de performance DB (pas de benchmark, pas d'`EXPLAIN` dans le dépôt) → **aucun test**.
+- `scripts/queries-admin.sql` : exécuté nulle part dans la CI (grep `queries-admin` dans
+  `.github` → absent) → script mort ou outil manuel ? Statuer sur son usage réel.
+
+## 3. Hypothèses pré-remplies
+
+- **H15-01 — Policy RESTRICTIVE = fonction évaluée par ligne.** `schema.sql:49-50` :
+  `eleves_jeton_autorise(jeton)` appelle `current_setting('request.headers', true)::json ->> …`
+  pour **chaque ligne** candidate. Coût : parse JSON du header × cardinalité candidate.
+  - SELECT `where email = X` (PK) → 1 ligne → OK.
+  - SELECT sans filtre (leaderboard via `xp` index) → **toutes les lignes** → 1 parse/row.
+    `schema.sql:36` index `eleves_xp_idx` + `queries-admin.sql` : lire les requêtes — si un
+    `order by xp desc limit N` sans filtre jeton, PostgREST doit RLS-filtrer **après** ou
+    **avant** l'index ? (Postgres évalue les policies en filtre qualifié — généralement après
+    le scan index, ce qui force le re-check par ligne). À 10⁵ lignes : 10⁵ appels de fonction
+    + parses ~ quelques ms à dizaines de ms par requête. Impact : leaderboard/devient lent au
+    fil des inscriptions. `PROUVÉ-STATIQUE` (mécanisme) ; pas de mesure.
+- **H15-02 — Index manquants sur les colonnes interrogées.** Inventaire :
+  `email` PK ✓, `maj desc` ✓ (l.35), `xp desc` ✓ (l.36), `wilaya` ✓ (l.37), `generation desc`
+  ✓ (0002 l.29). Colonnes **sans** index : `date_bac`, `niveau`, `app_version`,
+  `lecons_terminees`… — si `queries-admin.sql` filtre/sort dessus → seq scan. Lire le fichier
+  et matcher chaque `where/order by` avec l'inventaire ci-dessus.
+- **H15-03 — Pagination offset.** `queries-admin.sql` : `limit/offset` ? Sur 10⁵ lignes,
+  `offset 50000` coûte O(offset). Alternative keyset (`maj`/`xp` cursor). Statuer selon le
+  contenu réel du fichier (85 l. — c'est petit, tout est auditable).
+- **H15-04 — `charge_utile` 256 Ko × N : coût de policy d'écriture.** `schema.sql:77,85` :
+  `octet_length(charge_utile::text)` sérialise le JSON **à chaque INSERT/UPDATE** (2× pour
+  update : USING? non — USING ne lit que le jeton ; WITH CHECK lit `charge_utile` →
+  1 sérialisation/écriture). 256 Ko de texte ≈ 0,1-0,5 ms → OK à bas volume ; à 10 envois/s
+  (50 élèves actifs) : négligeable. Calculer et réfuter/quantifier.
+- **H15-05 — Upsert sans index de conflit supplémentaire.** `onConflict:'email'` → PK
+  (b-tree) ✓ sain.
+- **H15-06 — `eleves_maj_idx (maj desc)` : sert-il un vrai accès ?** Aucune requête client
+  (`src/` ne fait que upsert/delete) ; seul un admin ferait `order by maj`. Si
+  `queries-admin.sql` ne l'utilise pas → index inutilisé (coût d'écriture only, faible).
+  Statuer.
+- **H15-07 — Table unique en ligne : goulot multi-tenant.** Une seule table `eleves` partagée
+  par tous les élèves ; chaque envoi = upsert sur la même table (pas de partitionnement) —
+  acceptable à < 10⁴ lignes. Écrire la borne de passage : à partir de quel volume
+  l'index `xp` + RLS par ligne devient un problème (estimation avec H15-01 : 10⁴ → 10⁴
+  fonctions ≈ 10-100 ms). **Toute la scalabilité repose sur un seul petit index** — le dire.
+- **H15-08 — Proposition 02 (non déployée) : coût de `principal_verifie`.** `02:16-25` :
+  `select 1 from auth.users where id=p` **par appel RPC** (3-4 requêtes/plpgsql) — correct ;
+  `kunz_sync_ecrire` (l.52-68) : `jsonb_each` sur 2048 o max → OK. Si 02 un jour déployée :
+  index sur `auth.users(id)` = PK ✓. Réfuter en 2 lignes.
+- **H15-09 — `pg_policies` parité : coût négligeable (une fois/CI).** Réfuter.
+
+## 4. Obligations
+
+- Matrice « requête × index × policy cost » pour chaque ligne de `queries-admin.sql`.
+- Toute affirmation de plan = `[STATIQUE UNIQUEMENT]` (pas d'EXPLICATE sans DB).
+
+## 5. Limites
+
+- Pas de `SUPABASE_DB_URL` fonctionnel (pilote cassé — 03/02) : aucun EXPLAIN réel possible
+  ici. Une PGlite locale avec un jeu de 10⁴ lignes **serait** un atout si l'environnement le
+  permet (déclarer si fait).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/16-architecture-maintenabilite-typage-code-mort.md ═══════ -->
+
+# TRANCHE 16 — Architecture, Maintenabilité, Typage & Code Mort
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `eslint.config.mjs` (108 l.)
+- `modules/boussole/**` (55 fichiers : src 16, tests 6, scripts 4, assets, package, lock)
+- `public/boussole/**` (artefact : `index.html` 1,2 Mo + 2 PDF)
+- `src/utils/{boussoleAdapter,bridge,bridgeAdapter,carnetBoussole,profil}.ts`
+- `src/hooks/useBoussoleBridge.ts`, `src/types/boussoleBridge.ts` (zod)
+- Composants : `BadgeRelecture.tsx`, `CarteLecon.tsx`
+- Tests : `utils/__tests__/{bridge,carnet-boussole,profil}.test.ts`,
+  `__tests__/aide-boussole-ui.test.tsx`
+
+**Sweep transverse propriétaire :** duplication, code mort, casts, couplage sur **tout** le
+dépôt (lecture seule ; constats sur les fichiers d'autrui à transmettre au propriétaire dans
+le rapport, en gardant l'ID ici).
+
+## 2. Tests à auditer
+
+- Les 4 tests assignés (verts) : `bridge.test.ts` — l'idempotence de writeBack (bridge.ts:80)
+  est-elle testée en **double appel** avec le même événement (le commentaire l.80 le promet) ?
+- `verifier-inventaire-boussole.test.mjs` (5 tests, exécutés verts) : vérifie-t-il l'inventaire
+  **réel** du build ou une liste en dur recopiée dans le test (tautologie classique) ?
+- Aucun test de parité React 18 (boussole) vs 19 (app) — inexistence notée.
+
+## 3. Hypothèses pré-remplies
+
+- **H16-01 — ESLint ne voit aucun TypeScript.** `eslint.config.mjs:47-49` ignore `**/*.ts`,
+  `**/*.tsx` (choix documenté l.6-16 : typescript-eslint incompatible TS7). Conséquences
+  vérifiables : (a) les 7 `eslint-disable` de `src/**` sont **inertes** — dont
+  `react-hooks/exhaustive-deps` (`App.tsx:371,379`, `Communs.tsx:296`, `ProtocoleRunner.tsx:212`,
+  `LecteurAudioResume.tsx:222`, `Flashcards.tsx:19`) alors que le plugin `react-hooks` n'est
+  **même pas installé** (package.json : aucun `eslint-plugin-react-hooks`) → les commentaires
+  font référence à une règle qui n'existerait pas même si le TS était linté → **DRIFT** ;
+  (b) `npm run lint` vert = **zéro assurance** sur 52 kLOC de TS. `lint.test.ts` (20) prouve
+  le comportement d'ignore — il valide le trou, il ne le comble pas. Formuler le finding
+  d'architecture (pas « ajouter des règles » mais « la couverture déclarée est fausse »).
+- **H16-02 — Commentaire « 285 tests » faux.** `eslint.config.mjs:9` : exécution réelle =
+  **785 tests** (index §1). Petit drift, symptôme d'un commentaire-chiffre non outillé
+  (le README l'est via sync-metrics, pas eslint) → à lister pour 20.
+- **H16-03 — Double runtime React.** Racine `react@^19.3.0` vs boussole `react@18.3.1`
+  (`modules/boussole/package.json:16-19`) : deux copies, deux lockfiles, deux toolchains
+  (vite+TS7 vs esbuild+TS5.9). La boussole est livrée comme HTML autonome (pas de double
+  bundle dans l'app — vérifier : `src/components/Boussole.tsx`/`TiroirBoussole` embarque-t-il
+  l'iframe/fichier ou une réimplémentation ?). Si l'app **réimporte** la logique via
+  `boussoleAdapter.ts` alors que `modules/boussole/src/model.ts` a sa propre logique →
+  **duplication de logique métier** (le vrai finding). Comparer `carnetBoussole.ts` vs
+  `modules/boussole` storage : mêmes règles de conflit ? (tests `storage.cjs` vs
+  `carnet-boussole.test.ts` : deux vérités ?)
+- **H16-04 — Artefact de 1,2 Mo commité.** `public/boussole/index.html` : build minifié suivi
+  à la main (CI : sha256 avant/après rebuild, `ci.yml:66-71`). Risque : dérive silencieuse si
+  quelqu'un édite le HTML sans rebuild (la CI le détecte — OK, sain : le dire). Mais le
+  `.html` est-il dans le budget poids (1,2 Mo servis à chaque ouverture du labo — cache
+  `max-age 3600` vercel.json:31-35 → re-téléchargement horaire sur réseau mobile ? header
+  à 3600 sans immutable → vérifier).
+- **H16-05 — Code mort / exports inutilisés.** Recenser (grep) :
+  `delaisDepasses()` (sync.ts:115-117) — utilisé hors tests ?
+  `suspendreEcrituresLocalement()` (storage.ts:29-34) — appelé par qui ?
+  `autoriserRemplacementEtat`, `abandonnerJournalRestauration`, `sessionOuverte`
+  (App l.340-352 le dit « ne sert plus qu'à… » — vérifier les usages réels),
+  `DONNEES_JAMAIS_ENVOYEES` (sync.ts:62-66) — affiché quelque part ?
+  Méthode : pour chaque export de `src/utils/*.ts`, compter les importateurs (hors tests).
+  Toute valeur > 0 export non importé = finding `Information/Basse`.
+- **H16-06 — Casts.** `GamifiedOverlay.tsx:30-45` : globals `window as any.__kunz_son_*` —
+  pont invisible entre composants (contrat implicite non typé) ; `son.ts:12` webkit. Recenser
+  les 9 `as unknown as` (21 sont dans tests — hors finding produit). Vérifier
+  `eslint` no-unsafe n'existe pas (H16-01) → ces casts ne sont jamais signalés.
+- **H16-07 — `App.tsx` 1611 lignes : god component.** Compter les responsabilités réelles
+  (lazy imports l.42-80 = 39 chunks, handlers, effets l.324-560) vs le déclaratif SOLID.
+  Impact concret : tout changement de sync/backup/theme revalide le fichier entier ; les
+  symboles partagés (index §2.3) en sont la preuve (3 tranches y possèdent des lignes).
+  Proposer une découpe cible minimale dans le plan.
+- **H16-08 — Duplication démo/réel ?** grep `mode démo|demo|fake|mock` dans `src/utils` hors
+  tests : y a-t-il une voie « simulation » qui contourne les vrais garde-fous (ex.
+  `VITE_VERIFICATION_SYNC` .env.example : un flag qui bascule un comportement de sécurité) ?
+  Lire l'usage de `VITE_VERIFICATION_*` (grep dans src/) : qui le consomme, quel comportement
+  change (→ 17 croisé).
+- **H16-09 — `.pyc` commité + scripts Python hors CI.** `scripts/__pycache__/…pyc` (index) +
+  3 `.py` jamais lancés par CI → outillage orphelin ; couplé à `plans/` (93 docs), dette
+  d'hygiène.
+- **H16-10 — zod vs validation manuelle.** 2 fichiers zod (index) vs validation ad hoc
+  ailleurs (09-H09-08) → stratégie de validation incohérente. Proposer la règle unique.
+
+## 4. Exécutions
+
+- Comptage d'importations par export (script grep dans /tmp, non persisté, ou commandes
+  ad hoc) ; relecture de `bridge.test.ts` idempotence ; `node --test
+  scripts/verifier-inventaire-boussole.test.mjs` (déjà exécuté — 5/5).
+
+## 5. Limites
+
+- L'« architecture » se juge au code ; pas d'interview d'équipe. Les commentaires de plan
+  (`plans/`) sont des affirmations hostiles (20).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/17-build-config-secrets-supply-chain.md ═══════ -->
+
+# TRANCHE 17 — Build, Configuration, Secrets & Supply Chain
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `package.json`, `package-lock.json`
+- `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts` (symbole `precacheManifest` lu par 11)
+- `vercel.json`, `capacitor.config.ts`, `.env.example`, `.gitignore`, `LICENSE`
+- `src/vite-env.d.ts`
+- `android/**` (53 : gradle, manifest, wrapper)
+- `scripts/__pycache__/**` (artefact)
+
+**Hors périmètre :** CI (18), eslint (16), contenu SW (11), secrets d'ops (19 pour la PII,
+mais les **variables** sont ici).
+
+## 2. Tests à auditer
+
+- Aucun test de build déterministe. `verifier-deploiement.mjs` appartient à 18 (le lire en
+  croisé : il valide build-id/coquille — c'est le test « build » le plus proche).
+- `npm audit --audit-level=high` est dans CI (`ci.yml:61`) — **exécuter ici** :
+  `npm audit --audit-level=high` et citer le résultat réel (exit code + synthèse).
+
+## 3. Hypothèses pré-remplies
+
+- **H17-01 — Env variables figées au build.** `sync.ts:12-16` lit
+  `import.meta.env.VITE_SUPABASE_URL/KEY` → remplacées à la compilation. Conséquences :
+  (a) changer la clé = rebuild complet (pas de rotation à chaud) ; (b) une clé **vide** en
+  build prod désactive la sync (`syncActive` false — fail-closed, sain : le dire) ; (c) la
+  **clé anon est embarquée dans le bundle** (contraire à un secret — documenté comme « PUBLIC »
+  dans `.env.example`) : vérifier qu'elle n'apparaît **pas** dans un autre fichier de config
+  commité avec une vraie valeur (grep `eyJ\|service_role\|SUPABASE_URL=http` dans le dépôt
+  hors node_modules — la recherche de secrets réels : `git grep -E 'eyJ[A-Za-z0-9_-]{20,}'`).
+- **H17-02 — Rotation des secrets d'env sur Vercel.** `vercel.json` ne déclare que
+  `TSC_COMPILE_ON_ERROR` (l.7-11) ; les `VITE_*` viennent du dashboard. Aucun déclaratif →
+  drift possible env ↔ `.env.example` non détectable par la CI (grep `VITE_VERIFICATION_`
+  consommateurs : si `VITE_VERIFICATION_SYNC` n'est lu nulle part dans `src/` → variable
+  morte = confusion ; si lu, comportement de sécurité conditionné par un flag build →
+  noter le chemin exact).
+- **H17-03 — Dépendances : ranges `^` + lockfile.** `package.json` : toutes les deps en `^`
+  (10 prod) — la CI et Vercel utilisent `npm ci` (`ci.yml:17`, `vercel.json:5`) → lockfile
+  respecté (sain). Vérifier : (a) `npm ci` en local regénère-t-il le lock ? non ;
+  (b) 386 paquets résolus — `npm audit` (à exécuter) ; (c) paquets **non verrouillés par hash**
+  (`resolved` https registre — standard) ; (d) absence de `postinstall` scripts dangereux :
+  grep `"postinstall"` dans les lockfiles.
+- **H17-04 — TypeScript 7.0.2 + Vite 8 : versions majeures fraîches.** `package.json:66-70` :
+  `typescript ^7.0.2`, `vite ^8.3.8`, `vitest ^5.1.1` — vérifier que `npm ci` + `build`
+  passent (exécutés : **oui, verts** en MODE A) et que le lockfile ne contient pas de
+  `typescript@7.0.0-beta` instable (grep la version exacte résolue dans le lock).
+- **H17-05 — Gradle/Android non audité par CI.** `android/**` : `gradle-wrapper.jar` binaire
+  commité (checksum ? `gradle-wrapper.properties` distributionUrl — HTTPS ? version figée ?),
+  `build.gradle` deps : `compileSdk/targetSdk` (le manifest déclare-t-il des permissions
+  minimales ? lire `AndroidManifest.xml` : INTERNET ? ). Capacitor `capacitor.settings.gradle`
+  : versions alignées avec `@capacitor/*` du package.json (^8.6.0) ? `[STATIQUE UNIQUEMENT]`
+  (pas d'Android SDK ici).
+- **H17-06 — Déterminisme du build.** `vite.config.ts` : le hash de version inclut
+  `Date` ? (lire : `createHash('sha256').update(assets…)` — si aucune date/hostname dans le
+  hash → déterministe ; vérifier l'absence de `Date.now`/`new Date` dans le plugin — grep).
+  Aussi : `pkg.version` (0.13.0) → `__APP_VERSION__` (vitest.config l.6-8, vite.config) —
+  deux définitions (vite `define` vs vitest `define`) : parité à vérifier (les deux lisent
+  package.json — OK si même méthode).
+- **H17-07 — `base` d'assets.** `index.html` : `src="/src/main.tsx"` et manifeste `/…` —
+  déploiement sous sous-chemin (`/app/`) casserait tout (pas de `base` dans vite.config ?
+  grep `base:` → absent = `/`). Vercel déploie à la racine → OK ici ; noter la portabilité.
+- **H17-08 — Headers de cache vs fraîcheur.** `vercel.json:13-16` : `/assets/*` immutable 1 an
+  — standard Vite (hash) ✓ ; `/precache-manifest.json` max-age=0 ✓ ; `/boussole/*` 3600
+  (H16-04) ; **absence totale de headers de sécurité** → 04 (ne pas dupliquer le finding,
+  référencer).
+- **H17-09 — Artefacts de dev en prod.** `.pyc` (index), `plans/screenshots/*.xml` (dumps UI),
+  `plans/**` (93 fichiers) — sont-ils servis ? Non : `public/` seulement est servi par Vite
+  ✓ (`dist/` build). Vérifier que `.gitignore` exclut `dist/`, `.env` (lire le fichier —
+  confirmer que `.env` réel n'est **pas** suivi : `git ls-files .env` → vide attendu).
+- **H17-10 — `LICENSE` : licence du code vs contenu.** `modules/boussole/assets/LICENSE-Noto.txt`
+  (fontes) + LICENSE racine — la licence couvre-t-elle les contenus pédagogiques (MP3, PDF) ?
+  Question documentaire → signaler à 20 (dérive doc), ne pas trancher ici.
+
+## 4. Exécutions attendues
+
+- `npm audit --audit-level=high` (citer sortie).
+- `git ls-files | grep -iE '\.env$|credential|\.pem$|id_rsa'` (doit être vide).
+- `git grep -nE 'eyJ[A-Za-z0-9_-]{15,}' -- ':!package-lock.json'` (recherche de JWT réels).
+- Re-vérifier `npm run build` si `dist/` absent.
+
+## 5. Limites
+
+- Vercel dashboard, secrets réels : inaccessibles → config effective `[STATIQUE UNIQUEMENT]`.
+- Android build : pas d'SDK → `[STATIQUE UNIQUEMENT]`.
+
+---
+
+
+<!-- ═══════ SOURCE : audit/18-cicd-migrations-rollback.md ═══════ -->
+
+# TRANCHE 18 — CI/CD, Migrations, Sauvegarde, Restauration & Rollback
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `.github/workflows/ci.yml` (184 l.)
+- `supabase/migrations/202611210001_initial_eleves.sql` (97 l.)
+- `supabase/migrations/202611210002_generation_suppression.sql` (73 l.)
+- `supabase/tests/**` (`02-fixture.sql`, `02-cycle.sql`, `fixtures/parite-rls-2026-11-22.json`,
+  `fixtures/README.md`)
+- `scripts/verifier-deploiement.mjs` (68 l.), `scripts/annoter-echec-integration.mjs`
+- `vercel.json` (lecture CD — la config build appartient à 17, **les étapes de release ici**)
+
+**Hors périmètre :** contenu des policies (03), perf index (15), config env (17), boussole
+tests (16).
+
+## 2. Tests à auditer (le cœur de la tranche)
+
+- **`supabase/tests/02-cycle.sql` (49 l.) : jamais exécuté dans la CI** — grep des `run:` de
+  `ci.yml` : aucune étape PGlite/psql. C'est le **seul** test des invariants de la proposition
+  02 → aujourd'hui : code de test présent mais **non branché** (pire qu'un test faible :
+  il ne peut ni échouer ni passer en CI). Tenter un exécution locale si un moteur SQL
+  disponible (psql ? `which psql` / PGlite npm) — sinon `[STATIQUE UNIQUEMENT]` + finding.
+- `verifier-deploiement.mjs` — **exécuté en MODE A** : sortie « version cbf467e1dd665318d1fd ·
+  coquille 2,23 Mio · problèmes 0 ». Mordre : casser `dist/index.html` (copie) → doit échouer
+  (ne pas casser le vrai dist : copie jetable si refait).
+- Le JSON de fixture `parite-rls-2026-11-22.json` : test qui compare un fichier à… lui-même ?
+  Non — il compare le dépôt à un **instantané externe daté** ; toute policy ajoutée après le
+  22/11 sans mettre à jour la fixture → CI **rouge** (drift inverse) ; toute policy **retirée
+  en prod** sans changer le dépôt → fixture verte, prod divergente. Analyser le sens exact.
+
+## 3. Hypothèses pré-remplies
+
+- **H18-01 — Étapes CI dupliquées.** `ci.yml:72-96` vs `ci.yml:123-168` : mêmes noms
+  (« Mettre en cache les navigateurs Playwright », « Installer Chromium », « Tester le
+  laboratoire autonome », annotation d'échec). Deux interprétations à trancher par la lecture
+  complète : (a) duplication accidentelle → ×2 temps de CI + le2e « annotation » écrase la
+  1re ; (b) deux jobs différents (le grep montrait un seul `jobs: test`) → vérifier
+  l'indentation/`if:`. Calculer le coût (Chromium install ~2 min ×2). Lire les lignes 61-184
+  intégralement et citer.
+- **H18-02 — Lint non bloquant.** `ci.yml:37-39` `continue-on-error: true` → une régression
+  JS/SW passe. Couplé à 16 (TS jamais linté) : **la CI ne bloque jamais sur le lint**.
+  Accepté explicitement (commentaire l.34-36) → finding `Ops` sévérité Basse/Moyenne selon
+  l'ampleur des règles JS actives (`public/sw.js` et `scripts/**` sont lintés — donc le SW
+  l'est, les .ts ne l'est pas).
+- **H18-03 — Parité RLS : le grand trou.** `ci.yml:51-58` : sans secret → fixture figée ;
+  avec secret → script casse (`postgres` absent — **prouvé exit 1**, index). Donc dans les
+  deux cas, **la base réelle n'est jamais interrogée en CI**. C'est le finding central de la
+  tranche : toute modification de policy peut merger sans détection. Correctif minimal :
+  ajouter `postgres` aux devDependencies **et** documenter que le secret doit être présent
+  (sinon échouer, pas passer).
+- **H18-04 — Migrations : rejouabilité à deux vitesses.** `0001` : en-tête l.16-19 avoue
+  « À NE PAS REJOUER sur une base à jour » — un script dit « historique rejouable » (l.10) puis
+  interdit le rejeu : **drift interne**. `0002` : idempotente (`if not exists`, `drop trigger if
+  exists`) mais **n'active pas** ce qu'elle annonce (03-H03-03). Aucune tooling de migration
+  (pas de `supabase db push` dans CI, pas de `migration lock`) → les migrations sont
+  **appliquées à la main** (SQL Editor, commentaire `schema.sql:3`) → pas de trace d'application
+  en prod, pas de rollback. Statuer : chaîne de migration = manuelle, non exécutée, non testée.
+- **H18-05 — Rollback.** Aucun mécanisme : Vercel redeploy d'une rev (standard, pas de
+  config) ; coté DB : migrations non réversibles (pas de down SQL). Pire cas : 0002 appliquée
+  puis défaite → le trigger disparaît mais la colonne reste (ou inverse) → drift avec fixture
+  parité (qui ne regarde ni colonnes ni triggers !). Lier avec H03-04.
+- **H18-06 — Sauvegarde/restauration de la base.** Aucune config de backup dans le dépôt
+  (grep `backup|pg_dump` supabase/ — les backups Supabase sont managés par le fournisseur,
+  **non déclarés ici**) → la tranche doit dire : **preuve de backup absente du dépôt**, le
+  plan `plans/preuves/sauvegarde-restauration.md` est une affirmation (20).
+- **H18-07 — Deux CI de boussole ?** `ci.yml` installe Chromium + tests boussole **une fois**
+  (si H18-01 est une duplication, deux fois) — le cache `key: hashFiles('modules/boussole/package-lock.json')`
+  est correct. Vérifier que `npm ci` root (l.17) précède toujours `npm test` (l.40) et que le
+  job ne dépend pas de secrets pour le chemin nominal (non : seul RLS dépend du secret ✓).
+- **H18-08 — Pas de protection d'environnement.** Aucun `environment:` GitHub, aucune
+  approbation manuelle, pas de tag/release — tout push sur toute branche déploie (Vercel
+  auto-deploy branch ? config hors repo) → noter l'absence de garde-fou déclaré.
+- **H18-09 — Node version pin.** `ci.yml:15` `node-version: 22` (major only) vs lockfile
+  — flottement 22.x ; `package.json` n'a pas de `engines` (grep → vérifier) → drift local/CI
+  possible. Vérifier `engines` dans package.json.
+
+## 4. Exécutions attendues
+
+- Lecture intégrale `ci.yml` (déjà faite partiellement — compléter l.61-184 et trancher H18-01).
+- `which psql || npm ls pg` ; tenter `psql` si présent pour `02-cycle.sql` (sinon le dire).
+- Re-lancer `node scripts/verifier-deploiement.mjs` (fait : exit 0).
+
+## 5. Limites
+
+- Pas d'accès GitHub Actions run réel ici (les runs passés sont hors périmètre d'exécution) ;
+  la CI n'est **pas** rejouée dans l'environnement sandbox (sauf en rejouant les commandes
+  localement, ce qui est fait).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/19-observabilite-audit-pii-exploitation.md ═══════ -->
+
+# TRANCHE 19 — Observabilité, Auditabilité, PII & Exploitation
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `src/utils/telemetrie.ts` (258 l.) + `utils/__tests__/telemetrie.test.ts`
+- `src/utils/evenements.ts` (128 l.)
+- Composants : `Confidentialite.tsx`, `CarteMesurePilote.tsx`
+- Tests : `__tests__/{confidentialite-accessibilite,rapport-utilisabilite-ui}.test.tsx`
+- Sweep : `console.*` productif, logs, healthcheck, cron/alertes (inexistence à prouver)
+
+**Hors périmètre :** envoi sync (07) mais **parité des données annoncées vs envoyées** est ici ;
+contenu des backups (12) ; variables d'env (17).
+
+## 2. Tests à auditer
+
+- `telemetrie.test.ts` : couvre-t-il `rapportSansDonneePersonnelle` avec un rapport contenant
+  réellement un **email** (doit retourner false) ? Si le test fabrique un rapport sans jamais
+  y mettre de PII → tautologie. Mordant : injecter `{"email":"a@b.c"}` → doit être rejeté.
+- `confidentialite-accessibilite.test.tsx` : le texte affiché correspond-il aux **vraies**
+  données envoyées (`DONNEES_ENVOYEES`) ? Si le test ne vérifie que la présence de sections,
+  il ne prouve pas la vérité du contenu (→ croisement avec H19-02).
+- `rapport-utilisabilite-ui.test.tsx` : affichage du rapport pilote — vérifie-t-il qu'aucune
+  ligne sensible n'apparaît dans le rendu ?
+
+## 3. Hypothèses pré-remplies
+
+- **H19-01 — Télémétrie 100 % locale, zéro export.** `telemetrie.ts:235-243` :
+  `localStorage` en lecture/écriture ; aucun `fetch` (grep `fetch` dans telemetrie/evenements →
+  attendu vide). Si confirmé → **sain** : pas de analytics tiers. Le « rapport pilote » est
+  **copié-collé manuellement** (à vérifier : bouton copy dans `CarteMesurePilote`) — aucune
+  fuite réseau. Dire en 2 lignes si conforme.
+- **H19-02 — Parité annonce ↔ envoi.** `sync.ts:50-60` `DONNEES_ENVOYEES` liste 7 familles
+  (email, nom, wilaya, daira, date bac, IDs, compteurs, xp…). `Confidentialite.tsx` affiche-t-il
+  **exactement** cette liste ? Méthode : extraire les libellés des deux côtés et comparer ;
+  tout écart = `DRIFT-DOC` avec `fichier:ligne`. Aussi vérifier l'inverse : `Snapshot`
+  (`sync.ts:28-47`) ne contient-il **que** des champs listés ? (champ `cree_le` = date
+  d'inscription — listé ? « nom, wilaya, daira » oui, `cree_le` à vérifier dans la liste.)
+- **H19-03 — PII dans la télémétrie : garde par sous-chaîne.** `telemetrie.ts:198-206` :
+  `CLES_INTERDITES` + `rapportSansDonneePersonnelle` = `JSON.stringify(r).includes(cle)` —
+  détection **par nom de clé**, pas par valeur : un rapport contenant la **valeur** d'un email
+  sous une clé `commentaire` ou `id` passerait. Vérifier la fabrique `rapportPilote` (l.130-159)
+  : quelles clés produit-elle réellement ? Si toutes sont dans une whitelist stricte → la
+  détection est un filet secondaire (saine, le dire) ; sinon finding Basse.
+- **H19-04 — `evenements.ts` : événements stockés dans l'état.** `evenements.ts:44-77`
+  (`tentative`, `cleEvenement` avec `attemptId`) — que contient `attemptId` (UUID ? email ?
+  horodatage ?) — grep le générateur (`origine`, `attemptId` : fabriqué où ? probablement
+  crypto.randomUUID). Les événements partent-ils dans `charge_utile` ? Non — `Snapshot` ne les
+  inclut pas (vérifier). Impact : si `trophees`/`evenements` restent locaux → OK ; si un jour
+  inclus dans le snapshot → PII non listée. Statuer.
+- **H19-05 — `console.*` en production.** Recenser : `grep -rn 'console\.' src --include='*.ts*' | grep -v __tests__` — combien, que loggent-ils (email ? jeton ? état complet ?).
+  Un `console.log(etat)` (avec compte) = fuite dans DevTools/bug reports. Citer chaque occurrence
+  productif.
+- **H19-06 — Aucun healthcheck/alerting/cron.** Inexistence à prouver : pas de
+  `vercel.json` functions (l.1-11 : statique only), pas de cron dans le repo, pas de
+  `sentry`/`analytics` (grep dependencies : package.json — attendu vide). L'app n'a **aucune
+  observabilité serveur** (elle n'a pas de serveur) — conséquence : une panne de Supabase est
+  invisible côté exploitant (les élèves voient 'erreur', personne d'autre). C'est un constat
+  d'architecture à formuler comme limite acceptée ou finding (sévérité selon la promesse
+  opérationnelle — lire `plans/` ? affirmation).
+- **H19-07 — Journal d'audit immuable : absent.** Côté serveur : aucune table d'audit dans
+  `schema.sql` (qui a écrit quoi n'est pas journalisé — `maj` est un simple timestamp mis à
+  jour par le client `sync.ts:228` !). Vérifier : `maj` est **client-controlled** (la colonne
+  `default now()` ne s'applique que si absent — le client l'envoie toujours) → un client peut
+  mettre `maj` à une date passée/future. Impact : le tri admin par `maj` est manipulable ;
+  l'absence d'audit trail = aucun moyen de prouver une suppression. `PROUVÉ-STATIQUE`.
+- **H19-08 — Anonymisation réelle du rapport.** `rapportSansDonneePersonnelle` (l.203-206)
+  interdit les **noms de clés** ; `CLES_INTERDITES` inclut `'note'` — mais le rapport contient
+  des **libellés d'écrans en arabe** ? Des titres de leçons = PII faible. Vérifier le contenu
+  de `rapportPilote` champ par champ (l.130-159) et statuer chaque champ.
+- **H19-09 — Consentement : preuve datée locale.** `consentementSyncDecideLe`
+  (`sync.ts:295-305` + App l.761-767) : la preuve de consentement est un string local
+  modifiable (DevTools) et **absente du serveur** (H02-07) — pour une conformité, la preuve
+  n'est pas opposable. Constater, référencer 02.
+- **H19-10 — `date_bac` + `nom` + `wilaya` = PII envoyée.** Cohérent avec la doc (H19-02) ;
+  durée de rétention côté serveur : **aucune** (pas de TTL dans `schema.sql`, pas de cron de
+  purge) → les lignes vivent éternellement après consentement puis suppression seulement sur
+  demande. Finding `Données-API` Basse (rétention non bornée) — sauf si `plans/` prouve un
+  purge (affirmation → confronter).
+
+## 4. Exécutions
+
+- `grep` console productif ; comparaison libellés `DONNEES_ENVOYEES` ↔ `Confidentialite.tsx`
+  (extraction littérale) ;
+  `npx vitest run src/utils/__tests__/telemetrie.test.ts src/__tests__/confidentialite-accessibilite.test.tsx`.
+
+## 5. Limites
+
+- Vérification de ce qui quitte réellement le poste en prod : `[STATIQUE UNIQUEMENT]`
+  (pas de proxy réseau ici ; le code d'envoi est à 07 et est lu en croisé).
+
+---
+
+
+<!-- ═══════ SOURCE : audit/20-meta-audit-tests-derive-doc.md ═══════ -->
+
+# TRANCHE 20 — Méta-Audit des Tests & Dérive Code ↔ Documentation
+
+> MODE B — périmètre exclusif. Protocole §5 / format §6. **Dernière tranche fusionnée** :
+> elle confronte docs et tests à l'ensemble des constats des tranches 01-19.
+
+## 1. Périmètre (propriété exclusive)
+
+**Fichiers :**
+- `README.md` (1029 l., bloc METRICS l.366+)
+- `vitest.config.ts`
+- `scripts/sync-metrics.mjs` (+ `src/__tests__/metriques.test.ts`, `src/__tests__/lint.test.ts`)
+- `plans/**` (93 fichiers) — corpus d'affirmations
+- **Sweep transverse :** inventaire et audit anti-tautologie de **tous** les 90 fichiers de
+  tests `src/**` + 6 `modules/boussole/tests/**` + 2 `supabase/tests/**` (lecture ; les
+  findings restent attribués à la tranche propriétaire du code testé — ici on documente la
+  **couverture globale** et les tests tautologiques).
+
+## 2. Exécutions réelles (base du méta-audit)
+
+- `npx vitest run` → **90 fichiers / 785 tests / 0 échec / 35,52 s** (MODE A).
+- `node --test scripts/verifier-inventaire-boussole.test.mjs` → **5/5**.
+- `npm run lint` → 0 problème (mais voir H20-04).
+- `npm run verifier:metriques` → exit 0 (README sync).
+- Boussole `npm test` (3 fichiers) et `test:integration` (3 fichiers) : **NON EXÉCUTÉS**
+  (Chromium absent) → pour ces 6 : `[STATIQUE UNIQUEMENT]`.
+- Couverture de code : **jamais mesurée** dans CI (pas d'étape `coverage` dans `ci.yml`) ;
+  `vitest.config.ts:9-12` configure v8 mais rien ne la lance → à noter.
+
+## 3. Hypothèses pré-remplies
+
+- **H20-01 — Combien de tests « qui ne peuvent pas échouer » ?** Méthode obligatoire pour
+  chaque fichier clé : *si j'introduis le bug dans le code, le test échoue-t-il ?* Candidats
+  prioritaires (déjà repérés) :
+  - `lint.test.ts` — teste que la config ignore TS (valide le trou) ;
+  - `metriques.test.ts` — probablement appelle `sync-metrics --check` sur le vrai README
+    (robuste) OU recalcule une copie (tautologie) — lire ;
+  - `verifier-drills.test.ts` / `verifier-inventaire-boussole.test.mjs` — testent-ils le
+    script ou ses sorties figées ?
+  - `pwa-icones.test.tsx` — compare le manifeste à lui-même ?
+  - `garde-fous-anti-anxiete.test.ts` — regex sur des constantes du même module ?
+  Produire un **tableau** : fichier | # tests | type (mord / nominal / tautologique / mock
+  mensonger) | preuve (une ligne).
+- **H20-02 — Mocks divergents du runtime.** Recenser les mocks structuraux clés :
+  - `storage.test.ts` mock `localStorage` (l.28-43) : reproduit-il QuotaExceeded ?
+  - `sync.test.ts` mock supabase : rejette-t-il avec la vraie forme d'erreur
+    (`{message, code, details}`) ?
+  - `service-worker.test.ts` mock `caches` : `put` peut-il rejeter ?
+  - Tests boussole : mocks de Playwright ?
+  Tout écart = finding `Tests` (sévérité selon le risque masqué).
+- **H20-03 — Couverture par risque.** Matrice risque métier × test :
+  (1) perte de progression locale, (2) perte/corruption sync serveur, (3) takeover de compte,
+  (4) désactivation silencieuse de la sync, (5) erreur d'affichage de date/minuit,
+  (6) barème faux (XP/notes), (7) mise à jour PWA bloquée, (8) DoS insertion. Pour chacun :
+  fichier(s) de test qui le couvrent, ou **AUCUN**. (Plusieurs « AUCUN » attendus : 3 →
+  (3) n'a que compte-securite sans test d'inscription ; 4 → rien ne prouve l'affichage de
+  l'état 'erreur' ; 7 → aucun test de skipWaiting.)
+- **H20-04 — Déclaration de couverture fausse.** `eslint.config.mjs:9` « 285 tests » vs 785
+  réels (prouvé) — un commentaire qui **sous-annonce** (donc pas dangereux mais prouve que les
+  chiffres-commentaires ne sont pas outillés). Inverse : chercher tout autre chiffre dans les
+  commentaires/README hors bloc METRICS (grep `\b\d{2,3} tests\b|\b\d+ leçons\b` dans src/
+  eslint/README hors METRICS) → tableau des affirmations chiffrées et leur statut
+  (vrai/faux/non vérifié).
+- **H20-05 — README : ce que `sync-metrics` ne couvre pas.** Le script compte des regex sur
+  le code (l.24-40 de sync-metrics : `lessonIds`, entrées de records…). Toute affirmation
+  **non** dans le bloc METRICS (promesses « fonctionne hors ligne », « aucun tracking », « la
+  base est chiffrée », etc.) est **non vérifiée** : extraire 10 affirmations fonctionnelles du
+  README et les classer : confirmée / réfutée / non vérifiable (avec `fichier:ligne` du code).
+- **H20-06 — `plans/` :93 documents, aucune trace d'application.** Exemples d'affirmations à
+  confronter (commencer par celles-ci) :
+  - `plans/AUDIT-RLS-P0.1-2026-11-18.md` : ses P0 sont-ils faits ? (croiser 03 : la migration
+    0002 existe — partiellement) ;
+  - `plans/preuves/sauvegarde-restauration.md` : preuve exécutable ou récit ? (18-H18-06) ;
+  - `plans/PASSATION-RESTE-A-FAIRE.md` vs code réel ;
+  - tout document annonçant « parité RLS vérifiée en CI » → **réfuté** (18-H18-03 prouvé).
+  Ne pas tout lire en entier : échantillonner 10 documents, tableau drift.
+- **H20-07 — Tests ignorés/skipped.** grep `it.skip|describe.skip|test.skip|todo|\.only` dans
+  tout le dépôt (src, modules, supabase, scripts) → tout match = test désactivé caché.
+  Aussi `it.concurrent`/`--exclude` dans vitest.config (include : `src/**/*.test.{ts,tsx}` —
+  les tests hors `src/` (scripts/*.test.mjs) ne sont dans `npm test` que par la2e commande
+  package.json `&& node --test …` ✓ — vérifier qu'il n'y a pas de 3e fichier de test orphelin
+  : `find . -name '*.test.*' -not -path './node_modules/*'` vs la liste exécutée).
+- **H20-08 — Tests d'intégration boussole non exécutables en CI sandbox mais prévus en
+  CI GitHub** (`ci.yml:92-96`) : les 6 fichiers ont-ils des assertions réelles (pages Playwright
+  avec `expect`) ou des `console.log` de QA ? Lire au moins `account.cjs` et `integration.cjs`
+  (statique) et qualifier.
+
+## 4. Obligations de sortie (format §6 adaptés)
+
+- Tableau complet des 90+6+2 fichiers de tests : `# tests`, verdict anti-tautologie, échantillon
+  de preuve.
+- Tableau des affirmations docs (README hors METRICS + plans échantillonnés + commentaires
+  clés déjà collectés : eslint « 285 », migration 0002 « policy refuse », parite-rls « sort en
+  erreur » (vrai ✓)) : statut `CONFIRMÉ / RÉFUTÉ / DRIFT` avec `fichier:ligne`.
+- Recommandation de tests manquants **transverse** (alimente le backlog MODE C).
+
+## 5. Limites
+
+- 785 tests exécutés verts : un vert ne prouve rien sans l'anti-tautologie (étape 6 du
+  protocole) — ce méta-audit se fait par lecture, sauf les « tests qui mordent » qu'on peut
+  simuler sur **copies jetables /tmp** (jamais le dépôt).
+- Boussole tests d'intégration non exécutés ici : qualifier en `[STATIQUE UNIQUEMENT]`.
+
+---

@@ -7,7 +7,7 @@ import { effacerAlerteStockage } from '../utils/echecsStockage';
 import { autoriserRemplacementEtat } from '../utils/storage';
 import { etatVierge } from '../types';
 
-vi.mock('../components/Principal', () => ({
+vi.mock('../components/Aujourdhui', () => ({
   default: ({ onOuvrirExamenBlanc }: { onOuvrirExamenBlanc: () => void }) => createElement('button', { onClick: onOuvrirExamenBlanc }, 'Ouvrir examen'),
 }));
 vi.mock('../components/ExamBlanc', () => ({ default: () => createElement('div', null, 'Examen') }));
