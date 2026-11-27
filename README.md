@@ -36,14 +36,14 @@ avant de marcher.
 
 | Onglet | Rôle |
 |---|---|
-| **الرئيسية** | L'écran « main » : le bandeau d'accueil « المرشد يفتح الحصة », la mission du jour en un geste, le plan intensif, le rythme de la semaine, la position par rapport à la classe, les statistiques du مُرشد et les liens rapides. |
+| **الرئيسية** | L'écran « main », porté **1:1 de la maquette** (écran 01) : la rangée d'accueil (salutation, date, éligibilité), le héros « مهمّة اليوم » (mascotte, CTA or, « يكفي اليوم »), le guide d'énergie, « إيقاع الأسبوع » en perles, les deux mini-cartes (مراجعات اليوم · موقعك في القسم) et la carte « تدريبات سريعة » (chips). Le plan intensif P2.3 s'affiche en bas quand il existe. |
 | **مساري** | Le chemin complet : 11 unités verrouillées séquentiellement, chacune se terminant par un **جسر** (pont-jalon). Une carte = une action, jauge d'avancement (jamais de pourcentage affiché). |
-| **كويست** | La boîte à quiz et défis : le *quiz du jour* (3 min), le تحدّي 60 ثانية, le défi de la semaine, la revue croisée et la brique de compétence. Les **تدريبات** (620 items, 500 QCM + 120 définitions, 49 axes) s'ouvrent depuis ici, en sous-écran avec un bouton retour. |
+| **كويست** | La boîte à quiz et défis : le *quiz du jour* (3 min), le تحدّي 60 ثانية, le défi de la semaine, la revue croisée, la brique de compétence et les statistiques du مُرشد (كم صحيحة وكم ليست صحيحة). Les **تدريبات** (620 items, 500 QCM + 120 définitions, 49 axes) s'ouvrent depuis **الرئيسية** (carte de la maquette), en sous-écran avec barre de retour. |
 | **الباك** | Tout ce qui concerne l'épreuve : les **30 sujets** 2013→2026, l'**امتحان تجريبي**, la **منهجية** (laboratoire de lecture des documents, 4 ateliers) et les **6 schémas à légender**. Les fréquences de verbes et d'unités y sont calculées sur les sujets réels. |
-| **أنا** | Le journal, les notes, les statistiques, la sauvegarde et la réinitialisation. |
+| **أنا** | La carte d'identité de l'élève (avatar, ville, groupe, objectif), les statistiques du مُرشد, la récente séance, la sauvegarde/restauration et la réinitialisation, plus les cartes **مختبر الفضول** et **مسارات المنهجية**. |
 
 Les anciens onglets **البوصلة** et **تدريبات** ne sont plus des portes : ce sont des sous-écrans de
-**الباك** et de **كويست**, avec une barre de retour (qui renvoie à la porte d'origine). La barre du
+**الباك** et de **الرئيسية**, avec une barre de retour (qui renvoie à la porte d'origine). La barre du
 bas n'allume que cinq entrées (`.onglets` / `.onglet`, cible ≥ 54 px) ; un sous-écran allume son parent.
 
 ### 🧭 La rubrique البوصلة (`Boussole.tsx`, `Methodologie.tsx`)
@@ -66,7 +66,7 @@ Ouverte depuis **الباك** (sous-écran, retour → الباك), elle affiche
 - **4 مستويات التدريب** : القدوة المشروحة → التمرين الموجه → التمرين المستقل → تشخيص الخطأ,
   chacun ouvre les مسارات ; rappel non culpabilisant « لا تنتقل إلى المستوى التالي لمجرد أنك قرأت
   الطريقة ».
-- **3ᵉ porte depuis تدريبات** : la carte « تمارين المنهجية » (`IcoTamrin`) ouvre le composant en
+- **3ᵉ porte depuis أنا** : la carte « تمارين المنهجية » (`IcoTamrin`) ouvre le composant en
   `modeInitial="niveaux"` (par défaut : `'boussole'`) via le mode
   `methodoExos` d'`App.tsx` ; la fermeture (`setMode(null)`) **retourne à تدريبات** — l'onglet
   البوصلة, lui, ouvre le laboratoire.

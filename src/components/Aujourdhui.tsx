@@ -1,16 +1,16 @@
 // كويست — la porte des quiz et des défis (maquette : « main » ≠ « quiz »).
 //
 // L'écran principal vit sur الرئيسية ; ici : le quiz du jour (3 min), le défi de
-// 60 secondes, les تدريبات (620 items), le défi de la semaine, la revue croisée
-// et la brique de compétence. Aucun emoji : icônes SVG du dépôt uniquement.
+// 60 secondes, le défi de la semaine, la revue croisée, la brique de compétence
+// et les statistiques du مُرشد. Les تدريبات (620 items) vivent sur الرئيسية (maquette).
 import { competenceDue, prochaineAction } from '../utils/moteur';
 import { nb } from '../utils/dates';
 import { titreLecon } from '../data/programme';
 import { etapesKouest, etapesReussies, leconDeLaQuete } from '../utils/kouest';
 import { composerRevueCroisee, disponibiliteCroisee, nomDomaine } from '../utils/revueCroisee';
 import CarteDefi from './CarteDefi';
+import CarteStats from './CarteStats';
 import MascotteKunz from './MascotteKunz';
-import { IcoTamrin } from './Icones';
 import type { TypeDefi } from '../utils/defis';
 import type { Etat } from '../types';
 import type { ItemChemin } from '../data/programme';
@@ -45,8 +45,6 @@ interface Props {
   /** Invitation à créer un compte (facultative). */
   onCreerCompte?: () => void;
   onMasquerInvitation?: () => void;
-  /** تدريبات سريعة : sous-écran avec barre de retour vers cette porte. */
-  onOuvrirExercices?: () => void;
 }
 
 export default function Aujourdhui({
@@ -57,7 +55,6 @@ export default function Aujourdhui({
   onChoisirDefi,
   onDemarrerKouest,
   onDefi60,
-  onOuvrirExercices,
 }: Props) {
   const action = prochaineAction(etat);
   const competence = onResultatKafaa ? competenceDue(etat) : null;
@@ -113,37 +110,6 @@ export default function Aujourdhui({
                 ? 'أعد الكويست'
                 : 'كمّل الكويست'}
           </button>
-        </section>
-      )}
-
-      {/* تدريبات سريعة (maquette : chips) — 620 عناصر، 49 محورًا */}
-      {onOuvrirExercices && (
-        <section className="carte mb-4">
-          <div className="rangee rangee--entre">
-            <div className="min-w-0">
-              <p className="oeil">تدريبات سريعة</p>
-              <p className="petit doux mt-0.5">500 سؤال + 120 تعريفًا · 49 محورًا — تدرّب على ما تختار.</p>
-            </div>
-            <button type="button" className="btn-mini shrink-0" onClick={onOuvrirExercices}>
-              <span className="block h-4 w-4" aria-hidden>
-                <IcoTamrin />
-              </span>
-              افتح التدريبات
-            </button>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {['الوراثة', 'المناعة', 'العصبي', 'الغدّي'].map((axe) => (
-              <button
-                key={axe}
-                type="button"
-                className="btn-mini"
-                onClick={onOuvrirExercices}
-                aria-label={`تدريبات محور ${axe}`}
-              >
-                {axe}
-              </button>
-            ))}
-          </div>
         </section>
       )}
 
@@ -236,6 +202,11 @@ export default function Aujourdhui({
           </p>
         </section>
       )}
+
+      {/* إحصاء المُرشد — كم صحيحة وكم ليست صحيحة (statistiques de quiz) */}
+      <div className="mt-5">
+        <CarteStats />
+      </div>
     </div>
   );
 }

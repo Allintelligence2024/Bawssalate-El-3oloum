@@ -64,8 +64,8 @@ export default function GuideAccueil({
   const message = MESSAGE[energie ?? 'defaut'];
   return (
     <section className="carte mb-4" aria-label="المرشد يفتح الحصة">
-      <p className="oeil mb-2">المرشد يفتح الحصة</p>
-      {/* Le portrait vit dans le bandeau de مهمّة اليوم juste au-dessus : un seul
+      <p className="oeil mb-2">اختر حالتك اليوم</p>
+      {/* Le portrait vit dans le héros « مهمّة اليوم » juste au-dessus : un seul
           visuel du guide par écran. */}
       <MascotteKunz message={message} humeur="accueil" compact sansPortrait />
 

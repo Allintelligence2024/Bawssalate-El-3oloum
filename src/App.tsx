@@ -1487,8 +1487,6 @@ export default function App() {
           onCreerCompte={demanderCreationCompte}
           onMasquerInvitation={masquerInvitationCompte}
           onAllerExercices={() => ouvrirExercices('principal')}
-          onAllerKouest={() => setOnglet('aujourdhui')}
-          onAllerBac={() => setOnglet('bac')}
         />
       )}
       {pret && onglet === 'aujourdhui' && (
@@ -1499,7 +1497,6 @@ export default function App() {
           onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
           onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
           onDefi60={() => setMode({ type: 'defi60' })}
-          onOuvrirExercices={() => ouvrirExercices('aujourdhui')}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
@@ -1617,7 +1614,7 @@ export default function App() {
                       className="onglet"
                       aria-current={actif ? 'page' : undefined}
                     >
-                      <span className="block h-[18px] w-[18px]" aria-hidden="true">
+                      <span className="onglet-ico" aria-hidden="true">
                         <Ico />
                       </span>
                       <span>{o.label}</span>

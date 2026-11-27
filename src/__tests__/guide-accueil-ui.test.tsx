@@ -60,7 +60,7 @@ describe('la carte du guide', () => {
   it('affiche le titre, les trois états et aucune icône emoji', async () => {
     await monter(createElement(GuideAccueil, accessoires()));
     const texte = zone!.textContent ?? '';
-    expect(texte).toContain('المرشد يفتح الحصة');
+    expect(texte).toContain('اختر حالتك اليوم');
     expect(texte).toContain('عيان');
     expect(texte).toContain('لاباس');
     expect(texte).toContain('في الفورمة');
