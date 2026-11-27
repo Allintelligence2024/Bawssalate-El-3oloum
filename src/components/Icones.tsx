@@ -281,3 +281,17 @@ export function IcoChevron({ ouvert = false }: { ouvert?: boolean }) {
     </svg>
   );
 }
+
+// الرئيسية — أيقونة الباب الأول (الشاشة الرئيسية، maquette écran 01).
+export function IcoMaison() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-full w-full" aria-hidden>
+      <path
+        d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

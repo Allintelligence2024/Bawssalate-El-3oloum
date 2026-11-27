@@ -1,4 +1,4 @@
-// « المرشد يفتح الحصة » — la carte d'accueil du guide, en tête de كويست.
+// « المرشد يفتح الحصة » — la carte d'accueil du guide, en tête de الرئيسية.
 //
 // Elle ne décide rien : la mission vient de `missionDuJour()` (moteur unique). Le guide
 // demande seulement **comment l'élève se sent**, puis met en scène l'action que le moteur a

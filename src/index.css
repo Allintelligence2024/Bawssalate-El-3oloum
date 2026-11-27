@@ -45,6 +45,10 @@
   --color-paper: #fffef8;
   --color-sage: #eaf3e5;
   --color-sage-soft: #f3f8ef;
+  /* Feuille — l'accent vif de la mascotte القبطان مفتاح (maquette) : halo,
+     jauges, jalons du parcours, état « aujourd'hui » du rythme. */
+  --color-leaf: #4e9c2e;
+  --color-leaf-soft: #edf6e2;
   /* clay → ROUGE (sémantique faute / erreur / destructif) */
   --color-clay: #dc2626;
   --color-clay-soft: #fde8e8;
@@ -90,6 +94,8 @@
   --color-paper: #131b16;
   --color-sage: #5e8f6f;
   --color-sage-soft: #1a2e22;
+  --color-leaf: #93d964;
+  --color-leaf-soft: #17230f;
   /* clay → ROUGE (sémantique faute / erreur / destructif) */
   --color-clay: #f87171;
   --color-clay-soft: #7f1d1d;
@@ -126,6 +132,99 @@
   background-color: #fbfaf3;
   color: #183d31;
 }
+
+/* ── Maquette · الرئيسية : bandeau d'accueil vert « المرشد يفتح الحصة », halo
+   feuille et pastille miel. Règles hors @layer : elles priment sur les
+   utilitaires (couleurs du texte du hero, y compris en thème sombre). ── */
+.hero-principal {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  background: linear-gradient(140deg, #2c6b52 0%, #225342 55%, #1b4636 100%);
+  color: #f2f8ee;
+  box-shadow: 0 18px 38px rgba(22, 53, 42, 0.35);
+}
+[data-theme='dark'] .hero-principal {
+  background: linear-gradient(140deg, #1d4433 0%, #143427 55%, #0f2419 100%);
+  color: #eaf5e9;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.5);
+}
+.hero-principal .lueur-feuille {
+  position: absolute;
+  top: -44px;
+  inset-inline-start: -32px;
+  width: 180px;
+  height: 180px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(126, 194, 74, 0.5), transparent 70%);
+}
+.hero-principal .eyebrow { color: #cde8b8; }
+.hero-titre {
+  margin-top: 10px;
+  font-size: 1.85rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: inherit;
+}
+.hero-sous {
+  margin-top: 8px;
+  font-size: 0.925rem;
+  line-height: 1.7;
+  color: #d5e6cd;
+}
+[data-theme='dark'] .hero-sous { color: #c2d6b8; }
+.hero-note {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: #b9d3ab;
+}
+.pilule-sequence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(242, 193, 92, 0.16);
+  border: 1px solid rgba(227, 201, 143, 0.45);
+  color: #f2c15c;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* Liens rapides de الرئيسية (maquette : chips « تدريبات سريعة ») */
+.liens-rapides { display: flex; gap: 8px; flex-wrap: wrap; }
+.lien-rapide {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 14px;
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-line);
+  color: var(--color-ink);
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.lien-rapide:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-sage);
+}
+.lien-rapide:active { transform: translateY(1px); }
+.lien-rapide .picto {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+[data-theme='dark'] .lien-rapide .picto { color: var(--color-leaf); }
 
 html, body, #root { height: 100%; margin: 0; }
 html { scroll-behavior: smooth; }
@@ -611,7 +710,7 @@ h1, h2 { text-wrap: balance; }
     background: linear-gradient(90deg, #c9a558, var(--color-gold));
   }
 
-  /* — Barre d'onglets (bas de l'écran) : quatre portes, pas plus — */
+  /* — Barre d'onglets (bas de l'écran) : cinq portes, pas plus — */
   .onglets {
     display: flex;
     align-items: stretch;
@@ -628,7 +727,7 @@ h1, h2 { text-wrap: balance; }
     gap: 3px;
     min-height: 54px;
     padding: 4px 2px;
-    border-radius: 10px;
+    border-radius: 12px;
     color: var(--color-mute);
     font-size: 10.5px;
     font-weight: 700;

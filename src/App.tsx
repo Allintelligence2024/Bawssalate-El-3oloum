@@ -1,4 +1,4 @@
-// التطبيق — 5 تبويبات (اليوم / مساري / تدريبات / منهجية / أنا) + أوضاع جلسة كاملة الشاشة.
+// التطبيق — 5 تبويبات (الرئيسية / مساري / كويست / الباك / أنا) + أوضاع جلسة كاملة الشاشة.
 // تصميم حديث، ترفيهي، أصوات تفاعل، تأثيرات تصفيق.
 // كل الحالة في localStorage. لا خادم، لا تحليلات، لا تبعات ثقيلة.
 
@@ -35,6 +35,7 @@ import { synchroniserRappel } from './utils/rappels';
 import type { BoussoleAttemptEvent } from './types/boussoleBridge';
 import { appliquerEvenementBoussole, demoterProgressionDepuisKafaa } from './utils/boussoleAdapter';
 import { enregistrerDrillReussi } from './utils/drills';
+import Principal from './components/Principal';
 import Aujourdhui from './components/Aujourdhui';
 import Masari from './components/Masari';
 import Exercices from './components/Exercices';
@@ -87,13 +88,15 @@ import {
   IcoCarnet,
   IcoDiplome,
   IcoLune,
+  IcoMaison,
   IcoRoute,
   IcoCible,
 } from './components/Icones';
 
-// أربعة أبواب فقط: كويست · مساري · الباك · أنا.
+// خمسة أبواب: الرئيسية · مساري · كويست · الباك · أنا (قرار 2026-11-27 : « الرئيسية »
+// منفصلة عن « كويست » — الأولى هي الشاشة الرئيسية، والثانية بوّابة التمارين والاختبارات).
 // 'exercices' و'methodo' بقاو قيمًا صالحة، لكن كشاشات فرعية بلا تبويب خاصّ بها.
-type Onglet = 'aujourdhui' | 'masari' | 'bac' | 'ana' | 'exercices' | 'methodo';
+type Onglet = 'principal' | 'aujourdhui' | 'masari' | 'bac' | 'ana' | 'exercices' | 'methodo';
 type Mode =
   | { type: 'methodoExos' }
   | { type: 'structureTerre' }
@@ -126,6 +129,7 @@ type Mode =
   | { type: 'lecture'; lessonId: string; retour?: Mode }
 
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoCible }[] = [
+  { id: 'principal', label: 'الرئيسية', icone: IcoMaison },
   { id: 'masari', label: 'مساري', icone: IcoRoute },
   { id: 'aujourdhui', label: 'كويست', icone: IcoCible },
   { id: 'bac', label: 'الباك', icone: IcoDiplome },
@@ -134,7 +138,6 @@ const ONGLETS: { id: Onglet; label: string; icone: typeof IcoCible }[] = [
 
 /** L'onglet réellement allumé : un sous-écran allume son parent. */
 function ongletParent(o: Onglet): Onglet {
-  if (o === 'exercices') return 'aujourdhui';
   if (o === 'methodo') return 'bac';
   return o;
 }
@@ -319,7 +322,13 @@ export default function App() {
   const blocageRef = useRef(blocageRestauration);
   blocageRef.current = blocageRestauration;
   const [repriseVisible, setRepriseVisible] = useState(true);
-  const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
+  const [onglet, setOnglet] = useState<Onglet>('principal');
+  // Les تدريبات sont un sous-écran : la barre de retour renvoie à la porte d'origine.
+  const [origineExercices, setOrigineExercices] = useState<'principal' | 'aujourdhui' | 'ana'>('aujourdhui');
+  const ouvrirExercices = (origine: 'principal' | 'aujourdhui' | 'ana') => {
+    setOrigineExercices(origine);
+    setOnglet('exercices');
+  };
   // Changer de porte remet la page en haut : sinon on hérite du défilement du parent.
   useEffect(() => {
     // En jsdom (tests) scrollY vaut toujours 0 : on n'appelle rien.
@@ -1070,8 +1079,8 @@ export default function App() {
             if (vers === 'examen') setMode({ type: 'examenBlanc' });
             else if (vers === 'recherche') setMode({ type: 'recherche' });
             else if (vers === 'methodo') setOnglet('methodo');
-            else if (vers === 'exercices') setOnglet('exercices');
-            else setOnglet('aujourdhui');
+            else if (vers === 'exercices') ouvrirExercices('aujourdhui');
+            else setOnglet('principal');
           }}
         />
       );
@@ -1461,17 +1470,13 @@ export default function App() {
 
       {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
       <div className="pt-16">
-      {pret && onglet === 'aujourdhui' && (
-        <Aujourdhui
+      {pret && onglet === 'principal' && (
+        <Principal
           etat={etat}
           onOuvrirItem={ouvrirItem}
           onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
           onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
-          onResultatKafaa={onResultatKafaa}
-          onOuvrirMethodologie={() => setOnglet('methodo')}
           onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
-          onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
-          onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
           onDefi60={() => setMode({ type: 'defi60' })}
           onFakh={() => setMode({ type: 'fakh' })}
           onBriques={() => setMode({ type: 'briques' })}
@@ -1481,6 +1486,20 @@ export default function App() {
           nomSujet={SUJETS_OFFICIELS[0]?.id}
           onCreerCompte={demanderCreationCompte}
           onMasquerInvitation={masquerInvitationCompte}
+          onAllerExercices={() => ouvrirExercices('principal')}
+          onAllerKouest={() => setOnglet('aujourdhui')}
+          onAllerBac={() => setOnglet('bac')}
+        />
+      )}
+      {pret && onglet === 'aujourdhui' && (
+        <Aujourdhui
+          etat={etat}
+          onResultatKafaa={onResultatKafaa}
+          onOuvrirMethodologie={() => setOnglet('methodo')}
+          onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
+          onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
+          onDefi60={() => setMode({ type: 'defi60' })}
+          onOuvrirExercices={() => ouvrirExercices('aujourdhui')}
           onDemarrerRevueCroisee={() => {
             const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
             if (lessonIds.length < 2) return;
@@ -1512,7 +1531,10 @@ export default function App() {
       )}
       {pret && onglet === 'exercices' && (
         <>
-        <BarreRetour texte="رجوع إلى كويست" onRetour={() => setOnglet('aujourdhui')} />
+        <BarreRetour
+          texte={`رجوع إلى ${ONGLETS.find((o) => o.id === origineExercices)?.label ?? 'كويست'}`}
+          onRetour={() => setOnglet(origineExercices)}
+        />
         <Exercices
           etat={etat}
           onItemReussi={onItemReussi}
@@ -1570,23 +1592,23 @@ export default function App() {
           onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
           onBasculerFavori={basculerFavori}
           onRappel={(rappel) => setEtat((prev) => ({ ...prev, rappel }))}
-          onAllerExercices={() => setOnglet('exercices')}
+          onAllerExercices={() => ouvrirExercices('ana')}
           onOuvrirConfidentialite={() => setMode({ type: 'confidentialite' })}
           onOuvrirFiche={() => setMode({ type: 'fiche' })}
           evaluationsEntraineur={etat.maitriseSujets}
-          onOuvrirEntraineur={() => setOnglet('exercices')}
+          onOuvrirEntraineur={() => ouvrirExercices('ana')}
         />
         </Suspense>
       )}
       </div>
 
-          {/* أربعة أبواب، لا أكثر. الشاشات الفرعية تُضيء أباها. */}
+          {/* خمسة أبواب، لا أكثر. الشاشات الفرعية تُضيء أباها. */}
           {pret && <nav className="fixed inset-x-0 bottom-0 z-40" aria-label="أبواب البوصلة">
             <div className="mx-auto max-w-5xl">
               <div className="onglets">
                 {ONGLETS.map((o) => {
                   const Ico = o.icone;
-                  const actif = o.id === ongletParent(onglet);
+                  const actif = o.id === (onglet === 'exercices' ? origineExercices : ongletParent(onglet));
                   return (
                     <button
                       key={o.id}
