@@ -65,7 +65,9 @@ export default function GuideAccueil({
   return (
     <section className="carte mb-4" aria-label="المرشد يفتح الحصة">
       <p className="oeil mb-2">المرشد يفتح الحصة</p>
-      <MascotteKunz message={message} humeur="accueil" compact />
+      {/* Le portrait vit dans le bandeau de مهمّة اليوم juste au-dessus : un seul
+          visuel du guide par écran. */}
+      <MascotteKunz message={message} humeur="accueil" compact sansPortrait />
 
       <div className="mt-3 grid grid-cols-3 gap-2" role="group" aria-label="كيف حالك اليوم">
         {CHOIX.map(({ id, libelle, precision, Icone }) => {

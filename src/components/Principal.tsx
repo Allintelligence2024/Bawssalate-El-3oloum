@@ -1,9 +1,11 @@
-// الرئيسية — la porte principale de l'application (maquette « écran 01 »).
+// الرئيسية — la porte principale de l'application (maquette « écran 01 », version
+// développée) : bandeau d'accueil, carte مهمّة اليوم façon maquette (halo feuille,
+// mascotte, CTA or), le guide et son choix d'énergie, les liens rapides, le plan
+// intensif, l'éligibilité de la semaine en perles, les mini-statistiques, les
+// statistiques du مُرشد et la position par rapport à la classe.
 //
-// C'est l'écran « main » : le bandeau d'accueil (المرشد يفتح الحصة), la mission du
-// jour en un geste, le plan intensif, le rythme de la semaine, les statistiques
-// du مُرشد et les liens rapides. Le quiz et les défis vivent sur leur propre porte
-// (كويست) ; ici, une seule action principale.
+// Une seule action principale par écran : le CTA « ابدأ » de la mission. Le quiz
+// et les défis vivent sur leur propre porte (كويست).
 import { useState } from 'react';
 
 import { prochaineAction, positionClasse, rythmeSemaine, itemsFaits, planIntensif, quotaDe } from '../utils/moteur';
@@ -51,6 +53,13 @@ function etiquetteMission(type: TypeMission): string {
   return ETIQUETTES_MISSION[type];
 }
 
+const JOURS_AR = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const INITIALES_JOUR = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
+
+function jourDe(iso: string): number {
+  return new Date(iso + 'T12:00:00').getDay();
+}
+
 export default function Principal({
   etat,
   onOuvrirItem,
@@ -73,12 +82,11 @@ export default function Principal({
   const [energie, setEnergie] = useState<Energie | null>(null);
   const [reposChoisi, setReposChoisi] = useState(false);
   const planMission = missionDuJour(etat);
-  const croiseePlan = planIntensif(etat);
+  const plan = planIntensif(etat);
   const quota = quotaDe(etat);
   const rythme = rythmeSemaine(etat);
   const position = positionClasse(etat);
   const faits = itemsFaits(etat);
-  const plan = croiseePlan;
 
   /** Un seul geste : la mission du jour. Aucun écran intermédiaire, aucun choix à faire. */
   function lancerMission(): void {
@@ -111,28 +119,69 @@ export default function Principal({
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-8">
-      {/* bandeau d'accueil — maquette « écran 01 » : halo feuille, miel, une seule promesse */}
-      <header className="hero-principal">
-        <div className="lueur-feuille" aria-hidden="true" />
+      {/* ترحيب — rangée d'accueil façon maquette : date, salutation, pilule d'éligibilité */}
+      <header className="mb-4">
         <div className="rangee rangee--entre">
-          <p className="eyebrow">{formatJourAr(aujourdhui())}</p>
-          <span className="pilule-sequence">
+          <div className="min-w-0">
+            <p className="eyebrow">{formatJourAr(aujourdhui())}</p>
+            <h1 className="font-naskh mt-1 text-3xl font-bold leading-tight">
+              {salue()}، {etat.nom}
+            </h1>
+          </div>
+          <span className="pill-rythme">
             <span className="block h-3.5 w-3.5" aria-hidden>
               <IcoFlamme />
             </span>
             إيقاعك {nb(rythme.jours)} من {nb(rythme.cible)}
           </span>
         </div>
-        <h1 className="font-naskh hero-titre">
-          {salue()}، {etat.nom}
-        </h1>
-        <p className="hero-sous">
+        <p className="mt-2 text-sm leading-relaxed text-mute">
           {faits === 0
             ? 'كل شيء يبدأ بخطوة واحدة. مهمّة اليوم وحدها تكفي.'
             : `أنجزت ${nbMin(faits)} من ${nbMin(CHEMIN.length)} بنية في طريقك. مهمّة واحدة في كل مرة.`}
         </p>
-        {faits < 3 && messageAccueil(etat) && <p className="hero-note">{messageAccueil(etat)}</p>}
+        {faits < 3 && messageAccueil(etat) && (
+          <p className="mt-1.5 text-xs leading-relaxed text-forest-deep">{messageAccueil(etat)}</p>
+        )}
       </header>
+
+      {/* مهمّة اليوم — le héros maquette : halo feuille, mascotte, un seul « ابدأ » */}
+      <section className="hero-principal" aria-label="مهمّة اليوم">
+        <div className="lueur-feuille" aria-hidden="true" />
+        <img className="hero-mascotte" src="/mascotte.webp" alt="" aria-hidden="true" />
+        <div className="hero-contenu">
+          <div className="rangee rangee--entre">
+            <p className="hero-etiquette">مهمّة اليوم · {nb(planMission.mission.minutes)} دقائق</p>
+            <span
+              className={`mention ${
+                planMission.mission.type === 'repos' || planMission.mission.type === 'fini'
+                  ? 'mention--vert'
+                  : 'mention--or'
+              }`}
+            >
+              {etiquetteMission(planMission.mission.type)}
+            </span>
+          </div>
+          <h2 className="hero-titre-mission">{planMission.mission.titre}</h2>
+          <p className="hero-sous">في النهاية تعرف: {planMission.mission.savoirFaire}</p>
+          <p className="hero-note">{planMission.mission.pourquoi}</p>
+
+          <button type="button" className="btn-hero" onClick={lancerMission}>
+            {libelleMission(planMission.mission)}
+          </button>
+          <p className="hero-note hero-centre">{sousTitreMission(planMission)}</p>
+
+          {reposChoisi ? (
+            <p role="status" className="hero-statut">
+              سجّلنا راحتك — المهمّة تبقى هنا غدًا، بلا حساب.
+            </p>
+          ) : (
+            <button type="button" className="btn-hero-mini" onClick={() => setReposChoisi(true)}>
+              يكفي اليوم
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* المرشد يفتح الحصة — le guide demande l'énergie, puis met en scène l'action
           que le moteur a déjà choisie. Une seule carte, trois boutons. */}
@@ -160,48 +209,9 @@ export default function Principal({
         />
       </div>
 
-      {/* المهمّة الواحدة — 3 إلى 5 دقائق، بلا جدار وبلا طابور */}
-      <section className="carte mb-4" aria-label="مهمّة اليوم">
-        <div className="rangee rangee--entre">
-          <p className="oeil">مهمّة اليوم · {nb(planMission.mission.minutes)} دقائق</p>
-          <span
-            className={`mention ${
-              planMission.mission.type === 'repos' || planMission.mission.type === 'fini'
-                ? 'mention--vert'
-                : 'mention--or'
-            }`}
-          >
-            {etiquetteMission(planMission.mission.type)}
-          </span>
-        </div>
-        <p className="carte__titre mt-1">{planMission.mission.titre}</p>
-        <p className="petit mt-1">في النهاية تعرف: {planMission.mission.savoirFaire}</p>
-        <p className="petit doux mt-1">{planMission.mission.pourquoi}</p>
-
-        <button type="button" className="btn--primaire mt-3 w-full" onClick={lancerMission}>
-          {libelleMission(planMission.mission)}
-        </button>
-
-        <p className="petit doux mt-2 text-center">{sousTitreMission(planMission)}</p>
-
-        {reposChoisi ? (
-          <p role="status" className="mt-2 rounded-xl border border-line bg-bg px-3 py-2 text-center text-xs font-bold text-ink-soft">
-            سجّلنا راحتك — المهمّة تبقى هنا غدًا، بلا حساب.
-          </p>
-        ) : (
-          <button
-            type="button"
-            className="btn-mini mt-2 w-full"
-            onClick={() => setReposChoisi(true)}
-          >
-            يكفي اليوم
-          </button>
-        )}
-      </section>
-
       {/* Liens rapides (maquette : chips « تدريبات سريعة ») — jamais des « ابدأ » */}
       {(onAllerKouest || onAllerExercices || onAllerBac) && (
-        <nav className="liens-rapides mb-4" aria-label="وصول سريع">
+        <nav className="liens-rapides mt-4" aria-label="وصول سريع">
           {onAllerKouest && (
             <button type="button" className="lien-rapide" onClick={onAllerKouest}>
               <span className="picto" aria-hidden>
@@ -231,7 +241,7 @@ export default function Principal({
 
       {/* المراجعة المكثّفة (P2.3): خطة الأسبوع — تظهر فقط عند تفعيلها */}
       {plan && (
-        <section className="mb-4 rounded-3xl border border-gold-soft bg-gold-soft/40 p-5">
+        <section className="mb-4 mt-4 rounded-3xl border border-gold-soft bg-gold-soft/40 p-5">
           <p className="eyebrow">المراجعة المكثّفة</p>
           <h2 className="font-naskh mt-1 text-xl font-bold leading-snug">
             {plan.phase === 'J7'
@@ -276,7 +286,7 @@ export default function Principal({
         </section>
       )}
 
-      {/* إيقاع الأسبوع — لا سلسلة قابلة للكسر */}
+      {/* إيقاع الأسبوع — perles des jours (maquette), لا سلسلة قابلة للكسر */}
       <section className="card mt-5 p-5">
         <div className="flex items-center justify-between">
           <div>
@@ -287,35 +297,36 @@ export default function Principal({
                 : `${nb(rythme.jours)} من ${nb(rythme.cible)} أيام`}
             </p>
           </div>
-          <div className="flex items-start gap-1.5" dir="rtl">
-            {rythme.sept.map((j) => (
-              <div
-                key={j.iso}
-                className="flex w-7 flex-col items-center gap-1"
-                title={formatJourAr(j.iso)}
-              >
-                <span
-                  className={`grid h-7 w-7 place-items-center rounded-full text-[11px] font-black ${
-                    j.actif ? 'bg-forest text-paper' : 'border border-line bg-paper text-mute'
-                  } ${j.aujourdhui ? 'ring-2 ring-leaf ring-offset-1 ring-offset-paper' : ''}`}
-                >
-                  {j.actif ? '✓' : ''}
-                </span>
-                <span
-                  className={`text-[10px] leading-none ${
-                    j.aujourdhui ? 'font-black text-forest-deep' : 'text-mute'
-                  }`}
-                >
-                  {new Date(j.iso + 'T12:00:00').getDate()}
-                </span>
-              </div>
-            ))}
+          <div className="perles-jours" dir="rtl">
+            {rythme.sept.map((j) => {
+              const idx = jourDe(j.iso);
+              return (
+                <div key={j.iso} className="jour" title={formatJourAr(j.iso)}>
+                  <span className={`jour-perle ${j.actif ? 'fait' : ''} ${j.aujourdhui ? 'aujourdhui' : ''}`}>
+                    {j.actif ? '✓' : INITIALES_JOUR[idx]}
+                  </span>
+                  <span className={`jour-nom ${j.aujourdhui ? 'aujourdhui' : ''}`}>{JOURS_AR[idx]}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-mute">
           الهدف {nb(rythme.cible)} أيام من {nb(7)} — لا أكثر. الراحة جزء من الخطة، لا كسر فيها شيء.
         </p>
       </section>
+
+      {/* mini-statistiques (maquette : deux cartes courtes) */}
+      <div className="mini-stats mt-5">
+        <div className="card mini-stat">
+          <div className="num">{nb(etat.revisions)}</div>
+          <div className="lbl">مراجعة في رصيدك</div>
+        </div>
+        <div className="card mini-stat">
+          <div className="num">{nb(etat.minutesTotales)}</div>
+          <div className="lbl">دقيقة تدريب</div>
+        </div>
+      </div>
 
       {/* إحصاء المُرشد — كم صحيحة وكم ليست صحيحة */}
       <div className="mt-5">

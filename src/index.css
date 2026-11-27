@@ -133,12 +133,12 @@
   color: #183d31;
 }
 
-/* ── Maquette · الرئيسية : bandeau d'accueil vert « المرشد يفتح الحصة », halo
-   feuille et pastille miel. Règles hors @layer : elles priment sur les
-   utilitaires (couleurs du texte du hero, y compris en thème sombre). ── */
+/* ── Maquette · الرئيسية : carte مهمّة اليوم (halo feuille, mascotte, CTA or),
+   pilule d'éligibilité, perles des jours, mini-statistiques, liens rapides.
+   Règles hors @layer : elles priment sur les utilitaires (couleurs du hero,
+   y compris en thème sombre). ── */
 .hero-principal {
   position: relative;
-  overflow: hidden;
   border-radius: 22px;
   padding: 18px 18px 16px;
   background: linear-gradient(140deg, #2c6b52 0%, #225342 55%, #1b4636 100%);
@@ -156,42 +156,183 @@
   inset-inline-start: -32px;
   width: 180px;
   height: 180px;
+  border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(circle, rgba(126, 194, 74, 0.5), transparent 70%);
 }
-.hero-principal .eyebrow { color: #cde8b8; }
-.hero-titre {
-  margin-top: 10px;
-  font-size: 1.85rem;
-  line-height: 1.3;
+.hero-mascotte {
+  position: absolute;
+  left: 2px;
+  bottom: -14px;
+  width: 88px;
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.35));
+}
+.hero-contenu {
+  position: relative;
+  z-index: 2;
+  padding-left: 5.8rem;
+}
+.hero-etiquette {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #cde8b8;
+}
+.hero-titre-mission {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.55;
   font-weight: 700;
   color: inherit;
 }
 .hero-sous {
-  margin-top: 8px;
-  font-size: 0.925rem;
+  margin-top: 6px;
+  font-size: 0.82rem;
   line-height: 1.7;
   color: #d5e6cd;
 }
-[data-theme='dark'] .hero-sous { color: #c2d6b8; }
 .hero-note {
   margin-top: 4px;
-  font-size: 0.8rem;
-  line-height: 1.6;
+  font-size: 0.74rem;
+  line-height: 1.65;
   color: #b9d3ab;
 }
-.pilule-sequence {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
+.hero-centre { margin-top: 8px; text-align: center; }
+[data-theme='dark'] .hero-sous { color: #c2d6b8; }
+[data-theme='dark'] .hero-note { color: #a8c69b; }
+/* mentions sur fond vert : pastilles translucides miel / feuille */
+.hero-contenu .mention {
   background: rgba(242, 193, 92, 0.16);
   border: 1px solid rgba(227, 201, 143, 0.45);
   color: #f2c15c;
-  font-size: 0.75rem;
+}
+.hero-contenu .mention--vert {
+  background: rgba(126, 194, 74, 0.18);
+  border-color: rgba(126, 194, 74, 0.4);
+  color: #bfe6a6;
+}
+.btn-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(140deg, #f2c15c 0%, #d9a23f 100%);
+  color: #2b1e07;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn-hero:hover { filter: brightness(1.05); }
+.btn-hero:active { transform: translateY(1px); }
+.btn-hero-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  margin-top: 10px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-hero-mini:hover { background: rgba(255, 255, 255, 0.2); }
+.hero-statut {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  text-align: center;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: inherit;
+}
+/* Pilule d'éligibilité (rangée d'accueil) */
+.pill-rythme {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--color-honey-soft);
+  border: 1px solid var(--color-honey-line);
+  color: var(--color-honey-ink);
+  font-size: 0.78rem;
   font-weight: 800;
   white-space: nowrap;
+}
+/* Perles des jours (maquette « إيقاع الأسبوع ») */
+.perles-jours { display: flex; align-items: flex-start; gap: 6px; }
+.jour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 2.55rem;
+}
+.jour-perle {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 1.5px solid var(--color-line);
+  color: var(--color-mute);
+  font-size: 11px;
+  font-weight: 900;
+}
+.jour-perle.fait {
+  background: var(--color-forest);
+  border-color: var(--color-forest);
+  color: var(--color-paper);
+}
+.jour-perle.aujourdhui {
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-leaf);
+}
+.jour-nom {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--color-mute);
+  white-space: nowrap;
+}
+.jour-nom.aujourdhui { color: var(--color-forest-deep); }
+/* Mini-statistiques (maquette : quick-row) */
+.mini-stats { display: flex; gap: 12px; }
+.mini-stat {
+  flex: 1;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mini-stat .num {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+.mini-stat .lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-mute);
 }
 /* Liens rapides de الرئيسية (maquette : chips « تدريبات سريعة ») */
 .liens-rapides { display: flex; gap: 8px; flex-wrap: wrap; }
