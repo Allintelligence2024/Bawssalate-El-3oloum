@@ -20,7 +20,7 @@ const COQUILLE = [
 ];
 const contenuValide = u => typeof u === 'string' &&
   (/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
-   /^\/assets\/(schemasSvt|audioMourchid)-[a-zA-Z0-9_.-]+\.js$/.test(u) ||
+   /^\/assets\/(schemasSvt|audioMourchid|audioLecons)-[a-zA-Z0-9_.-]+\.js$/.test(u) ||
    BOUSSOLE.includes(u));
 const coquilleValide = u => typeof u === 'string' && COQUILLE.includes(u);
 // Phase 2/4 : les visuels de /lecons/img/ (WebP muets du manuel et SVG vectoriels) ne

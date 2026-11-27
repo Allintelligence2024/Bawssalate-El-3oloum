@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { BRANCHES, QUESTIONS, questionParId, questionsDeBranche, type LienMourchid } from '../data/mourchid';
 import { nb } from '../utils/dates';
 import { prechaufferAudioMourchid } from '../utils/audioMourchidChargeur';
+import { prechaufferAudioLecons } from '../utils/audioLeconsChargeur';
 import AudioMourchidBloc from './AudioMourchidBloc';
+import BibliothequeResumesLecons from './BibliothequeResumesLecons';
 import { IcoRetour } from './Icones';
 
 interface Props {
@@ -20,6 +22,7 @@ export default function Mourchid({ onAller, onFermer }: Props) {
 
   useEffect(() => {
     prechaufferAudioMourchid();
+    prechaufferAudioLecons();
   }, []);
 
   function retour() {
@@ -67,6 +70,11 @@ export default function Mourchid({ onAller, onFermer }: Props) {
               <div className="mt-6">
                 <p className="eyebrow mb-2">كبسولات المُرشد الصوتية في المنهجية</p>
                 <AudioMourchidBloc modeMethodo />
+              </div>
+
+              <div className="mt-6">
+                <p className="eyebrow mb-2">ملخّصات الدروس بصوت ونصّ المُرشد</p>
+                <BibliothequeResumesLecons />
               </div>
             </>
           )}

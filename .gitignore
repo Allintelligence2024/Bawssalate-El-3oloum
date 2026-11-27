@@ -57,7 +57,8 @@ plans/_travail-images/
 .cache/
 
 # Phase 3 — capsules audio « voix du المرشد » : jamais versionnées dans Git ni public/
-# (générées dans .cache/audio-mourchid/ et déployées sur Cloudflare R2).
+# (générées dans plans/_audio-r2/ et déployées sur Cloudflare R2).
+plans/_audio-r2/
 public/audio/
 public/**/*.mp3
 public/**/*.wav

@@ -10,7 +10,7 @@ import { BRANCHES } from '../mourchid';
 import {
   formatDureeAudio,
   urlAudioMourchid,
-} from '../../utils/audioMourchid';
+} from '../../utils/audioUrl';
 import {
   chargerAudioMourchid,
   lireAudioMourchidCache,

@@ -212,4 +212,19 @@ describe('illustrations WebP de leçon (Phase 2)', () => {
     const chunk = await e.demande('/assets/audioMourchid-def456.js');
     expect(await chunk!.text()).toContain('AUDIO_MOURCHID');
   });
+
+  it('place audioLecons-*.js dans le lot contenu (hors coquille) et le sert hors ligne après téléchargement', async () => {
+    const e = environnement();
+    e.manifest.contenu.push('/assets/audioLecons-u1pilot.js');
+    e.put('/precache-manifest.json', JSON.stringify(e.manifest), 'application/json');
+    e.put('/assets/audioLecons-u1pilot.js', 'export const AUDIO_LECONS = [];', 'text/javascript');
+    await e.lifecycle('install');
+    expect((await e.message('TELECHARGER_HORS_LIGNE')).manquants).toBe(0);
+    expect(e.demandes).not.toContain('/assets/audioLecons-u1pilot.js');
+    expect((await e.message('TELECHARGER_CONTENU')).manquants).toBe(0);
+    expect(e.demandes).toContain('/assets/audioLecons-u1pilot.js');
+    e.setOnline(false);
+    const chunk = await e.demande('/assets/audioLecons-u1pilot.js');
+    expect(await chunk!.text()).toContain('AUDIO_LECONS');
+  });
 });

@@ -9,8 +9,10 @@ import { nb } from '../utils/dates';
 import { IcoRetour } from './Icones';
 import IllustrationsLecon from './IllustrationsLecon';
 import AudioMourchidBloc from './AudioMourchidBloc';
+import LecteurAudioResume from './LecteurAudioResume';
 import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
 import { prechaufferAudioMourchid } from '../utils/audioMourchidChargeur';
+import { prechaufferAudioLecons } from '../utils/audioLeconsChargeur';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -31,6 +33,7 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
   useEffect(() => {
     prechaufferSchemasSvt();
     prechaufferAudioMourchid();
+    prechaufferAudioLecons();
   }, []);
 
   return (
@@ -136,6 +139,11 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
             <div className="card p-4">
               <p className="eyebrow">الملخّص الذهبي</p>
               <h2 className="font-naskh mt-1 text-lg font-bold">{titreLecon(lessonId)}</h2>
+
+              {/* المرحلة 3 / 5.3 — مشغّل الملخّص الصوتي للدرس في أعلى الملخّص الذهبي */}
+              <div className="mt-3">
+                <LecteurAudioResume lessonId={lessonId} />
+              </div>
 
               <p className="mt-3 text-[11px] font-bold text-forest">الخطوات السببية</p>
               <div className="mt-2 space-y-2">

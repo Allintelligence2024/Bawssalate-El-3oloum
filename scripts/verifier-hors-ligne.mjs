@@ -44,11 +44,15 @@ const coquilleOk = Array.isArray(manifeste.statiques) && manifeste.statiques.len
 if (!coquilleOk) problemes.push('manifeste : entrées de coquille non conformes à la règle du worker');
 const SCHEMA_CHUNK = /^\/assets\/schemasSvt-[a-zA-Z0-9_.-]+\.js$/;
 const AUDIO_CHUNK = /^\/assets\/audioMourchid-[a-zA-Z0-9_.-]+\.js$/;
+const AUDIO_LECONS_CHUNK = /^\/assets\/audioLecons-[a-zA-Z0-9_.-]+\.js$/;
 if (Array.isArray(manifeste.assets) && manifeste.assets.some((u) => SCHEMA_CHUNK.test(u))) {
   problemes.push('manifeste : schemasSvt-*.js ne doit jamais entrer dans la coquille (assets)');
 }
 if (Array.isArray(manifeste.assets) && manifeste.assets.some((u) => AUDIO_CHUNK.test(u))) {
   problemes.push('manifeste : audioMourchid-*.js ne doit jamais entrer dans la coquille (assets)');
+}
+if (Array.isArray(manifeste.assets) && manifeste.assets.some((u) => AUDIO_LECONS_CHUNK.test(u))) {
+  problemes.push('manifeste : audioLecons-*.js ne doit jamais entrer dans la coquille (assets)');
 }
 const contenu = Array.isArray(manifeste.contenu) ? manifeste.contenu : null;
 if (!contenu) problemes.push('manifeste : liste « contenu » absente');
@@ -56,6 +60,7 @@ else {
   const contenuOk = contenu.every((u) => /^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(u) ||
     SCHEMA_CHUNK.test(u) ||
     AUDIO_CHUNK.test(u) ||
+    AUDIO_LECONS_CHUNK.test(u) ||
     ['/boussole/index.html', '/boussole/cahier-bac-2022.pdf', '/boussole/memo.pdf'].includes(u));
   if (!contenuOk) problemes.push('manifeste : entrées de contenu non conformes à la règle du worker');
   if (contenu.length === 0) problemes.push('manifeste : contenu lourd vide (le bouton de téléchargement ne servirait à rien)');
@@ -64,6 +69,9 @@ else {
   }
   if (!contenu.some((u) => AUDIO_CHUNK.test(u))) {
     problemes.push('manifeste : audioMourchid-*.js absent du lot « contenu » (hors-ligne sur demande)');
+  }
+  if (!contenu.some((u) => AUDIO_LECONS_CHUNK.test(u))) {
+    problemes.push('manifeste : audioLecons-*.js absent du lot « contenu » (hors-ligne sur demande)');
   }
 }
 // Phase 2 : aucune illustration WebP ne doit entrer dans le précache de démarrage.

@@ -11,7 +11,7 @@ import {
   MESSAGE_AUDIO_R2_EN_ATTENTE,
   formatDureeAudio,
   urlAudioMourchid,
-} from '../utils/audioMourchid';
+} from '../utils/audioUrl';
 
 const VITESSES = [0.85, 1, 1.15] as const;
 
@@ -61,10 +61,19 @@ export default function LecteurAudioMourchid({ piste, compact = false, baseUrl }
   const vitesse = VITESSES[indexVitesse];
 
   useEffect(() => {
+    const el = audioRef.current;
+    if (el && !el.paused && typeof el.pause === 'function') {
+      el.pause();
+    }
     setEnLecture(false);
     setPosition(0);
     setDuree(piste.dureeSecondes);
     setErreurReseau(false);
+    return () => {
+      if (el && !el.paused && typeof el.pause === 'function') {
+        el.pause();
+      }
+    };
   }, [piste.id, piste.dureeSecondes]);
 
   useEffect(() => {
@@ -82,6 +91,7 @@ export default function LecteurAudioMourchid({ piste, compact = false, baseUrl }
       setEnLecture(false);
       return;
     }
+    el.playbackRate = vitesse;
     const promesse = el.play();
     if (promesse && typeof promesse.then === 'function') {
       void promesse
@@ -138,8 +148,11 @@ export default function LecteurAudioMourchid({ piste, compact = false, baseUrl }
             ref={audioRef}
             src={url}
             preload="none"
+            onPlay={() => setEnLecture(true)}
+            onPause={() => setEnLecture(false)}
             onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
             onLoadedMetadata={(e) => {
+              e.currentTarget.playbackRate = vitesse;
               if (Number.isFinite(e.currentTarget.duration) && e.currentTarget.duration > 0) {
                 setDuree(e.currentTarget.duration);
               }

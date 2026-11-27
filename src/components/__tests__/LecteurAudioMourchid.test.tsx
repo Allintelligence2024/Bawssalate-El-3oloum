@@ -10,7 +10,7 @@ import { AUDIO_MOURCHID } from '../../data/audioMourchid';
 import {
   MESSAGE_AUDIO_HORS_LIGNE,
   MESSAGE_AUDIO_R2_EN_ATTENTE,
-} from '../../utils/audioMourchid';
+} from '../../utils/audioUrl';
 import { reinitialiserChargeurAudioMourchidPourTests } from '../../utils/audioMourchidChargeur';
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });

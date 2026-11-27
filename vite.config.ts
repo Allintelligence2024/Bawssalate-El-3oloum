@@ -90,15 +90,17 @@ function precacheManifest(): Plugin {
         // à la volée par le Service Worker dès la première ouverture.
         /^assets\/schemasSvt-/,
         // Phase 3 — le registre « voix du المرشد » (10 capsules + transcriptions arabes)
-        // suit la même discipline : jamais dans la coquille de démarrage, servi dans `contenu`.
+        // et le registre des résumés audio de leçons (`audioLecons-*`) suivent la même
+        // discipline : jamais dans la coquille de démarrage, servis dans `contenu`.
         /^assets\/audioMourchid-/,
+        /^assets\/audioLecons-/,
       ];
       const assets = Object.keys(bundle)
         .filter((f) => /^assets\/.+\.(js|css)$/.test(f))
         .filter((f) => !HORS_PRECACHE.some((r) => r.test(f)))
         .sort().map((f) => `/${f}`);
       const assetsContenu = Object.keys(bundle)
-        .filter((f) => /^assets\/(schemasSvt|audioMourchid)-[a-zA-Z0-9_.-]+\.js$/.test(f))
+        .filter((f) => /^assets\/(schemasSvt|audioMourchid|audioLecons)-[a-zA-Z0-9_.-]+\.js$/.test(f))
         .sort();
       const statiques = COQUILLE;
       // `public/lecons/img/*.{webp,svg}` reste volontairement hors de `statiques` et de `contenu` :
