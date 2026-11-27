@@ -225,7 +225,7 @@ partout). Reliquats possibles, seulement sur sa demande : un 2ᵉ schéma sur `p
 - **Registre** : **65 entrées** (`21` WebP legacy intactes + `44` schémas créés : `37` SVG + `7` WebP muettes annotées), **0 `reviewed: true`**.
 - **Volume local** : `public/lecons/img/` = **2,11 Mio** (< 4 Mio).
 - **Budget hors-ligne** : coquille **2,21 Mio / 2,25 Mio** (inchangée) ; contenu **4,26 Mio / 5,0 Mio** (inclut `schemasSvt-*.js`).
-- **Arbitrage** : consigné en **A-075** dans `plans/relecture/REGISTRE-ARBITRAGES.md`.
+- **Arbitrage** : consigné en **A-076** dans `plans/relecture/REGISTRE-ARBITRAGES.md` (supplante les 3 SVG provisoires de A-075).
 
 ---
 
@@ -253,6 +253,6 @@ partout). Reliquats possibles, seulement sur sa demande : un 2ᵉ schéma sur `p
 - **Poids Lot B** : **476,7 Ko** (`0,47 Mio`) pour les 10 scènes (`28,1–67,9 Ko`, toutes `≤ 100 Ko`).
 - **Volume local** : `public/lecons/img/` = **69 fichiers / 2,54 Mio** (`2 597,0 Ko` < `4,0 Mio`).
 - **Budget hors-ligne** : coquille **2,21 Mio / 2,25 Mio** (inchangée) ; contenu **4,27 Mio / 5,0 Mio** (`schemasSvt` = `88,46 Ko` brut / `21,72 Ko` gzip).
-- **Arbitrage** : consigné en **A-076** dans `plans/relecture/REGISTRE-ARBITRAGES.md`.
+- **Arbitrage** : consigné en **A-077** dans `plans/relecture/REGISTRE-ARBITRAGES.md`.
 
 
