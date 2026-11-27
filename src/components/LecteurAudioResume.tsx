@@ -15,11 +15,12 @@ import {
 } from '../utils/audioLeconsChargeur';
 import {
   MESSAGE_AUDIO_RESUME_HORS_LIGNE,
+  VITESSES_AUDIO,
+  activerLecteurAudio,
   formatDureeAudio,
+  libererLecteurAudio,
   urlAudioLecon,
 } from '../utils/audioUrl';
-
-const VITESSES_RESUME = [1, 1.25, 1.5] as const;
 
 export const STATUT_AUDIO_RESUME = 'ملخّص صوتي — قيد مراجعة الأستاذ';
 
@@ -29,6 +30,8 @@ interface Props {
   compact?: boolean;
   /** إخفاء كتلة النصّ المكتوب عندما يكون معروضًا سلفًا في البطاقة الأمّ */
   masquerTexte?: boolean;
+  /** بدء التشغيل تلقائيًا عند فتح المشغّل بنقرة واحدة من المكتبة الصوتية */
+  lectureAuto?: boolean;
   /** تجاوز اختياري لرابط R2 (للاختبارات أو المعاينة المحلية) */
   baseUrl?: string;
   /** تجاوز اختياري لحالة الشبكة في الاختبارات الوحدوية */
@@ -70,11 +73,19 @@ export default function LecteurAudioResume({
   lessonId,
   compact = false,
   masquerTexte = false,
+  lectureAuto = false,
   baseUrl,
   horsLigneForce,
 }: Props) {
   const [pistes, setPistes] = useState<PisteAudioLecon[] | null>(() => lireAudioLeconsCache());
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const arreterRef = useRef<() => void>(() => {
+    const el = audioRef.current;
+    if (el && typeof el.pause === 'function') {
+      el.pause();
+    }
+    setEnLecture(false);
+  });
   const [enLecture, setEnLecture] = useState(false);
   const [position, setPosition] = useState(0);
   const [duree, setDuree] = useState(0);
@@ -155,10 +166,11 @@ export default function LecteurAudioResume({
       if (cible && !cible.paused && typeof cible.pause === 'function') {
         cible.pause();
       }
+      libererLecteurAudio(arreterRef.current);
     };
   }, [piste?.lessonId, piste?.dureeSecondes, url]);
 
-  const vitesse = VITESSES_RESUME[indexVitesse];
+  const vitesse = VITESSES_AUDIO[indexVitesse];
 
   useEffect(() => {
     if (audioRef.current) {
@@ -171,9 +183,43 @@ export default function LecteurAudioResume({
       if (audioRef.current && typeof audioRef.current.pause === 'function') {
         audioRef.current.pause();
       }
+      libererLecteurAudio(arreterRef.current);
       setEnLecture(false);
     }
   }, [enLigne, enCache, enLecture]);
+
+  useEffect(() => {
+    if (!lectureAuto || !piste || !url || (!enLigne && !enCache)) return;
+    const el = audioRef.current;
+    if (!el || typeof el.play !== 'function') return;
+    activerLecteurAudio(arreterRef.current);
+    el.playbackRate = vitesse;
+    try {
+      const promesse = el.play();
+      if (promesse && typeof promesse.then === 'function') {
+        void promesse
+          .then(() => {
+            setEnLecture(true);
+            setErreurReseau(false);
+          })
+          .catch((err: unknown) => {
+            libererLecteurAudio(arreterRef.current);
+            setEnLecture(false);
+            const nom = err instanceof Error ? err.name : '';
+            if (nom !== 'NotAllowedError' && nom !== 'AbortError') {
+              setErreurReseau(true);
+            }
+          });
+      } else {
+        setEnLecture(true);
+      }
+    } catch {
+      libererLecteurAudio(arreterRef.current);
+      setEnLecture(false);
+    }
+    // تشغيل تلقائي عند فتح سطر محدّد فقط (وليس عند تغيير السرعة أو حالة الشبكة لاحقًا)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lectureAuto, piste?.lessonId, url]);
 
   if (!piste) return null;
 
@@ -187,10 +233,12 @@ export default function LecteurAudioResume({
     if (!el || indisponibleHorsLigne) return;
     if (enLecture) {
       el.pause();
+      libererLecteurAudio(arreterRef.current);
       setEnLecture(false);
       return;
     }
     try {
+      activerLecteurAudio(arreterRef.current);
       el.playbackRate = vitesse;
       const promesse = el.play();
       if (promesse && typeof promesse.then === 'function') {
@@ -200,6 +248,7 @@ export default function LecteurAudioResume({
             setErreurReseau(false);
           })
           .catch(() => {
+            libererLecteurAudio(arreterRef.current);
             setEnLecture(false);
             setErreurReseau(true);
           });
@@ -207,6 +256,7 @@ export default function LecteurAudioResume({
         setEnLecture(true);
       }
     } catch {
+      libererLecteurAudio(arreterRef.current);
       setEnLecture(false);
       setErreurReseau(true);
     }
@@ -228,7 +278,7 @@ export default function LecteurAudioResume({
   }
 
   function cyclerVitesse() {
-    setIndexVitesse((i) => (i + 1) % VITESSES_RESUME.length);
+    setIndexVitesse((i) => (i + 1) % VITESSES_AUDIO.length);
   }
 
   return (
@@ -320,8 +370,14 @@ export default function LecteurAudioResume({
           ref={audioRef}
           src={url}
           preload="none"
-          onPlay={() => setEnLecture(true)}
-          onPause={() => setEnLecture(false)}
+          onPlay={() => {
+            activerLecteurAudio(arreterRef.current);
+            setEnLecture(true);
+          }}
+          onPause={() => {
+            libererLecteurAudio(arreterRef.current);
+            setEnLecture(false);
+          }}
           onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
           onLoadedMetadata={(e) => {
             e.currentTarget.playbackRate = vitesse;
@@ -329,8 +385,12 @@ export default function LecteurAudioResume({
               setDuree(e.currentTarget.duration);
             }
           }}
-          onEnded={() => setEnLecture(false)}
+          onEnded={() => {
+            libererLecteurAudio(arreterRef.current);
+            setEnLecture(false);
+          }}
           onError={() => {
+            libererLecteurAudio(arreterRef.current);
             setEnLecture(false);
             setErreurReseau(true);
           }}
