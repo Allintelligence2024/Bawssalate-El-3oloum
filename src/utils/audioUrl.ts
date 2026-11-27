@@ -67,3 +67,24 @@ export function formatDureeAudio(secondes: number): string {
   const sec = total % 60;
   return `${min}:${sec < 10 ? '0' : ''}${sec}`;
 }
+
+/** سرعات التشغيل الموحّدة بين ملخّصات الدروس وكبسولات «صوت المُرشد». */
+export const VITESSES_AUDIO = [1, 1.25, 1.5] as const;
+
+let arretAudioActif: (() => void) | null = null;
+
+/** يضمن تشغيل مقطع صوتي واحد فقط في كلّ لحظة عبر جميع المشغّلات. */
+export function activerLecteurAudio(arreter: () => void): void {
+  if (arretAudioActif && arretAudioActif !== arreter) {
+    arretAudioActif();
+  }
+  arretAudioActif = arreter;
+}
+
+/** يحرّر القفل الصوتي عند الإيقاف أو انتهاء التشغيل أو إزالة المكوّن. */
+export function libererLecteurAudio(arreter: () => void): void {
+  if (arretAudioActif === arreter) {
+    arretAudioActif = null;
+  }
+}
+

@@ -1,6 +1,7 @@
 // مكتبة ملخّصات المُرشد للدروس — تعرض النصوص المكتوبة والصوتية لجميع الدروس المسجّلة حسب الوحدات.
 //
-// تعمل بلا إنترنت للنصوص المكتوبة وتُحمّل السجلّ كسولًا في حزمة `contenu` (0 أوكتي في الكوكية).
+// صفوف خفيفة ومضغوطة للهاتف: تشغيل فوري بنقرة واحدة + نصّ مكتوب قابل للطيّ (يفتح تلقائيًا
+// عند مطابقة البحث) داخل حزمة `contenu` الكسولة (0 أوكتي في الكوكية).
 
 import { useEffect, useId, useMemo, useState } from 'react';
 import type { PisteAudioLecon } from '../data/audioLecons';
@@ -23,6 +24,22 @@ function normaliserArabe(texte: string): string {
     .toLowerCase();
 }
 
+function IcoPlayMini() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+      <path d="M8 5.5v13l11-6.5-11-6.5Z" />
+    </svg>
+  );
+}
+
+function IcoStopMini() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0" aria-hidden="true">
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  );
+}
+
 export default function BibliothequeResumesLecons() {
   const [pistes, setPistes] = useState<PisteAudioLecon[] | null>(() =>
     lireAudioLeconsCache(),
@@ -30,6 +47,8 @@ export default function BibliothequeResumesLecons() {
   const [uniteActive, setUniteActive] = useState<string>('toutes');
   const [recherche, setRecherche] = useState('');
   const [leconOuverte, setLeconOuverte] = useState<string | null>(null);
+  const [texteOuvertId, setTexteOuvertId] = useState<string | null>(null);
+  const [texteMasqueId, setTexteMasqueId] = useState<string | null>(null);
   const idRecherche = useId();
 
   useEffect(() => {
@@ -61,19 +80,20 @@ export default function BibliothequeResumesLecons() {
     }));
   }, [pistes]);
 
+  const termeNormalise = useMemo(() => normaliserArabe(recherche), [recherche]);
+
   const pistesFiltrees = useMemo(() => {
     const base =
       uniteActive === 'toutes'
         ? (pistes ?? [])
         : (pistes ?? []).filter((p) => p.uniteId === uniteActive);
-    const terme = normaliserArabe(recherche);
-    if (!terme) return base;
+    if (!termeNormalise) return base;
     return base.filter(
       (p) =>
-        normaliserArabe(p.titreAr).includes(terme) ||
-        normaliserArabe(p.texteAr).includes(terme),
+        normaliserArabe(p.titreAr).includes(termeNormalise) ||
+        normaliserArabe(p.texteAr).includes(termeNormalise),
     );
-  }, [pistes, uniteActive, recherche]);
+  }, [pistes, uniteActive, termeNormalise]);
 
   if (!pistes || pistes.length === 0) return null;
 
@@ -92,7 +112,7 @@ export default function BibliothequeResumesLecons() {
             مكتبة ملخّصات المُرشد في دقيقة
           </h2>
           <p className="mt-0.5 text-xs text-mute">
-            كلّ ملخّص متاح نصًّا كاملًا بلا إنترنت، وبصوت المُرشد عند توفّر الاتصال.
+            نقرة واحدة للاستماع الفوري، مع النصّ المكتوب كاملًا بلا إنترنت.
           </p>
         </div>
       </div>
@@ -105,7 +125,10 @@ export default function BibliothequeResumesLecons() {
           id={idRecherche}
           type="search"
           value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
+          onChange={(e) => {
+            setRecherche(e.target.value);
+            setTexteMasqueId(null);
+          }}
           placeholder="ابحث عن درس أو مفهوم (مثال: الاستنساخ، كالفن، المغماتيت)..."
           className="w-full rounded-xl border border-line bg-paper px-3 py-2 text-xs text-ink placeholder:text-mute focus:border-forest focus:outline-none"
         />
@@ -153,58 +176,89 @@ export default function BibliothequeResumesLecons() {
         <ul className="mt-3 space-y-2">
           {pistesFiltrees.map((piste) => {
             const ouvert = leconOuverte === piste.lessonId;
+            const texteVisible = termeNormalise
+              ? texteMasqueId !== piste.lessonId
+              : texteOuvertId === piste.lessonId;
             const unite = UNITES.find((u) => u.id === piste.uniteId);
             return (
               <li
                 key={piste.lessonId}
-                className="rounded-xl border border-line bg-paper p-3"
+                className={`rounded-xl border bg-paper p-3 transition-colors ${
+                  ouvert ? 'border-forest bg-sage-soft/20' : 'border-line'
+                }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold text-forest-deep">
-                      {unite
-                        ? `الوحدة ${nb(unite.numero)} · ${unite.titre}`
-                        : piste.uniteId}
-                    </p>
-                    <p className="mt-0.5 text-sm font-bold text-ink">
-                      {piste.titreAr}
-                    </p>
-                  </div>
-                  <span
-                    className="shrink-0 rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-mute"
-                    dir="ltr"
-                  >
-                    {formatDureeAudio(piste.dureeSecondes)}
-                  </span>
-                </div>
-
-                <p className="mt-2 text-xs leading-relaxed text-ink-soft">
-                  {piste.texteAr}
-                </p>
-
-                <div className="mt-2">
+                <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() =>
                       setLeconOuverte(ouvert ? null : piste.lessonId)
                     }
                     aria-expanded={ouvert}
-                    className="text-[11px] font-bold text-forest hover:underline"
+                    aria-label={
+                      ouvert
+                        ? `إغلاق مشغّل ملخّص: ${piste.titreAr}`
+                        : `استماع فوري لملخّص: ${piste.titreAr}`
+                    }
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${
+                      ouvert
+                        ? 'bg-forest-deep text-paper'
+                        : 'bg-forest text-paper hover:bg-forest-deep'
+                    }`}
                   >
-                    {ouvert
-                      ? 'إخفاء مشغّل الصوت'
-                      : 'استماع بصوت المُرشد لهذا الملخّص'}
+                    {ouvert ? <IcoStopMini /> : <IcoPlayMini />}
                   </button>
-                  {ouvert && (
-                    <div className="mt-2">
-                      <LecteurAudioResume
-                        lessonId={piste.lessonId}
-                        compact
-                        masquerTexte
-                      />
-                    </div>
-                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11px] font-bold text-forest-deep">
+                      {unite
+                        ? `الوحدة ${nb(unite.numero)} · ${unite.titre}`
+                        : piste.uniteId}
+                    </p>
+                    <p className="mt-0.5 text-sm font-bold leading-snug text-ink">
+                      {piste.titreAr}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className="rounded-full bg-cream px-2 py-0.5 text-[10px] font-bold tabular-nums text-mute"
+                      dir="ltr"
+                    >
+                      {formatDureeAudio(piste.dureeSecondes)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (termeNormalise) {
+                          setTexteMasqueId(texteVisible ? piste.lessonId : null);
+                        } else {
+                          setTexteOuvertId(texteVisible ? null : piste.lessonId);
+                        }
+                      }}
+                      aria-expanded={texteVisible}
+                      className="text-[11px] font-bold text-forest hover:underline"
+                    >
+                      {texteVisible ? 'إخفاء النصّ' : 'قراءة النصّ'}
+                    </button>
+                  </div>
                 </div>
+
+                {texteVisible && (
+                  <p className="mt-2.5 border-t border-line/70 pt-2 text-xs leading-relaxed text-ink-soft">
+                    {piste.texteAr}
+                  </p>
+                )}
+
+                {ouvert && (
+                  <div className="mt-2.5">
+                    <LecteurAudioResume
+                      lessonId={piste.lessonId}
+                      compact
+                      masquerTexte
+                      lectureAuto
+                    />
+                  </div>
+                )}
               </li>
             );
           })}
