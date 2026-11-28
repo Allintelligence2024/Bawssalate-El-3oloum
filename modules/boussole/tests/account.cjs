@@ -6,7 +6,15 @@ const launch = require("../scripts/browser.cjs");
 const origin = process.env.APP_URL || "http://127.0.0.1:4182";
 if (!["127.0.0.1", "localhost"].includes(new URL(origin).hostname))
   throw Error("Ce scénario est réservé au build local.");
-const hash = (mdp) => crypto.createHash("sha256").update(`kunz::${mdp}`).digest("hex");
+// Format courant du produit (src/utils/compte.ts) : pbkdf2$<iterations>$<selHex32>$<cleHex64>.
+// Le test re-dérive la clé avec Node crypto pour prouver l'exactitude du hash stocké.
+const parsePbkdf2 = (stocke) => {
+  const m = /^pbkdf2\$(\d+)\$([0-9a-f]{32})\$([0-9a-f]{64})$/.exec(stocke);
+  assert.ok(m, `hachage pbkdf2 attendu, obtenu : ${stocke}`);
+  return { iterations: Number(m[1]), sel: m[2], cle: m[3] };
+};
+const clePbkdf2 = (mdp, selHex) =>
+  crypto.pbkdf2Sync(`kunz::${mdp}`, Buffer.from(selHex, "hex"), 60000, 32, "sha256").toString("hex");
 const alertes = [];
 
 async function protegerReseau(ctx) {
@@ -31,7 +39,8 @@ async function deconnecter(page) {
   const browser = await launch();
   try {
     // Sans compte, pas de navigation. Créer un compte quand WebCrypto n'est pas
-    // disponible produit tout de même le même SHA-256, pas l'ancien repli faible.
+    // disponible doit produire le hachage PBKDF2 courant via le repli @noble,
+    // pas l'ancien repli faible.
     const fresh = await browser.newContext();
     await protegerReseau(fresh);
     await fresh.addInitScript(() => {
@@ -66,7 +75,10 @@ async function deconnecter(page) {
     await consent.or(badge).first().waitFor();
     if (await consent.isVisible()) await consent.click();
     await badge.waitFor();
-    assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem("murajih_svt_v1")).compte.motDePasse), hash("secret-123"));
+    const stocke = await p.evaluate(() => JSON.parse(localStorage.getItem("murajih_svt_v1")).compte.motDePasse);
+    const frais = parsePbkdf2(stocke);
+    assert.equal(frais.iterations, 60000);
+    assert.equal(frais.cle, clePbkdf2("secret-123", frais.sel));
     await deconnecter(p);
     await p.locator("#mdp").fill("incorrect");
     await p.getByRole("button", { name: "دخول ←" }).click();
@@ -105,7 +117,8 @@ async function deconnecter(page) {
     await q.getByRole("button", { name: "دخول ←" }).click();
     await q.getByRole("button", { name: "نقاط الخبرة وأيام النشاط" }).waitFor();
     const saved = await q.evaluate(() => JSON.parse(localStorage.getItem("murajih_svt_v1")));
-    assert.equal(saved.compte.motDePasse, hash("مرحبا-🧪"));
+    const migre = parsePbkdf2(saved.compte.motDePasse);
+    assert.equal(migre.cle, clePbkdf2("مرحبا-🧪", migre.sel));
     assert.equal(saved.compte.jeton, "fixture-locale");
     assert.deepEqual(saved.favoris, ["conserver"]);
     await deconnecter(q);
