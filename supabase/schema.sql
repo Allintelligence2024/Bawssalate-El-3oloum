@@ -3,6 +3,15 @@
 -- يُنسخ مرّة واحدة في Supabase Studio (SQL Editor → New query → Run)
 -- ──────────────────────────────────────────────────────────────────────────────
 
+-- Les politiques `to anon` plus bas exigent le rôle `anon`. Supabase le possède
+-- déjà ; une PostgreSQL vierge (CI postgres:16-alpine) non — création idempotente
+-- avant la première policy, sinon `create policy … to anon` échoue (42704).
+do $$ begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    create role anon nologin;
+  end if;
+end $$;
+
 create table if not exists public.eleves (
   email             text primary key,
   jeton             text not null check (char_length(jeton) >= 32), -- رمز كتابة عشوائي (≥ 32 حرفًا)

@@ -58,7 +58,17 @@ export function enregistrerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return;
   if (import.meta.env.DEV) return; // في التطوير لا يسجّل (Hot Module Replacement)
 
+  // Première installation : le worker prend la main SANS recharge (un rechargement
+  // à chaque première visite ferait clignoter l'écran et perdrait une saisie en
+  // cours — « bannière de mise à jour, pas de rechargement brutal »). La recharge
+  // reste réservée à une mise à jour acceptée (bandeau → SKIP_WAITING → activation).
+  let premierePriseDeControle = !navigator.serviceWorker.controller;
+
   navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (premierePriseDeControle) {
+      premierePriseDeControle = false;
+      return;
+    }
     if (rechargementEnCours) return;
     rechargementEnCours = true;
     workerEnAttente = null;
