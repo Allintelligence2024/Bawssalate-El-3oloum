@@ -19,24 +19,38 @@ interface Props {
   onFermer: () => void;
   /** Série terminée (temps écoulé ou questions épuisées) : l'appelant note la date, sans score. */
   onTermine?: (questionsVues: number) => void;
+  /** Graine optionnelle (tests) : par défaut renouvelée à chaque partie. */
+  graine?: number;
 }
 
 const DUREE = 60;
 const NB_QUESTIONS = 12;
 
-function melange<T>(liste: T[], graine: number): T[] {
-  let h = graine || 1;
+export function melange<T>(liste: T[], graine: number): T[] {
+  let h = (graine >>> 0) || 1;
   const sortie = [...liste];
   for (let i = sortie.length - 1; i > 0; i--) {
-    h = (h * 1664525 + 1013904223) >>> 0;
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
     const j = h % (i + 1);
     [sortie[i], sortie[j]] = [sortie[j], sortie[i]];
   }
   return sortie;
 }
 
-export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Props) {
+function nouvelleGraineSession(): number {
+  try {
+    if (globalThis.crypto?.getRandomValues) {
+      return globalThis.crypto.getRandomValues(new Uint32Array(1))[0] || 1;
+    }
+  } catch {
+    /* repli horloge */
+  }
+  return ((Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0) || 1;
+}
+
+export default function Defi60({ etat: _etat, onItemReussi, onFermer, onTermine, graine }: Props) {
   const uniteId = useMemo(() => uniteDeLaClasse() ?? 'u1', []);
+  const graineSession = useMemo(() => graine ?? nouvelleGraineSession(), [graine]);
   const [items, setItems] = useState<ItemDrill[] | null>(null);
   const [index, setIndex] = useState(0);
   const [secondes, setSecondes] = useState(DUREE);
@@ -44,18 +58,28 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
   const [choix, setChoix] = useState<string | null>(null);
   const [fini, setFini] = useState(false);
   const dejaNote = useRef(false);
+  const delaiSuivantRef = useRef<number | null>(null);
+
+  const annulerDelaiSuivant = () => {
+    if (delaiSuivantRef.current !== null) {
+      window.clearTimeout(delaiSuivantRef.current);
+      delaiSuivantRef.current = null;
+    }
+  };
+
+  useEffect(() => () => annulerDelaiSuivant(), []);
 
   useEffect(() => {
     let vivant = true;
     const numero = Number(uniteId.replace('u', '')) || 1;
     void chargerDomaineDeUnite(numero).then((liste) => {
       if (!vivant) return;
-      setItems(melange(liste, 20261126).slice(0, NB_QUESTIONS));
+      setItems(melange(liste, graineSession).slice(0, NB_QUESTIONS));
     });
     return () => {
       vivant = false;
     };
-  }, [uniteId]);
+  }, [uniteId, graineSession]);
 
   useEffect(() => {
     if (fini || secondes <= 0) return;
@@ -64,7 +88,10 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
   }, [secondes, fini]);
 
   useEffect(() => {
-    if (secondes === 0) setFini(true);
+    if (secondes === 0) {
+      annulerDelaiSuivant();
+      setFini(true);
+    }
   }, [secondes]);
 
   // Une seule note par série, et seulement si l'élève a réellement vu au moins une question.
@@ -76,8 +103,8 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
 
   const item = items?.[index];
   const options = useMemo(
-    () => (item ? melange(item.o, item.id.length + index) : []),
-    [item, index],
+    () => (item ? melange(item.o, (graineSession ^ (item.id.length + index + 1)) >>> 0) : []),
+    [item, index, graineSession],
   );
 
   if (fini || (items && index >= items.length)) {
@@ -139,7 +166,7 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
       <section className="carte mt-4 p-5">
         <p className="text-sm font-bold leading-relaxed text-ink">{item.q}</p>
         <div className="mt-3 space-y-2">
-          {options.map((option) => {
+          {options.map((option, idxOption) => {
             const estChoisie = choix === option;
             const estBonne = option === bonne;
             const style = !choix
@@ -151,7 +178,7 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
                   : 'border-line bg-paper opacity-70';
             return (
               <button
-                key={option}
+                key={`${item.id}-${idxOption}`}
                 type="button"
                 disabled={Boolean(choix)}
                 onClick={() => {
@@ -162,7 +189,9 @@ export default function Defi60({ etat, onItemReussi, onFermer, onTermine }: Prop
                   } else {
                     onItemReussi(item.id, 1);
                   }
-                  window.setTimeout(() => {
+                  annulerDelaiSuivant();
+                  delaiSuivantRef.current = window.setTimeout(() => {
+                    delaiSuivantRef.current = null;
                     setChoix(null);
                     setIndex((i) => i + 1);
                   }, 420);

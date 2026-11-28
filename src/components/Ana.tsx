@@ -203,7 +203,7 @@ export default function Ana({
         ? `${nb(h)} ساعة`
         : `${nb(h)} ساعة و${nb(m)} دقيقة`;
 
-  const derniersJours = [...etat.journal].sort().slice(-12);
+  const derniersJours = [...new Set(etat.journal)].sort().slice(-12);
 
   /** Validation et confirmation avant toute restauration. */
   async function importerFichier(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {

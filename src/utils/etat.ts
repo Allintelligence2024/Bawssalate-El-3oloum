@@ -31,7 +31,7 @@ export function etatDepuisBrut(analyse: Partial<Etat>): Etat {
     jalons: { ...analyse.jalons },
     notes: analyse.notes ?? [],
     carnet: analyse.carnet ?? [],
-    journal: analyse.journal ?? [],
+    journal: [...new Set(analyse.journal ?? [])],
     kafaa: analyse.kafaa ?? {},
     drills: analyse.drills ?? {},
     ateliers: analyse.ateliers ?? {},

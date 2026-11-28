@@ -1,11 +1,15 @@
 // الحساب المحلي — بريد إلكتروني وكلمة مرور وولاية ودائرة، داخل المتصفح فقط.
 // لا خادم، لا إرسال، لا تتبّع: كل شيء في localStorage تحت مفتاح التطبيق نفسه.
 
+import { pbkdf2 } from '@noble/hashes/pbkdf2';
 import { sha256 } from '@noble/hashes/sha256';
 
 const CLE_SESSION = 'kunz_session_v1';
 
 export const MIN_MDP = 6;
+const PBKDF2_PREFIXE = 'pbkdf2';
+const PBKDF2_ITERATIONS = 60_000;
+const PBKDF2_OCTETS_CLE = 32;
 
 export function courrielValide(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim().toLowerCase());
@@ -15,24 +19,86 @@ export function normaliserEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-/** SHA-256 reste identique avec ou sans WebCrypto. Le préfixe historique est
- *  fixe : ce compte local ne chiffre pas les données et n'est pas une protection
- *  contre une personne ayant accès au stockage du navigateur. */
-export async function hacher(texte: string): Promise<string> {
+function versHex(octets: Uint8Array): string {
+  return [...octets].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function depuisHex(hex: string): Uint8Array | null {
+  if (hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(hex)) return null;
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return out;
+}
+
+function egalTempsConstant(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function genererSel(texte: string): Uint8Array {
+  try {
+    if (globalThis.crypto?.getRandomValues) {
+      return globalThis.crypto.getRandomValues(new Uint8Array(16));
+    }
+  } catch {
+    /* Repli sans CSPRNG dans un environnement de test isolé */
+  }
+  // Repli déterministe minimal uniquement si WebCrypto/CSPRNG est totalement absent.
+  return sha256(new TextEncoder().encode(`kunz-sel::${texte}`)).slice(0, 16);
+}
+
+async function deriverPbkdf2(texte: string, sel: Uint8Array, iterations: number): Promise<string> {
+  const octets = new TextEncoder().encode(`kunz::${texte}`);
+  try {
+    const subtle = globalThis.crypto?.subtle;
+    if (subtle && typeof subtle.importKey === 'function' && typeof subtle.deriveBits === 'function') {
+      const cle = await subtle.importKey('raw', octets, 'PBKDF2', false, ['deriveBits']);
+      const bits = await subtle.deriveBits(
+        { name: 'PBKDF2', salt: sel as BufferSource, iterations, hash: 'SHA-256' },
+        cle,
+        PBKDF2_OCTETS_CLE * 8,
+      );
+      return versHex(new Uint8Array(bits));
+    }
+  } catch {
+    /* Repli @noble/hashes compatible lorsque WebCrypto manque ou échoue. */
+  }
+  return versHex(pbkdf2(sha256, octets, sel, { c: iterations, dkLen: PBKDF2_OCTETS_CLE }));
+}
+
+async function sha256Historique(texte: string): Promise<string> {
   const octets = new TextEncoder().encode(`kunz::${texte}`);
   try {
     const subtle = globalThis.crypto?.subtle;
     if (subtle) {
       const resultat = await subtle.digest('SHA-256', octets);
-      return [...new Uint8Array(resultat)].map((b) => b.toString(16).padStart(2, '0')).join('');
+      return versHex(new Uint8Array(resultat));
     }
   } catch {
     /* Repli SHA-256 compatible lorsque WebCrypto manque ou échoue. */
   }
-  return [...sha256(octets)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return versHex(sha256(octets));
 }
 
-/** Uniquement pour authentifier les comptes créés par l'ancien repli non-SHA. */
+/** Dérivation salée PBKDF2-SHA256 (compatible avec ou sans WebCrypto).
+ *  Note de transparence : le compte local ne chiffre pas les données du navigateur. */
+export async function hacher(texte: string): Promise<string> {
+  const sel = genererSel(texte);
+  const cle = await deriverPbkdf2(texte, sel, PBKDF2_ITERATIONS);
+  return `${PBKDF2_PREFIXE}$${PBKDF2_ITERATIONS}$${versHex(sel)}$${cle}`;
+}
+
+/** Indique si un hachage stocké utilise un format historique à migrer après vérification. */
+export function doitMigrerHachage(hash?: string): boolean {
+  if (!hash) return false;
+  return !hash.startsWith(`${PBKDF2_PREFIXE}$`);
+}
+
+/** Uniquement pour authentifier les comptes créés par l'ancien repli non-SHA avant migration. */
 function ancienHachage(s: string): string {
   let a = 0x811c9dc5;
   let b = 0x1b873593;
@@ -47,22 +113,33 @@ function ancienHachage(s: string): string {
 
 export async function verifierMdp(motDePasse: string, hashAttendu: string): Promise<boolean> {
   if (typeof hashAttendu !== 'string') return false;
-  // Les anciens repli et SHA-256 n'ont pas la même longueur. Ne jamais accepter
-  // arbitrairement un format inconnu et ne plus créer de nouveaux comptes faibles.
-  if (/^[0-9a-f]{16}$/.test(hashAttendu)) return ancienHachage(`kunz::${motDePasse}`) === hashAttendu;
-  if (/^[0-9a-f]{64}$/.test(hashAttendu)) return (await hacher(motDePasse)) === hashAttendu;
+  // Format courant : pbkdf2$<iterations>$<selHex32>$<cleHex64>
+  if (hashAttendu.startsWith(`${PBKDF2_PREFIXE}$`)) {
+    const parties = hashAttendu.split('$');
+    if (parties.length !== 4) return false;
+    const iterations = Number(parties[1]);
+    if (!Number.isSafeInteger(iterations) || iterations < 10_000 || iterations > 1_000_000) return false;
+    if (!/^[0-9a-f]{32}$/.test(parties[2]) || !/^[0-9a-f]{64}$/.test(parties[3])) return false;
+    const sel = depuisHex(parties[2]);
+    if (!sel) return false;
+    const derivee = await deriverPbkdf2(motDePasse, sel, iterations);
+    return egalTempsConstant(derivee, parties[3]);
+  }
+  // Rétrocompatibilité stricte des comptes existants (migrés vers PBKDF2 à la connexion).
+  if (/^[0-9a-f]{16}$/.test(hashAttendu)) return egalTempsConstant(ancienHachage(`kunz::${motDePasse}`), hashAttendu);
+  if (/^[0-9a-f]{64}$/.test(hashAttendu)) return egalTempsConstant(await sha256Historique(motDePasse), hashAttendu);
   return false;
 }
 
-/** Jeton d'écriture aléatoire — stores in the compte, sent as `x-kunz-jeton` header.
+/** Jeton d'écriture aléatoire — stocké dans le compte, envoyé en en-tête `x-kunz-jeton`.
  *  La policy UPDATE de Supabase l'exige : seul le client qui le connaît peut modifier
- *  la ligne de l'élève (n'importe qui d'autre avec l'URL publique ne peut qu'insérer). */
+ *  la ligne de l'élève. */
 export function nouveauJeton(): string | undefined {
   try {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
     if (!globalThis.crypto?.getRandomValues) return undefined;
     const octets = globalThis.crypto.getRandomValues(new Uint8Array(16));
-    return [...octets].map((b) => b.toString(16).padStart(2, '0')).join('');
+    return versHex(octets);
   } catch {
     return undefined; // pas d'aléa fiable : le compte reste local, sans synchronisation
   }
@@ -71,7 +148,7 @@ export function nouveauJeton(): string | undefined {
 /** فتح جلسة بعد نجاح الدخول (تبقى مفتوحة ما دام التبويب مفتوحًا). */
 export function ouvrirSession(email: string): void {
   try {
-    sessionStorage.setItem(CLE_SESSION, email);
+    sessionStorage.setItem(CLE_SESSION, normaliserEmail(email));
   } catch {
     /* تجاهل */
   }
@@ -80,7 +157,8 @@ export function ouvrirSession(email: string): void {
 export function sessionOuverte(email?: string): boolean {
   if (!email) return false;
   try {
-    return sessionStorage.getItem(CLE_SESSION) === email;
+    const courant = sessionStorage.getItem(CLE_SESSION);
+    return courant === email || courant === normaliserEmail(email);
   } catch {
     return false;
   }

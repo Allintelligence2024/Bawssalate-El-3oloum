@@ -1,18 +1,19 @@
 -- ──────────────────────────────────────────────────────────────────────────────
--- استعلامات المطوّر — كنز العلوم Lite
+-- استعلامات المطوّر — بوصلة العلوم Lite
 -- يُنسخ كل استعلام في Supabase Studio (SQL Editor) ويُعدَّل حسب الحاجة.
--- الجداول: public.eleves (انظر supabase/schema.sql)
+-- الجداول: public.eleves (المرحلة 1، انظر supabase/schema.sql)
+--         و kunz_sync_prive.profils (المرحلة 2، المزامنة الموثّقة)
 -- ──────────────────────────────────────────────────────────────────────────────
 
 -- 1) كل التلاميذ — آخر تحديث أولًا
-select email, nom, wilaya, daira, niveau, xp,
+select email, coalesce(nom, '') as nom, wilaya, daira, niveau, xp,
        lecons_terminees, drills_faits, reponses_justes, reponses_fausses,
-       minutes_totales, jours_activite, maj
+       minutes_totales, jours_activite, generation, maj
 from public.eleves
 order by maj desc;
 
 -- 2) الأكثر تقدّمًا (نقاط الخبرة)
-select email, nom, niveau, xp, lecons_terminees, drills_faits
+select email, coalesce(nom, '') as nom, niveau, xp, lecons_terminees, drills_faits
 from public.eleves
 order by xp desc
 limit 20;
@@ -27,23 +28,39 @@ from public.eleves
 group by wilaya
 order by تلاميذ desc;
 
--- 4) النشاطون فقط (تحديث خلال 7 أيام)
-select email, nom, niveau, xp, lecons_terminees, drills_faits, maj
+-- 4) النشطون فقط (تحديث خلال 7 أيام)
+select email, coalesce(nom, '') as nom, niveau, xp, lecons_terminees, drills_faits, maj
 from public.eleves
 where maj > now() - interval '7 days'
 order by maj desc;
 
--- 5) الدروس الهشّة عند التلامي — ما يحتاج مراجعة (من الملخّص الكامل)
-select email, nom, jsonb_array_length(charge_utile->'lecons_fragiles') as "دروس هشّة",
-       jsonb_array_length(charge_utile->'lecons_en_cours') as "دروس جارية"
+-- 5) الدروس الهشّة عند التلاميذ — ما يحتاج مراجعة (مع حماية من القيم الفارغة)
+select email, coalesce(nom, '') as nom,
+       case
+         when jsonb_typeof(charge_utile->'lecons_fragiles') = 'array'
+         then jsonb_array_length(charge_utile->'lecons_fragiles')
+         else 0
+       end as "دروس هشّة",
+       case
+         when jsonb_typeof(charge_utile->'lecons_en_cours') = 'array'
+         then jsonb_array_length(charge_utile->'lecons_en_cours')
+         else 0
+       end as "دروس جارية"
 from public.eleves
-where jsonb_array_length(charge_utile->'lecons_fragiles') > 0
+where jsonb_typeof(charge_utile->'lecons_fragiles') = 'array'
+  and jsonb_array_length(charge_utile->'lecons_fragiles') > 0
 order by "دروس هشّة" desc;
 
--- 6) أكثر الدروس الهشّة تكرارًا عبر كل التلامي
+-- 6) أكثر الدروس الهشّة تكرارًا عبر كل التلاميذ
 select lecon, count(*) as "عدد التلاميذ"
 from public.eleves,
-     jsonb_array_elements_text(charge_utile->'lecons_fragiles') as lecon
+     jsonb_array_elements_text(
+       case
+         when jsonb_typeof(charge_utile->'lecons_fragiles') = 'array'
+         then charge_utile->'lecons_fragiles'
+         else '[]'::jsonb
+       end
+     ) as lecon
 group by lecon
 order by "عدد التلاميذ" desc
 limit 20;
@@ -51,13 +68,19 @@ limit 20;
 -- 7) أكثر الدروس إكمالًا
 select lecon, count(*) as "عدد التلاميذ"
 from public.eleves,
-     jsonb_array_elements_text(charge_utile->'lecons_terminees') as lecon
+     jsonb_array_elements_text(
+       case
+         when jsonb_typeof(charge_utile->'lecons_terminees') = 'array'
+         then charge_utile->'lecons_terminees'
+         else '[]'::jsonb
+       end
+     ) as lecon
 group by lecon
 order by "عدد التلاميذ" desc
 limit 20;
 
 -- 8) نسبة الإجابات الصحيحة لكل تلميذ (حساب يدوي — التطبيق نفسه لا يعرض نسبًا)
-select email, nom,
+select email, coalesce(nom, '') as nom,
        reponses_justes as "صحيحة",
        reponses_fausses as "خاطئة",
        reponses_justes + reponses_fausses as "المجموع",

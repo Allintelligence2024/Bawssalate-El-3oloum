@@ -8,7 +8,7 @@ import { titreLecon } from '../data/programme';
 import { qcmPourLecon } from '../utils/qcm';
 import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
 import { MICRO_EPREUVES_UNITE } from '../data/enquetesBac';
-import { nb, formatJourAr } from '../utils/dates';
+import { aujourdhui, nb, formatJourAr } from '../utils/dates';
 import type { Etat } from '../types';
 import { ChoixUnique, Morceau, OptionsMcq } from './Communs';
 import BadgeRelecture from './BadgeRelecture';
@@ -292,7 +292,7 @@ return (
 
       <footer className="mt-4">
         <p className="text-center text-xs text-mute">
-          {TXT_BRIDGE_DATE.replace('{d}', formatJourAr(new Date().toISOString().slice(0, 10)))}
+          {TXT_BRIDGE_DATE.replace('{d}', formatJourAr(aujourdhui()))}
         </p>
       </footer>
     </div>

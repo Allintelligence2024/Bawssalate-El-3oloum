@@ -25,8 +25,8 @@ const MOITIE = TAILLE_SERIE / 2;
 
 function hache(s: string): number {
   let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = (h ^ s.charCodeAt(i)) * 16777619;
-  return h >>> 0;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619) >>> 0;
+  return h;
 }
 
 /** Tous les énoncés disponibles pour une unité, triés de façon stable. */

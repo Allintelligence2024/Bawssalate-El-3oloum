@@ -30,10 +30,10 @@ interface Props {
 /** Mélange déterministe : la même consigne présente toujours les briques dans le même ordre. */
 function melange<T>(liste: T[], graine: string): T[] {
   let h = 2166136261;
-  for (let i = 0; i < graine.length; i++) h = (h ^ graine.charCodeAt(i)) * 16777619;
+  for (let i = 0; i < graine.length; i++) h = Math.imul(h ^ graine.charCodeAt(i), 16777619) >>> 0;
   const sortie = [...liste];
   for (let i = sortie.length - 1; i > 0; i--) {
-    h = (h * 1664525 + 1013904223) >>> 0;
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
     const j = h % (i + 1);
     [sortie[i], sortie[j]] = [sortie[j], sortie[i]];
   }

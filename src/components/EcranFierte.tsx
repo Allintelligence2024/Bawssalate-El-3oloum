@@ -18,12 +18,21 @@ interface Props {
   onFermer: () => void;
 }
 
-/** « 2026-11-23 » → « 23 نوفمبر » (sans dépendre d'Intl pour rester identique hors-ligne). */
-function jourCourtAr(iso: string | undefined): string | null {
+/** « 2026-11-23 » → « 23 نوفمبر » (sans dépendre d'Intl ni du fuseau horaire local). */
+export function jourCourtAr(iso: string | undefined): string | null {
   if (!iso) return null;
+  const mois = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+  const mDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (mDate) {
+    const a = Number(mDate[1]);
+    const m = Number(mDate[2]);
+    const j = Number(mDate[3]);
+    const verif = new Date(a, m - 1, j);
+    if (verif.getFullYear() !== a || verif.getMonth() !== m - 1 || verif.getDate() !== j) return null;
+    return `${j} ${mois[m - 1]}`;
+  }
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  const mois = ['جانفي', 'فيفري', 'مارس', 'أفريل', 'ماي', 'جوان', 'جويلية', 'أوت', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
   return `${d.getDate()} ${mois[d.getMonth()]}`;
 }
 

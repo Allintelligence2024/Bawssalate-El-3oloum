@@ -13,19 +13,30 @@
 // Le zoom plein écran est volontairement minimal : un bouton, la touche Échap, le focus
 // rendu au déclencheur à la fermeture, et la légende arabe toujours visible sous l'image.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ILLUSTRATIONS_LECONS_LEGACY } from '../data/illustrationsLegacy.gen';
 import {
   aDesAnnotations,
   typeVisuelDe,
   type IllustrationLecon,
 } from '../data/illustrationsTypes';
-import { legendeArSecurisee } from '../utils/illustrations';
+import { analyserLegendeAr, type NoeudLegende } from '../utils/illustrations';
 import { chargerSchemasSvt, lireSchemasSvtCache } from '../utils/schemasSvtChargeur';
 import { SchemaAnnoteBloc, VisuelAnnote } from './SchemaAnnote';
 
 export const MESSAGE_HORS_LIGNE_SCHEMAS =
   'تعذّر تحميل المخطّط دون اتصال — افتح الدرس مرّة واحدة بالإنترنت لحفظه';
+
+function rendreNoeudsLegende(noeuds: NoeudLegende[], prefixe = 'l'): ReactNode[] {
+  return noeuds.map((n, i) => {
+    const cle = `${prefixe}-${i}`;
+    if (n.type === 'texte') return <Fragment key={cle}>{n.texte}</Fragment>;
+    if (n.type === 'br') return <br key={cle} />;
+    if (n.type === 'strong') return <strong key={cle}>{rendreNoeudsLegende(n.enfants, cle)}</strong>;
+    if (n.type === 'em') return <em key={cle}>{rendreNoeudsLegende(n.enfants, cle)}</em>;
+    return <span key={cle}>{rendreNoeudsLegende(n.enfants, cle)}</span>;
+  });
+}
 
 interface Props {
   lessonId: string;
@@ -154,7 +165,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
   }
 
   const legende = (illustration: IllustrationLecon) =>
-    legendeArSecurisee(illustration.legendeAr ?? illustration.titreAr);
+    rendreNoeudsLegende(analyserLegendeAr(illustration.legendeAr ?? illustration.titreAr));
   const contientSchemaCree = illustrations.some((i) => typeVisuelDe(i) !== 'webp_legacy');
 
   return (
@@ -207,7 +218,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
               </button>
             )}
             <figcaption className="border-t border-line px-3 py-2 text-[12px] leading-relaxed text-ink-soft">
-              <p dangerouslySetInnerHTML={{ __html: legende(illustration) }} />
+              <p>{legende(illustration)}</p>
               <div className="mt-1 flex justify-start">
                 <button
                   type="button"
@@ -269,7 +280,7 @@ export default function IllustrationsLecon({ lessonId, compacte = false }: Props
             dir="rtl"
             className="fond-schema-clair w-full max-w-5xl rounded-xl px-4 py-3 text-center text-sm leading-relaxed shadow-lg"
           >
-            <p dangerouslySetInnerHTML={{ __html: legende(zoom) }} />
+            <p>{legende(zoom)}</p>
           </div>
           <p className="fond-schema-clair rounded-lg px-3 py-1 text-[11px] font-bold">
             في انتظار مراجعة أستاذ · لم يُعتمد بعد

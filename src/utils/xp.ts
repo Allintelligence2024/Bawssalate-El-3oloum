@@ -34,9 +34,13 @@ export function xpDe(etat: Etat): number {
   xp += Object.values(etat.jalons).filter((j) => j.fait).length * VALEURS.jalon;
   xp += Object.values(etat.ateliers ?? {}).filter((a) => a.fait).length * VALEURS.atelier;
   xp += Object.keys(etat.drills ?? {}).length * VALEURS.drill;
-  xp += Math.floor(etat.minutesTotales / 30) * VALEURS.demiHeure;
+  const minutesSures = Number.isFinite(etat.minutesTotales) ? Math.max(0, etat.minutesTotales) : 0;
+  xp += Math.floor(minutesSures / 30) * VALEURS.demiHeure;
   // الباك خطوة بخطوة : كلّ تعليمة قُيّمت ذاتيًّا تغلّي 3 أو 2 أو 0، والتمرين الكامل +6.
-  xp += Object.values(etat.bacEtapes ?? {}).reduce<number>((somme, q) => somme + q, 0);
+  xp += Object.values(etat.bacEtapes ?? {}).reduce<number>(
+    (somme, q) => somme + (Number.isFinite(q) && q > 0 ? q : 0),
+    0,
+  );
   xp += Object.keys(etat.bacExercices ?? {}).length * VALEURS.bacExercice;
   xp += Object.keys(etat.fakh ?? {}).length * VALEURS.fakh;
   xp += Object.keys(etat.fakhSeries ?? {}).length * VALEURS.fakhSerie;
@@ -51,10 +55,14 @@ export function niveauDe(xp: number): { nom: string; seuil: number } {
 
 /** أيام نشاط متتالية — آخر نشاط أمس أو اليوم. بلا عقاب: انقطاعٌ لا يُعرض ولا يُحسّ. */
 export function joursConsecutifs(journal: string[]): number {
-  const jours = [...new Set(journal)].sort();
+  const auj = aujourdhui();
+  const jours = [...new Set(journal)]
+    .filter((j) => /^\d{4}-\d{2}-\d{2}$/.test(j) && j <= auj)
+    .sort();
   if (jours.length === 0) return 0;
   const dernier = jours[jours.length - 1];
-  if (differenceJours(dernier, aujourdhui()) > 1) return 0;
+  const ecart = differenceJours(dernier, auj);
+  if (ecart < 0 || ecart > 1) return 0;
   let n = 1;
   for (let i = jours.length - 1; i > 0; i--) {
     if (differenceJours(jours[i - 1], jours[i]) === 1) n++;

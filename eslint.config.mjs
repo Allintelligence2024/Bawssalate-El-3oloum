@@ -6,12 +6,8 @@ import js from '@eslint/js';
 // **refuse de démarrer** avec TS >= 7 (vérifié à l'exécution, aucune version publiée ne le
 // supporte encore). Une configuration qui parle de `.ts` sans linter les `.ts` donnerait une
 // fausse assurance. Les fichiers TypeScript sont donc couverts par `tsc -b` (types stricts)
-// et par les 285 tests, pas par ESLint.
-//
-// Le garde-fou ci-dessous empêche la configuration de prétendre traiter du TypeScript :
-//   1. les `.ts`/`.tsx` sont explicitement ignorés (pas d'analyse partielle silencieuse) ;
-//   2. quiconque ajoute une règle sur un fichier TypeScript se heurte à `no-restricted-syntax`
-//      sur le glob `**/*.ts` — un test vérifie ce comportement (lint.test.ts).
+// et par la suite automatisée (Vitest + Node test), et les fichiers `.ts`/`.tsx` sont
+// explicitement ignorés ci-dessous pour éviter toute analyse partielle silencieuse.
 
 export default [
   {

@@ -167,7 +167,7 @@ function modificationsDuJournal(journal: JournalRestauration): Modification[] | 
     if (!etat.compte || typeof etat.compte !== 'object' || Array.isArray(etat.compte)) return null;
     const compte = etat.compte as Record<string, unknown>;
     if (['email', 'wilaya', 'daira', 'creeLe'].some((cle) => typeof compte[cle] !== 'string')) return null;
-    if (['motDePasse', 'jeton'].some((cle) => compte[cle] !== undefined && typeof compte[cle] !== 'string')) return null;
+    if (['motDePasse', 'jeton'].some((cle) => compte[cle] !== undefined && compte[cle] !== null && typeof compte[cle] !== 'string')) return null;
   }
   if (etat.consentementSync !== undefined && typeof etat.consentementSync !== 'boolean') return null;
   if (etat.consentementSyncDecideLe !== undefined && typeof etat.consentementSyncDecideLe !== 'string') return null;

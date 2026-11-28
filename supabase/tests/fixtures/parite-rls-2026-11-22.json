@@ -1,1 +1,49 @@
-{"politiques":[{"nom":"ecriture_app","permissive":"PERMISSIVE","cmd":"INSERT"},{"nom":"eleves_jeton_obligatoire","permissive":"RESTRICTIVE","cmd":"ALL"},{"nom":"lecture_proprietaire","permissive":"PERMISSIVE","cmd":"SELECT"},{"nom":"maj_app","permissive":"PERMISSIVE","cmd":"UPDATE"},{"nom":"suppression_app","permissive":"PERMISSIVE","cmd":"DELETE"}],"fonctions":[{"nom":"eleves_jeton_autorise","args":"jeton text"}]}
+{
+  "politiques": [
+    {
+      "nom": "ecriture_app",
+      "permissive": "PERMISSIVE",
+      "cmd": "INSERT",
+      "qual": null,
+      "with_check": "((email ~ '^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$'::text) AND ((charge_utile IS NULL) OR (octet_length((charge_utile)::text) <= 262144)))"
+    },
+    {
+      "nom": "eleves_jeton_obligatoire",
+      "permissive": "RESTRICTIVE",
+      "cmd": "ALL",
+      "qual": "eleves_jeton_autorise(jeton)",
+      "with_check": "eleves_jeton_autorise(jeton)"
+    },
+    {
+      "nom": "lecture_proprietaire",
+      "permissive": "PERMISSIVE",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "nom": "maj_app",
+      "permissive": "PERMISSIVE",
+      "cmd": "UPDATE",
+      "qual": "true",
+      "with_check": "(((charge_utile IS NULL) OR (octet_length((charge_utile)::text) <= 262144)) AND eleves_generation_a_jour((generation - 1), charge_utile))"
+    },
+    {
+      "nom": "suppression_app",
+      "permissive": "PERMISSIVE",
+      "cmd": "DELETE",
+      "qual": "true",
+      "with_check": null
+    }
+  ],
+  "fonctions": [
+    { "nom": "eleves_avant_insertion_fn", "args": "" },
+    { "nom": "eleves_generation_a_jour", "args": "generation_actuelle bigint, charge_utile jsonb" },
+    { "nom": "eleves_generation_suivante", "args": "" },
+    { "nom": "eleves_jeton_autorise", "args": "jeton text" }
+  ],
+  "declencheurs": [
+    { "nom": "eleves_avant_insertion" },
+    { "nom": "eleves_generation_avant_maj" }
+  ]
+}

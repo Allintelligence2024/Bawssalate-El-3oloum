@@ -8,6 +8,7 @@ import { WILAYAS, WILAYA_PAR_CODE } from '../data/wilayas';
 import {
   MIN_MDP,
   courrielValide,
+  doitMigrerHachage,
   hacher,
   messageCompte,
   nouveauJeton,
@@ -56,20 +57,23 @@ export default function Inscription({ compte, onValide, onInvite, onSupprimerCom
         return annoncer('لا يوجد حساب بهذا البريد على هذا الجهاز.');
       }
       if (mdp.length === 0) return annoncer(messageCompte('mdp'));
-      setOccupe(true);
       if (!compte.motDePasse) {
-        setOccupe(false);
         return annoncer('لا يمكن التحقّق من كلمة مرور هذا الحساب القديم. يمكنك حذف الحساب المحلي مع إبقاء تقدّمك وإنشاء حساب جديد؛ هذا لا يستعيد رمز الخادم.');
       }
-      const bon = await verifierMdp(mdp, compte.motDePasse);
-      if (!bon) {
+      setOccupe(true);
+      try {
+        const bon = await verifierMdp(mdp, compte.motDePasse);
+        if (!bon) {
+          return annoncer(messageCompte('mdp', { mdp: true }));
+        }
+        // Migrer les anciens formats (16 hex ou SHA-256 non salé) vers PBKDF2 salé après vérification.
+        const motDePasse = doitMigrerHachage(compte.motDePasse) ? await hacher(mdp) : compte.motDePasse;
+        onValide({ ...compte, motDePasse });
+      } catch {
+        annoncer('تعذّر التحقّق من كلمة المرور مؤقّتًا — أعِد المحاولة.');
+      } finally {
         setOccupe(false);
-        return annoncer(messageCompte('mdp', { mdp: true }));
       }
-      // Migrer l'ancien repli uniquement après vérification du mot de passe.
-      const motDePasse = compte.motDePasse.length === 16 ? await hacher(mdp) : compte.motDePasse;
-      setOccupe(false);
-      onValide({ ...compte, motDePasse });
       return;
     }
 
@@ -79,16 +83,21 @@ export default function Inscription({ compte, onValide, onInvite, onSupprimerCom
     if (!daira) return annoncer(messageCompte('daira'));
 
     setOccupe(true);
-    const hash = await hacher(mdp);
-    setOccupe(false);
-    onValide({
-      email: normaliserEmail(email),
-      motDePasse: hash,
-      jeton: nouveauJeton(), // exigé par la policy UPDATE côté Supabase (écriture protégée)
-      wilaya,
-      daira,
-      creeLe: new Date().toISOString(),
-    });
+    try {
+      const hash = await hacher(mdp);
+      onValide({
+        email: normaliserEmail(email),
+        motDePasse: hash,
+        jeton: nouveauJeton(), // exigé par la policy UPDATE côté Supabase (écriture protégée)
+        wilaya,
+        daira,
+        creeLe: new Date().toISOString(),
+      });
+    } catch {
+      annoncer('تعذّر إنشاء الحساب مؤقّتًا — أعِد المحاولة.');
+    } finally {
+      setOccupe(false);
+    }
   }
 
   return (

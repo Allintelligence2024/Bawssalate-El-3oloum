@@ -5,6 +5,7 @@ dist/
 .DS_Store
 *.log
 __pycache__/
+*.pyc
 
 # مفاتيح Supabase الحقيقية — لا تُرفع أبدًا
 .env

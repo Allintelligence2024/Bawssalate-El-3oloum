@@ -19,8 +19,9 @@ export const CALENDRIERS: ReadonlyArray<CalendrierScolaire> = [
   { debut: '2026-09-14', bac: '2027-06-10', libelle: '2026–2027', estime: false },
 ];
 
-/** عدد أيام ما بعد البكالوريا التي نعتبر فيها السنة جارية (نتائج، استدراك) */
-const MARGE_APRES_BAC_JOURS = 45;
+/** عدد أيام ما قبل الدخول (أوت) وما بعد البكالوريا حتى نهاية أوت (النتائج والتوجيه والاستدراك) */
+const MARGE_AVANT_RENTREE_JOURS = 14;
+const MARGE_APRES_BAC_JOURS = 82;
 
 function iso(y: number, m: number, d: number): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -52,11 +53,11 @@ function plusJours(isoDate: string, n: number): string {
 /** التقويم المناسب لتاريخ معيّن (ISO). مؤكَّد إن وُجد، وإلا مشتقّ. */
 export function calendrierPour(isoAujourdhui: string): CalendrierScolaire {
   const confirme = CALENDRIERS.find(
-    (c) => isoAujourdhui >= plusJours(c.debut, -MARGE_APRES_BAC_JOURS) && isoAujourdhui <= plusJours(c.bac, MARGE_APRES_BAC_JOURS),
+    (c) => isoAujourdhui >= plusJours(c.debut, -MARGE_AVANT_RENTREE_JOURS) && isoAujourdhui <= plusJours(c.bac, MARGE_APRES_BAC_JOURS),
   );
   if (confirme) return confirme;
   const annee = Number(isoAujourdhui.slice(0, 4));
   const mois = Number(isoAujourdhui.slice(5, 7));
-  // قبل أوت: نحن في سنة بدأت في سبتمبر الماضي؛ من أوت فصاعدًا: السنة القادمة
-  return calendrierEstime(mois >= 8 ? annee : annee - 1);
+  // قبل سبتمبر (يشمل جويلية وأوت للنتائج والتوجيه): نحن في السنة التي بدأت في سبتمبر الماضي؛ من سبتمبر فصاعدًا: السنة الجديدة
+  return calendrierEstime(mois >= 9 ? annee : annee - 1);
 }

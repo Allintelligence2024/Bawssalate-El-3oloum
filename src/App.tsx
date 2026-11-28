@@ -25,7 +25,9 @@ import { ajouterJours, aujourdhui } from './utils/dates';
 import { cloturerSeance, debutSemaine, modeIntensifActif } from './utils/moteur';
 import { demarrerRevueCroisee, terminerRevueCroisee } from './utils/revueCroisee';
 import { avancementDefi, choisirDefi, consoliderDefi } from './utils/defis';
-import { envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
+import { delaiAvantEnvoi, envoyerSnapshot, syncActive, doitDemanderConsentement, suspendreSync, reprendreSync } from './utils/sync';
+import ErrorBoundary from './components/ErrorBoundary';
+import BandeauMiseAJourPwa from './components/BandeauMiseAJourPwa';
 import type { ItemChemin } from './data/programme';
 import type { SituationSynthese } from './data/syntheses';
 import { SUJETS_OFFICIELS } from './data/sujetsOfficiels';
@@ -342,7 +344,7 @@ export default function App() {
   // السمة: داكن أو فاتح — يُحفظ في localStorage
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
-    try { return (localStorage.getItem('kunz_theme') as 'light' | 'dark') ?? 'light'; }
+    try { return localStorage.getItem('kunz_theme') === 'dark' ? 'dark' : 'light'; }
     catch { signalerEchecStockage(); return 'light'; }
   });
 
@@ -427,6 +429,7 @@ export default function App() {
   }
 
   function onDeconnexion() {
+    suspendreSync(etatRef.current.compte?.email);
     fermerSession();
     setOnglet('aujourdhui');
     setMode(null);
@@ -508,26 +511,37 @@ export default function App() {
     }
   }
 
+  const debutAttenteSyncRef = useRef<number | null>(null);
+
+  // Écouteurs de visibilité et retour réseau montés une seule fois tant que l'onglet n'est pas bloqué.
   useEffect(() => {
     if (!syncActive() || blocageRestauration) return;
-    const envoyerSiCourant = () => {
+    const envoyerMaintenant = () => {
+      debutAttenteSyncRef.current = null;
       if (!blocageRef.current && stockageCourantPourSync()) void envoyerSnapshot(etatRef.current);
     };
-    // بعد كل تغيير: انتظر 6 ثوانٍ ثم أرسل (تفادي الإرسال المتكرر)
-    const delai = setTimeout(envoyerSiCourant, 6000);
-    // عند تصغير التطبيق أو تبديل التبويب: أرسل فورًا
     const onVisibilite = () => {
-      if (document.visibilityState === 'hidden') envoyerSiCourant();
+      if (document.visibilityState === 'hidden') envoyerMaintenant();
     };
-    // عند عودة الشبكة: أرسل ما تجمّع
-    const onLigne = envoyerSiCourant;
     document.addEventListener('visibilitychange', onVisibilite);
-    window.addEventListener('online', onLigne);
+    window.addEventListener('online', envoyerMaintenant);
     return () => {
-      clearTimeout(delai);
       document.removeEventListener('visibilitychange', onVisibilite);
-      window.removeEventListener('online', onLigne);
+      window.removeEventListener('online', envoyerMaintenant);
     };
+  }, [blocageRestauration]);
+
+  // Debounce 6 s borné par un plafond d'attente maximal (30 s) : évite la famine sous saisie continue.
+  useEffect(() => {
+    if (!syncActive() || blocageRestauration) return;
+    const maintenant = Date.now();
+    if (debutAttenteSyncRef.current === null) debutAttenteSyncRef.current = maintenant;
+    const attente = delaiAvantEnvoi(debutAttenteSyncRef.current, maintenant);
+    const delai = setTimeout(() => {
+      debutAttenteSyncRef.current = null;
+      if (!blocageRef.current && stockageCourantPourSync()) void envoyerSnapshot(etatRef.current);
+    }, attente);
+    return () => clearTimeout(delai);
   }, [etat, blocageRestauration]);
 
   // ───────────── فتح بنود الطريق ─────────────
@@ -824,12 +838,14 @@ export default function App() {
   const ecranInerte = Boolean(blocageRestauration && repriseVisible);
 
   if (mode) {
-    // كل الشاشات أدناه كسولة التحميل (P3.6): Suspense واحد يغلّفها جميعًا
+    // كل الشاشات أدناه كسولة التحميل (P3.6): Suspense واحد يغلّفها جميعًا مع حاجز أخطاء
     return <>
       {reprise}
       <div inert={ecranInerte} aria-hidden={ecranInerte}>
-        <AlerteStockage visible={stockageDefaillant && !blocageRestauration} pret={false} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
-        <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>
+        <AlerteStockage visible={stockageDefaillant && !blocageRestauration} pret={true} onBackup={() => { setMode(null); setOnglet('ana'); }} onFermer={() => { effacerAlerteStockage(); setStockageDefaillant(false); }} />
+        <ErrorBoundary onRetour={() => setMode(null)}>
+          <Suspense fallback={<ChargementEcran />}>{ecranMode(mode)}</Suspense>
+        </ErrorBoundary>
       </div>
     </>;
   }
@@ -1605,6 +1621,7 @@ export default function App() {
               </div>
             </div>
           </nav>}
+      {pret && <BandeauMiseAJourPwa masque={Boolean(mode)} />}
       </>
     </div>
   </>;

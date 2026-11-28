@@ -9,6 +9,9 @@ export type Qualite = 0 | 1 | 2 | 3 | 4 | 5;
 
 /** سقف الفاصل في المراجعة المكثّفة (P2.3): J+1 / J+3 — لا J+7 ولا J+14 قبل الامتحان. */
 export const PLAFOND_INTENSIF_JOURS = 3;
+/** سقف معامل السهولة والفاصل خارج الوضع المكثّف (يبقى ضمن أفق السنة الدراسية). */
+export const FACILITE_MAX = 2.8;
+export const PLAFOND_INTERVALLE_MAX_JOURS = 180;
 
 // نواة تكرار سباقات — مشتركة بين دروس وبطاقات الكفاءة (منهجية)
 export interface Srs {
@@ -32,11 +35,17 @@ export function mettreAJourSrs<T extends Srs>(p: T, qualite: Qualite, plafondInt
     repetitions += 1;
     if (repetitions === 1) intervalle = 1;
     else if (repetitions === 2) intervalle = 3;
-    else intervalle = Math.round(intervalle * facilite);
-    facilite = Math.max(1.3, facilite + (0.1 - (5 - qualite) * (0.08 + (5 - qualite) * 0.02)));
+    else intervalle = Math.max(1, Math.round(intervalle * facilite));
+    facilite = Math.min(
+      FACILITE_MAX,
+      Math.max(1.3, facilite + (0.1 - (5 - qualite) * (0.08 + (5 - qualite) * 0.02))),
+    );
   }
 
-  if (plafondIntervalle !== undefined) intervalle = Math.min(intervalle, plafondIntervalle);
+  const plafondEffectif = plafondIntervalle !== undefined
+    ? Math.min(plafondIntervalle, PLAFOND_INTERVALLE_MAX_JOURS)
+    : PLAFOND_INTERVALLE_MAX_JOURS;
+  intervalle = Math.min(intervalle, plafondEffectif);
 
   return {
     ...p,

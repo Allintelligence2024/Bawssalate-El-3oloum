@@ -64,8 +64,8 @@ describe('rappels (P2.4)', () => {
       expect(t.corps).not.toMatch(/\d|%/);
       expect(t.corps).not.toMatch(/تأخّرت|تأخرت|فشل|ضعيف/);
     }
-    expect(texteRappel(new Date('2026-01-01'))).toEqual(TEXTES_RAPPEL[0]);
-    expect(texteRappel(new Date('2026-01-02'))).toEqual(TEXTES_RAPPEL[1]);
+    expect(texteRappel(new Date(2026, 0, 1))).toEqual(TEXTES_RAPPEL[0]);
+    expect(texteRappel(new Date(2026, 0, 2))).toEqual(TEXTES_RAPPEL[1]);
   });
 
   it('activer : demande la permission puis programme UNE notification à l\'heure choisie', async () => {

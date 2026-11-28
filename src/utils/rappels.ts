@@ -51,7 +51,7 @@ export function prochainRappel(heure: string, maintenant = new Date()): Date | n
   if (!h) return null;
   const d = new Date(maintenant);
   d.setHours(h.hour, h.minute, 0, 0);
-  if (d.getTime() <= maintenant.getTime()) d.setDate(d.getDate() + 1);
+  if (d.getTime() < maintenant.getTime()) d.setDate(d.getDate() + 1);
   return d;
 }
 

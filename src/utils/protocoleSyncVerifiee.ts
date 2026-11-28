@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { signalDelai } from './sync';
 
 export type EtatAutorisation = { generation: number; autorise: boolean };
 export type ResumePilote = { minutes_totales: number; lecons_terminees?: number; revisions?: number };
@@ -11,7 +12,7 @@ function generationValide(g: unknown): g is number {
 /** Aucune reprise automatique : le demandeur conserve la génération d'origine en cas de doute. */
 export function protocoleSyncVerifiee(client: Pick<SupabaseClient, 'rpc'>) {
   async function appel(nom: string, args?: Record<string, unknown>): Promise<unknown> {
-    const { data, error } = await client.rpc(nom, args).abortSignal(AbortSignal.timeout(12_000));
+    const { data, error } = await client.rpc(nom, args).abortSignal(signalDelai(12_000));
     if (error) throw error;
     return data;
   }

@@ -1,4 +1,4 @@
-// Cache par version : une mise à jour attend la fermeture des anciens onglets.
+// Cache par version : une mise à jour attend l'accord de l'élève (SKIP_WAITING) ou la fermeture des onglets.
 // Le téléchargement complet est demandé explicitement et peut être repris.
 const VERSION = '__KUNZ_BUILD_ID__';
 const CACHE = `kunz-hors-ligne-${VERSION}`;
@@ -56,6 +56,10 @@ function typeValide(url, res) {
   return true;
 }
 
+function estErreurQuota(erreur) {
+  return Boolean(erreur && (erreur.name === 'QuotaExceededError' || erreur.code === 22));
+}
+
 const DELAI_RESSOURCE_MS = 30_000;
 async function avecRessource(url, modeCache, utiliser) {
   const controle = new AbortController();
@@ -67,7 +71,7 @@ async function avecRessource(url, modeCache, utiliser) {
   } finally { clearTimeout(delai); }
 }
 
-async function telecharger(cache, url) {
+async function telecharger(cache, url, etatQuota) {
   if (await cache.match(url)) return true;
   try {
     return await avecRessource(url, 'no-cache', async res => {
@@ -75,7 +79,10 @@ async function telecharger(cache, url) {
       await cache.put(url, res);
       return true;
     });
-  } catch { return false; }
+  } catch (e) {
+    if (etatQuota && estErreurQuota(e)) etatQuota.depasse = true;
+    return false;
+  }
 }
 
 async function manifesteCache(cache) {
@@ -84,6 +91,45 @@ async function manifesteCache(cache) {
     const m = res && await res.json();
     return valideManifeste(m) ? m : null;
   } catch { return null; }
+}
+
+/** Construit une réponse 206 Partial Content conforme à partir d'un 200 en cache (audio/PDF Safari & iOS). */
+async function repondrePlage(cached, enteteRange) {
+  if (!enteteRange || typeof enteteRange !== 'string') return cached;
+  const correspondance = /^bytes=(\d*)-(\d*)$/i.exec(enteteRange.trim());
+  if (!correspondance) return cached;
+  const tampon = await cached.arrayBuffer();
+  const total = tampon.byteLength;
+  if (total === 0) return cached;
+  let debut;
+  let fin;
+  if (correspondance[1] === '' && correspondance[2] !== '') {
+    const suffixe = Number(correspondance[2]);
+    debut = Math.max(0, total - suffixe);
+    fin = total - 1;
+  } else {
+    debut = Number(correspondance[1]);
+    fin = correspondance[2] === '' ? total - 1 : Math.min(total - 1, Number(correspondance[2]));
+  }
+  if (!Number.isFinite(debut) || !Number.isFinite(fin) || debut < 0 || debut > fin || debut >= total) {
+    return new Response(null, {
+      status: 416,
+      statusText: 'Range Not Satisfiable',
+      headers: { 'Content-Range': `bytes */${total}` },
+    });
+  }
+  const tranche = tampon.slice(debut, fin + 1);
+  const entetes = {
+    'Content-Type': cached.headers.get('content-type') || 'application/octet-stream',
+    'Content-Range': `bytes ${debut}-${fin}/${total}`,
+    'Accept-Ranges': 'bytes',
+    'Content-Length': String(tranche.byteLength),
+  };
+  return new Response(tranche, {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: entetes,
+  });
 }
 
 self.addEventListener('install', event => {
@@ -107,7 +153,7 @@ self.addEventListener('install', event => {
       const demarrage = [...html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.(?:js|css))"/g)].map(x => x[1]);
       if (!demarrage.length || demarrage.some(u => !m.assets.includes(u))) throw new Error('assets de démarrage incompatibles');
       for (const url of demarrage) if (!await telecharger(cache, url)) throw new Error('asset de démarrage indisponible');
-      // Pas de skipWaiting : ne pas casser les onglets de la version précédente.
+      // Pas de skipWaiting automatique : activation contrôlée via message SKIP_WAITING ou fermeture des onglets.
     } catch (e) {
       await caches.delete(CACHE);
       throw e;
@@ -117,7 +163,6 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    // Un nouveau worker n'active qu'après la fermeture des clients de l'ancien.
     // Ne supprimer que nos propres caches ; jamais ceux d'une autre application.
     const cles = await caches.keys();
     await Promise.all(cles.filter(k => (k.startsWith('kunz-hors-ligne-') || k.startsWith('murajih-svt-')) && k !== CACHE).map(k => caches.delete(k)));
@@ -137,21 +182,33 @@ async function verifier(cache, m, avecContenu) {
   };
 }
 
-let telechargement = null;
-async function remplir(cache, m, avecContenu) {
-  const urls = [...m.statiques, ...m.assets, ...(avecContenu ? m.contenu : [])];
+// Deux verrous distincts : une demande « contenu complet » ne doit jamais se contenter
+// d'attendre une promesse « coquille seule » déjà en cours.
+let telechargementCoquille = null;
+let telechargementContenu = null;
+
+async function remplirUrls(cache, urls) {
+  const etatQuota = { depasse: false };
   let suivant = 0;
   async function ouvrier() {
     while (suivant < urls.length) {
       const url = urls[suivant++];
-      await telecharger(cache, url);
+      await telecharger(cache, url, etatQuota);
     }
   }
   // Une connexion 3G et un téléphone modeste ne doivent pas subir 50 requêtes en parallèle.
   await Promise.all([ouvrier(), ouvrier(), ouvrier()]);
+  return etatQuota.depasse;
 }
 
 self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    if (typeof self.skipWaiting === 'function') {
+      const p = self.skipWaiting();
+      if (typeof event.waitUntil === 'function') event.waitUntil(p);
+    }
+    return;
+  }
   const port = event.ports && event.ports[0];
   if (!port || !['ETAT_HORS_LIGNE', 'TELECHARGER_HORS_LIGNE', 'TELECHARGER_CONTENU'].includes(event.data?.type)) return;
   event.waitUntil((async () => {
@@ -160,11 +217,23 @@ self.addEventListener('message', event => {
       const m = await manifesteCache(cache);
       if (!m) throw new Error('manifeste absent ou invalide');
       const avecContenu = event.data.type === 'TELECHARGER_CONTENU';
-      if (event.data.type !== 'ETAT_HORS_LIGNE') {
-        if (!telechargement) telechargement = remplir(cache, m, avecContenu).finally(() => { telechargement = null; });
-        await telechargement;
+      let quotaDepasse = false;
+      if (event.data.type === 'TELECHARGER_HORS_LIGNE') {
+        if (!telechargementCoquille) {
+          telechargementCoquille = remplirUrls(cache, [...m.statiques, ...m.assets]).finally(() => { telechargementCoquille = null; });
+        }
+        quotaDepasse = await telechargementCoquille;
+      } else if (event.data.type === 'TELECHARGER_CONTENU') {
+        if (telechargementCoquille) {
+          quotaDepasse = (await telechargementCoquille) || quotaDepasse;
+        }
+        if (!telechargementContenu) {
+          telechargementContenu = remplirUrls(cache, [...m.statiques, ...m.assets, ...m.contenu]).finally(() => { telechargementContenu = null; });
+        }
+        quotaDepasse = (await telechargementContenu) || quotaDepasse;
       }
-      port.postMessage({ ok: true, ...await verifier(cache, m, avecContenu) });
+      const etat = await verifier(cache, m, avecContenu);
+      port.postMessage({ ok: true, ...etat, ...(quotaDepasse ? { quotaDepasse: true } : {}) });
     } catch {
       port.postMessage({ ok: false, version: VERSION });
     }
@@ -176,12 +245,15 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  // Certains lecteurs PDF ou audio demandent une plage (Range). Un 200 intégral déjà
-  // vérifié est aussi une réponse valide ; jamais de 206 partiel dans le cache.
+  // Les lecteurs PDF ou audio demandent une plage (Range). On conserve un 200 complet en cache
+  // et on découpe proprement une réponse 206 Partial Content quand l'en-tête Range est fourni.
   if (request.headers.has('range')) {
     if ((BOUSSOLE.includes(url.pathname) && url.pathname.endsWith('.pdf')) || audioValide(url.pathname)) {
       event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(cached => {
-        if (cached) return cached;
+        if (cached) {
+          const enteteRange = typeof request.headers.get === 'function' ? request.headers.get('range') : null;
+          return repondrePlage(cached, enteteRange);
+        }
         if (audioValide(url.pathname) && typeof event.waitUntil === 'function') {
           event.waitUntil((async () => {
             try {

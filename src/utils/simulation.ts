@@ -33,13 +33,23 @@ export const MINUTES_RELECTURE = 15;
 
 export function allouerTemps(sujet: Pick<SujetOfficiel, 'exercices'>, dureeMin = DUREE_BAC_MIN): AllocationExercice[] {
   const baremeTotal = sujet.exercices.reduce((n, e) => n + e.bareme, 0);
-  const aRepartir = Math.max(0, dureeMin - MINUTES_RELECTURE);
+  const aRepartir = Math.max(0, Math.round(dureeMin - MINUTES_RELECTURE));
   if (baremeTotal <= 0) return [];
+  // Méthode des plus forts restes : la somme des minutes allouées vaut toujours exactement `aRepartir`.
+  const exacts = sujet.exercices.map((e, index) => {
+    const brut = (e.bareme / baremeTotal) * aRepartir;
+    const plancher = Math.floor(brut);
+    return { index, numero: e.numero, bareme: e.bareme, minutes: plancher, reste: brut - plancher };
+  });
+  let restant = aRepartir - exacts.reduce((s, x) => s + x.minutes, 0);
+  const parReste = [...exacts].sort((a, b) => (b.reste - a.reste) || (b.bareme - a.bareme) || (a.index - b.index));
+  for (let i = 0; i < restant && i < parReste.length; i++) {
+    parReste[i].minutes += 1;
+  }
   let cumul = 0;
-  return sujet.exercices.map((e) => {
-    const minutes = Math.round((e.bareme / baremeTotal) * aRepartir);
-    cumul += minutes;
-    return { numero: e.numero, bareme: e.bareme, minutes, finConseillee: cumul };
+  return exacts.map((e) => {
+    cumul += e.minutes;
+    return { numero: e.numero, bareme: e.bareme, minutes: e.minutes, finConseillee: cumul };
   });
 }
 

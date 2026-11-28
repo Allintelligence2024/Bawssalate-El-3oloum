@@ -5,6 +5,51 @@ on:
 permissions:
   contents: read
 jobs:
+  sql-verification:
+    name: SQL, RLS & Parité PostgreSQL
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: bousala_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Installer le client psql
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Appliquer le schéma Temps 1 et exécuter les tests de génération/RLS
+        env:
+          PGPASSWORD: ci_password
+        run: |
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -c "create extension if not exists pgcrypto;"
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/schema.sql
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/tests/01-eleves-generation.sql
+      - name: Vérifier la parité RLS contre PostgreSQL CI
+        env:
+          SUPABASE_DB_URL: postgres://postgres:ci_password@127.0.0.1:5432/bousala_ci
+        run: npm run verifier:parite-rls
+      - name: Tester le protocole Temps 2 (synchronisation vérifiée)
+        env:
+          PGPASSWORD: ci_password
+        run: |
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/tests/02-fixture.sql
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/migrations/202611270004_synchronisation_verifiee.sql
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/tests/02-cycle.sql
+
   test:
     # Playwright 1.56.1 ne prend pas en charge Ubuntu 26.04 (ubuntu-latest).
     runs-on: ubuntu-24.04
@@ -15,7 +60,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - name: Vérifier l'absence de fichiers suivis > 10 Mo
+      - name: Vérifier l'absence de fichiers suivis > 10 Mo ou artefacts .pyc
         run: |
           node -e '
             const { execSync } = require("node:child_process");
@@ -28,32 +73,35 @@ jobs:
               console.error("Fichiers suivis dépassant 10 Mo :", tropGros);
               process.exit(1);
             }
+            const pyc = fichiers.filter((f) => f.endsWith(".pyc") || f.includes("__pycache__/"));
+            if (pyc.length) {
+              console.error("Artefacts Python compilés suivis dans Git :", pyc);
+              process.exit(1);
+            }
           '
       - name: Vérification TypeScript
         run: npx tsc --noEmit
-      # Lint JavaScript uniquement (voir eslint.config.mjs) : TypeScript 7 n'est pas
-      # supporté par typescript-eslint, les .ts restent couverts par tsc + les tests.
-      # Décision de sprint : NON bloquant — on l'affiche sans bloquer la fusion.
-      - name: Lint (non bloquant)
+      - name: Lint JavaScript (bloquant)
         run: npm run lint
-        continue-on-error: true
       - run: npm test
+      - name: Tests unitaires hors fuseau UTC (TZ=America/New_York)
+        env:
+          TZ: America/New_York
+        run: npx vitest run
       - run: npm run build
       - run: node scripts/verifier-drills.mjs
       - run: node scripts/verifier-hors-ligne.mjs
       # Smoke test de ce qui est réellement servi : build-id, worker, types, budget de poids.
-      # Comble le trou « vite build passe alors que tsc -b n'a jamais tourné » (Vercel).
       - run: npm run verifier:deploiement
       # 9.2 — le README ne peut plus mentir sur ses chiffres.
       - run: npm run verifier:metriques
-      # 7.3.3 — parité RLS. Sans SUPABASE_DB_URL, le script sort en 2 et le dit :
-      # il ne prétend jamais avoir vérifié une base qu'il n'a pas interrogée.
-      - name: Parité RLS (si SUPABASE_DB_URL fourni)
+      # 7.3.3 — parité RLS production (exécutée contre la base distante si le secret est configuré).
+      - name: Parité RLS production (si SUPABASE_DB_URL configuré)
         run: |
           if [ -n "$SUPABASE_DB_URL" ]; then
             npm run verifier:parite-rls
           else
-            echo "SUPABASE_DB_URL absent : parité NON vérifiée (témoin figé seulement)."
+            echo "::notice title=Parité RLS production::SUPABASE_DB_URL absent : la parité sur le schéma local est vérifiée dans le job sql-verification ; configurer le secret SUPABASE_DB_URL pour vérifier la base distante."
             node scripts/verifier-parite-rls.mjs --fichier supabase/tests/fixtures/parite-rls-2026-11-22.json
           fi
         env:
@@ -120,65 +168,3 @@ jobs:
         if: failure()
         run: |
           node scripts/annoter-echec-integration.mjs || true
-      - name: Mettre en cache les navigateurs Playwright
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('modules/boussole/package-lock.json') }}
-      - name: Installer Chromium pour les tests locaux
-        run: |
-          if npx playwright install --with-deps chromium > /tmp/boussole-chromium-install.log 2>&1; then
-            cat /tmp/boussole-chromium-install.log
-          else
-            cat /tmp/boussole-chromium-install.log
-            node -e '
-              const fs = require("fs");
-              const lignes = fs.readFileSync("/tmp/boussole-chromium-install.log", "utf8").trim().split("\n").slice(-15);
-              const message = lignes.join("\n").replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
-              console.log("::error title=Installation Chromium::" + message);
-            '
-            exit 1
-          fi
-        working-directory: modules/boussole
-      - name: Tester le laboratoire autonome
-        run: npm test
-        working-directory: modules/boussole
-      - name: Tester l'intégration sur le build local
-        run: |
-          node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4182 --strictPort > /tmp/boussole-preview.log 2>&1 &
-          serveur=$!
-          trap 'kill "$serveur" 2>/dev/null || true' EXIT
-          node -e '
-            async function attendre() {
-              for (let i = 0; i < 60; i++) {
-                try { if ((await fetch("http://127.0.0.1:4182/")).ok) return; } catch {}
-                await new Promise(resolve => setTimeout(resolve, 500));
-              }
-              throw new Error("Le serveur local n’a pas démarré.");
-            }
-            attendre().catch(e => { console.error(e); process.exitCode = 1; });
-          '
-          cd modules/boussole
-          # Le log de job exige une authentification GitHub : on recopie les dernières lignes
-          # dans une annotation de check, lisible par l'API et par l'onglet « Checks ».
-          set -o pipefail
-          APP_URL=http://127.0.0.1:4182 npm run test:integration 2>&1 | tee /tmp/boussole-integration.log
-      - name: Remonter l'échec d'intégration dans l'annotation
-        if: failure()
-        run: |
-          node -e '
-            const fs = require("fs");
-            let texte = "";
-            try { texte = fs.readFileSync("/tmp/boussole-integration.log", "utf8"); } catch {}
-            if (!texte) try { texte = fs.readFileSync("/tmp/boussole-preview.log", "utf8"); } catch {}
-            // On ne garde que les lignes qui situent l'échec : les dumps de texte arabe
-            // de la page noieraient l'annotation (et dépasseraient sa taille maximale).
-            const utiles = texte
-              .split("\n")
-              .filter((l) => /waiting for|locator|Error|Timeout|assert|expected|actual|\.cjs:\d+|not ok/i.test(l))
-              .filter((l) => l.length < 400)
-              .slice(-40);
-            const lignes = (utiles.length ? utiles.join("\n") : texte.trim().split("\n").slice(-20).join("\n")).slice(-3500);
-            if (!lignes) { console.log("::error title=Intégration navigateur::Aucune sortie capturée."); process.exit(0); }
-            console.log("::error title=Intégration navigateur::" + lignes.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A"));
-          '

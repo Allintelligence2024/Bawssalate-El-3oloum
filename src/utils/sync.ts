@@ -3,10 +3,16 @@
 // التطبيق يعمل offline دائمًا، والمزامنة مجرّد إضافة صامتة في الخلفية.
 
 import type { Etat } from '../types';
+import { normaliserEmail } from './compte';
 import { xpDe, niveauDe } from './xp';
 import { statsActuelles } from './stats';
 
 export const VERSION_APP = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.9.3';
+
+/** Plafond aligné sur la policy RLS Supabase (256 Kio). */
+export const TAILLE_MAX_CHARGE_UTILE = 262_144;
+export const DELAI_DEBOUNCE_SYNC_MS = 6_000;
+export const DELAI_MAX_ATTENTE_SYNC_MS = 30_000;
 
 function getSupabaseConfig() {
   return {
@@ -75,7 +81,7 @@ export function construireSnapshot(etat: Etat): Snapshot | null {
   const lecons = Object.entries(etat.progression);
   const xp = xpDe(etat);
   return {
-    email: etat.compte.email,
+    email: normaliserEmail(etat.compte.email),
     jeton: etat.compte.jeton ?? '',
     wilaya: etat.compte.wilaya,
     daira: etat.compte.daira,
@@ -108,10 +114,50 @@ export function construireSnapshot(etat: Etat): Snapshot | null {
  *  « erreur » affiché honnêtement qu'une application qui semble figée dans un couloir. */
 export const DELAI_ENVOI_MS = 8_000;
 
-/** Signal d'annulation à délai fixe. Isolé pour être testable avec un délai court
- *  (AbortSignal.timeout utilise une horloge interne que les faux timers ne pilotent pas). */
+function erreurDelai(): Error {
+  const e = new Error('Délai de synchronisation dépassé');
+  e.name = 'TimeoutError';
+  return e;
+}
+
+/** Signal d'annulation à délai fixe avec repli AbortController pour les anciens Safari/WebView. */
 export function signalDelai(ms: number = DELAI_ENVOI_MS): AbortSignal {
-  return AbortSignal.timeout(ms);
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  const controle = new AbortController();
+  const minuterie = setTimeout(() => {
+    controle.abort(erreurDelai());
+  }, ms);
+  // Permet à Node de ne pas rester bloqué sur un timer orphelin en test.
+  if (typeof (minuterie as unknown as { unref?: () => void }).unref === 'function') {
+    (minuterie as unknown as { unref: () => void }).unref();
+  }
+  return controle.signal;
+}
+
+/** Borne n'importe quelle promesse asynchrone (dont l'import dynamique du SDK) par un délai strict. */
+export function avecDelai<T>(promesse: Promise<T>, ms: number = DELAI_ENVOI_MS): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const minuterie = setTimeout(() => reject(erreurDelai()), ms);
+    promesse.then(
+      (valeur) => { clearTimeout(minuterie); resolve(valeur); },
+      (err) => { clearTimeout(minuterie); reject(err); },
+    );
+  });
+}
+
+/** Calcule le délai effectif avant envoi sans famine : debounce court + plafond d'attente maximal. */
+export function delaiAvantEnvoi(
+  debutAttenteMs: number | null,
+  maintenantMs: number,
+  debounceMs: number = DELAI_DEBOUNCE_SYNC_MS,
+  plafondMs: number = DELAI_MAX_ATTENTE_SYNC_MS,
+): number {
+  if (debutAttenteMs === null) return debounceMs;
+  const ecoule = Math.max(0, maintenantMs - debutAttenteMs);
+  const restant = Math.max(0, plafondMs - ecoule);
+  return Math.min(debounceMs, restant);
 }
 
 let client: import('@supabase/supabase-js').SupabaseClient | null = null;
@@ -122,43 +168,106 @@ let enCours: Promise<void> | null = null;
 let enAttente: Snapshot | null = null;
 const comptesSuspendus = new Set<string>();
 const suppressionsEnCours = new Set<string>();
-/** Les anciens jetons déterministes ou issus du repli faible ne sont pas sûrs. */
-export function jetonUtilisable(jeton?: string): boolean {
-  return Boolean(jeton && !/^0{32}$/.test(jeton) && !jeton.startsWith('j-'));
+const generationsConnues = new Map<string, number>();
+
+export function generationConnue(email?: string): number {
+  if (!email) return 1;
+  return generationsConnues.get(normaliserEmail(email)) ?? 1;
 }
+
+export function definirGenerationConnue(email: string, generation: number): void {
+  if (Number.isSafeInteger(generation) && generation >= 1) {
+    generationsConnues.set(normaliserEmail(email), generation);
+  }
+}
+
+/** Les anciens jetons déterministes, triviaux (hex répété) ou issus du repli faible ne sont pas sûrs. */
+export function jetonUtilisable(jeton?: string): boolean {
+  return Boolean(
+    jeton &&
+    !/^([0-9a-f])\1{31,}$/i.test(jeton) &&
+    !jeton.startsWith('j-'),
+  );
+}
+
 /** Arrête les nouveaux envois dans cet onglet ; les requêtes déjà parties peuvent continuer. */
 export function suspendreSync(email?: string): void {
   if (!email) return;
-  comptesSuspendus.add(email);
-  if (enAttente?.email === email) enAttente = null;
+  const cle = normaliserEmail(email);
+  comptesSuspendus.add(cle);
+  if (enAttente?.email === cle) enAttente = null;
 }
+
 /** Un nouveau consentement explicite est nécessaire pour reprendre. */
 export function reprendreSync(email?: string): void {
-  if (!email || suppressionsEnCours.has(email)) return;
-  comptesSuspendus.delete(email);
+  if (!email) return;
+  const cle = normaliserEmail(email);
+  if (suppressionsEnCours.has(cle)) return;
+  comptesSuspendus.delete(cle);
   dernierEnvoye = '';
-  publierEtatEnvoi(email, 'en_attente');
+  erreursEnvoi.delete(cle);
+  publierEtatEnvoi(cle, 'en_attente');
 }
+
 let dernierEnvoye = '';
 export type EtatEnvoi = 'en_attente' | 'envoi' | 'confirme' | 'erreur' | 'hors_ligne';
+export type CauseErreurEnvoi =
+  | 'aucune'
+  | 'autorisation'
+  | 'conflit_generation'
+  | 'charge_trop_lourde'
+  | 'limite_debit'
+  | 'delai'
+  | 'reseau'
+  | 'serveur';
+
 /** Compteur local (aucun envoi) des envois interrompus par le délai de 8 s. */
 let derniersDelaisDepasses = 0;
 export function delaisDepasses(): number {
   return derniersDelaisDepasses;
 }
+
 const etatsEnvoi = new Map<string, EtatEnvoi>();
+const erreursEnvoi = new Map<string, CauseErreurEnvoi>();
 const observateursEnvoi = new Set<() => void>();
+
 export function etatEnvoi(email?: string): EtatEnvoi {
-  return (email && etatsEnvoi.get(email)) || 'en_attente';
+  return (email && etatsEnvoi.get(normaliserEmail(email))) || 'en_attente';
 }
+
+export function derniereErreurEnvoi(email?: string): CauseErreurEnvoi {
+  return (email && erreursEnvoi.get(normaliserEmail(email))) || 'aucune';
+}
+
 export function abonnerEtatEnvoi(fn: () => void): () => void {
   observateursEnvoi.add(fn);
   return () => { observateursEnvoi.delete(fn); };
 }
-function publierEtatEnvoi(email: string, etat: EtatEnvoi): void {
-  if (comptesSuspendus.has(email)) return;
-  etatsEnvoi.set(email, etat);
+
+function publierEtatEnvoi(email: string, etat: EtatEnvoi, cause: CauseErreurEnvoi = 'aucune'): void {
+  const cle = normaliserEmail(email);
+  if (comptesSuspendus.has(cle)) return;
+  etatsEnvoi.set(cle, etat);
+  if (etat === 'erreur') erreursEnvoi.set(cle, cause);
+  else if (etat === 'confirme') erreursEnvoi.set(cle, 'aucune');
   for (const fn of observateursEnvoi) fn();
+}
+
+export function classerErreurEnvoi(err: unknown): CauseErreurEnvoi {
+  if (!err) return 'reseau';
+  if (err instanceof Error && err.name === 'TimeoutError') return 'delai';
+  const obj = err as { status?: number; code?: string; message?: string };
+  const status = typeof obj.status === 'number' ? obj.status : undefined;
+  const code = typeof obj.code === 'string' ? obj.code : '';
+  const msg = typeof obj.message === 'string' ? obj.message.toLowerCase() : '';
+  if (code === '40001' || status === 409 || msg.includes('génération') || msg.includes('generation')) {
+    return 'conflit_generation';
+  }
+  if (status === 401 || status === 403 || code === '42501') return 'autorisation';
+  if (status === 413 || msg.includes('262144') || msg.includes('payload too large')) return 'charge_trop_lourde';
+  if (status === 429) return 'limite_debit';
+  if (status !== undefined && status >= 500) return 'serveur';
+  return 'reseau';
 }
 
 async function clientSupabase(jeton: string) {
@@ -167,7 +276,7 @@ async function clientSupabase(jeton: string) {
   // Le client est recréé si le compte (donc le jeton) a changé dans l'onglet.
   const { url, key } = getSupabaseConfig();
   if (!client || jetonClient !== jeton) {
-    const { createClient } = await import('@supabase/supabase-js');
+    const { createClient } = await avecDelai(import('@supabase/supabase-js'), DELAI_ENVOI_MS);
     client = createClient(url as string, key as string, {
       auth: { persistSession: false, autoRefreshToken: false },
       global: { headers: { 'x-kunz-jeton': jeton } },
@@ -180,8 +289,10 @@ async function clientSupabase(jeton: string) {
 // La progression locale ne dépend jamais du réseau.
 export async function envoyerSnapshot(etat: Etat): Promise<void> {
   if (!syncActive()) return;
-  if (!etat.compte || !jetonUtilisable(etat.compte.jeton) || comptesSuspendus.has(etat.compte.email) || !consentementExplicite(etat)) return;
-  if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(etat.compte.email, 'hors_ligne'); return; }
+  if (!etat.compte) return;
+  const email = normaliserEmail(etat.compte.email);
+  if (!jetonUtilisable(etat.compte.jeton) || comptesSuspendus.has(email) || !consentementExplicite(etat)) return;
+  if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(email, 'hors_ligne'); return; }
   const snap = construireSnapshot(etat);
   if (!snap) return;
   // Coalescence (BUG-003) : si un envoi est en cours, on mémorise le dernier état produit.
@@ -194,54 +305,62 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
   const { maj: _maj, jeton: _jeton, ...chargeUtile } = snap;
   const json = JSON.stringify([snap.jeton, chargeUtile]);
   if (json === dernierEnvoye) { publierEtatEnvoi(snap.email, 'confirme'); return; }
-  const travail = Promise.resolve().then(async () => {
-  try {
-    const sb = await clientSupabase(snap.jeton);
-    if (!sb || comptesSuspendus.has(snap.email)) return;
-    if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(snap.email, 'hors_ligne'); return; }
-    publierEtatEnvoi(snap.email, 'envoi');
-    // Timeout borné (BUG-007) : `abortSignal` annule la requête réseau, pas seulement l'attente.
-    const { error } = await sb.from('eleves').upsert(
-      {
-        email: snap.email,
-        jeton: snap.jeton,
-        wilaya: snap.wilaya,
-        daira: snap.daira,
-        cree_le: snap.cree_le,
-        nom: snap.nom,
-        date_bac: snap.date_bac,
-        xp: snap.xp,
-        niveau: snap.niveau,
-        lecons_terminees: snap.lecons_terminees.length,
-        lecons_en_cours: snap.lecons_en_cours.length,
-        lecons_fragiles: snap.lecons_fragiles.length,
-        jalons_faits: snap.jalons_faits.length,
-        ateliers_faits: snap.ateliers_faits.length,
-        drills_faits: snap.drills_faits,
-        minutes_totales: snap.minutes_totales,
-        revisions: snap.revisions,
-        seances_comptees: snap.seances_comptees,
-        jours_activite: snap.jours_activite.length,
-        reponses_justes: snap.reponses_justes,
-        reponses_fausses: snap.reponses_fausses,
-        notes_nombre: snap.notes_nombre,
-        app_version: snap.app_version,
-        maj: snap.maj,
-        charge_utile: { ...chargeUtile, maj: snap.maj },
-      },
-      { onConflict: 'email' },
-    ).abortSignal(signalDelai());
-    if (!error) {
-      dernierEnvoye = json;
-      publierEtatEnvoi(snap.email, 'confirme');
-    } else publierEtatEnvoi(snap.email, 'erreur');
-  } catch (e) {
-    // Un dépassement de délai n'est pas une erreur serveur : l'élève doit voir « hors ligne »
-    // ou « erreur » selon ce qu'on sait, jamais un silence. On garde 'erreur' (état déjà testé)
-    // et on distingue le délai pour la télémétrie locale.
-    if (e instanceof Error && e.name === 'TimeoutError') derniersDelaisDepasses++;
-    publierEtatEnvoi(snap.email, 'erreur');
+  const generationAttendue = generationConnue(snap.email);
+  const chargeComplete = { ...chargeUtile, maj: snap.maj, temoin_generation: generationAttendue };
+  if (new TextEncoder().encode(JSON.stringify(chargeComplete)).byteLength > TAILLE_MAX_CHARGE_UTILE) {
+    publierEtatEnvoi(snap.email, 'erreur', 'charge_trop_lourde');
+    return;
   }
+  const travail = Promise.resolve().then(async () => {
+    try {
+      const sb = await clientSupabase(snap.jeton);
+      if (!sb || comptesSuspendus.has(snap.email)) return;
+      if (typeof navigator !== 'undefined' && !navigator.onLine) { publierEtatEnvoi(snap.email, 'hors_ligne'); return; }
+      publierEtatEnvoi(snap.email, 'envoi');
+      // Timeout borné (BUG-007) : `abortSignal` annule la requête réseau, pas seulement l'attente.
+      const { error } = await sb.from('eleves').upsert(
+        {
+          email: snap.email,
+          jeton: snap.jeton,
+          wilaya: snap.wilaya,
+          daira: snap.daira,
+          cree_le: snap.cree_le,
+          nom: snap.nom,
+          date_bac: snap.date_bac,
+          xp: snap.xp,
+          niveau: snap.niveau,
+          lecons_terminees: snap.lecons_terminees.length,
+          lecons_en_cours: snap.lecons_en_cours.length,
+          lecons_fragiles: snap.lecons_fragiles.length,
+          jalons_faits: snap.jalons_faits.length,
+          ateliers_faits: snap.ateliers_faits.length,
+          drills_faits: snap.drills_faits,
+          minutes_totales: snap.minutes_totales,
+          revisions: snap.revisions,
+          seances_comptees: snap.seances_comptees,
+          jours_activite: snap.jours_activite.length,
+          reponses_justes: snap.reponses_justes,
+          reponses_fausses: snap.reponses_fausses,
+          notes_nombre: snap.notes_nombre,
+          app_version: snap.app_version,
+          maj: snap.maj,
+          charge_utile: chargeComplete,
+        },
+        { onConflict: 'email' },
+      ).abortSignal(signalDelai());
+      if (!error) {
+        dernierEnvoye = json;
+        generationsConnues.set(snap.email, generationAttendue + 1);
+        publierEtatEnvoi(snap.email, 'confirme');
+      } else {
+        const cause = classerErreurEnvoi(error);
+        publierEtatEnvoi(snap.email, 'erreur', cause);
+      }
+    } catch (e) {
+      const cause = classerErreurEnvoi(e);
+      if (cause === 'delai') derniersDelaisDepasses++;
+      publierEtatEnvoi(snap.email, 'erreur', cause);
+    }
   });
   enCours = travail;
   try {
@@ -263,27 +382,29 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
 export type ResultatSuppression = 'supprime' | 'hors_ligne' | 'pas_de_compte' | 'sync_inactive' | 'indetermine' | 'erreur';
 
 export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSuppression> {
-  suspendreSync(etat.compte?.email);
+  const email = etat.compte?.email ? normaliserEmail(etat.compte.email) : undefined;
+  suspendreSync(email);
   if (!syncActive()) return 'sync_inactive';
-  if (!etat.compte?.email || !etat.compte.jeton) return 'pas_de_compte';
+  if (!email || !etat.compte?.jeton) return 'pas_de_compte';
   if (typeof navigator !== 'undefined' && !navigator.onLine) return 'hors_ligne';
-  if (suppressionsEnCours.has(etat.compte.email)) return 'erreur';
-  suppressionsEnCours.add(etat.compte.email);
+  if (suppressionsEnCours.has(email)) return 'erreur';
+  suppressionsEnCours.add(email);
   try {
     if (enCours) await enCours;
     const sb = await clientSupabase(etat.compte.jeton);
     if (!sb) return 'sync_inactive';
-    const { data, error } = await sb.from('eleves').delete().eq('email', etat.compte.email).select('email');
+    const { data, error } = await sb.from('eleves').delete().eq('email', email).select('email');
     if (error) {
       return 'erreur';
     }
     if (!data || data.length !== 1) return 'indetermine'; // RLS ou ligne absente : impossible de distinguer
     dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
+    generationsConnues.delete(email);
     return 'supprime';
   } catch {
     return 'erreur';
   } finally {
-    suppressionsEnCours.delete(etat.compte.email);
+    suppressionsEnCours.delete(email);
   }
 }
 

@@ -89,7 +89,8 @@ export function aujourdhui(): string {
 
 export function ajouterJours(iso: string, jours: number): string {
   const d = new Date(iso + 'T12:00:00');
-  d.setDate(d.getDate() + jours);
+  if (Number.isNaN(d.getTime()) || !Number.isFinite(jours)) return iso;
+  d.setDate(d.getDate() + Math.trunc(jours));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
     d.getDate()
   ).padStart(2, '0')}`;
@@ -98,19 +99,21 @@ export function ajouterJours(iso: string, jours: number): string {
 export function differenceJours(depuis: string, jusquA: string): number {
   const a = new Date(depuis + 'T12:00:00');
   const b = new Date(jusquA + 'T12:00:00');
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return 0;
   return Math.round((b.getTime() - a.getTime()) / 86_400_000);
 }
 
 export function salue(): string {
   const h = new Date().getHours();
-  return h >= 4 && h < 12 ? 'صباح الخير' : h >= 12 && h < 18 ? 'مساء الخير' : 'مساء الخير';
+  return h >= 4 && h < 12 ? 'صباح الخير' : 'مساء الخير';
 }
 
 /** تنسيق الثواني إلى mm:ss أو hh:mm:ss */
 export function formatChrono(secondes: number): string {
-  const h = Math.floor(secondes / 3600);
-  const m = Math.floor((secondes % 3600) / 60);
-  const s = secondes % 60;
+  const total = Number.isFinite(secondes) ? Math.max(0, Math.trunc(secondes)) : 0;
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
 }

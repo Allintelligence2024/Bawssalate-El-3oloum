@@ -40,6 +40,7 @@
     "eslint": "^9.39.5",
     "jsdom": "^24.0.0",
     "playwright": "^1.65.1",
+    "postgres": "^4.1.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

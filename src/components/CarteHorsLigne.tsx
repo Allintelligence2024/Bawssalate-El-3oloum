@@ -3,7 +3,7 @@
 // lourd (leçons, laboratoire Boussole, PDF) ne l'est que si l'élève le demande, et son poids
 // lui est annoncé avant de commencer — sur un forfait mobile, ce n'est pas un détail.
 import { useEffect, useState } from 'react';
-import { etatHorsLigne, type EtatHorsLigne } from '../utils/pwa';
+import { etatHorsLigne, verifierEspaceStockage, type EtatHorsLigne } from '../utils/pwa';
 
 /** En Mo, arrondi au dixième : plus lisible qu'un nombre d'octets, plus honnête qu'un arrondi entier. */
 function mo(octets: number): string {
@@ -15,12 +15,14 @@ export default function CarteHorsLigne() {
   const [complet, setComplet] = useState<EtatHorsLigne | null>(null);
   const [occupé, setOccupe] = useState<'coquille' | 'complet' | null>(null);
   const [erreur, setErreur] = useState(false);
+  const [quotaInsuffisant, setQuotaInsuffisant] = useState(false);
 
   async function verifier() {
     try {
       setCoquille(await etatHorsLigne(false, 'coquille'));
       setComplet(await etatHorsLigne(false, 'complet'));
       setErreur(false);
+      setQuotaInsuffisant(false);
     } catch {
       setCoquille(null);
       setComplet(null);
@@ -31,10 +33,20 @@ export default function CarteHorsLigne() {
   async function telecharger(portee: 'coquille' | 'complet') {
     setOccupe(portee);
     setErreur(false);
+    setQuotaInsuffisant(false);
     try {
+      const octetsRequis = portee === 'complet' ? (complet?.octetsContenu ?? 0) : (coquille?.octetsCoquille ?? 0);
+      if (octetsRequis > 0) {
+        const espace = await verifierEspaceStockage(octetsRequis);
+        if (!espace.suffisant) {
+          setQuotaInsuffisant(true);
+          return;
+        }
+      }
       const etat = await etatHorsLigne(true, portee);
       if (portee === 'coquille') setCoquille(etat);
       else setComplet(etat);
+      if (etat.quotaDepasse) setQuotaInsuffisant(true);
     } catch {
       setErreur(true);
     } finally {
@@ -66,6 +78,12 @@ export default function CarteHorsLigne() {
               ? 'الواجهة موجودة على الجهاز: التطبيق يفتح دون شبكة.'
               : `الواجهة غير مكتملة: ${resteCoquille} ملف من ${coquille!.total} غير موجود.`}
       </p>
+
+      {quotaInsuffisant && (
+        <p role="alert" className="mt-2 text-xs font-semibold leading-relaxed text-amber-800">
+          المساحة المتاحة على الجهاز غير كافية لتنزيل المحتوى الكامل. أفرغ بعض المساحة ثم أعد المحاولة.
+        </p>
+      )}
 
       <dl className="mt-3 space-y-1 text-xs text-mute">
         <div className="flex justify-between gap-3">
