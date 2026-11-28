@@ -60,7 +60,7 @@ describe('la carte du guide', () => {
   it('affiche le titre, les trois états et aucune icône emoji', async () => {
     await monter(createElement(GuideAccueil, accessoires()));
     const texte = zone!.textContent ?? '';
-    expect(texte).toContain('المرشد يفتح الحصة');
+    expect(texte).toContain('اختر حالتك اليوم');
     expect(texte).toContain('عيان');
     expect(texte).toContain('لاباس');
     expect(texte).toContain('في الفورمة');
@@ -143,17 +143,17 @@ describe('les humeurs du guide', () => {
   });
 });
 
-// ── L'invitation au compte passe par كويست (Aujourdhui), après une micro-victoire ──
-describe('invitation au compte depuis كويست', () => {
+// ── L'invitation au compte passe par الرئيسية (Principal), après une micro-victoire ──
+describe('invitation au compte depuis الرئيسية', () => {
   it('n’apparaît pas avant la première victoire, puis une seule fois', async () => {
-    const { default: Aujourdhui } = await import('../components/Aujourdhui');
+    const { default: Principal } = await import('../components/Principal');
     const { migrerEtat } = await import('../utils/etat');
     const creer = vi.fn();
     const plusTard = vi.fn();
-    const base = { onOuvrirItem: () => {}, onVoirUnite: () => {}, onDemarrerRevision: () => {}, onOuvrirMethodologie: () => {}, onResultatKafaa: () => {} };
+    const base = { onOuvrirItem: () => {}, onVoirUnite: () => {}, onDemarrerRevision: () => {} };
 
     const vierge = migrerEtat({});
-    await monter(createElement(Aujourdhui, { ...base, etat: vierge, onCreerCompte: creer, onMasquerInvitation: plusTard }));
+    await monter(createElement(Principal, { ...base, etat: vierge, onCreerCompte: creer, onMasquerInvitation: plusTard }));
     expect(zone!.textContent).not.toContain('أوّل انتصار');
 
     await act(async () => root!.unmount());
@@ -172,7 +172,7 @@ describe('invitation au compte depuis كويست', () => {
         } as never,
       },
     });
-    await monter(createElement(Aujourdhui, { ...base, etat: avance, onCreerCompte: creer, onMasquerInvitation: plusTard }));
+    await monter(createElement(Principal, { ...base, etat: avance, onCreerCompte: creer, onMasquerInvitation: plusTard }));
     const texte = zone!.textContent ?? '';
     expect(texte).toContain('أوّل انتصار');
     await clic(parTexte('أنشئ حسابي')!);
@@ -186,7 +186,7 @@ describe('invitation au compte depuis كويست', () => {
 
     // Invitation déjà vue : elle ne revient pas.
     const vue = { ...avance, invitationCompteVue: '2026-11-20T11:00:00.000Z' };
-    await monter(createElement(Aujourdhui, { ...base, etat: vue, onCreerCompte: creer, onMasquerInvitation: plusTard }));
+    await monter(createElement(Principal, { ...base, etat: vue, onCreerCompte: creer, onMasquerInvitation: plusTard }));
     expect(zone!.textContent).not.toContain('أوّل انتصار');
   });
 });

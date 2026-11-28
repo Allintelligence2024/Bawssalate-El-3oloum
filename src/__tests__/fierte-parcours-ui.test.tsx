@@ -12,8 +12,8 @@ import { effacerAlerteStockage } from '../utils/echecsStockage';
 
 const LECON = 'd1-u1-l1-expression-genique';
 
-// L'accueil : un seul bouton qui demande l'ouverture d'une leçon non terminée.
-vi.mock('../components/Aujourdhui', () => ({
+// L'accueil (الرئيسية) : un seul bouton qui demande l'ouverture d'une leçon non terminée.
+vi.mock('../components/Principal', () => ({
   default: ({ onOuvrirItem }: { onOuvrirItem: (item: { type: 'lecon'; id: string }) => void }) =>
     createElement(
       'div',
