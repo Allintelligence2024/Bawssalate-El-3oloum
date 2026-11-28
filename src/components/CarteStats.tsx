@@ -1,8 +1,9 @@
-﻿// بطاقة إحصاء المُرشد — كم إجابة صحيحة وكم ليست صحيحة، بلا نسبة مئوية وبلا لوم.
+// بطاقة إحصاء المُرشد — كم إجابة صحيحة وكم ليست صحيحة، بلا نسبة مئوية وبلا لوم.
 
 import { SOURCES, messageTuteur, statsSemaine, useStats, totalReponses } from '../utils/stats';
 import { nb } from '../utils/dates';
 import { Morceau } from './Communs';
+import { IcoShajara } from './Icones';
 
 interface Props {
   complet?: boolean; // true في «أنا»: تفصيل حسب المصدر
@@ -23,7 +24,9 @@ export default function CarteStats({ complet = false }: Props) {
             يقيس محاولاتك بلا ضغط: الخطأ هنا معلومة، لا حكم.
           </p>
         </div>
-        <span className="text-2xl">🌿</span>
+        <span className="block h-7 w-7 shrink-0 text-forest" aria-hidden="true">
+          <IcoShajara />
+        </span>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3">

@@ -250,6 +250,16 @@ export interface Etat {
   trophees?: Record<string, { le: string; n: number }>;
   /** « تحدّي 60 ثانية » (v0.11) : séries rapides jouées, par date ISO. */
   defis60?: string[];
+  /** خطة المراجعة 30 يومًا في العلوم (الأيام المُنجزة فقط — المحتوى يُبنى تلقائيًّا من بيانات التلميذ). */
+  plan30Jours?: {
+    fait: string[];
+  };
+  /** أيام الراحة المحمية (يوم واحد أسبوعيًا يحفظ السلسلة بلا تأنيب). */
+  rythmeBienveillant?: {
+    joursRepos: string[];
+  };
+  /** جلسات « سبرينت ٣ دقائق » المنجزة (تواريخ ISO). */
+  sprints3Min?: string[];
 
   bacExercices?: Record<string, true>; // تمارين أُكملت كلّ خطواتها (مفتاح: `${sujetId}:${numéro}`)
 }

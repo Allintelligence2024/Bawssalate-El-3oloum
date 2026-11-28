@@ -295,3 +295,104 @@ export function IcoMaison() {
     </svg>
   );
 }
+
+/** درع الراحة المحمية — يوم راحة أسبوعي بلا تأنيب. */
+export function IcoBouclier({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path
+        d="M12 3 5 6v5.5c0 4.6 3 8.1 7 9.5 4-1.4 7-4.9 7-9.5V6l-7-3Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path d="m9 12 2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** آلة حاسبة — محاكي معدل البكالوريا. */
+export function IcoCalculatrice({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect x="4" y="3" width="16" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="7.5" y="6.5" width="9" height="3.5" rx="0.8" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="8.5" cy="13.5" r="1" fill="currentColor" />
+      <circle cx="12" cy="13.5" r="1" fill="currentColor" />
+      <circle cx="15.5" cy="13.5" r="1" fill="currentColor" />
+      <circle cx="8.5" cy="17" r="1" fill="currentColor" />
+      <circle cx="12" cy="17" r="1" fill="currentColor" />
+      <circle cx="15.5" cy="17" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** انقطاع الشبكة — وضع دون إنترنت. */
+export function IcoWifiOff({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M3 3l18 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M5 10.5a11 11 0 0 1 5.2-2.2M15.4 8.7A11 11 0 0 1 19 10.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8.5 14a6 6 0 0 1 2.7-1.1M15.5 14a6 6 0 0 0-.8-.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="12" cy="18" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** مؤقّت — سبرينت ٣ دقائق. */
+export function IcoChrono({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <circle cx="12" cy="13.5" r="7.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M9.5 3h5M12 3v3M12 13.5l3-2.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** تثبيت التطبيق على الهاتف. */
+export function IcoMobile({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 7.5v6m0 0-2.2-2.2M12 13.5l2.2-2.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="18.2" r="0.9" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** بحث — عدسة مكبّرة SVG. */
+export function IcoRecherche({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="m16 16 4.5 4.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** خريطة ذهنية — شبكة عقد مترابطة SVG. */
+export function IcoCarte({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="2.8" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="5.5" cy="6.5" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="18.5" cy="6.5" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="6.5" cy="18" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <circle cx="17.5" cy="18" r="2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M9.8 10.2 7.1 7.9M14.2 10.2l2.7-2.3M10 14l-2 2.4M14 14l2 2.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** جسر الوحدة — قوس ربط علمي SVG. */
+export function IcoPont({ className = 'h-full w-full' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M3 16h18M4 16v3M20 16v3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M4 16a8 8 0 0 1 16 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8.5 11.2V16M12 8.5V16M15.5 11.2V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+

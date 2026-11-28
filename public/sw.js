@@ -101,10 +101,24 @@ async function repondrePlage(cached, enteteRange) {
   const tampon = await cached.arrayBuffer();
   const total = tampon.byteLength;
   if (total === 0) return cached;
+  if (correspondance[1] === '' && correspondance[2] === '') {
+    return new Response(null, {
+      status: 416,
+      statusText: 'Range Not Satisfiable',
+      headers: { 'Content-Range': `bytes */${total}` },
+    });
+  }
   let debut;
   let fin;
   if (correspondance[1] === '' && correspondance[2] !== '') {
     const suffixe = Number(correspondance[2]);
+    if (!Number.isFinite(suffixe) || suffixe <= 0) {
+      return new Response(null, {
+        status: 416,
+        statusText: 'Range Not Satisfiable',
+        headers: { 'Content-Range': `bytes */${total}` },
+      });
+    }
     debut = Math.max(0, total - suffixe);
     fin = total - 1;
   } else {
@@ -201,7 +215,14 @@ async function remplirUrls(cache, urls) {
   return etatQuota.depasse;
 }
 
+// Mode économie de data 4G : évite toute mise en cache opportuniste de médias lourds en arrière-plan.
+let economieData4G = false;
+
 self.addEventListener('message', event => {
+  if (event.data?.type === 'CONFIG_DATA_SAVER') {
+    economieData4G = Boolean(event.data.actif);
+    return;
+  }
   if (event.data?.type === 'SKIP_WAITING') {
     if (typeof self.skipWaiting === 'function') {
       const p = self.skipWaiting();
@@ -249,23 +270,19 @@ self.addEventListener('fetch', event => {
   // et on découpe proprement une réponse 206 Partial Content quand l'en-tête Range est fourni.
   if (request.headers.has('range')) {
     if ((BOUSSOLE.includes(url.pathname) && url.pathname.endsWith('.pdf')) || audioValide(url.pathname)) {
-      event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(cached => {
+      event.respondWith(caches.open(CACHE).then(c => c.match(url.pathname)).then(async cached => {
         if (cached) {
           const enteteRange = typeof request.headers.get === 'function' ? request.headers.get('range') : null;
           return repondrePlage(cached, enteteRange);
         }
-        if (audioValide(url.pathname) && typeof event.waitUntil === 'function') {
-          event.waitUntil((async () => {
-            try {
-              const cache = await caches.open(CACHE);
-              const complet = await fetch(url.pathname);
-              if (complet.status === 200 && typeValide(url.pathname, complet)) {
-                await cache.put(url.pathname, complet);
-              }
-            } catch { /* hors ligne ou annulé : on ignore silencieusement */ }
-          })());
+        // Jamais de double téléchargement parallèle (économie 4G) : on sert la requête unique,
+        // et si le serveur répond 200 complet (et hors mode Data-Saver), on le met en cache sans coût réseau supplémentaire.
+        const res = await fetch(request);
+        if (!economieData4G && res.status === 200 && typeValide(url.pathname, res)) {
+          const cache = await caches.open(CACHE);
+          await cache.put(url.pathname, res.clone()).catch(() => {});
         }
-        return fetch(request);
+        return res;
       }));
     }
     return;
@@ -276,7 +293,8 @@ self.addEventListener('fetch', event => {
   }
   // Seuls les fichiers publics de l'application sont mis en cache, jamais une API ou une vidéo.
   // Les illustrations WebP et les MP3 du المرشد sont explicitement autorisés ici, mais absents
-  // du précache : ils entrent dans le cache à la volée lors de la première ouverture/lecture.
+  // du précache : ils entrent dans le cache à la volée lors de la première ouverture/lecture
+  // (sauf lorsque le mode économie de data 4G est activé).
   if (!url.pathname.startsWith('/assets/') &&
       !/^\/lecons\/[a-zA-Z0-9_.-]+\.html$/.test(url.pathname) &&
       !illustrationValide(url.pathname) &&
@@ -289,7 +307,8 @@ self.addEventListener('fetch', event => {
     if (cached) return cached;
     try {
       const res = await fetch(request);
-      if (res.status === 200 && typeValide(url.pathname, res) && !request.headers.has('range')) {
+      const mediaLourd = audioValide(url.pathname) || illustrationValide(url.pathname);
+      if (res.status === 200 && typeValide(url.pathname, res) && !request.headers.has('range') && !(economieData4G && mediaLourd)) {
         await cache.put(request, res.clone()).catch(() => {});
       }
       return res;

@@ -41,11 +41,12 @@ create table if not exists public.eleves (
   charge_utile      jsonb          -- الملخّص الكامل (بحدّ أقصى 256 ك.ب)
 );
 
--- فهارس للاستعلامات
+-- فهارس للاستعلامات وRLS
 create index if not exists eleves_maj_idx on public.eleves (maj desc);
 create index if not exists eleves_xp_idx  on public.eleves (xp desc);
 create index if not exists eleves_wilaya_idx on public.eleves (wilaya);
-create index if not exists eleves_generation_idx on public.eleves (generation desc);
+create index if not exists eleves_jeton_idx on public.eleves (jeton);
+drop index if exists public.eleves_generation_idx;
 
 -- ───────────── Génération monotone & horodatage serveur (BUG-002 / P0) ─────────────
 alter table public.eleves add column if not exists generation bigint not null default 1;
@@ -121,16 +122,18 @@ create trigger eleves_generation_avant_maj
 create or replace function public.eleves_jeton_autorise(jeton text)
 returns boolean language sql stable security invoker set search_path = pg_catalog
 as $$
+  -- Court-circuit : comparer d'abord l'en-tête HTTP avant les regex et le comptage d'entropie
+  -- pour éviter O(N) allocations regexp_split_to_table lors d'un scan RLS.
   select coalesce(
     jeton is not null
+    and jeton = (nullif(current_setting('request.headers', true), '')::json ->> 'x-kunz-jeton')
     and char_length(jeton) >= 32
     and jeton ~ '^([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
     and replace(jeton, '-', '') !~ '^([0-9a-f])\1+$'
     and (
       select count(distinct ch)
       from regexp_split_to_table(replace(jeton, '-', ''), '') as ch
-    ) >= 4
-    and jeton = (nullif(current_setting('request.headers', true), '')::json ->> 'x-kunz-jeton'),
+    ) >= 4,
     false
   );
 $$;

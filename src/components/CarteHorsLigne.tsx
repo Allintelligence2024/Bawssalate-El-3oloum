@@ -4,6 +4,8 @@
 // lui est annoncé avant de commencer — sur un forfait mobile, ce n'est pas un détail.
 import { useEffect, useState } from 'react';
 import { etatHorsLigne, verifierEspaceStockage, type EtatHorsLigne } from '../utils/pwa';
+import { ecrireDataSaver4G, lireDataSaver4G, surChangementDataSaver } from '../utils/dataSaver';
+import { BoutonInstallerPwa } from './BoutonInstallerPwa';
 
 /** En Mo, arrondi au dixième : plus lisible qu'un nombre d'octets, plus honnête qu'un arrondi entier. */
 function mo(octets: number): string {
@@ -16,6 +18,7 @@ export default function CarteHorsLigne() {
   const [occupé, setOccupe] = useState<'coquille' | 'complet' | null>(null);
   const [erreur, setErreur] = useState(false);
   const [quotaInsuffisant, setQuotaInsuffisant] = useState(false);
+  const [dataSaver, setDataSaver] = useState<boolean>(() => lireDataSaver4G());
 
   async function verifier() {
     try {
@@ -56,18 +59,50 @@ export default function CarteHorsLigne() {
 
   useEffect(() => {
     void verifier();
+    return surChangementDataSaver(setDataSaver);
   }, []);
+
+  function basculerDataSaver() {
+    const suivant = !dataSaver;
+    if (ecrireDataSaver4G(suivant)) {
+      setDataSaver(suivant);
+    }
+  }
 
   const resteCoquille = coquille ? coquille.manquants : null;
   const resteComplet = complet ? complet.manquants : null;
 
   return (
-    <section className="card mt-5 p-5">
-      <p className="eyebrow">العمل دون إنترنت</p>
+    <section className="card mt-5 p-5" aria-label="العمل دون إنترنت وتوفير الأنترنت">
+      <p className="eyebrow">العمل دون إنترنت وتوفير 4G</p>
       <p className="mt-2 text-xs leading-relaxed text-mute">
         الواجهة تُنزَّل تلقائيًا وتعمل دون شبكة. أمّا الدروس ومختبر البوصلة وورقتا الطباعة فهي ملفات
         ثقيلة: لا تُنزَّل إلّا إذا اخترت ذلك، ويُعلَن حجمها قبل البدء. الفيديو والملفات الخارجية ليست ضمن هذا التنزيل.
       </p>
+
+      {/* وضع توفير الأنترنت 4G */}
+      <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-line bg-bg p-3.5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-extrabold text-ink">وضع توفير الأنترنت 4G</p>
+          <p className="mt-0.5 text-[11px] leading-relaxed text-mute">
+            يمنع التخزين التلقائي لملفات الصوت والصور الثقيلة في الخلفية للحفاظ على رصيد 4G.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={dataSaver}
+          aria-label="تفعيل وضع توفير الأنترنت 4G"
+          onClick={basculerDataSaver}
+          className={`flex min-h-[44px] min-w-[76px] shrink-0 items-center justify-center rounded-xl border px-3 text-xs font-extrabold ${
+            dataSaver
+              ? 'border-forest bg-forest text-paper'
+              : 'border-line bg-paper text-ink-soft hover:border-forest'
+          }`}
+        >
+          {dataSaver ? 'مفعّل' : 'متوقّف'}
+        </button>
+      </div>
 
       <p role="status" className="mt-3 text-sm font-bold text-forest-deep">
         {erreur
@@ -88,11 +123,11 @@ export default function CarteHorsLigne() {
       <dl className="mt-3 space-y-1 text-xs text-mute">
         <div className="flex justify-between gap-3">
           <dt>الواجهة (تُنزَّل دائمًا)</dt>
-          <dd className="font-bold text-forest-deep">{coquille ? `${mo(coquille.octetsCoquille)} ميغابايت` : '—'}</dd>
+          <dd className="tnum font-bold text-forest-deep">{coquille ? `${mo(coquille.octetsCoquille)} ميغابايت` : '—'}</dd>
         </div>
         <div className="flex justify-between gap-3">
           <dt>المحتوى الكامل (الدروس + البوصلة + الأوراق)</dt>
-          <dd className="font-bold text-forest-deep">{complet ? `${mo(complet.octetsContenu)} ميغابايت إضافية` : '—'}</dd>
+          <dd className="tnum font-bold text-forest-deep">{complet ? `${mo(complet.octetsContenu)} ميغابايت إضافية` : '—'}</dd>
         </div>
       </dl>
 
@@ -113,7 +148,7 @@ export default function CarteHorsLigne() {
           type="button"
           disabled={occupé !== null}
           onClick={() => void telecharger('complet')}
-          className="btn btn-primary flex-1 text-sm"
+          className="btn btn-primary min-h-[44px] flex-1 text-sm"
         >
           {occupé === 'complet' ? 'جارٍ التنزيل…' : 'تنزيل المحتوى الكامل'}
         </button>
@@ -121,11 +156,13 @@ export default function CarteHorsLigne() {
           type="button"
           disabled={occupé !== null}
           onClick={() => void verifier()}
-          className="btn btn-ghost flex-1 text-sm"
+          className="btn btn-ghost min-h-[44px] flex-1 border border-line text-sm"
         >
           تحقّق
         </button>
       </div>
+
+      <BoutonInstallerPwa />
     </section>
   );
 }

@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import Inscription from '../components/Inscription';
-import Aujourdhui from '../components/Aujourdhui';
+import Tadarobati from '../components/Tadarobati';
 import Principal from '../components/Principal';
 import SujetGuide from '../components/SujetGuide';
 import { migrerEtat } from '../utils/etat';
@@ -130,30 +130,32 @@ describe('B2 — une seule action principale sur l’accueil', () => {
 
     const texte = (zone!.textContent ?? '').replace(/\s+/g, ' ');
     expect(texte.indexOf('مهمّة اليوم'), 'carte mission absente').toBeGreaterThan(-1);
-    expect(texte, 'le quiz vit sur son propre onglet كويست').not.toContain('كويست اليوم');
+    expect(texte, 'le quiz vit sur la porte تدريباتي').not.toContain('كويست اليوم');
 
     const demarrages = boutons().filter((b) => (b.textContent ?? '').trim().startsWith('ابدأ'));
     expect(demarrages).toHaveLength(1);
     expect(demarrages[0].textContent).toMatch(/ابدأ \d+ دقائق/);
   });
 
-  it('le quiz du jour vit sur la porte كويست, jamais sur الرئيسية', async () => {
+  it('le quiz du jour et les التمارين القصوى vivent ensemble sur تدريباتي, sans امتحان تجريبي', async () => {
     const etat = migrerEtat({});
     await monter(
-      <Aujourdhui
+      <Tadarobati
         etat={etat}
-        onOuvrirItem={() => {}}
-        onVoirUnite={() => {}}
-        onDemarrerRevision={() => {}}
-        onOuvrirMethodologie={() => {}}
         onDemarrerKouest={() => {}}
         onDefi60={() => {}}
         onResultatKafaa={() => {}}
+        onOuvrirUltimes={() => {}}
+        onOuvrirMethodo={() => {}}
+        onOuvrirSchemas={() => {}}
+        onOuvrirFakh={() => {}}
       />,
     );
 
     const texte = (zone!.textContent ?? '').replace(/\s+/g, ' ');
     expect(texte.indexOf('كويست اليوم'), 'carte kouest absente').toBeGreaterThan(-1);
+    expect(texte.indexOf('التمارين القصوى'), 'section التمارين القصوى absente').toBeGreaterThan(-1);
+    expect(texte, 'امتحان تجريبي doit être retiré').not.toContain('امتحان تجريبي');
   });
 });
 

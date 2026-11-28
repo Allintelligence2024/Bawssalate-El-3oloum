@@ -36,6 +36,8 @@ interface Props {
   onBoussoleEvent?: (evt: BoussoleAttemptEvent) => void;
   /** v0.11 — ouvre l'atelier « البوصلة 1-2-3 » (constructeur de réponse par briques). */
   onOuvrirBriques?: () => void;
+  /** التمارين القصوى بوثائق أصلية */
+  onOuvrirUltimes?: () => void;
 }
 
 type Ecran = 'boussole' | 'accueil' | 'operations' | 'verbes' | 'diagnostic' | 'methode' | 'niveaux' | 'unite1' | 'exercice' | 'redaction' | 'enquete' | 'autopsie' | 'resultat' | 'diagrammes';
@@ -80,6 +82,7 @@ export default function Methodologie({
   onOuvrirSynthese,
   onBoussoleEvent,
   onOuvrirBriques,
+  onOuvrirUltimes,
 }: Props) {
   const [ecran, setEcran] = useState<Ecran>(modeInitial);
   const [q, setQ] = useState(0);
@@ -615,6 +618,8 @@ export default function Methodologie({
   if (ecran === 'boussole') {
     return (
       <Boussole
+        onFermer={onFermer}
+        onUltimes={onOuvrirUltimes}
         onAteliers={() => {
           setEcran('accueil');
           window.scrollTo(0, 0);

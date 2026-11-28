@@ -90,17 +90,13 @@ async function attendre(texte: string): Promise<void> {
 
 const etatSauve = () => JSON.parse(localStorage.getItem('murajih_svt_v1') ?? '{}');
 
-describe('parcours nœuds → protocole → fierté', () => {
-  it('ouvre les six nœuds, puis la fierté, et compte la séance à la clôture', async () => {
+describe('parcours direct leçon → protocole → fierté', () => {
+  it('ouvre directement la session 3 étapes, puis la fierté, et compte la séance à la clôture', async () => {
     await act(async () => { root!.render(createElement(App)); });
-    await clic(bouton('ouvrir leçon')!);
-    // Une leçon non terminée passe par MicroNoeuds, pas directement par le protocole.
-    expect(zone!.textContent).toContain('Six nœuds');
-    // Ouvrir ne compte pas de séance.
     expect(etatSauve().seancesComptees ?? 0).toBe(0);
 
-    await clic(bouton('commencer le nœud')!);
-    // Le protocole s'ouvre puis se termine → l'écran de fierté prend la main.
+    await clic(bouton('ouvrir leçon')!);
+    // Plus d'écran intermédiaire : le protocole s'ouvre directement puis clôt → l'écran de fierté prend la main.
     await attendre('خلّصت الدرس');
     expect(zone!.textContent).toContain('6 / 6');
     expect(zone!.textContent).not.toMatch(/%/);
@@ -114,7 +110,6 @@ describe('parcours nœuds → protocole → fierté', () => {
   it('ne recompte pas la séance si le même protocole se termine deux fois', async () => {
     await act(async () => { root!.render(createElement(App)); });
     await clic(bouton('ouvrir leçon')!);
-    await clic(bouton('commencer le nœud')!);
     await attendre('خلّصت الدرس');
     expect(etatSauve().seancesComptees).toBe(1);
     // Le protocole est resté monté et rappelle onTerminer à chaque rendu : la clôture est

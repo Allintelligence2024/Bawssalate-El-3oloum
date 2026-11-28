@@ -6,7 +6,7 @@
 
 import type { Etat } from '../types';
 import { CHEMIN, TOTAL_LECONS } from '../data/programme';
-import { aujourdhui, nb, formatJourAr, joursNb } from '../utils/dates';
+import { ajouterJours, aujourdhui, nb, formatJourAr, joursNb } from '../utils/dates';
 import { joursConsecutifs, niveauDe, xpDe, xpTexte } from '../utils/xp';
 import { joursAvantBac, revisionsDues } from '../utils/moteur';
 import { WILAYA_PAR_CODE } from '../data/wilayas';
@@ -18,14 +18,12 @@ interface Props {
   onFermer: () => void;
 }
 
-/** Les 7 derniers jours, du plus ancien au plus récent. */
+/** Les 7 derniers jours, du plus ancien au plus récent (date locale, sans dérive UTC). */
 function semaine(journal: string[]): { iso: string; actif: boolean }[] {
   const base = aujourdhui();
   const jours: { iso: string; actif: boolean }[] = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(`${base}T12:00:00`);
-    d.setDate(d.getDate() - i);
-    const iso = d.toISOString().slice(0, 10);
+    const iso = ajouterJours(base, -i);
     jours.push({ iso, actif: journal.includes(iso) });
   }
   return jours;
@@ -57,7 +55,7 @@ export default function FicheEleve({ etat, onFermer }: Props) {
   const restants = joursAvantBac(etat);
   const wilaya = etat.compte ? WILAYA_PAR_CODE[etat.compte.wilaya] : undefined;
   const actifs = semaine(etat.journal).filter((j) => j.actif).length;
-  const pourcent = Math.round((lecons / Math.max(TOTAL_LECONS, 1)) * 100);
+  const ratioJauge = Math.min(1, Math.max(0, lecons / Math.max(TOTAL_LECONS, 1)));
 
   return (
     <div dir="rtl" className="mx-auto max-w-3xl px-4 pb-10 pt-6">
@@ -103,7 +101,7 @@ export default function FicheEleve({ etat, onFermer }: Props) {
             </span>
           </div>
           <div className="jauge mt-2" aria-hidden="true">
-            <div className="jauge__r" style={{ width: `${pourcent}%` }} />
+            <div className="jauge__r" style={{ width: `${Math.round(ratioJauge * 100)}%` }} />
           </div>
           <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1">
             <Ligne label="دروس مُتمّمة" valeur={`${nb(lecons)} / ${nb(TOTAL_LECONS)}`} />

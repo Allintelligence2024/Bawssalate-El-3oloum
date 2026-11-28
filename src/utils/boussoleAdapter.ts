@@ -11,6 +11,7 @@ import type { CarteKafaa, Etat, FauteCarnet } from '../types';
 import type { BoussoleAttemptEvent } from '../types/boussoleBridge';
 import { UNITE_PAR_ID } from '../data/programme';
 import { ajouterJours, aujourdhui, differenceJours } from './dates';
+import { cleEvenement } from './evenements';
 import { mettreAJourSrs } from './srs';
 
 export const MAX_BOUSSOLE_EVENTS_SEEN = 500;
@@ -70,9 +71,10 @@ export function appliquerEvenementBoussole(
   auj: string = aujourdhui(),
 ): Etat {
   const dejaVus = etat.boussoleEventsSeen ?? [];
-  if (dejaVus.includes(evt.attemptId)) return etat;
+  const cleCanonique = cleEvenement({ origine: 'boussole', attemptId: evt.attemptId });
+  if (dejaVus.includes(cleCanonique) || dejaVus.includes(evt.attemptId)) return etat;
 
-  const boussoleEventsSeen = [...dejaVus, evt.attemptId].slice(-MAX_BOUSSOLE_EVENTS_SEEN);
+  const boussoleEventsSeen = [...dejaVus, cleCanonique].slice(-MAX_BOUSSOLE_EVENTS_SEEN);
 
   const cleKafaa = evt.exerciseId.startsWith('boussole:')
     ? evt.exerciseId

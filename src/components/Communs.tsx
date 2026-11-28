@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { QcmLecon } from '../data/qcmLecons';
 import { noterReponse, type SourceReponse } from '../utils/stats';
 import { sonFaux, sonJuste } from '../utils/son';
-import { IcoAide } from './Icones';
+import { IcoAide, IcoShajara } from './Icones';
 
 // ───────────── كلام المُرشد (لحظات محددة فقط) ─────────────
 export function Morceau({ children, ton = 'sage' }: { children: ReactNode; ton?: 'sage' | 'gold' }) {
@@ -14,7 +14,9 @@ export function Morceau({ children, ton = 'sage' }: { children: ReactNode; ton?:
       : 'border-sage bg-sage-soft text-forest-deep';
   return (
     <div className={`flex gap-3 rounded-2xl border p-3.5 ${styles}`}>
-      <span className="mt-0.5 text-base">🌿</span>
+      <span className="mt-0.5 h-5 w-5 shrink-0 text-forest" aria-hidden>
+        <IcoShajara />
+      </span>
       <p className="text-sm font-semibold leading-relaxed">{children}</p>
     </div>
   );
@@ -308,7 +310,12 @@ export function DiagnosticPieges({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-[11px] font-bold text-mute">
-        <span>🧨 فخّ {index + 1} من {pieges.length}</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-3.5 w-3.5 shrink-0 text-clay" aria-hidden>
+            <IcoAide />
+          </span>
+          <span>فخّ {index + 1} من {pieges.length}</span>
+        </span>
         <span className="flex gap-1">
           {pieges.map((_, k) => (
             <span

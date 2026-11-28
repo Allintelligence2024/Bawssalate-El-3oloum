@@ -10,7 +10,8 @@ select email, coalesce(nom, '') as nom, wilaya, daira, niveau, xp,
        lecons_terminees, drills_faits, reponses_justes, reponses_fausses,
        minutes_totales, jours_activite, generation, maj
 from public.eleves
-order by maj desc;
+order by maj desc
+limit 200;
 
 -- 2) الأكثر تقدّمًا (نقاط الخبرة)
 select email, coalesce(nom, '') as nom, niveau, xp, lecons_terminees, drills_faits
@@ -32,7 +33,8 @@ order by تلاميذ desc;
 select email, coalesce(nom, '') as nom, niveau, xp, lecons_terminees, drills_faits, maj
 from public.eleves
 where maj > now() - interval '7 days'
-order by maj desc;
+order by maj desc
+limit 200;
 
 -- 5) الدروس الهشّة عند التلاميذ — ما يحتاج مراجعة (مع حماية من القيم الفارغة)
 select email, coalesce(nom, '') as nom,
@@ -49,7 +51,8 @@ select email, coalesce(nom, '') as nom,
 from public.eleves
 where jsonb_typeof(charge_utile->'lecons_fragiles') = 'array'
   and jsonb_array_length(charge_utile->'lecons_fragiles') > 0
-order by "دروس هشّة" desc;
+order by "دروس هشّة" desc
+limit 200;
 
 -- 6) أكثر الدروس الهشّة تكرارًا عبر كل التلاميذ
 select lecon, count(*) as "عدد التلاميذ"
@@ -91,10 +94,14 @@ select email, coalesce(nom, '') as nom,
        end as "% صحيحة"
 from public.eleves
 where reponses_justes + reponses_fausses > 0
-order by "% صحيحة" desc;
+order by "% صحيحة" desc
+limit 200;
 
--- 9) بحث عن تلميذ بالبريد
-select * from public.eleves where email ilike '%الكلمة%';
+-- 9) بحث عن تلميذ بالبريد (تجنّب % في البداية متى أمكن لاستغلال فهرس البريد)
+select email, nom, wilaya, daira, niveau, xp, lecons_terminees, maj
+from public.eleves
+where email ilike 'الكلمة%'
+limit 50;
 
 -- 10) ملخّص سريع للمشروع كاملًا
 select count(*)                                   as "إجمالي التلاميذ",

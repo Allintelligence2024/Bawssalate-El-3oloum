@@ -168,17 +168,72 @@ let enCours: Promise<void> | null = null;
 let enAttente: Snapshot | null = null;
 const comptesSuspendus = new Set<string>();
 const suppressionsEnCours = new Set<string>();
+export const CLE_SYNC_GENERATIONS = 'kunz_sync_generations_v1';
 const generationsConnues = new Map<string, number>();
+
+function lireGenerationsStockees(): Record<string, number> {
+  try {
+    if (typeof localStorage === 'undefined') return {};
+    const brut = localStorage.getItem(CLE_SYNC_GENERATIONS);
+    if (!brut) return {};
+    const obj = JSON.parse(brut) as unknown;
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {};
+    const resultat: Record<string, number> = {};
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      if (typeof v === 'number' && Number.isSafeInteger(v) && v >= 1) {
+        resultat[k] = v;
+      }
+    }
+    return resultat;
+  } catch {
+    return {};
+  }
+}
+
+function ecrireGenerationStockee(cle: string, generation: number | null): void {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    const courant = lireGenerationsStockees();
+    if (generation === null) {
+      delete courant[cle];
+    } else {
+      courant[cle] = generation;
+    }
+    if (Object.keys(courant).length === 0) {
+      localStorage.removeItem(CLE_SYNC_GENERATIONS);
+    } else {
+      localStorage.setItem(CLE_SYNC_GENERATIONS, JSON.stringify(courant));
+    }
+  } catch {
+    // Stockage privé/indisponible : la Map mémoire reste fonctionnelle.
+  }
+}
 
 export function generationConnue(email?: string): number {
   if (!email) return 1;
-  return generationsConnues.get(normaliserEmail(email)) ?? 1;
+  const cle = normaliserEmail(email);
+  const enMemoire = generationsConnues.get(cle);
+  if (enMemoire !== undefined) return enMemoire;
+  const stockees = lireGenerationsStockees();
+  const stockee = stockees[cle];
+  if (stockee !== undefined) {
+    generationsConnues.set(cle, stockee);
+    return stockee;
+  }
+  return 1;
 }
 
 export function definirGenerationConnue(email: string, generation: number): void {
   if (Number.isSafeInteger(generation) && generation >= 1) {
-    generationsConnues.set(normaliserEmail(email), generation);
+    const cle = normaliserEmail(email);
+    generationsConnues.set(cle, generation);
+    ecrireGenerationStockee(cle, generation);
   }
+}
+
+/** Vide le cache mémoire des générations (utile après effacement local ou en test). */
+export function reinitialiserGenerationsMemoire(): void {
+  generationsConnues.clear();
 }
 
 /** Les anciens jetons déterministes, triviaux (hex répété) ou issus du repli faible ne sont pas sûrs. */
@@ -301,7 +356,31 @@ export async function envoyerSnapshot(etat: Etat): Promise<void> {
   await envoyerResume(snap);
 }
 
-async function envoyerResume(snap: Snapshot): Promise<void> {
+async function lireGenerationServeur(
+  sb: import('@supabase/supabase-js').SupabaseClient,
+  email: string,
+): Promise<number | null> {
+  try {
+    const table = sb.from('eleves') as unknown as {
+      select?: (cols: string) => {
+        eq: (col: string, val: string) => {
+          maybeSingle?: () => Promise<{ data?: { generation?: unknown } | null; error?: unknown }>;
+        };
+      };
+    };
+    if (typeof table.select !== 'function') return null;
+    const req = table.select('generation').eq('email', email);
+    if (typeof req.maybeSingle !== 'function') return null;
+    const { data, error } = await avecDelai(req.maybeSingle(), DELAI_ENVOI_MS);
+    if (error || !data) return null;
+    const gen = data.generation;
+    return typeof gen === 'number' && Number.isSafeInteger(gen) && gen >= 1 ? gen : null;
+  } catch {
+    return null;
+  }
+}
+
+async function envoyerResume(snap: Snapshot, tentativesConflit = 0): Promise<void> {
   const { maj: _maj, jeton: _jeton, ...chargeUtile } = snap;
   const json = JSON.stringify([snap.jeton, chargeUtile]);
   if (json === dernierEnvoye) { publierEtatEnvoi(snap.email, 'confirme'); return; }
@@ -311,6 +390,7 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
     publierEtatEnvoi(snap.email, 'erreur', 'charge_trop_lourde');
     return;
   }
+  let nouvelleGenerationReprise: number | null = null;
   const travail = Promise.resolve().then(async () => {
     try {
       const sb = await clientSupabase(snap.jeton);
@@ -350,10 +430,18 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
       ).abortSignal(signalDelai());
       if (!error) {
         dernierEnvoye = json;
-        generationsConnues.set(snap.email, generationAttendue + 1);
+        definirGenerationConnue(snap.email, generationAttendue + 1);
         publierEtatEnvoi(snap.email, 'confirme');
       } else {
         const cause = classerErreurEnvoi(error);
+        if (cause === 'conflit_generation' && tentativesConflit < 1 && !comptesSuspendus.has(snap.email)) {
+          const genServeur = await lireGenerationServeur(sb, snap.email);
+          if (genServeur !== null && genServeur !== generationAttendue) {
+            definirGenerationConnue(snap.email, genServeur);
+            nouvelleGenerationReprise = genServeur;
+            return;
+          }
+        }
         publierEtatEnvoi(snap.email, 'erreur', cause);
       }
     } catch (e) {
@@ -370,6 +458,12 @@ async function envoyerResume(snap: Snapshot): Promise<void> {
     // produit pendant l'envoi ne doit jamais disparaître parce que l'envoi a échoué.
     if (enCours === travail) {
       enCours = null;
+      if (nouvelleGenerationReprise !== null && !comptesSuspendus.has(snap.email)) {
+        const aRejouer = enAttente ?? snap;
+        enAttente = null;
+        await envoyerResume(aRejouer, tentativesConflit + 1);
+        return;
+      }
       const suivant = enAttente;
       enAttente = null;
       if (suivant && !comptesSuspendus.has(suivant.email)) await envoyerResume(suivant);
@@ -393,13 +487,21 @@ export async function supprimerSnapshotServeur(etat: Etat): Promise<ResultatSupp
     if (enCours) await enCours;
     const sb = await clientSupabase(etat.compte.jeton);
     if (!sb) return 'sync_inactive';
-    const { data, error } = await sb.from('eleves').delete().eq('email', email).select('email');
+    const requeteSuppression = sb.from('eleves').delete().eq('email', email).select('email') as unknown as
+      Promise<{ data: unknown[] | null; error: unknown }> & {
+        abortSignal?: (signal: AbortSignal) => Promise<{ data: unknown[] | null; error: unknown }>;
+      };
+    const promesseSuppression = typeof requeteSuppression.abortSignal === 'function'
+      ? requeteSuppression.abortSignal(signalDelai())
+      : requeteSuppression;
+    const { data, error } = await avecDelai(promesseSuppression, DELAI_ENVOI_MS);
     if (error) {
       return 'erreur';
     }
     if (!data || data.length !== 1) return 'indetermine'; // RLS ou ligne absente : impossible de distinguer
     dernierEnvoye = ''; // إن أعاد التلميذ الموافقة لاحقًا يُرسَل من جديد
     generationsConnues.delete(email);
+    ecrireGenerationStockee(email, null);
     return 'supprime';
   } catch {
     return 'erreur';

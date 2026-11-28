@@ -1,23 +1,20 @@
-// مساري — الطريق الكامل مقفلًا حتى يُنهى ما قبله. لا وصول مباشر للدروس المتقدّمة.
-//
-// Habillage « maquette » (étape 1) : une carte = une action, jauge au lieu d'un
-// pourcentage, badges en `.mention`, et le pont de l'unité en carte pleine largeur.
-// La logique (verrouillage, pont, priorités) vient de `moteur.ts` — inchangée.
+// مساري — المسار المرئي التفاعلي لـ 3 مجالات و 11 وحدة في علوم الطبيعة والحياة.
+// تنظيم خفيف بتبويب المجالات (3–5 وحدات فقط)، لافتة وحدة واضحة، ومسار خطوات متّصل بأسلوب Duolingo.
 
+import { useState } from 'react';
 import {
   CHEMIN,
   DOMAINES,
   UNITE_PAR_ID,
   cleItem,
-  idJalon,
   titreItem,
+  uniteDeItem,
   type ItemChemin,
 } from '../data/programme';
-import { itemFait, itemVerrouille, leconsUniteFaites } from '../utils/moteur';
+import { itemFait, leconsUniteFaites, prochainItem } from '../utils/moteur';
 import { nb } from '../utils/dates';
 import type { Etat } from '../types';
-import { ACCENTS } from '../utils/accents';
-import { IcoVerifie, IcoVerrou } from './Icones';
+import { IcoCarte, IcoChevron, IcoPont, IcoRecherche, IcoRetour, IcoVerifie } from './Icones';
 import { prioriteLecon } from '../data/priorites';
 import MascotteKunz from './MascotteKunz';
 
@@ -29,263 +26,415 @@ interface Props {
   onOuvrirRecherche?: () => void;
 }
 
+const COURTS: Record<string, [string, string]> = {
+  d1: ['المجال 1', 'البروتينات'],
+  d2: ['المجال 2', 'الطاقة'],
+  d3: ['المجال 3', 'التكتونية'],
+};
+
+const GRAD = 'bg-[image:var(--gradient-primary)] text-white';
+const LIP = 'shadow-[0_3px_0_var(--color-forest-deep)]';
+
 function itemsUnite(uniteId: string): ItemChemin[] {
   const u = UNITE_PAR_ID[uniteId];
-  const items: ItemChemin[] = [
+  return [
     ...(u.prerequis ?? []).map((id) => ({ type: 'lecon' as const, id })),
     ...u.lessonIds.map((id) => ({ type: 'lecon' as const, id })),
   ];
-  return items;
 }
 
-export default function Masari({ etat, onOuvrirItem, onVoirUnite, onOuvrirMindmap,
-  onOuvrirRecherche }: Props) {
+export default function Masari({
+  etat,
+  onOuvrirItem,
+  onVoirUnite,
+  onOuvrirMindmap,
+  onOuvrirRecherche,
+}: Props) {
   const faits = CHEMIN.filter((i) => itemFait(etat, i)).length;
   const pourcent = Math.round((faits / Math.max(CHEMIN.length, 1)) * 100);
+  const suivant = prochainItem(etat);
+  const uniteRec = suivant ? uniteDeItem(suivant) : null;
+  const uniteRecId = uniteRec?.id ?? 'u1';
+  const cleSuivant = suivant ? cleItem(suivant) : null;
+
+  const [domaineId, setDomaineId] = useState<string>(uniteRec?.domaineId ?? DOMAINES[0].id);
+  const [ouverteId, setOuverteId] = useState<string | null>(uniteRecId);
+
+  const domaine = DOMAINES.find((d) => d.id === domaineId) ?? DOMAINES[0];
+
+  function choisirDomaine(id: string) {
+    setDomaineId(id);
+    const d = DOMAINES.find((x) => x.id === id);
+    if (!d) return;
+    setOuverteId(d.unites.includes(uniteRecId) ? uniteRecId : (d.unites[0] ?? null));
+  }
 
   return (
-    <div dir="rtl" className="mx-auto max-w-3xl px-4 pb-28 pt-6">
+    <div dir="rtl" className="mx-auto max-w-3xl px-4 pb-28 pt-5 lg:pb-12">
       <header className="mb-4">
-        <p className="oeil">الطريق · 3 مجالات</p>
-        <h1 className="titre-1 mt-1">مساري</h1>
-        <p className="petit doux mt-1">
-          11 وحدة، {nb(CHEMIN.length)} بنية. كلّ بند مقفل حتى تنهي اللي قبله — هذه الضمانة
-          الوحيدة لعدم تراكم الثغرات.
-        </p>
-        <div className="rangee rangee--galerie mt-3">
-          {onOuvrirRecherche && (
-            <button type="button" className="btn-mini" onClick={onOuvrirRecherche}>
-              <span aria-hidden="true">🔎</span> بحث
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="oeil">3 مجالات · 11 وحدة · مفتوح للمراجعة</p>
+            <h1 className="titre-1 mt-0.5">مساري</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {onOuvrirRecherche && (
+              <button type="button" className="btn-mini min-h-11" onClick={onOuvrirRecherche}>
+                <span className="block h-4 w-4 text-forest" aria-hidden="true">
+                  <IcoRecherche />
+                </span>
+                <span>بحث</span>
+              </button>
+            )}
+            <button type="button" className="btn-mini min-h-11" onClick={onOuvrirMindmap}>
+              <span className="block h-4 w-4 text-forest" aria-hidden="true">
+                <IcoCarte />
+              </span>
+              <span>الخريطة الذهنية</span>
             </button>
-          )}
-          <button type="button" className="btn-mini" onClick={onOuvrirMindmap}>
-            <span aria-hidden="true">🗺️</span> الخريطة الذهنية
-          </button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between gap-2 text-xs">
+            <span className="font-bold text-ink-soft">تقدّمك الكلّي في البرنامج</span>
+            <span className="tnum font-extrabold text-forest">
+              {nb(faits)} / {nb(CHEMIN.length)} بنية ({nb(pourcent)}%)
+            </span>
+          </div>
+          <div
+            className="jauge h-2.5"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={CHEMIN.length}
+            aria-valuenow={faits}
+            aria-label="تقدّمي في المسار"
+          >
+            <div className="jauge__r" style={{ width: `${Math.max(faits > 0 ? 4 : 0, pourcent)}%` }} />
+          </div>
         </div>
       </header>
 
-      {/* Où j'en suis — une seule ligne, jamais un pourcentage affiché */}
-      <section className="carte mb-4">
-        <div className="rangee rangee--entre mb-2">
-          <span className="oeil">تقدّمي في الطريق</span>
-          <span className="mention mention--or tnum">
-            {nb(faits)} من {nb(CHEMIN.length)}
-          </span>
-        </div>
-        <div
-          className="jauge"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={CHEMIN.length}
-          aria-valuenow={faits}
-          aria-label="تقدّمي في الطريق"
-        >
-          <div className="jauge__r" style={{ width: `${pourcent}%` }} />
-        </div>
-        <p className="petit doux mt-2">بنية واحدة في كلّ حصّة — الباقي يجي وحدو.</p>
-      </section>
-
       <MascotteKunz
         compact
-        message="أهلاً أيها المستكشف! افتح الوحدات بالتدريج: كل درس تنهيه يفتح لك جزءًا جديدًا من خريطة بوصلة العلوم."
+        message="اختَر المجال وتقدّم خطوة بخطوة — خطوتك القادمة جاهزة ومُبرَزة بالأخضر، وكل الوحدات مفتوحة لك."
       />
 
-      <div className="mt-5 flex flex-col gap-6">
+      <div role="tablist" aria-label="مجالات البرنامج الرسمي" className="mt-4 grid grid-cols-3 gap-2">
         {DOMAINES.map((d) => {
-          const accent = ACCENTS[d.accent] ?? ACCENTS.forest;
+          const actif = d.id === domaine.id;
+          const [num, court] = COURTS[d.id] ?? [d.titre, ''];
+          const faitesDom = d.unites.filter((uid) =>
+            itemFait(etat, { type: 'jalon', uniteId: uid })
+          ).length;
           return (
-            <section key={d.id}>
-              <div className={`mb-3 flex items-center gap-2 border-r-4 ${accent.border} pr-3`}>
-                <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
-                <h2 className="font-naskh text-lg font-bold leading-snug">{d.titre}</h2>
+            <button
+              key={d.id}
+              type="button"
+              role="tab"
+              aria-selected={actif}
+              onClick={() => choisirDomaine(d.id)}
+              className={`min-h-14 rounded-2xl border px-2.5 py-2 text-right transition-all ${
+                actif
+                  ? `border-forest-deep ${GRAD} ${LIP}`
+                  : 'border-line bg-paper text-ink hover:border-forest/40'
+              }`}
+            >
+              <span className={`block text-[11px] font-bold ${actif ? 'text-white/80' : 'text-mute'}`}>
+                {num}
+              </span>
+              <span className="mt-0.5 flex items-baseline justify-between gap-1">
+                <span className="truncate text-sm font-extrabold">{court}</span>
+                <span className={`tnum text-[11px] font-extrabold ${actif ? 'text-white/90' : 'text-forest'}`}>
+                  {nb(faitesDom)}/{nb(d.unites.length)}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 mb-3 flex items-center justify-between gap-2">
+        <h2 className="font-naskh text-base font-extrabold text-ink sm:text-lg">{domaine.titre}</h2>
+        <span className="tnum text-xs font-bold text-mute whitespace-nowrap">
+          {nb(domaine.unites.length)} وحدات
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {domaine.unites.map((uniteId) => {
+          const u = UNITE_PAR_ID[uniteId];
+          const items = itemsUnite(uniteId);
+          const faites = leconsUniteFaites(etat, uniteId);
+          const total = u.lessonIds.length;
+          const jalonFait = itemFait(etat, { type: 'jalon', uniteId });
+          const estRec = uniteId === uniteRecId;
+          const ouverte = ouverteId === uniteId;
+          const pct = Math.round((faites / Math.max(total, 1)) * 100);
+          const prochain =
+            items.find((it) => cleItem(it) === cleSuivant && !itemFait(etat, it)) ??
+            items.find((it) => !itemFait(etat, it)) ??
+            null;
+
+          if (!ouverte) {
+            return (
+              <button
+                key={uniteId}
+                type="button"
+                onClick={() => setOuverteId(uniteId)}
+                aria-expanded={false}
+                className={`carte flex min-h-16 w-full items-center gap-3 px-4 py-3 text-right transition-colors hover:border-forest/40 ${
+                  estRec ? 'border-forest/50' : ''
+                }`}
+              >
+                <span
+                  className={`tnum grid h-10 w-10 flex-none place-items-center rounded-xl text-sm font-black ${
+                    jalonFait
+                      ? GRAD
+                      : estRec
+                        ? 'bg-primary-soft text-primary'
+                        : 'border border-line bg-bg text-ink-soft'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {jalonFait ? (
+                    <span className="block h-4 w-4">
+                      <IcoVerifie />
+                    </span>
+                  ) : (
+                    nb(u.numero)
+                  )}
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-x-2">
+                    <span className="text-sm font-extrabold text-ink sm:text-base">{u.titre}</span>
+                    {estRec && <span className="text-[11px] font-extrabold text-forest">· وحدتك الآن</span>}
+                  </span>
+                  <span className="tnum mt-0.5 block text-xs text-mute">
+                    {nb(faites)}/{nb(total)} دروس · وزن الباك {nb(u.poidsBac)}/5
+                  </span>
+                  {faites > 0 && (
+                    <span className="jauge mt-1.5 block h-1.5" aria-hidden="true">
+                      <span className="jauge__r block" style={{ width: `${Math.max(8, pct)}%` }} />
+                    </span>
+                  )}
+                </span>
+
+                <span className="grid h-9 w-9 flex-none place-items-center text-mute" aria-hidden="true">
+                  <span className="block h-4 w-4">
+                    <IcoChevron ouvert={false} />
+                  </span>
+                </span>
+              </button>
+            );
+          }
+
+          let compteurPrio = 0;
+          const cleFocal = prochain ? cleItem(prochain) : null;
+
+          return (
+            <section
+              key={uniteId}
+              aria-label={`الوحدة ${nb(u.numero)}: ${u.titre}`}
+              className="overflow-hidden rounded-2xl border border-line bg-paper shadow-sm"
+            >
+              <div className={`${GRAD} p-4`}>
+                <div className="flex items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOuverteId(null)}
+                    aria-expanded={true}
+                    className="min-w-0 flex-1 text-right"
+                  >
+                    <span className="tnum block text-[11px] font-bold text-white/80">
+                      الوحدة {nb(u.numero)} · {nb(faites)} من {nb(total)} دروس · وزن الباك {nb(u.poidsBac)}/5
+                    </span>
+                    <h3 className="font-naskh mt-0.5 text-xl font-extrabold leading-snug text-white">
+                      {u.titre}
+                    </h3>
+                  </button>
+
+                  <div className="flex flex-none items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => (prochain ? onOuvrirItem(prochain) : onVoirUnite(uniteId))}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-extrabold text-[#183d31] shadow-sm transition-transform active:translate-y-0.5"
+                    >
+                      <span>{faites === 0 ? 'ابدأ' : prochain ? 'تابع' : 'الجسر'}</span>
+                      <span className="block h-3.5 w-3.5 rotate-180" aria-hidden="true">
+                        <IcoRetour />
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOuverteId(null)}
+                      aria-label={`طي الوحدة ${nb(u.numero)}`}
+                      className="grid h-11 w-11 place-items-center rounded-xl bg-white/15 text-white hover:bg-white/25"
+                    >
+                      <span className="block h-4 w-4" aria-hidden="true">
+                        <IcoChevron ouvert={true} />
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-black/20">
+                  <div
+                    className="h-full rounded-full bg-leaf transition-all duration-300"
+                    style={{ width: `${Math.max(faites > 0 ? 6 : 0, pct)}%` }}
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col gap-2.5">
-                {d.unites.map((uniteId) => {
-                  const u = UNITE_PAR_ID[uniteId];
-                  const items = itemsUnite(uniteId);
-                  const premierVerrouille = itemVerrouille(etat, items[0]);
-                  const jalonVerrouille = itemVerrouille(etat, { type: 'jalon', uniteId });
-                  const faites = leconsUniteFaites(etat, uniteId);
-                  const total = u.lessonIds.length;
-                  const jalonFait = itemFait(etat, { type: 'jalon', uniteId });
-                  const uniteActuelle = !premierVerrouille && faites < total;
-                  const pct = Math.round((faites / Math.max(total, 1)) * 100);
+              <div className="p-4 sm:p-5">
+                <ol className="relative flex flex-col gap-2.5">
+                  {items.map((item, idx) => {
+                    const cle = cleItem(item);
+                    const fait = itemFait(etat, item);
+                    const enCours =
+                      item.type === 'lecon' && etat.progression[item.id]?.statut === 'en_cours';
+                    const estFocal = !fait && cle === cleFocal;
+                    const estPrio =
+                      !fait &&
+                      !estFocal &&
+                      item.type === 'lecon' &&
+                      prioriteLecon(item.id) === 1 &&
+                      compteurPrio < 2;
+                    if (estPrio) compteurPrio += 1;
 
-                  return (
-                    <div
-                      key={uniteId}
-                      className={`carte ${uniteActuelle ? 'ring-2 ring-primary/25' : ''}`}
-                    >
-                      {/* رأس الوحدة — نقرة واحدة تفتح جسر الوحدة */}
-                      <button
-                        type="button"
-                        onClick={() => onVoirUnite(uniteId)}
-                        className="carte__ligne w-full text-right"
-                      >
-                        <span
-                          className={`grid h-9 w-9 flex-none place-items-center rounded-xl text-sm font-black tnum ${
-                            jalonFait
-                              ? 'bg-primary text-bg'
-                              : uniteActuelle
-                                ? 'bg-primary-soft text-primary'
-                                : premierVerrouille
-                                  ? 'bg-bg text-mute border border-line'
-                                  : 'bg-gold-soft text-honey-ink'
-                          }`}
-                          aria-hidden="true"
-                        >
-                          {jalonFait ? '✓' : nb(u.numero)}
-                        </span>
-
-                        <span className="carte__texte mx-2 flex-1">
-                          <span className="carte__titre block">{u.titre}</span>
-                          <span className="petit doux block">
-                            {nb(faites)} من {nb(total)} دروس · {u.fenetreAr}
-                          </span>
-                          {!premierVerrouille && (
-                            <span className="jauge mt-2 block" aria-hidden="true">
-                              <span className="jauge__r block" style={{ width: `${pct}%` }} />
-                            </span>
-                          )}
-                        </span>
-
-                        <span className="flex flex-none items-center gap-1.5">
+                    return (
+                      <li key={cle} className="relative flex items-stretch gap-3">
+                        <div className="relative flex w-12 flex-none flex-col items-center">
                           <span
-                            className="mention mention--or"
-                            title="ثقل الوحدة في البكالوريا (1-5)"
-                          >
-                            {u.poidsBac}/5
-                          </span>
-                          {premierVerrouille ? (
-                            <span className="block h-4 w-4 text-mute" aria-label="مقفلة">
-                              <IcoVerrou />
-                            </span>
-                          ) : jalonFait ? (
-                            <span className="block h-4 w-4 text-primary" aria-label="منجزة">
-                              <IcoVerifie />
-                            </span>
-                          ) : (
-                            <span className="block h-4 w-4 text-mute" aria-hidden="true">
-                              <IcoVerrou />
-                            </span>
-                          )}
-                        </span>
-                      </button>
-
-                      {/* قائمة الدروس — تظهر إن فُتحت الوحدة */}
-                      {!premierVerrouille && (
-                        <div className="mt-2 border-t border-line pt-1">
-                          <ul className="flex flex-col">
-                            {items.map((item) => {
-                              const fait = itemFait(etat, item);
-                              const enCours =
-                                item.type === 'lecon' &&
-                                etat.progression[item.id]?.statut === 'en_cours';
-                              const verrouille = itemVerrouille(etat, item);
-                              return (
-                                <li key={cleItem(item)}>
-                                  <button
-                                    type="button"
-                                    onClick={() => !verrouille && onOuvrirItem(item)}
-                                    disabled={verrouille}
-                                    className="rangee w-full py-2 text-right transition-colors hover:bg-sage-soft/60 disabled:opacity-60"
-                                  >
-                                    <span className="grid h-5 w-5 flex-none place-items-center">
-                                      {fait ? (
-                                        <span className="block h-4 w-4 text-primary">
-                                          <IcoVerifie />
-                                        </span>
-                                      ) : enCours ? (
-                                        <span className="block h-2.5 w-2.5 rounded-full bg-gold" />
-                                      ) : verrouille ? (
-                                        <span className="block h-3.5 w-3.5 text-mute">
-                                          <IcoVerrou />
-                                        </span>
-                                      ) : (
-                                        <span className="block h-3 w-3 rounded-full border-2 border-line" />
-                                      )}
-                                    </span>
-                                    <span
-                                      className={`flex-1 text-sm ${
-                                        fait
-                                          ? 'font-semibold text-mute'
-                                          : enCours
-                                            ? 'font-bold text-primary'
-                                            : 'font-medium text-ink-soft'
-                                      }`}
-                                    >
-                                      {titreItem(item)}
-                                    </span>
-                                    {enCours && <span className="mention mention--or">متابعة</span>}
-                                    {item.type === 'lecon' && prioriteLecon(item.id) === 1 && !fait && !verrouille && (
-                                      <span
-                                        className="mention"
-                                        title="ظهر هذا الموضوع في معظم مواضيع البكالوريا السابقة"
-                                      >
-                                        يتكرّر
-                                      </span>
-                                    )}
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-
-                          {/* جسر الوحدة — carte pleine largeur, une seule action */}
-                          <button
-                            type="button"
-                            onClick={() => !jalonVerrouille && onVoirUnite(uniteId)}
-                            disabled={jalonVerrouille}
-                            className={`carte__ligne mt-2 w-full rounded-xl border p-2.5 text-right transition-colors disabled:opacity-60 ${
-                              jalonFait
-                                ? 'border-primary/30 bg-primary-soft'
-                                : jalonVerrouille
-                                  ? 'border-line bg-bg'
-                                  : 'border-honey-line bg-honey-soft hover:bg-honey-soft/70'
+                            className={`relative z-10 grid h-11 w-11 flex-none place-items-center rounded-full text-sm font-black tnum ${
+                              fait
+                                ? `${GRAD} ${LIP}`
+                                : estFocal
+                                  ? `${GRAD} ${LIP} ring-4 ring-leaf/25`
+                                  : enCours
+                                    ? 'border-2 border-gold bg-honey-soft text-honey-ink'
+                                    : 'border-2 border-line bg-bg text-ink-soft'
                             }`}
+                            aria-hidden="true"
                           >
-                            <span className="text-base" aria-hidden="true">🌉</span>
-                            <span className="carte__texte mx-2 flex-1">
-                              <span className="block text-sm font-bold">
-                                جسر الوحدة {nb(u.numero)}
-                              </span>
-                              <span className="petit doux block">
-                                {jalonFait
-                                  ? 'أَجَبْتَ عن سؤال الوحدة كتابةً من ذاكرتك.'
-                                  : jalonVerrouille
-                                    ? 'يُفتح بعد إنهاء كل دروس الوحدة.'
-                                    : 'سؤال واحد، إجابة مكتوبة من الذاكرة — هذا هو الجسر.'}
-                              </span>
-                            </span>
-                            {jalonFait && (
-                              <span className="block h-5 w-5 flex-none text-primary">
+                            {fait ? (
+                              <span className="block h-5 w-5">
                                 <IcoVerifie />
                               </span>
+                            ) : (
+                              nb(idx + 1)
                             )}
-                          </button>
+                          </span>
+                          <span
+                            className={`-mb-2.5 w-0.5 flex-1 ${fait ? 'bg-forest/50' : 'bg-line'}`}
+                            aria-hidden="true"
+                          />
                         </div>
-                      )}
 
-                      {premierVerrouille && (
-                        <p className="petit doux mt-2 border-t border-line pt-2">
-                          {u.numero === 1
-                            ? 'يُفتح هذا القسم مع بداية الطريق.'
-                            : `يُفتح هذا القسم بعد إنهاء جسر الوحدة ${nb(u.numero - 1)}.`}
-                        </p>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => onOuvrirItem(item)}
+                          className={`mb-1 flex min-h-14 flex-1 items-center justify-between gap-2.5 rounded-2xl border px-3.5 py-2.5 text-right transition-colors ${
+                            estFocal
+                              ? 'border-2 border-forest/50 bg-primary-soft hover:bg-sage'
+                              : fait
+                                ? 'border-line bg-bg hover:border-forest/40'
+                                : 'border-line bg-paper hover:border-forest/40 hover:bg-sage-soft'
+                          }`}
+                        >
+                          <span className="min-w-0 flex-1">
+                            {estFocal && (
+                              <span className="mb-0.5 block text-[11px] font-extrabold text-forest">
+                                {cle === cleSuivant ? 'خطوتك الآن' : 'الدرس التالي في الوحدة'}
+                              </span>
+                            )}
+                            <span
+                              className={`block text-sm leading-snug ${
+                                fait
+                                  ? 'font-semibold text-mute'
+                                  : estFocal
+                                    ? 'font-extrabold text-ink'
+                                    : 'font-bold text-ink'
+                              }`}
+                            >
+                              {titreItem(item)}
+                            </span>
+                            {!estFocal && enCours && (
+                              <span className="mt-0.5 block text-[11px] font-extrabold text-honey-ink">
+                                جاري الإنجاز · تابع من حيث توقّفت
+                              </span>
+                            )}
+                            {estPrio && !enCours && (
+                              <span className="mt-0.5 block text-[11px] font-bold text-honey-ink">
+                                مهم للباك
+                              </span>
+                            )}
+                          </span>
+
+                          {estFocal ? (
+                            <span className={`inline-flex flex-none items-center gap-1 rounded-xl ${GRAD} px-3 py-1.5 text-xs font-extrabold`}>
+                              <span>{enCours ? 'تابع' : 'ابدأ'}</span>
+                              <span className="block h-3.5 w-3.5 rotate-180" aria-hidden="true">
+                                <IcoRetour />
+                              </span>
+                            </span>
+                          ) : fait ? (
+                            <span className="text-[11px] font-bold text-forest whitespace-nowrap">مراجعة</span>
+                          ) : (
+                            <span className="block h-4 w-4 flex-none rotate-180 text-mute" aria-hidden="true">
+                              <IcoRetour />
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+
+                  <li className="relative flex items-center gap-3 pt-1">
+                    <div className="flex w-12 flex-none justify-center">
+                      <span
+                        className={`grid h-12 w-12 flex-none place-items-center rounded-2xl border-2 ${
+                          jalonFait
+                            ? `border-forest ${GRAD} ${LIP}`
+                            : 'border-honey-line bg-honey-soft text-honey-ink'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        <span className="block h-5 w-5">
+                          {jalonFait ? <IcoVerifie /> : <IcoPont />}
+                        </span>
+                      </span>
                     </div>
-                  );
-                })}
+
+                    <button
+                      type="button"
+                      onClick={() => onVoirUnite(uniteId)}
+                      className={`flex min-h-14 flex-1 items-center justify-between gap-2.5 rounded-2xl border px-3.5 py-2.5 text-right transition-colors ${
+                        jalonFait
+                          ? 'border-forest/40 bg-primary-soft hover:bg-sage'
+                          : 'border-honey-line bg-honey-soft hover:border-gold'
+                      }`}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[11px] font-extrabold text-honey-ink">
+                          تتويج الوحدة {nb(u.numero)}
+                        </span>
+                        <span className="block text-sm font-extrabold text-ink">
+                          جسر الوحدة — سؤال التثبيت الشامل
+                        </span>
+                      </span>
+                      <span className="text-xs font-extrabold text-forest whitespace-nowrap">
+                        {jalonFait ? 'مُنجَز' : 'اختبر نفسك'}
+                      </span>
+                    </button>
+                  </li>
+                </ol>
               </div>
             </section>
           );
         })}
       </div>
-
-      <p className="petit doux mt-8 text-center">
-        الطريق وحده يصل بك. {nb(CHEMIN.length)} بنية، واحدة في كلّ حصّة.
-      </p>
     </div>
   );
 }

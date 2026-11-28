@@ -1,9 +1,6 @@
 // @vitest-environment jsdom
-// Phase 3 — « أنا » en trois volets : تقدّمي · كرّاستي · إعداداتي.
-//
-// Rien n'est supprimé : les cartes restent dans la page et sont repliées par `hidden`.
-// Un élève qui revient sur « إعداداتي » retrouve tout, et la sauvegarde ne bouge pas
-// d'un volet à l'autre.
+// «أنا» المبسّطة في قسمين واضحين: «تحليل أدائي» (شجرة التحليل التفاعلية) + «إعداداتي».
+// الإعدادات تبقى مركّبة بـ hidden حتى لا تفقد الاستعادة والمزامنة الوصول إليها.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -55,48 +52,41 @@ async function monter() {
 
 const onglet = (nom: string) =>
   [...zone!.querySelectorAll('[role="tab"]')].find((b) => (b.textContent ?? '').trim() === nom) as HTMLElement | undefined;
+
 const choisir = async (nom: string) => {
   const b = onglet(nom);
   expect(b).toBeTruthy();
   await act(async () => { b!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
 };
-/** La section dont le titre d'œil / l'étiquette contient ce texte. */
-const sectionDe = (motif: string) => {
-  const sections = [...zone!.querySelectorAll('section')];
-  return sections.find((s) => (s.textContent ?? '').includes(motif)) as HTMLElement | undefined;
-};
 
-describe('les trois volets d’أنا', () => {
-  it('ouvre sur « تقدّمي » et laisse les deux autres repliés', async () => {
+describe('شاشة «أنا» المبسّطة وشجرة التحليل', () => {
+  it('تفتح على شجرة تحليل الأداء وتُبقي الإعدادات مطوية دون تفكيكها', async () => {
     await monter();
-    expect(zone!.querySelectorAll('[role="tab"]').length).toBe(3);
-    expect(onglet('تقدّمي')!.getAttribute('aria-selected')).toBe('true');
-    expect(onglet('كرّاستي')!.getAttribute('aria-selected')).toBe('false');
+    expect(zone!.querySelectorAll('[role="tab"]').length).toBe(2);
+    expect(onglet('تحليل أدائي')!.getAttribute('aria-selected')).toBe('true');
     expect(onglet('إعداداتي')!.getAttribute('aria-selected')).toBe('false');
 
-    // le premier volet porte l'identité (la fiche A4 imprime ce nom) et les chiffres
-    expect(sectionDe('رحلتي بالأرقام')!.hasAttribute('hidden')).toBe(false);
-    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(false);
-    expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(true);
-    expect(sectionDe('النسخة الاحتياطية')!.hasAttribute('hidden')).toBe(true);
+    const arbre = zone!.querySelector('[data-testid="arbre-analyse-dashboard"]') as HTMLElement;
+    expect(arbre).toBeTruthy();
+    expect(arbre.parentElement?.hasAttribute('hidden')).toBe(false);
+    expect(zone!.textContent).toContain('شجرة تحليل أدائك');
+    expect(zone!.textContent).toContain('3 مجالات ← 11 وحدة رسمية');
+
+    const nomInput = zone!.querySelector<HTMLInputElement>('#nom')!;
+    expect(nomInput.value).toBe('أمين');
+    expect(nomInput.closest('div[hidden]')).toBeTruthy();
   });
 
-  it('bascule vers « كرّاستي » puis « إعداداتي » sans rien perdre', async () => {
+  it('تبدّل بين «تحليل أدائي» و«إعداداتي» بسلاسة دون فقدان حالة الاسم', async () => {
     await monter();
-    await choisir('كرّاستي');
-    expect(sectionDe('دوّن')!.hasAttribute('hidden')).toBe(false);
-    expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(false);
-    expect(sectionDe('رحلتي بالأرقام')!.hasAttribute('hidden')).toBe(true);
-    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(true);
-
     await choisir('إعداداتي');
-    expect(sectionDe('النسخة الاحتياطية')!.hasAttribute('hidden')).toBe(false);
-    expect(sectionDe('سجلّ الأخطاء')!.hasAttribute('hidden')).toBe(true);
-    expect(sectionDe('اسمي')!.hasAttribute('hidden')).toBe(true);
+    expect(onglet('إعداداتي')!.getAttribute('aria-selected')).toBe('true');
+    const nomInput = zone!.querySelector<HTMLInputElement>('#nom')!;
+    expect(nomInput.closest('div[hidden]')).toBeNull();
+    expect(zone!.textContent).toContain('النسخة الاحتياطية');
 
-    await choisir('تقدّمي');
-    expect(sectionDe('أيام نشاطي')!.hasAttribute('hidden')).toBe(false);
-    // le nom saisi n'a jamais été démonté
+    await choisir('تحليل أدائي');
+    expect(onglet('تحليل أدائي')!.getAttribute('aria-selected')).toBe('true');
     expect(zone!.querySelector<HTMLInputElement>('#nom')!.value).toBe('أمين');
   });
 });

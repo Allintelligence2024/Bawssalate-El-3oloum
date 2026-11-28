@@ -41,6 +41,9 @@ export function etatDepuisBrut(analyse: Partial<Etat>): Etat {
     derogationsSujets: analyse.derogationsSujets ?? {},
     trophees: analyse.trophees ?? {},
     defis60: analyse.defis60 ?? [],
+    sprints3Min: analyse.sprints3Min ?? [],
+    ...(analyse.plan30Jours ? { plan30Jours: analyse.plan30Jours } : {}),
+    ...(analyse.rythmeBienveillant ? { rythmeBienveillant: analyse.rythmeBienveillant } : {}),
   };
 }
 

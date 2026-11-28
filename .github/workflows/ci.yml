@@ -4,6 +4,9 @@ on:
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   sql-verification:
     name: SQL, RLS & Parité PostgreSQL
@@ -42,13 +45,29 @@ jobs:
         env:
           SUPABASE_DB_URL: postgres://postgres:ci_password@127.0.0.1:5432/bousala_ci
         run: npm run verifier:parite-rls
-      - name: Tester le protocole Temps 2 (synchronisation vérifiée)
+      - name: Tester le protocole Temps 2 (synchronisation vérifiée) & migration 0005
         env:
           PGPASSWORD: ci_password
         run: |
           psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/tests/02-fixture.sql
           psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/migrations/202611270004_synchronisation_verifiee.sql
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/migrations/202611280005_perf_rls_index_et_purge.sql
           psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_ci -f supabase/tests/02-cycle.sql
+      - name: Rejouer la chaîne complète des migrations (0001 → 0005) sur une base vierge
+        env:
+          PGPASSWORD: ci_password
+          SUPABASE_DB_URL: postgres://postgres:ci_password@127.0.0.1:5432/bousala_migrations
+        run: |
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d postgres -c "create database bousala_migrations;"
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_migrations -c "create extension if not exists pgcrypto;"
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_migrations -f supabase/tests/02-fixture.sql
+          for f in supabase/migrations/*.sql; do
+            echo "── Application de $f ──"
+            psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_migrations -f "$f"
+          done
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_migrations -f supabase/tests/01-eleves-generation.sql
+          psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d bousala_migrations -f supabase/tests/02-cycle.sql
+          npm run verifier:parite-rls
 
   test:
     # Playwright 1.56.1 ne prend pas en charge Ubuntu 26.04 (ubuntu-latest).
@@ -88,7 +107,10 @@ jobs:
         env:
           TZ: America/New_York
         run: npx vitest run
-      - run: npm run build
+      - name: Build de production
+        env:
+          NODE_ENV: production
+        run: npm run build
       - run: node scripts/verifier-drills.mjs
       - run: node scripts/verifier-hors-ligne.mjs
       # Smoke test de ce qui est réellement servi : build-id, worker, types, budget de poids.

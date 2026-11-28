@@ -128,8 +128,11 @@ export default function BaguetteXp({ etat, onDeconnexion, onCreerCompte }: Props
 
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="chip text-[11px] font-bold text-forest-deep">{niveau.nom}</span>
-            <span className="chip text-[11px] font-bold text-forest-deep">
-              🔥 {joursNb(jours)}
+            <span className="chip inline-flex items-center gap-1 text-[11px] font-bold text-forest-deep">
+              <span className="h-3.5 w-3.5 text-honey-ink" aria-hidden="true">
+                <IcoFlamme />
+              </span>
+              {joursNb(jours)}
             </span>
             <span className="chip text-[11px] font-bold text-forest-deep">{xpTexte(xp)}</span>
           </div>

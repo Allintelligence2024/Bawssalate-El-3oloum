@@ -101,10 +101,10 @@
   --color-clay-soft: #7f1d1d;
   --color-forest: #7fb896;
   --color-forest-deep: #12291e;
-  --gradient-primary: linear-gradient(135deg, #7fb896 0%, #12291e 100%);
-  --gradient-success: linear-gradient(135deg, #7fb896 0%, #3d6b52 100%);
-  --gradient-secondary: linear-gradient(135deg, #5e8f6f 0%, #2f5d47 100%);
-  --gradient-gold: linear-gradient(135deg, #5e8f6f 0%, #2f5d47 100%);
+  --gradient-primary: linear-gradient(135deg, #2b6f53 0%, #1d513c 100%);
+  --gradient-success: linear-gradient(135deg, #2b6f53 0%, #1d513c 100%);
+  --gradient-secondary: linear-gradient(135deg, #3b745a 0%, #244d3b 100%);
+  --gradient-gold: linear-gradient(135deg, #b07d22 0%, #79531f 100%);
   --gradient-surface: linear-gradient(180deg, #131b16 0%, #0a0f0c 100%);
 }
 
@@ -370,6 +370,9 @@
 .ecran-maquette .day.today {
   color: var(--color-forest-deep);
   font-weight: 800;
+}
+[data-theme='dark'] .ecran-maquette .day.today {
+  color: var(--color-leaf);
 }
 .ecran-maquette .day.today .bead {
   background: var(--color-leaf-soft);
@@ -697,6 +700,13 @@ h1, h2 { text-wrap: balance; }
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+  [data-theme='dark'] .app-brand,
+  [data-theme='dark'] .text-gradient {
+    background: linear-gradient(135deg, #bfe8d0 0%, #7fb896 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
   .fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   @keyframes fadeIn {
@@ -987,6 +997,69 @@ h1, h2 { text-wrap: balance; }
   /* — Focus : jamais d'anneau sur une cible programmatique (tabindex=-1) — */
   [tabindex='-1']:focus,
   [tabindex='-1']:focus-visible { outline: none; }
+}
+
+/* — Desktop (≥ 1024px) : rail latéral fixe façon Duolingo Web (hors @layer pour primer sur inset-x-0) — */
+@media (min-width: 1024px) {
+  .nav-portes {
+    left: auto;
+    right: auto;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    top: 4rem;
+    bottom: 0;
+    width: 14rem;
+    border-inline-end: 1px solid var(--color-line);
+    background: var(--color-paper);
+  }
+  .nav-portes__inner {
+    max-width: none;
+    height: 100%;
+  }
+  .nav-portes .onglets {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    height: 100%;
+    border-top: 0;
+    background: transparent;
+    padding: 18px 12px;
+  }
+  .nav-portes .onglet {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    border: 1.5px solid transparent;
+  }
+  .nav-portes .onglet:hover:not([aria-current='page']) {
+    background: var(--color-sage-soft);
+    color: var(--color-ink);
+  }
+  .nav-portes .onglet[aria-current='page'] {
+    border-color: color-mix(in srgb, var(--color-forest) 35%, transparent);
+  }
+  .nav-portes .onglet[aria-current='page']::before {
+    inset-block: 22%;
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    width: 4px;
+    height: auto;
+  }
+  .nav-portes .onglet-ico {
+    width: 30px;
+    height: 30px;
+  }
+  .nav-portes .onglet[aria-current='page'] .onglet-ico svg,
+  .nav-portes .onglet-ico svg {
+    width: 19px;
+    height: 19px;
+  }
 }
 
 /* الطباعة: « ملفّي » ورقة A4 نظيفة — بلا قوائم ولا زرّ */

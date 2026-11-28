@@ -2,6 +2,7 @@
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { CLE_ETAT } from '../utils/storage';
+import { aujourdhui } from '../utils/dates';
 
 interface Props {
   children: ReactNode;
@@ -13,15 +14,41 @@ interface State {
   exportEffectue: boolean;
 }
 
+/** Retire systématiquement compte, motDePasse, jeton et consentements de tout export de secours. */
+export function nettoyerBrutSecours(brut: string): string | null {
+  try {
+    const parsed: unknown = JSON.parse(brut);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const copie = { ...(parsed as Record<string, unknown>) };
+    delete copie.compte;
+    delete copie.consentementSync;
+    delete copie.consentementSyncDecideLe;
+    return JSON.stringify(
+      {
+        application: 'بوصلة العلوم · نسخة إنقاذ محليّة',
+        version: 3,
+        exporteLe: new Date().toISOString(),
+        etat: copie,
+      },
+      null,
+      2,
+    );
+  } catch {
+    return null;
+  }
+}
+
 function telechargerSecoursLocal(): boolean {
   try {
     const brut = localStorage.getItem(CLE_ETAT);
     if (!brut) return false;
-    const blob = new Blob([brut], { type: 'application/json;charset=utf-8' });
+    const nettoye = nettoyerBrutSecours(brut);
+    if (!nettoye) return false;
+    const blob = new Blob([nettoye], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bousala-secours-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `bousala-secours-${aujourdhui()}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

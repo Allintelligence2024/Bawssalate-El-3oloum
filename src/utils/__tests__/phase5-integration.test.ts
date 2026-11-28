@@ -68,7 +68,7 @@ describe('Lot 5A — Contrat typé, idempotence et règle « Preuve ≠ Complét
       expect(maj.progression[lid]?.statut).not.toBe('terminee');
     }
     expect(maj.jalons.u1?.fait).not.toBe(true);
-    expect(maj.boussoleEventsSeen).toContain(evt.attemptId);
+    expect(maj.boussoleEventsSeen).toContain(`boussole:${evt.attemptId}`);
   });
 
   it('est strictement idempotent sur attemptId et borne la file à 500 entrées', () => {
@@ -88,7 +88,7 @@ describe('Lot 5A — Contrat typé, idempotence et règle « Preuve ≠ Complét
     const apres = appliquerEvenementBoussole(sature, creerEvt({ attemptId: 'new-event-99999' }), '2026-11-21');
     expect(apres.boussoleEventsSeen?.length).toBe(MAX_BOUSSOLE_EVENTS_SEEN);
     expect(apres.boussoleEventsSeen?.[0]).toBe('old-event-0001');
-    expect(apres.boussoleEventsSeen?.at(-1)).toBe('new-event-99999');
+    expect(apres.boussoleEventsSeen?.at(-1)).toBe('boussole:new-event-99999');
   });
 
   it('useBoussoleBridge rejette mauvaise origine / mauvaise source et accepte uniquement le cadre monté', () => {

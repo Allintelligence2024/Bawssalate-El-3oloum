@@ -5,7 +5,7 @@ import { etatVierge, progressionVierge, type Etat, type ProgressionLecon } from 
 import { viderStats, statsPourExport, appliquerStats, suspendreEcritureStats, CLE_STATS, type StatsReponses } from './stats';
 import { signalerEchecStockage } from './echecsStockage';
 import { lireSauvegarde } from './backup';
-import { etatDepuisBrut } from './etat';
+import { etatDepuisBrut, migrerEtat } from './etat';
 import { memoriserValeur, marquerEtatPerime, reinitialiserEtatPerime, verifierCoherence } from './coherenceStockage';
 import {
   CLE_CARNET_BOUSSOLE, CLE_RESTAURATION, lireCarnetBoussole,
@@ -84,7 +84,7 @@ export function chargerEtat(): Etat {
       const { minutes } = p as Record<string, unknown>;
       return minutes !== undefined && !minutesValides(minutes);
     })) throw new Error('leçon invalide');
-    const etat = etatDepuisBrut(analyse as Partial<Etat>);
+    const etat = migrerEtat(analyse as Partial<Etat> & { version?: number });
     reinitialiserEtatPerime();
     lectureEnEchec = false;
     return etat;
@@ -337,11 +337,23 @@ export function viderStockage(carnetAvantConfirmation: string | null): boolean {
     localStorage.removeItem(CLE_RESTAURATION);
   } catch { signalerEchecStockage(); return false; }
   let supprime = true;
-  for (const cle of [CLE_CARNET_BOUSSOLE, CLE]) {
+  const clesAuxiliaires = [
+    'kunz_telemetrie_v1',
+    'kunz-identite-sync-v1',
+    'kunz_sync_generations_v1',
+    'kunz_theme',
+    'kunz_data_saver_4g',
+  ];
+  for (const cle of [CLE_CARNET_BOUSSOLE, CLE, ...clesAuxiliaires]) {
     try {
       localStorage.removeItem(cle);
       if (cle === CLE) memoriserValeur(CLE, null);
-    } catch { supprime = false; signalerEchecStockage(); }
+    } catch {
+      if (cle === CLE_CARNET_BOUSSOLE || cle === CLE) {
+        supprime = false;
+        signalerEchecStockage();
+      }
+    }
   }
   const statsSupprimees = viderStats();
   // En cas d'échec partiel, empêcher l'état encore affiché d'écraser le disque.

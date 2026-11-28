@@ -1,26 +1,38 @@
-// مشغّل البروتوكول — 6 مراحل مع بوّابة تحقّق لكل مرحلة (لا زر تخطّي)
-// المُرشد يتكلّم في 4 لحظات فقط. صمّام «أنا عالق» يُعطي تلميحين لكل مرحلة.
-// كل شيء يُحفظ بعد كل مرحلة (localStorage) فلا تُفقد الدقائق.
+// مسار الدرس السريع بأسلوب Duolingo BAC — 3 خطوات مباشرة (~8 دقائق)
+// الخطوة 1: افهم الفكرة (3 د) — السؤال العلمي + الآلية + الدليل والشكل + الصوت الاختياري
+// الخطوة 2: ثبّت بالتمرين (3 د) — 3 بطاقات تفاعلية سريعة (آلية · دليل علمي · فخّ الباك)
+// الخطوة 3: جملة الباك + البطاقة + الملخّص الصوتي القصير (2 د) — تثبيت الصياغة، بطاقة الدرس، والملخّص الصوتي
 
 import { useEffect, useMemo, useState } from 'react';
-import { getLessonGoldSummary } from '../data/lessonGoldSummaries';
-import { DIAGNOSTICS, PROTOCOLE, minutesCumulees, type PhaseProtocole } from '../data/protocole';
-import { UNITE_PAR_ID, titreLecon, uniteDeLecon } from '../data/programme';
+import { getLessonGoldSummary, type LessonGoldSummary } from '../data/lessonGoldSummaries';
+import { titreLecon, uniteDeLecon } from '../data/programme';
 import { aContenuLecon, questionLecon } from '../data/leconsPassives';
-import { consignerCompteur, consignerPhase } from '../utils/telemetrie';
-import { ajouterJours, aujourdhui, nb, formatJourAr, minutesNb } from '../utils/dates';
+import { aujourdhui, nb } from '../utils/dates';
 import { premiereRevision } from '../utils/srs';
 import { noterReponse } from '../utils/stats';
 import { sonFaux, sonJuste } from '../utils/son';
-import type { ProgressionLecon } from '../types';
-import { ChoixUnique, DiagnosticPieges, Minuteur, Morceau, OptionsMcq, ValveAide } from './Communs';
-import EcranCelebration from './Fetes';
-import { IcoRetour, IcoVerifie } from './Icones';
 import { qcmPourLecon } from '../utils/qcm';
 import { prechaufferSchemasSvt } from '../utils/schemasSvtChargeur';
-import { prechaufferAudioLecons } from '../utils/audioLeconsChargeur';
+import {
+  chargerAudioLecons,
+  lireAudioLeconsCache,
+  prechaufferAudioLecons,
+} from '../utils/audioLeconsChargeur';
+import {
+  DUREE_LECON_RAPIDE_MIN,
+  ETAPES_LECON,
+  construireCarteBac,
+  construireCartesExercice,
+  construireResumeCourtAr,
+  etapeInitialeDepuisProgression,
+  phasesPourEtape,
+  type CarteExerciceRapide,
+} from '../utils/leconRapide';
+import type { ProgressionLecon } from '../types';
+import { IcoDocument, IcoRetour, IcoVerifie } from './Icones';
 import IllustrationsLecon from './IllustrationsLecon';
 import LecteurAudioResume from './LecteurAudioResume';
+import CarteLecon from './CarteLecon';
 
 interface Props {
   lessonId: string;
@@ -30,21 +42,10 @@ interface Props {
   onLireLecon: () => void;
   leconLue: boolean;
   onFermer: () => void;
-  /** Pont vers la Manhadjia (audit F4) : proposé à la clôture de la leçon. */
   onAllerMethodo?: () => void;
 }
 
-// المراحل التي يتكلّم فيها المُرشد (الباقي: صمت)
-const PHASES_PARLANTES = new Set([1, 3, 5, 6]);
-
-// اختيار ثابت لكل درس (لا يتغيّر بين الجلسات)
-function hache(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-function progressionBase(p: ProgressionLecon | undefined): ProgressionLecon {
+function progressionBase(p?: ProgressionLecon): ProgressionLecon {
   return (
     p ?? {
       statut: 'en_cours',
@@ -53,51 +54,212 @@ function progressionBase(p: ProgressionLecon | undefined): ProgressionLecon {
       repetitions: 0,
       intervalle: 0,
       facilite: 2.5,
+      reponses: {},
     }
   );
 }
 
-// سلّم الفهم — من الظاهري (السؤال) إلى الآلي (الخطوات) إلى الجزيئي (الدليل).
-// ي situّ où en est l'élève et matérialise la progression macro→micro (mesure d'audit F2).
-function Echelle({ meso, total, micro }: { meso: number; total: number; micro: boolean }) {
-  const paliers: [string, boolean][] = [
-    ['الظاهرة', true],
-    [`الآلية ${nb(meso)}/${nb(total)}`, meso > 0],
-    ['الدليل الجزيئي', micro],
-  ];
+/**
+ * مشغّل الملخّص الصوتي القصير في نهاية الدرس:
+ * - يستعمل تلقائيًا الملف الصوتي المسجّل بصوت المُرشد (55/55 درس رسمي) عبر LecteurAudioResume.
+ * - ولأيّ درس إضافي دون ملف MP3 (مثل مكتسبات 2AS)، يوفّر قراءة صوتية عربية عبر Web Speech API
+ *   مع النصّ المختصر المقروء لضمان تغطية 100% من الدروس.
+ */
+function ResumeAudioFinLecon({
+  lessonId,
+  lecon,
+  titre,
+}: {
+  lessonId: string;
+  lecon: LessonGoldSummary;
+  titre: string;
+}) {
+  const [aPisteMp3, setAPisteMp3] = useState<boolean | null>(() => {
+    const cache = lireAudioLeconsCache();
+    return cache ? cache.some((p) => p.lessonId === lessonId) : null;
+  });
+  const [enLectureTts, setEnLectureTts] = useState(false);
+
+  const texteCourt = useMemo(() => construireResumeCourtAr(lecon, titre), [lecon, titre]);
+  const ttsDisponible =
+    typeof window !== 'undefined' &&
+    'speechSynthesis' in window &&
+    typeof SpeechSynthesisUtterance !== 'undefined';
+
+  useEffect(() => {
+    let actif = true;
+    const cache = lireAudioLeconsCache();
+    if (cache) {
+      setAPisteMp3(cache.some((p) => p.lessonId === lessonId));
+      return;
+    }
+    void chargerAudioLecons()
+      .then((liste) => {
+        if (actif) setAPisteMp3(liste.some((p) => p.lessonId === lessonId));
+      })
+      .catch(() => {
+        if (actif) setAPisteMp3(false);
+      });
+    return () => {
+      actif = false;
+    };
+  }, [lessonId]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [lessonId]);
+
+  function basculerTts() {
+    if (!ttsDisponible) return;
+    if (enLectureTts) {
+      window.speechSynthesis.cancel();
+      setEnLectureTts(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texteCourt);
+    u.lang = 'ar-DZ';
+    u.rate = 0.98;
+    u.onend = () => setEnLectureTts(false);
+    u.onerror = () => setEnLectureTts(false);
+    setEnLectureTts(true);
+    window.speechSynthesis.speak(u);
+  }
+
+  if (aPisteMp3 !== false) {
+    return <LecteurAudioResume lessonId={lessonId} />;
+  }
+
   return (
-    <div className="flex items-center gap-1" dir="rtl" aria-label="سلّم الفهم: من الظاهري إلى الجزيئي">
-      {paliers.map(([label, actif], i) => (
-        <div key={label} className="flex flex-1 items-center gap-1">
-          <span
-            className={`flex-1 rounded-lg px-2 py-1 text-center text-[10px] font-bold leading-tight transition-colors ${
-              actif ? 'bg-forest text-paper' : 'border border-dashed border-line bg-paper text-mute'
-            }`}
-          >
-            {label}
-          </span>
-          {i < paliers.length - 1 && <span className="text-[10px] text-mute">←</span>}
+    <section
+      dir="rtl"
+      aria-label={`ملخّص صوتي قصير للدرس: ${titre}`}
+      className="rounded-2xl border border-sage bg-sage-soft/50 p-4"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-extrabold text-forest-deep">ملخّص صوتي قصير للدرس</p>
+          <p className="text-[11px] text-mute">استمع للخلاصة السريعة بالعربية في أقلّ من دقيقة</p>
         </div>
-      ))}
-    </div>
+        {ttsDisponible && (
+          <button
+            type="button"
+            onClick={basculerTts}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-forest px-3.5 py-2 text-xs font-extrabold text-paper transition-colors hover:bg-forest-deep"
+          >
+            <span>{enLectureTts ? 'إيقاف القراءة' : 'استمع للملخّص القصير'}</span>
+          </button>
+        )}
+      </div>
+      <p className="mt-2.5 rounded-xl border border-line bg-paper p-3 text-xs leading-relaxed text-ink">
+        {texteCourt}
+      </p>
+    </section>
   );
 }
 
-// « Portillon de rappel imposé » (audit F1) : avant tout choix, l'élève PRODUIT sa réponse
-// (papier / à voix haute). Le QCM qui suit ne sert plus qu'à VÉRIFIER, pas à deviner.
-// Respecte la règle « click-only » de l'app : aucune saisie clavier, mais la production reste réelle.
-function PortillonRappel({ consigne, onProduit }: { consigne: string; onProduit: () => void }) {
+/** بطاقة سؤال تفاعلية بأسلوب Duolingo: تغذية راجعة فورية خضراء/حمراء + شرح موجز. */
+function CarteQuestionDuolingo({
+  carte,
+  choix,
+  validee,
+  onChoisir,
+}: {
+  carte: CarteExerciceRapide;
+  choix: string | null;
+  validee: boolean;
+  onChoisir: (option: string) => void;
+}) {
+  const estJuste = choix === carte.bonneReponse;
+
   return (
-    <div className="rounded-2xl border border-dashed border-gold bg-gold-soft/50 p-4">
-      <p className="text-[11px] font-black text-forest-deep">✋ قف وأنتج أولًا — لا تلمس الخيارات بعد</p>
-      <p className="mt-1.5 text-sm font-bold leading-relaxed text-ink">{consigne}</p>
-      <p className="mt-1.5 text-[11px] leading-relaxed text-mute">
-        اكتبها على ورقتك أو قلها بصوتٍ جهور. الانتاج من ذاكرتك هو ما يثبت — أمّا اختيار جواب جاهز
-        فيُصلّح التعرّف لا الاسترجاع.
-      </p>
-      <button onClick={onProduit} className="btn btn-gold mt-3 w-full text-sm">
-        أنتجتُ جوابي ← أظهر الخيارات للتحقّق فقط
-      </button>
+    <div className="carte p-4 sm:p-5">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <span
+          className={`inline-block rounded-lg px-2.5 py-1 text-[11px] font-extrabold ${
+            carte.categorie === 'piege'
+              ? 'bg-honey-soft text-honey-ink'
+              : 'bg-primary-soft text-forest'
+          }`}
+        >
+          {carte.badgeAr}
+        </span>
+        {validee && (
+          <span className="inline-flex items-center gap-1 text-xs font-extrabold text-forest">
+            <span className="block h-4 w-4">
+              <IcoVerifie />
+            </span>
+            <span>إجابة صحيحة</span>
+          </span>
+        )}
+      </div>
+
+      <h3 className="font-naskh text-base font-extrabold leading-relaxed text-ink sm:text-lg">
+        {carte.question}
+      </h3>
+
+      <div className="mt-4 flex flex-col gap-2.5">
+        {carte.options.map((opt, idx) => {
+          const selectionne = choix === opt;
+          const bonne = opt === carte.bonneReponse;
+          let etatStyle = 'border-line bg-paper text-ink hover:border-forest/50 hover:bg-sage-soft/50';
+          if (validee && bonne) {
+            etatStyle = 'border-2 border-forest bg-primary-soft text-ink font-extrabold';
+          } else if (selectionne && !bonne) {
+            etatStyle = 'border-2 border-error bg-error-soft text-ink';
+          }
+
+          return (
+            <button
+              key={opt}
+              type="button"
+              disabled={validee}
+              onClick={() => onChoisir(opt)}
+              className={`flex min-h-12 w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-right text-sm leading-snug transition-colors disabled:cursor-default ${etatStyle}`}
+            >
+              <span
+                className={`tnum grid h-7 w-7 flex-none place-items-center rounded-lg text-xs font-black ${
+                  validee && bonne
+                    ? 'bg-forest text-paper'
+                    : selectionne && !bonne
+                      ? 'bg-error text-white'
+                      : 'border border-line bg-bg text-mute'
+                }`}
+                aria-hidden="true"
+              >
+                {validee && bonne ? (
+                  <span className="block h-3.5 w-3.5">
+                    <IcoVerifie />
+                  </span>
+                ) : (
+                  nb(idx + 1)
+                )}
+              </span>
+              <span className="flex-1">{opt}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {choix !== null && (
+        <div
+          role="status"
+          className={`mt-4 rounded-2xl border p-3.5 text-xs leading-relaxed ${
+            estJuste
+              ? 'border-forest/35 bg-primary-soft text-ink'
+              : 'border-error/40 bg-error-soft text-ink'
+          }`}
+        >
+          <p className={`font-extrabold ${estJuste ? 'text-forest' : 'text-error'}`}>
+            {estJuste ? 'ممتاز — ثبّتّ الفكرة بدقّة.' : 'ليست هذه — انتبه للفخّ وجرّب خيارًا آخر.'}
+          </p>
+          {estJuste && <p className="mt-1 text-ink-soft">{carte.explication}</p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -108,915 +270,421 @@ export default function ProtocoleRunner({
   onProgresse,
   onTerminer,
   onLireLecon,
-  leconLue,
   onFermer,
   onAllerMethodo,
 }: Props) {
   const lecon = getLessonGoldSummary(lessonId);
   const unite = uniteDeLecon(lessonId);
-  const qcmLecon = qcmPourLecon(lessonId, lecon);
-  const piegesPresents = Boolean(qcmLecon?.pieges && qcmLecon.pieges.length > 0);
+  const titre = titreLecon(lessonId);
+  const qcmLecon = useMemo(() => qcmPourLecon(lessonId, lecon), [lessonId, lecon]);
 
-  const faites = progression?.phases ?? [];
-  const [index, setIndex] = useState<number>(Math.min(faites.length, PROTOCOLE.length - 1));
-  const phase: PhaseProtocole = PROTOCOLE[index];
-
-  const [secondes, setSecondes] = useState(phase.dureeMin * 60);
-  const [enMarche, setEnMarche] = useState(false);
-  const [cloture, setCloture] = useState(false);
-  // شاشة الاحتفال: رقم المرحلة المنتهية (شخصية + تصفيق + ألعاب نارية + الملخّص الذهبي)
-  const [fete, setFete] = useState<number | null>(null);
-
-  // حالات البوّابات
-  const [revele, setRevele] = useState(false);
-  const [mcq, setMcq] = useState<string | null>(null);
-  const [echecs, setEchecs] = useState(0);
-  const [echecMax, setEchecMax] = useState(false);
-  const [classes, setClasses] = useState<Record<string, 'avant' | 'nouveau'>>({});
-  const [lectureFaite, setLectureFaite] = useState(false);
-  // «العودة إلى مراحل المراجعة»: شاشة فهرس المراحل يملكها التلميذ
-  const [vue, setVue] = useState<'phase' | 'sommaire'>('phase');
-  const [qcmFait, setQcmFait] = useState(false);
-  const [auto, setAuto] = useState<'plein' | 'partiel' | 'non' | null>(null);
-  const [diagnostic, setDiagnostic] = useState<string | null>(null);
-  const [aides, setAides] = useState(2);
-  // Phase 5 progressive : nombre d'étapes du mécanisme révélées (anti-surcharge, audit F2).
-  // Si la phase 5 est déjà accomplie, on rouvre tout le mécanisme d'un coup.
-  const [etapesVisibles, setEtapesVisibles] = useState<number>(() =>
-    faites.includes(5) ? (lecon?.mechanismAr.length ?? 1) : 1
+  const cartes = useMemo(
+    () => (lecon ? construireCartesExercice(lessonId, lecon, qcmLecon ?? undefined) : []),
+    [lessonId, lecon, qcmLecon]
   );
-  // Phases 3 & 6 — « portillon de rappel imposé » (audit F1) : avant de voir les choix,
-  // l'élève doit produire sa réponse (papier / à voix haute). Le QCM ne sert alors
-  // plus à TROUVER mais à VÉRIFIER — reconnaissance → production. Respecte le « click-only ».
-  const [rappelProduit, setRappelProduit] = useState(false);
-  // Pièges diagnostiques §11 (audit croisé plan de cours SVT2) : en phase 6, avant la
-  // synthèse, l'élève confronte 4 représentations erronées fréquentes sanctionnées au Bac.
-  const [piegesFaits, setPiegesFaits] = useState(false);
+  const carteBac = useMemo(
+    () => (lecon ? construireCarteBac(lessonId, lecon, qcmLecon ?? undefined) : null),
+    [lessonId, lecon, qcmLecon]
+  );
 
-  // Préchauffage discret du registre des schémas dès l'entrée dans la leçon :
-  // quand l'élève atteint la Phase 5 (« الدليل الوثائقي »), les schémas sont déjà en mémoire.
+  const [etape, setEtape] = useState<0 | 1 | 2>(() => etapeInitialeDepuisProgression(progression));
+  const [carteIndex, setCarteIndex] = useState(0);
+  const [choixCarte, setChoixCarte] = useState<string | null>(null);
+  const [carteValidee, setCarteValidee] = useState(false);
+
+  const [choixBac, setChoixBac] = useState<string | null>(null);
+  const [bacValide, setBacValide] = useState(() => (progression?.phases?.length ?? 0) >= 6);
+  const [erreurs, setErreurs] = useState(0);
+
   useEffect(() => {
     prechaufferSchemasSvt();
     prechaufferAudioLecons();
-  }, []);
-
-  // قياس الأثر (§12.1): نقطة انطلاق المرحلة الحالية، وجلسة واحدة لكل فتح.
-  //
-  // Deux corrections par rapport au premier jet :
-  //   1. la clé est propre à la LEÇON (`leçon:phase`) — sinon une phase abandonnée dans une
-  //      leçon restait « ouverte » indéfiniment et le temps mesuré enflait ;
-  //   2. l'entrée n'est consignée qu'une fois par ouverture: ouvrir l'écran puis le fermer
-  //      ne doit pas fabriquer une session fantôme de 0 s.
-  // Le nettoyage au démontage enregistre la sortie SANS avoir terminé : c'est exactement ce
-  // que mesure l'indicateur d'abandon, qui sinon restait toujours à zéro.
-  useEffect(() => {
-    // Rouvrir une phase DÉJÀ terminée n'est pas une session de travail : la compter
-    // gonflerait les entrées et fabriquerait un abandon à la sortie.
-    if (faites.includes(phase.id)) return;
-    const cle = `kunz_debut_${lessonId}_p${phase.id}`;
-    if (sessionStorage.getItem(cle)) return;
-    sessionStorage.setItem(cle, String(Date.now()));
-    consignerPhase('entree', phase.id);
-    return () => {
-      const depart = Number(sessionStorage.getItem(cle));
-      if (!depart || !Number.isFinite(depart)) return;
-      sessionStorage.removeItem(cle);
-      consignerPhase('sortie', phase.id, (Date.now() - depart) / 1000, false);
-    };
-  }, [lessonId, phase.id]);
-
-  // متى فُتحت الجلسة (لحساب الدقائق عند الإنهاء)
-  const [minutesDepart] = useState(() => progression?.minutes ?? 0);
-  // تصحيح D5: الدقائق تُجمع فوق ما حُسب فعلًا (minutesDepart) فحسب — إذن
-  // نبدأ الجمع من أول مرحلة *غير محسوبة* في هذه الجلسة، لا من أول المرحلة 1،
-  // وإلّا فُضّعت المراحل المنجزة سابقًا مرّتين (8 → 19 بدل 11).
-  const [indiceDepart] = useState(() => Math.min(faites.length, PROTOCOLE.length - 1));
-
-  // إعادة الضبط عند تغيير المرحلة
-  useEffect(() => {
-    setSecondes(phase.dureeMin * 60);
-    setEnMarche(false);
-    setRevele(false);
-    setMcq(null);
-    setEchecs(0);
-    setEchecMax(false);
-    setClasses({});
-    setLectureFaite(false);
-    setQcmFait(false);
-    setAuto(null);
-    setDiagnostic(null);
-    setAides(2);
-    setEtapesVisibles(faites.includes(5) ? (lecon?.mechanismAr.length ?? 1) : 1);
-    setRappelProduit(false);
-    setPiegesFaits(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [index]);
-
-  // المؤقّت
-  useEffect(() => {
-    if (!enMarche || secondes <= 0) return;
-    const t = setTimeout(() => setSecondes((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [enMarche, secondes]);
-
-  // ───────────── أسئلة البوّابات المُولّدة من المحتوى ─────────────
-
-  const qEtapes = useMemo(() => {
-    if (!lecon) return null;
-    const n = lecon.mechanismAr.length;
-    const options = Array.from(new Set([n - 1, n, n + 1, n + 2].filter((x) => x >= 1)))
-      .sort((a, b) => a - b)
-      .slice(0, 4)
-      .map((x) => ({ key: String(x), label: `${nb(x)} خطوات` }));
-    return { n, options };
-  }, [lecon]);
-
-  const qSequence = useMemo(() => {
-    if (!lecon || lecon.mechanismAr.length < 3) return null;
-    const i = hache(lessonId) % (lecon.mechanismAr.length - 1);
-    const juste = lecon.mechanismAr[i + 1];
-    const autres = lecon.mechanismAr.filter((_, j) => j !== i + 1);
-    const distracteurs = [autres[0], autres[autres.length - 1]];
-    const options = [juste, ...distracteurs].map((s, k) => ({ key: String(k), label: s }));
-    // ترتيب ثابت يبدأ من العدد الصحيح
-    const ordre = options.map((_, k) => k).sort((a, b) => (hache(lessonId + a) % 10) - (hache(lessonId + b) % 10));
-    return {
-      indice: i,
-      options: ordre.map((k) => options[k]),
-      reponse: String(options.findIndex((o) => o.label === juste)),
-    };
-  }, [lecon, lessonId]);
-
-  // ───────────── هل تجاوزت بوّابة المرحلة؟ ─────────────
-
-  function verrouPasse(): boolean {
-    if (!lecon) return false;
-    // مرحلة أنجزتها من قبل: تُفتح لك دائمًا حين تعود إليها (لا إعادة إجبارية)
-    if (faites.includes(phase.id)) return true;
-    switch (phase.id) {
-      case 1:
-        return lectureFaite && (echecMax || mcq === String(qEtapes?.n));
-      case 2:
-        return lecon.vocabulary.every((v) => classes[v]);
-      case 3:
-        return rappelProduit && qcmFait;
-      case 4:
-        return revele;
-      case 5:
-        return echecMax || mcq === qSequence?.reponse;
-      case 6:
-        return (
-          rappelProduit &&
-          (!piegesPresents || piegesFaits) &&
-          qcmFait &&
-          auto !== null &&
-          (auto === 'plein' || diagnostic !== null)
-        );
-      default:
-        return false;
-    }
-  }
-
-  function fragile(): boolean {
-    return echecMax || auto === 'partiel' || auto === 'non';
-  }
-
-  // ───────────── الانتقال ─────────────
-
-  function phaseSuivante(): void {
-    const base = progressionBase(progression);
-    const reponses = { ...base.reponses };
-
-    // Phase menée à son terme : on clôt la session ouverte en « terminée ». Sans ça, le
-    // démontage qui suit consignerait un abandon pour une phase pourtant finie.
-    // `closed` est nécessaire : à cause du rendu en mode strict, le nettoyage d'un effet
-    // peut déjà avoir supprimé le départ.
-    if (!faites.includes(phase.id)) {
-      const cle = `kunz_debut_${lessonId}_p${phase.id}`;
-      const depart = Number(sessionStorage.getItem(cle));
-      const duree = depart && Number.isFinite(depart) && depart > 0
-        ? (Date.now() - depart) / 1000
-        : phase.dureeMin * 60;
-      sessionStorage.removeItem(cle);
-      consignerPhase('sortie', phase.id, duree, true);
-    }
-
-    const maj: ProgressionLecon = {
-      ...base,
-      statut: 'en_cours',
-      phases: Array.from(new Set([...faites, phase.id])),
-      minutes: minutesCumulees(minutesDepart, indiceDepart, index),
-      derniereSession: aujourdhui(),
-      reponses,
-      diagnostic: phase.id === 6 && diagnostic ? diagnostic : base.diagnostic,
-    };
-
-    if (index === PROTOCOLE.length - 1) {
-      onProgresse({ ...maj, fragile: fragile() });
-      setFete(phase.id);
-      return;
-    }
-
-    // كل مرحلة تنتهي → احتفال: الشخصية، التصفيق، الألعاب النارية، ثم الملخّص الذهبي للطبع
-    onProgresse(maj);
-    setFete(phase.id);
-  }
+  }, [lessonId]);
 
   if (!lecon) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pt-20 text-center">
+      <div dir="rtl" className="mx-auto max-w-2xl px-4 pt-20 text-center">
         <p className="text-mute">الدرس المطلوب غير متوفّر في قاعدة البيانات.</p>
-        <button onClick={onFermer} className="btn btn-ghost mt-4">
+        <button type="button" onClick={onFermer} className="btn btn-ghost mt-4">
           رجوع
         </button>
       </div>
     );
   }
 
-  function formatTemps(s: number): string {
-    return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  const questionPrincipale = questionLecon(lessonId)?.trim() || lecon.missionAr;
+  const metaEtape = ETAPES_LECON[etape];
+  const fragile = erreurs >= 2;
+
+  // نسبة التقدّم البصرية في شريط Duolingo العلوي
+  const progressionBarre =
+    etape === 0
+      ? 24
+      : etape === 1
+        ? 38 + Math.round(((carteIndex + (carteValidee ? 1 : 0)) / Math.max(cartes.length, 1)) * 34)
+        : bacValide
+          ? 100
+          : 82;
+
+  function passerEtape2() {
+    const base = progressionBase(progression);
+    onProgresse({
+      ...base,
+      statut: 'en_cours',
+      phases: phasesPourEtape(0),
+      minutes: Math.max(base.minutes, 3),
+      derniereSession: aujourdhui(),
+    });
+    setCarteIndex(0);
+    setChoixCarte(null);
+    setCarteValidee(false);
+    setEtape(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ───────────── شاشة الإغلاق (كلام المُرشد الأخير) ─────────────
+  function choisirOptionCarte(option: string) {
+    const courante = cartes[carteIndex];
+    if (!courante || carteValidee) return;
+    setChoixCarte(option);
+    if (option === courante.bonneReponse) {
+      sonJuste();
+      noterReponse('phase', true);
+      setCarteValidee(true);
+    } else {
+      sonFaux();
+      noterReponse('phase', false);
+      setErreurs((e) => e + 1);
+    }
+  }
 
-  if (cloture) {
-    const frag = fragile();
-    const prochaine = ajouterJours(aujourdhui(), frag ? 1 : 3);
-    const minutes = minutesCumulees(minutesDepart, indiceDepart, PROTOCOLE.length - 1);
-    return (
-      <div className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center px-4 py-10">
-        <div className="card animate-pop-in p-7 text-center">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-sage text-forest">
-            <span className="block h-7 w-7">
-              <IcoVerifie />
-            </span>
-          </span>
-          <p className="eyebrow mt-4">أنهيت الدرس</p>
-          <h1 className="font-naskh mt-2 text-2xl font-bold">{titreLecon(lessonId)}</h1>
-          <p className="mt-2 text-sm text-mute">
-            {minutesNb(minutes)} من التركيز في هذا الدرس — الوقت المقدّر للجلسة.
-          </p>
+  function carteSuivante() {
+    if (carteIndex < cartes.length - 1) {
+      setCarteIndex((i) => i + 1);
+      setChoixCarte(null);
+      setCarteValidee(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const base = progressionBase(progression);
+    onProgresse({
+      ...base,
+      statut: 'en_cours',
+      phases: phasesPourEtape(1),
+      minutes: Math.max(base.minutes, 6),
+      derniereSession: aujourdhui(),
+    });
+    setEtape(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-          <div className="mt-5 space-y-3 text-right">
-            <Morceau>
-              {frag
-                ? `كانت المراجعة صعبة قليلًا — وهذا خبر جيد: سنعود إلى هذا الدرس غدًا ${formatJourAr(
-                    prochaine
-                  )}. هكذا تُردم الثغرات.`
-                : `سنعود إلى هذا الدرس يوم ${formatJourAr(prochaine)} (بعد ٣ أيام). الاسترجاع المتباعد هو ما يثبّت.`}
-            </Morceau>
-            <p className="text-xs leading-relaxed text-mute">
-              المراجعات التالية: J+3 ثم J+7 ثم J+14 ثم J+28. كلما صعُب عليك الاسترجاع، أرسلنا المراجعة
-              أقرب — وهذه علامة تعلّم لا فشل.
-            </p>
-          </div>
+  function choisirOptionBac(option: string) {
+    if (!carteBac || bacValide) return;
+    setChoixBac(option);
+    if (option === carteBac.bonneReponse) {
+      sonJuste();
+      noterReponse('phase', true);
+      setBacValide(true);
+      const base = progressionBase(progression);
+      onProgresse({
+        ...base,
+        statut: 'en_cours',
+        phases: phasesPourEtape(2),
+        minutes: Math.max(base.minutes, DUREE_LECON_RAPIDE_MIN),
+        derniereSession: aujourdhui(),
+        fragile,
+      });
+    } else {
+      sonFaux();
+      noterReponse('phase', false);
+      setErreurs((e) => e + 1);
+    }
+  }
 
+  function cloturerLecon() {
+    const base = progressionBase(progression);
+    const maj = premiereRevision(
+      {
+        ...base,
+        statut: 'terminee',
+        phases: [1, 2, 3, 4, 5, 6],
+        minutes: Math.max(base.minutes, DUREE_LECON_RAPIDE_MIN),
+        derniereSession: aujourdhui(),
+        fragile,
+      },
+      fragile
+    );
+    onTerminer(maj, DUREE_LECON_RAPIDE_MIN);
+  }
+
+  const carteActuelle = cartes[carteIndex];
+
+  return (
+    <div dir="rtl" className="min-h-dvh bg-bg pb-24">
+      {/* شريط علوي ثابت بأسلوب Duolingo: رجوع + شريط تقدّم + الدرس الكامل (اختياري) */}
+      <header className="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button
-            onClick={() => {
-              const base = progressionBase(progression);
-              const minutesFinales = minutesCumulees(minutesDepart, indiceDepart, PROTOCOLE.length - 1);
-              onTerminer(
-                premiereRevision(
-                  {
-                    ...base,
-                    statut: 'terminee',
-                    phases: [1, 2, 3, 4, 5, 6],
-                    minutes: minutesFinales,
-                    derniereSession: aujourdhui(),
-                    fragile: frag,
-                  },
-                  frag
-                ),
-                minutesFinales
-              );
-            }}
-            className="btn btn-primary mt-6 w-full"
+            type="button"
+            onClick={onFermer}
+            aria-label="العودة إلى المسار"
+            className="grid h-11 w-11 flex-none place-items-center rounded-xl border border-line bg-bg text-ink transition-colors hover:border-forest/40"
           >
-            تم — العودة إلى المسار
+            <span className="block h-5 w-5">
+              <IcoRetour />
+            </span>
           </button>
 
-          {/* Pont vers la Manhadjia (audit F4) : assimiler ≠ réussir le Bac.
-              On propose d'appliquer la méthodologie tant que la notion est chaude. */}
-          {onAllerMethodo && (
-            <button onClick={onAllerMethodo} className="btn btn-gold mt-2 w-full text-sm">
-              🎯 طبّق المنهجية الآن — من الفهم إلى صناعة النقطة
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center justify-between gap-2 text-[11px]">
+              <span className="truncate font-extrabold text-ink">
+                {nb(etape + 1)} / 3 · {metaEtape.titreAr}
+              </span>
+              <span className="tnum flex-none font-bold text-forest">{metaEtape.dureeAr}</span>
+            </div>
+            <div
+              className="h-2.5 w-full overflow-hidden rounded-full bg-line"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progressionBarre}
+              aria-label="تقدّم الدرس"
+            >
+              <div
+                className="h-full rounded-full bg-leaf transition-all duration-300"
+                style={{ width: `${progressionBarre}%` }}
+              />
+            </div>
+          </div>
+
+          {aContenuLecon(lessonId) && (
+            <button
+              type="button"
+              onClick={onLireLecon}
+              aria-label="عرض الدرس الكامل"
+              className="inline-flex min-h-11 flex-none items-center gap-1.5 rounded-xl border border-line bg-bg px-3 text-xs font-bold text-forest transition-colors hover:border-forest/40"
+            >
+              <span className="block h-4 w-4" aria-hidden="true">
+                <IcoDocument />
+              </span>
+              <span className="hidden sm:inline">الدرس الكامل</span>
             </button>
           )}
         </div>
-      </div>
-    );
-  }
 
-  // ───────────── شاشة الاحتفال: بعد كل مرحلة (شخصية + تصفيق + ألعاب نارية) ─────────────
-
-  if (fete !== null && lecon) {
-    const derniere = index === PROTOCOLE.length - 1;
-    return (
-      <EcranCelebration
-        lecon={lecon}
-        titre={titreLecon(lessonId)}
-        numero={fete}
-        total={PROTOCOLE.length}
-        derniere={derniere}
-        onContinuer={() => {
-          setFete(null);
-          if (derniere) setCloture(true);
-          else setIndex(index + 1);
-        }}
-        onQuitter={() => {
-          setFete(null);
-          onFermer();
-        }}
-      />
-    );
-  }
-
-  // ───────────── شاشة فهرس المراحل (ملك التلميذ: يعود متى شاء) ─────────────
-
-  if (vue === 'sommaire') {
-    const maxAtteint = Math.max(phase.id, ...faites);
-    return (
-      <div className="mx-auto max-w-2xl px-4 pb-6 pt-5">
-        <header className="mb-4 flex items-center justify-between gap-2">
-          <button
-            onClick={onFermer}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-paper text-mute transition-colors hover:bg-sage-soft"
-            aria-label="خروج من الدرس"
-            title="خروج من الدرس"
-          >
-            <span className="block h-5 w-5">
-              <IcoRetour />
-            </span>
-          </button>
-          <div className="min-w-0 flex-1 text-center">
-            <p className="truncate text-[11px] text-mute">
-              {unite ? `الوحدة ${unite.numero}: ${unite.titre}` : 'درس'}
-            </p>
-            <h1 className="truncate text-base font-bold">{titreLecon(lessonId)}</h1>
-          </div>
-          <div className="h-10 w-10" aria-hidden="true" />
-        </header>
-
-        <h2 className="font-naskh text-xl font-bold">مراحل المراجعة</h2>
-        <p className="mt-1 text-xs leading-relaxed text-mute">
-          اختر أي مرحلة تريد العودة إليها — لا شيء يُفقد، ولا مرحلة تُحذف.
-        </p>
-
-        <ol className="mt-4 space-y-2.5" dir="rtl">
-          {PROTOCOLE.map((p) => {
-            const faite = faites.includes(p.id) || p.id < phase.id;
-            const actuelle = p.id === phase.id;
-            const atteignable = p.id <= maxAtteint;
+        {/* مؤشّر الخطوات الثلاث القابل للنقر للرجوع السريع */}
+        <div className="mx-auto grid max-w-2xl grid-cols-3 gap-1.5 px-4 pb-2.5">
+          {ETAPES_LECON.map((e) => {
+            const active = e.index === etape;
+            const passee = e.index < etape;
             return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  disabled={!atteignable}
-                  onClick={() => {
-                    setIndex(p.id - 1);
-                    setVue('phase');
-                  }}
-                  className={`flex w-full items-start gap-3 rounded-2xl border p-3.5 text-right transition-colors ${
-                    actuelle
-                      ? 'border-forest bg-sage-soft'
-                      : faite
-                        ? 'border-line bg-paper'
-                        : 'border-dashed border-line bg-cream/50'
-                  } ${atteignable ? 'hover:bg-sage-soft' : 'cursor-not-allowed opacity-50'}`}
-                >
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      faite ? 'bg-forest text-paper' : 'bg-cream text-mute'
-                    }`}
-                  >
-                    {nb(p.id)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-bold">{p.titre}</span>
-                    <span className="mt-0.5 block text-[11px] leading-relaxed text-mute">
-                      {p.but} · {nb(p.dureeMin)} دقائق
-                    </span>
-                    {!atteignable && (
-                      <span className="mt-1 block text-[11px] text-mute">
-                        تُفتح بعد إنهاء المرحلة السابقة
-                      </span>
-                    )}
-                  </span>
-                  {actuelle && (
-                    <span className="chip shrink-0 text-[10px]">الحالية</span>
-                  )}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-
-        <button onClick={() => setVue('phase')} className="btn btn-primary mt-5 w-full text-base">
-          العودة إلى المرحلة {nb(phase.id)} ←
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 pb-6 pt-5">
-      {/* رأس */}
-      <header className="mb-4">
-        <div className="flex items-center justify-between gap-2">
-          <button
-            onClick={() => setVue('sommaire')}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-paper text-mute transition-colors hover:bg-sage-soft"
-            aria-label="العودة إلى مراحل المراجعة"
-            title="العودة إلى مراحل المراجعة"
-          >
-            <span className="block h-5 w-5">
-              <IcoRetour />
-            </span>
-          </button>
-          <div className="min-w-0 flex-1 text-center">
-            <p className="truncate text-[11px] text-mute">
-              {unite ? `الوحدة ${unite.numero}: ${unite.titre}` : 'درس'}
-            </p>
-            <h1 className="truncate text-base font-bold">{titreLecon(lessonId)}</h1>
-          </div>
-          <div className="h-10 w-10" aria-hidden="true" />
-        </div>
-
-        {/* نقاط المراحل */}
-        <div className="mt-4 flex items-center justify-between" dir="rtl">
-          {PROTOCOLE.map((p) => {
-            const faite = faites.includes(p.id) || p.id < phase.id;
-            const actuelle = p.id === phase.id;
-            return (
-              <div key={p.id} className="flex flex-1 flex-col items-center gap-1">
-                <div
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold tnum transition-[background-color,border-color,box-shadow] ${
-                    faite
-                      ? 'bg-forest text-paper'
-                      : actuelle
-                        ? 'bg-sage text-forest-deep ring-2 ring-forest/40'
-                        : 'bg-paper text-mute border border-line'
-                  }`}
-                >
-                  {faite ? '✓' : p.id}
-                </div>
-                <span
-                  className={`hidden text-[9px] leading-tight text-center sm:block ${
-                    actuelle ? 'font-bold text-forest' : faite ? 'text-mute' : 'text-mute/60'
-                  }`}
-                >
-                  {p.titre.split(' ')[0]}
-                </span>
-              </div>
+              <button
+                key={e.index}
+                type="button"
+                disabled={e.index > etape && !(e.index === 2 && bacValide)}
+                onClick={() => setEtape(e.index)}
+                className={`rounded-xl px-2 py-1 text-center text-[11px] font-extrabold transition-colors disabled:opacity-60 ${
+                  active
+                    ? 'bg-primary-soft text-forest'
+                    : passee
+                      ? 'bg-bg text-ink-soft hover:text-forest'
+                      : 'bg-transparent text-mute'
+                }`}
+              >
+                {nb(e.index + 1)}. {e.titreAr}
+              </button>
             );
           })}
         </div>
       </header>
 
-      {/* بطاقة المرحلة */}
-      <main key={phase.id} className="animate-pop-in card flex-1 p-5">
-        <div className="mb-1 flex items-center gap-2">
-          <span className="rounded-lg bg-sage px-2 py-0.5 text-[11px] font-bold text-forest-deep">
-            المرحلة {phase.id} من 6
-          </span>
-          <span className="text-[11px] text-mute">الهدف: {phase.but}</span>
+      <main className="mx-auto max-w-2xl px-4 pt-5">
+        {/* عنوان الدرس وموقعه */}
+        <div className="mb-4">
+          {unite && (
+            <p className="oeil">
+              الوحدة {nb(unite.numero)} · {unite.titre}
+            </p>
+          )}
+          <h1 className="font-naskh mt-1 text-xl font-extrabold leading-snug text-ink sm:text-2xl">
+            {titre}
+          </h1>
+          <p className="mt-1 text-xs text-mute">{metaEtape.sousTitreAr}</p>
         </div>
-        <h2 className="font-naskh text-xl font-bold">{phase.titre}</h2>
 
-        <Minuteur
-          secondes={secondes}
-          enMarche={enMarche}
-          onToggle={() => setEnMarche((m) => !m)}
-          finMessage="انتهى وقت المرحلة — تابع بلطف، الوقت ليس سيّدك"
-        />
-
-        <p className="mt-4 rounded-2xl bg-cream/70 p-3 text-sm leading-relaxed text-ink-soft">
-          {phase.instruction}
-        </p>
-
-        {/* محتوى المرحلة */}
-        <div className="mt-5">
-          {phase.id === 1 && qEtapes && (
-            <div className="space-y-3">
-              {questionLecon(lessonId) && (
-                <div className="rounded-2xl border border-gold-soft bg-gold-soft/60 p-3.5">
-                  <p className="text-[11px] font-bold text-forest-deep">سؤال الدرس</p>
-                  <p className="mt-1.5 text-sm font-bold leading-relaxed">
-                    {questionLecon(lessonId)}
-                  </p>
-                </div>
-              )}
-              <div className="rounded-2xl border border-sage bg-sage-soft p-3.5">
-                <p className="text-[11px] font-bold text-forest">إشكالية الدرس</p>
-                <p className="mt-1.5 text-sm font-bold leading-relaxed">{lecon.missionAr}</p>
-              </div>
-              <LecteurAudioResume lessonId={lessonId} compact />
-              <button
-                type="button"
-                onClick={onLireLecon}
-                className="btn btn-primary w-full text-sm"
-              >
-                📖 افتح الدرس واقرأه كاملًا (من أوله إلى آخره)
-              </button>
-              <button
-                onClick={() => setLectureFaite(true)}
-                disabled={lectureFaite || !leconLue}
-                className={`btn w-full text-sm ${
-                  lectureFaite ? 'btn-gold' : 'btn-ghost border border-line'
-                }`}
-              >
-                {lectureFaite
-                  ? '✓ تمّت قراءة الدرس'
-                  : aContenuLecon(lessonId)
-                    ? 'أنهيتُ قراءة الدرس كاملًا ✓'
-                    : 'راجعتُ الدرس في الكتاب الورقي ✓'}
-              </button>
-              {!lectureFaite && !leconLue && (
-                <p className="rounded-xl border border-dashed border-line bg-cream/60 p-2.5 text-center text-xs leading-relaxed text-mute">
-                  بوّابة القراءة: افتح الدرس أولًا واقرأه من أوله إلى آخره، ثم عُد إلى هنا.
-                  لا يُفتح هذا الزر قبل ذلك.
-                </p>
-              )}
-              {lectureFaite && (
-                <p className="text-xs text-mute">
-                  يتكوّن الدرس من {nb(lecon.mechanismAr.length)} خطوات سببية و{' '}
-                  {nb(lecon.vocabulary.length)} كلمات مفتاحية. صفرها ذهنيًا الآن.
-                </p>
-              )}
-              {lectureFaite && (
-                <div className="space-y-2">
-                  {lecon.mechanismAr.map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 rounded-xl border border-dashed border-line bg-cream/50 px-3 py-2.5"
-                    >
-                      <span className="text-xs font-bold text-mute">{i + 1}</span>
-                      <span className="h-3 flex-1 rounded bg-line/70" />
-                    </div>
-                  ))}
-                </div>
-              )}
-              {lectureFaite && (
-                <p className="text-xs font-bold text-ink-soft">
-                  بوّابة المرحلة: كم خطوة سببية في الدرس؟
-                </p>
-              )}
-              {lectureFaite && (
-                <OptionsMcq
-                  nom="عدد الخطوات السببية"
-                  options={qEtapes.options}
-                  value={mcq}
-                  cleFaux={mcq && mcq !== String(qEtapes.n) ? mcq : null}
-                  cleJuste={echecMax ? String(qEtapes.n) : null}
-                  onChange={(k) => {
-                    if (k === mcq) return; // نقرة مكرّرة على الخيار نفسه — لا تُحتسب مرتين
-                    setMcq(k);
-                    const ok = k === String(qEtapes.n);
-                    if (ok) sonJuste();
-                    else sonFaux();
-                    noterReponse('phase', ok);
-                    if (!ok) {
-                      const e = echecs + 1;
-                      setEchecs(e);
-                      if (e === 2) consignerCompteur('blocagesPortes');
-                      if (e >= 2) setEchecMax(true);
-                    }
-                  }}
-                />
-              )}
-              {echecs === 1 && !echecMax && (
-                <p className="text-xs font-bold text-clay">ليست الإجابة — حاول مرة أخرى.</p>
-              )}
-              {echecMax && (
-                <p className="text-xs font-bold text-clay">
-                  الإجابة الصحيحة: {nb(qEtapes.n)} خطوات. سُجّلت هذه المرحلة كـ«هشّة» — لا بأس،
-                  سنراجعها غدًا.
-                </p>
-              )}
-            </div>
-          )}
-
-          {phase.id === 2 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-ink-soft">الكلمات المفتاحية — صنّف كل واحدة</p>
-              <div className="space-y-2">
-                {lecon.vocabulary.map((v) => {
-                  const c = classes[v];
-                  return (
-                    <button
-                      key={v}
-                      onClick={() =>
-                        setClasses((prev) => ({ ...prev, [v]: prev[v] === 'avant' ? 'nouveau' : 'avant' }))
-                      }
-                      className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition-colors ${
-                        c === 'avant'
-                          ? 'border-sage bg-sage-soft text-forest-deep'
-                          : c === 'nouveau'
-                            ? 'border-gold-soft bg-gold-soft/60 text-forest-deep'
-                            : 'border-line bg-paper text-ink-soft'
-                      }`}
-                    >
-                      <span>{v}</span>
-                      <span className="text-[11px] font-bold">
-                        {c === 'avant' ? 'مرتبطة بدرس سابق' : c === 'nouveau' ? 'جديدة' : 'اضغط للتصنيف'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-xs leading-relaxed text-mute">
-                التي تعرفها من قبل هي الجسر، والتي لا تعرفها هي ثغرتك — ستركّز عليها في القراءة.
+        {/* ─────────────── الخطوة 1: افهم الفكرة (3 دقائق) ─────────────── */}
+        {etape === 0 && (
+          <div className="space-y-4">
+            {/* المشكل العلمي للدرس */}
+            <section className="rounded-2xl border border-honey-line bg-honey-soft p-4">
+              <p className="text-[11px] font-extrabold text-honey-ink">سؤال الدرس (المشكل العلمي)</p>
+              <p className="font-naskh mt-1.5 text-base font-extrabold leading-relaxed text-ink">
+                {questionPrincipale}
               </p>
-            </div>
-          )}
+            </section>
 
-          {phase.id === 3 && (
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-sage bg-sage-soft p-3.5">
-                <p className="text-[11px] font-bold text-forest">إشكالية الدرس</p>
-                <p className="mt-1.5 text-sm font-bold leading-relaxed">{lecon.missionAr}</p>
+            {/* الآلية العلمية بخطوات واضحة ومباشرة */}
+            <section className="carte p-4 sm:p-5">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-extrabold text-ink">الآلية الأساسية بخطوات واضحة</h2>
+                <span className="tnum text-[11px] font-bold text-forest">
+                  {nb(lecon.mechanismAr.length)} خطوات
+                </span>
               </div>
-              <p className="text-xs font-bold text-ink-soft">
-                بوّابة المرحلة: أوّلًا استرجع الجواب من ذاكرتك وأنتجه، ثم تحقّق من اختيارك — إن أخطأت أعد المحاولة.
-              </p>
-              {!rappelProduit ? (
-                <PortillonRappel
-                  consigne="من ذاكرتك وحدها: كيف يُجاب عن سؤال الدرس؟ أنتج جوابك الآن (ورقة أو بصوتٍ جهور) قبل رؤية أي خيار."
-                  onProduit={() => setRappelProduit(true)}
-                />
-              ) : (
-                qcmLecon?.rappel && (
-                  <>
-                    <p className="text-[11px] leading-relaxed text-mute">
-                      الآن قارن ما أنتجته بالخيارات — أيّها يطابق جوابك؟ (الخيارات للتحقّق، لا للتخمين)
-                    </p>
-                    <ChoixUnique
-                      qcm={qcmLecon.rappel}
-                      fait={qcmFait}
-                      onValide={() => setQcmFait(true)}
-                      source="phase"
-                    />
-                  </>
-                )
-              )}
-            </div>
-          )}
-
-          {phase.id === 4 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-ink-soft">
-                الهيكل العظمي — {nb(lecon.mechanismAr.length)} صناديق سببية
-              </p>
-              <div className="space-y-2">
-                {lecon.mechanismAr.map((etape, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 rounded-xl border border-dashed border-line bg-cream/50 px-3 py-2.5"
-                  >
-                    <span className="text-xs font-bold text-mute">{i + 1}</span>
-                    {revele ? (
-                      <span className="text-sm leading-relaxed">{etape}</span>
-                    ) : (
-                      <span className="h-3 flex-1 rounded bg-line/70" />
-                    )}
-                  </div>
-                ))}
-              </div>
-              {!revele && (
-                <button
-                  onClick={() => setRevele(true)}
-                  className="btn btn-gold w-full"
-                >
-                  حاولتُ — اكشف الهيكل العظمي
-                </button>
-              )}
-              {revele && (
-                <p className="text-xs text-mute">
-                  قارن هيكلك بهذا: ما الصندوق الذي نسيته؟ إنه ثغرتك الأولى — ستردمها في المرحلة 6.
-                </p>
-              )}
-            </div>
-          )}
-
-          {phase.id === 5 && qSequence && (
-            <div className="space-y-3">
-              {aContenuLecon(lessonId) && (
-                <button
-                  type="button"
-                  onClick={onLireLecon}
-                  className="btn btn-ghost w-full text-sm"
-                >
-                  📖 أعد قراءة الدرس بانتباه للعلاقات (قراءة موجَّهة)
-                </button>
-              )}
-
-              <LecteurAudioResume lessonId={lessonId} compact />
-
-              {/* سلّم الفهم — من الظاهري إلى الجزيئي (audit F2 : matérialiser macro→micro). */}
-              <Echelle
-                meso={etapesVisibles}
-                total={lecon.mechanismAr.length}
-                micro={etapesVisibles >= lecon.mechanismAr.length}
-              />
-
-              {/* الخطوات السببية — كشف تدريجي: خطوة واحدة كل مرة (تقليل الحمل المعرفي). */}
-              <div className="space-y-2">
-                {lecon.mechanismAr.slice(0, etapesVisibles).map((etape, i) => (
-                  <div
-                    key={i}
-                    className="animate-pop-in flex items-start gap-3 rounded-xl border border-line bg-cream/50 px-3 py-2.5"
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-forest text-[10px] font-bold text-paper">
-                      {i + 1}
+              <ol className="space-y-2.5">
+                {lecon.mechanismAr.map((ligne, i) => (
+                  <li key={i} className="flex items-start gap-2.5 rounded-xl bg-bg p-3">
+                    <span className="tnum mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-full bg-primary-soft text-xs font-black text-forest">
+                      {nb(i + 1)}
                     </span>
-                    <span className="text-sm leading-relaxed">{etape}</span>
-                  </div>
+                    <p className="text-sm leading-relaxed text-ink">{ligne}</p>
+                  </li>
                 ))}
+              </ol>
+
+              {/* الدليل التجريبي والوثيقة */}
+              <div className="mt-4 rounded-xl border border-forest/25 bg-primary-soft/60 p-3.5">
+                <p className="text-[11px] font-extrabold text-forest">الدليل الوثائقي في البكالوريا</p>
+                <p className="mt-1 text-xs leading-relaxed text-ink">{lecon.evidenceAr}</p>
               </div>
 
-              {/* بوابة الكشف التدريجي: استرجاع نشط للرابط قبل رؤية الخطوة الموالية. */}
-              {etapesVisibles < lecon.mechanismAr.length && (
-                <div className="rounded-2xl border border-dashed border-sage bg-sage-soft/50 p-3.5">
-                  <p className="text-xs font-bold text-forest-deep">
-                    قبل أن تكشف الخطوة {nb(etapesVisibles + 1)}: لِماذا تأتي بعد «
-                    {lecon.mechanismAr[etapesVisibles - 1]}»؟ فكّر في الرابط لحظة.
-                  </p>
-                  <p className="mt-1 text-[11px] leading-relaxed text-mute">
-                    قول الرابط بصوتٍ منخفض يصعّد التثبيت — ثم اكشف.
-                  </p>
-                  <button
-                    onClick={() => setEtapesVisibles((n) => Math.min(n + 1, lecon.mechanismAr.length))}
-                    className="btn btn-gold mt-3 w-full text-sm"
-                  >
-                    فكّرت في الرابط ← اكشف الخطوة {nb(etapesVisibles + 1)}
-                  </button>
+              {/* الرسومات التوضيحية الرسمية إن وُجدت */}
+              <div className="mt-3">
+                <IllustrationsLecon lessonId={lessonId} compacte />
+              </div>
+
+              {/* مصطلحات مفتاحية */}
+              {lecon.vocabulary.length > 0 && (
+                <div className="mt-4 border-t border-line pt-3">
+                  <p className="mb-2 text-[11px] font-extrabold text-mute">المصطلحات المفتاحية</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {lecon.vocabulary.map((mot) => (
+                      <span
+                        key={mot}
+                        className="rounded-lg border border-line bg-bg px-2.5 py-1 text-xs font-bold text-ink-soft"
+                      >
+                        {mot}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
+            </section>
 
-              {/* الدليل + البوّابة يظهران بعد كشف كل الخطوات (الدليل هو القمة الجزيئية). */}
-              {etapesVisibles >= lecon.mechanismAr.length && (
-                <>
-                  <div className="rounded-2xl border border-sage bg-sage-soft p-3.5">
-                    <p className="text-[11px] font-bold text-forest">الدليل الوثائقي — ما تُصنع به النقطة في البكالوريا</p>
-                    <p className="mt-1.5 text-sm leading-relaxed">{lecon.evidenceAr}</p>
-                  </div>
+            {/* ملخّص صوتي اختياري أثناء الفهم */}
+            <LecteurAudioResume lessonId={lessonId} compact masquerTexte />
 
-                  {/* Phase 3 — وثائق الدرس : les WebP de la leçon, s'il en existe (sinon null).
-                      Jamais précachés : lazy + cache à la volée à la première ouverture. */}
-                  <IllustrationsLecon lessonId={lessonId} compacte />
-
-                  <p className="text-xs font-bold text-ink-soft">
-                    بوّابة المرحلة: ما الخطوة التي تأتي مباشرة بعد الخطوة {qSequence.indice + 1}؟
-                  </p>
-                  <OptionsMcq
-                    nom="الخطوة التالية"
-                    options={qSequence.options}
-                    value={mcq}
-                    cleFaux={mcq && mcq !== qSequence.reponse ? mcq : null}
-                    cleJuste={echecMax ? qSequence.reponse : null}
-                    onChange={(k) => {
-                      if (k === mcq) return; // نقرة مكرّرة — لا تُحتسب مرتين
-                      setMcq(k);
-                      const ok = k === qSequence.reponse;
-                      if (ok) sonJuste();
-                      else sonFaux();
-                      noterReponse('phase', ok);
-                      if (!ok) {
-                        const e = echecs + 1;
-                        setEchecs(e);
-                        if (e === 2) consignerCompteur('blocagesPortes');
-                        if (e >= 2) setEchecMax(true);
-                      }
-                    }}
-                  />
-                  {echecs === 1 && !echecMax && (
-                    <p className="text-xs font-bold text-clay">ليست الإجابة — اقرأ الخطوات من جديد.</p>
-                  )}
-                  {echecMax && (
-                    <p className="text-xs font-bold text-clay">
-                      الإجابة الصحيحة هي الخطوة {qSequence.indice + 2}. سُجّلت المرحلة كـ«هشّة» — سنراجعها
-                      غدًا.
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
-          {phase.id === 6 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-ink-soft">
-                جملة البكالوريا — أنتج الجملة كاملة بحروفك أولًا، ثم تحقّق
-              </p>
-              <div className="rounded-2xl border border-line bg-cream/60 p-4 text-center text-base font-bold leading-loose">
-                {lecon.bacSentenceFrameAr?.split('______').map((part, i, arr) => (
-                  <span key={i}>
-                    {part}
-                    {i < arr.length - 1 && (
-                      <span className="mx-1 inline-block min-w-[64px] border-b-2 border-dashed border-forest/60 pb-0.5 text-forest">
-                        ‥‥‥
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-              {!rappelProduit ? (
-                <PortillonRappel
-                  consigne="أكمل جملة البكالوريا أعلاه بكلماتك أنت (ورقة أو بصوتٍ جهور). جملة واحدة مكتوبة بحروفك تعادل عشر قراءات."
-                  onProduit={() => setRappelProduit(true)}
-                />
-              ) : piegesPresents && !piegesFaits ? (
-                // ── أفخاخ §11: اصطدم بالتمثّلات الخاطئة الشائعة قبل الخلاصة (تدقيق خطة الدرس) ──
-                <DiagnosticPieges
-                  pieges={qcmLecon!.pieges!}
-                  source="phase"
-                  onTermine={() => setPiegesFaits(true)}
-                />
-              ) : (
-                qcmLecon?.synthese && (
-                  <>
-                    <p className="text-[11px] leading-relaxed text-mute">
-                      الآن قارن جملتك بالتكملة الصحيحة — هل طابقت ما أنتجته؟ (للتحقّق، لا للتخمين)
-                    </p>
-                    <ChoixUnique
-                      qcm={qcmLecon.synthese}
-                      fait={qcmFait}
-                      onValide={() => setQcmFait(true)}
-                      source="phase"
-                    />
-                  </>
-                )
-              )}
-
-              {qcmFait && (
-                <>
-                  <div className="rounded-2xl border border-clay-soft bg-clay-soft/50 p-3.5">
-                    <p className="text-[11px] font-bold text-clay">الخطأ النووي الشائع — تصحيح ذرّي</p>
-                    <p className="mt-1.5 text-sm leading-relaxed">{lecon.commonErrorAr}</p>
-                  </div>
-                  <p className="text-xs font-bold text-ink-soft">قارن اختيارك بهذا الخطأ:</p>
-                  <OptionsMcq
-                    nom="التقييم الذاتي مقابل الخطأ النووي"
-                    options={[
-                      { key: 'plein', label: 'تجنّبته تمامًا' },
-                      { key: 'partiel', label: 'فيه بعض الخلل' },
-                      { key: 'non', label: 'لم أتجنّبه' },
-                    ]}
-                    value={auto}
-                    onChange={(k) => setAuto(k as 'plein' | 'partiel' | 'non')}
-                  />
-                  {auto && auto !== 'plein' && (
-                    <>
-                      <p className="text-xs font-bold text-clay">نوع الثغرة (التشخيص):</p>
-                      <OptionsMcq
-                        nom="تشخيص الثغرة"
-                        options={DIAGNOSTICS.map((d) => ({ key: d.id, label: d.ar }))}
-                        value={diagnostic}
-                        onChange={setDiagnostic}
-                      />
-                    </>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* المُرشد: 4 لحظات فقط */}
-        {PHASES_PARLANTES.has(phase.id) && (
-          <div className="mt-5">
-            <Morceau ton={phase.id === 6 ? 'gold' : 'sage'}>{phase.morchidAr}</Morceau>
+            <button
+              type="button"
+              onClick={passerEtape2}
+              className="btn btn-primary min-h-12 w-full text-sm font-extrabold"
+            >
+              فهمت الفكرة — نطبّق الآن
+            </button>
           </div>
         )}
 
-        <div className="mt-4">
-          <ValveAide
-            restant={aides}
-            indice={phase.indiceAr}
-            onUtiliser={() => {
-              setAides((a) => a - 1);
-              // §12.1 — compter les demandes d'indice : seul signal fiable de « je bloque
-              // ici » qui ne demande rien à l'élève.
-              consignerCompteur('indicesMurshid');
-            }}
-          />
-        </div>
-      </main>
+        {/* ─────────────── الخطوة 2: ثبّت بالتمرين (3 دقائق) ─────────────── */}
+        {etape === 1 && carteActuelle && (
+          <div className="space-y-4">
+            {/* مؤشّر البطاقات الثلاث */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="tnum text-xs font-extrabold text-ink-soft">
+                بطاقة {nb(carteIndex + 1)} من {nb(cartes.length)}
+              </span>
+              <div className="flex items-center gap-1.5" aria-hidden="true">
+                {cartes.map((c, idx) => (
+                  <span
+                    key={c.id}
+                    className={`h-2 rounded-full transition-all ${
+                      idx < carteIndex || (idx === carteIndex && carteValidee)
+                        ? 'w-7 bg-leaf'
+                        : idx === carteIndex
+                          ? 'w-7 bg-forest'
+                          : 'w-2.5 bg-line'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
 
-      {/* أزرار التنقل — لا تخطّي */}
-      <footer className="mt-4">
-        <button
-          onClick={phaseSuivante}
-          disabled={!verrouPasse()}
-          className="btn btn-primary w-full text-base"
-        >
-          {index === PROTOCOLE.length - 1 ? 'إنهاء الدرس ✓' : 'انتهيت من هذه المرحلة'}
-        </button>
-        {!verrouPasse() && (
-          <p className="mt-2 text-center text-xs text-mute">البوّابة: {phase.verrouAr}</p>
+            <CarteQuestionDuolingo
+              carte={carteActuelle}
+              choix={choixCarte}
+              validee={carteValidee}
+              onChoisir={choisirOptionCarte}
+            />
+
+            {carteValidee && (
+              <button
+                type="button"
+                onClick={carteSuivante}
+                className="btn btn-primary min-h-12 w-full text-sm font-extrabold"
+              >
+                {carteIndex < cartes.length - 1
+                  ? 'البطاقة التالية'
+                  : 'إلى جملة الباك والملخّص الصوتي'}
+              </button>
+            )}
+          </div>
         )}
-      </footer>
 
+        {/* ─────────────── الخطوة 3: جملة الباك + البطاقة + الملخّص الصوتي (2 د) ─────────────── */}
+        {etape === 2 && carteBac && (
+          <div className="space-y-4">
+            {/* قالب الصياغة الرسمية للبكالوريا */}
+            {lecon.bacSentenceFrameAr && (
+              <section className="rounded-2xl border border-forest/30 bg-primary-soft/70 p-4">
+                <p className="text-[11px] font-extrabold text-forest">
+                  قالب الإجابة النموذجية في الباك (جملة الباك)
+                </p>
+                <p className="font-naskh mt-1.5 text-sm font-bold leading-relaxed text-ink">
+                  {lecon.bacSentenceFrameAr}
+                </p>
+              </section>
+            )}
+
+            {/* سؤال تثبيت جملة الباك */}
+            <CarteQuestionDuolingo
+              carte={carteBac}
+              choix={choixBac}
+              validee={bacValide}
+              onChoisir={choisirOptionBac}
+            />
+
+            {/* بعد التحقّق: فتح بطاقة الدرس + الملخّص الصوتي القصير في نهاية الدرس */}
+            {bacValide && (
+              <div className="space-y-4 pt-1">
+                <CarteLecon lessonId={lessonId} compact />
+
+                {/* الملخّص الصوتي القصير للدرس بالعربية (نهاية كلّ درس) */}
+                <div>
+                  <p className="oeil mb-2">ختام الدرس · ملخّص صوتي قصير بالعربية</p>
+                  <ResumeAudioFinLecon lessonId={lessonId} lecon={lecon} titre={titre} />
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={cloturerLecon}
+                    className="btn btn-primary min-h-12 w-full text-sm font-extrabold"
+                  >
+                    أنهيت الدرس — تثبيت التقدّم والعودة
+                  </button>
+                  {onAllerMethodo && (
+                    <button
+                      type="button"
+                      onClick={onAllerMethodo}
+                      className="btn btn-ghost min-h-11 w-full text-xs font-bold"
+                    >
+                      طبّق المنهجية الآن على تمرين باك
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
     </div>
   );
 }

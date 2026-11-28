@@ -104,6 +104,7 @@ export default function LecteurLecon({ lessonId, onFermer, favori, onBasculerFav
               <iframe
                 src={urlLecon(lessonId)}
                 title={titreLecon(lessonId)}
+                sandbox="allow-scripts allow-same-origin"
                 className="h-[72vh] w-full bg-cream"
                 loading="eager"
                 onError={() => setContenuIndisponible(true)}

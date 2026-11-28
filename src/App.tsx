@@ -16,8 +16,6 @@ import { attribuerCarteLecon } from './utils/etat';
 import { enregistrerTentative } from './utils/amelioration';
 import { cleEvenement, consignerTrophee, dejaVu, marquerVu, tentative } from './utils/evenements';
 import type { EvaluationBriques } from './utils/briques';
-import { tracerDerogation } from './utils/accesSujets';
-import { SUJETS_AVEC_BRIQUES } from './data/briques';
 import { effacerAlerteStockage, signalerEchecStockage } from './utils/echecsStockage';
 import { CLE_STATS, statsPourExport, type StatsReponses } from './utils/stats';
 import { CLE_RESTAURATION, restaurationEnAttente, type CarnetBoussole } from './utils/carnetBoussole';
@@ -30,28 +28,28 @@ import ErrorBoundary from './components/ErrorBoundary';
 import BandeauMiseAJourPwa from './components/BandeauMiseAJourPwa';
 import type { ItemChemin } from './data/programme';
 import type { SituationSynthese } from './data/syntheses';
-import { SUJETS_OFFICIELS } from './data/sujetsOfficiels';
 import type { Qualite } from './utils/srs';
 import { mettreAJourSrs, mettreAJourSrsIntensif, premiereRevision } from './utils/srs';
 import { synchroniserRappel } from './utils/rappels';
+import { synchroniserDataSaverSw } from './utils/dataSaver';
+import { activerJourReposEtat } from './utils/xp';
+import { IndicateurHorsLigne } from './components/BoutonInstallerPwa';
 import type { BoussoleAttemptEvent } from './types/boussoleBridge';
 import { appliquerEvenementBoussole, demoterProgressionDepuisKafaa } from './utils/boussoleAdapter';
 import { enregistrerDrillReussi } from './utils/drills';
 import Principal from './components/Principal';
-import Aujourdhui from './components/Aujourdhui';
-import Masari from './components/Masari';
-import Exercices from './components/Exercices';
+const Masari = lazy(() => import('./components/Masari'));
+const Exercices = lazy(() => import('./components/Exercices'));
 // Methodologie est l'écran le plus lourd (~190 kB source) : chargé à la demande (React.lazy).
 const Methodologie = lazy(() => import('./components/Methodologie'));
-const Bac = lazy(() => import('./components/Bac'));
-const BacPasAPas = lazy(() => import('./components/BacPasAPas'));
+const Tadarobati = lazy(() => import('./components/Tadarobati'));
+const ExercicesUltimes = lazy(() => import('./components/ExercicesUltimes'));
 const Kouest = lazy(() => import('./components/Kouest'));
 const FicheEleve = lazy(() => import('./components/FicheEleve'));
 const Fakh = lazy(() => import('./components/Fakh'));
 import { ListeDonneesSync } from './components/CarteSync';
 // P3.6 — écrans plein écran chargés à la demande : ils tirent les gros fichiers de données
 // (lessonGoldSummaries, qcmLecons) qui n'ont rien à faire dans le chunk de démarrage.
-const ExamBlanc = lazy(() => import('./components/ExamBlanc'));
 const SyntheseLibre = lazy(() => import('./components/SyntheseLibre'));
 const Ana = lazy(() => import('./components/Ana'));
 const ProtocoleRunner = lazy(() => import('./components/ProtocoleRunner'));
@@ -63,14 +61,12 @@ const EcranFierte = lazy(() => import('./components/EcranFierte'));
 const JourneeReparation = lazy(() => import('./components/JourneeReparation'));
 const EcranBriques = lazy(() => import('./components/EcranBriques'));
 const Defi60 = lazy(() => import('./components/Defi60'));
-// v0.12 — le sujet complet guidé (tous les exercices, méthode 1-2-3), chargé à la demande.
-const SujetGuide = lazy(() => import('./components/SujetGuide'));
+const Sprint3Min = lazy(() => import('./components/Sprint3Min'));
 const SessionRevision = lazy(() => import('./components/SessionRevision'));
 const Confidentialite = lazy(() => import('./components/Confidentialite'));
 const Mourchid = lazy(() => import('./components/Mourchid'));
 const SchemaALegender = lazy(() => import('./components/SchemaALegender'));
 const ChoixSynthese = lazy(() => import('./components/ChoixSynthese'));
-const SujetsOfficiels = lazy(() => import('./components/SujetsOfficiels'));
 const JalonUnite = lazy(() => import('./components/JalonUnite'));
 const LecteurLecon = lazy(() => import('./components/LecteurLecon'));
 const AtelierDomaine1 = lazy(() => import('./components/AtelierDomaine1'));
@@ -88,17 +84,14 @@ import { fermerSession, ouvrirSession, sessionOuverte } from './utils/compte';
 import type { Compte } from './types';
 import {
   IcoCarnet,
-  IcoDiplome,
-  IcoLune,
   IcoMaison,
   IcoRoute,
   IcoCible,
 } from './components/Icones';
 
-// خمسة أبواب: الرئيسية · مساري · كويست · الباك · أنا (قرار 2026-11-27 : « الرئيسية »
-// منفصلة عن « كويست » — الأولى هي الشاشة الرئيسية، والثانية بوّابة التمارين والاختبارات).
-// 'exercices' و'methodo' بقاو قيمًا صالحة، لكن كشاشات فرعية بلا تبويب خاصّ بها.
-type Onglet = 'principal' | 'aujourdhui' | 'masari' | 'bac' | 'ana' | 'exercices' | 'methodo';
+// أربعة أبواب موحّدة: الرئيسية · مساري · تدريباتي (كويست + الباك) · أنا.
+// 'exercices' و'methodo' شاشات فرعية بلا تبويب خاصّ بها وتُضيء أباها.
+type Onglet = 'principal' | 'masari' | 'tadarobati' | 'ana' | 'exercices' | 'methodo';
 type Mode =
   | { type: 'methodoExos' }
   | { type: 'structureTerre' }
@@ -111,19 +104,17 @@ type Mode =
   | { type: 'reparation'; lessonId: string }
   | { type: 'briques'; uniteId?: string; sujetId?: string }
   | { type: 'defi60' }
+  | { type: 'sprint3min'; zen?: boolean }
   | { type: 'revision'; lessonIds: string[]; croisee?: boolean }
   | { type: 'confidentialite' }
   | { type: 'mourchid' }
   | { type: 'jalon'; uniteId: string }
-  | { type: 'examenBlanc' }
+  | { type: 'ultimes' }
   | { type: 'synthese'; uniteId: string; sujet: string; question: string; modele: string[]; pieges: string[]; diagnostic: { id: string; ar: string }; retour?: Mode }
   | { type: 'mindmap' }
   | { type: 'recherche'; q?: string }
   | { type: 'schemas' }
   | { type: 'choixSynthese' }
-  | { type: 'sujets' }
-  | { type: 'bacPasAPas'; sujetId: string; exercice: number }
-  | { type: 'sujetGuide'; sujetId: string }
   | { type: 'kouest'; lessonId: string }
   | { type: 'fiche' }
   | { type: 'fakh'; uniteId?: string }
@@ -133,14 +124,13 @@ type Mode =
 const ONGLETS: { id: Onglet; label: string; icone: typeof IcoCible }[] = [
   { id: 'principal', label: 'الرئيسية', icone: IcoMaison },
   { id: 'masari', label: 'مساري', icone: IcoRoute },
-  { id: 'aujourdhui', label: 'كويست', icone: IcoCible },
-  { id: 'bac', label: 'الباك', icone: IcoDiplome },
+  { id: 'tadarobati', label: 'تدريباتي', icone: IcoCible },
   { id: 'ana', label: 'أنا', icone: IcoCarnet },
 ];
 
 /** L'onglet réellement allumé : un sous-écran allume son parent. */
 function ongletParent(o: Onglet): Onglet {
-  if (o === 'methodo') return 'bac';
+  if (o === 'methodo') return 'tadarobati';
   return o;
 }
 
@@ -326,8 +316,8 @@ export default function App() {
   const [repriseVisible, setRepriseVisible] = useState(true);
   const [onglet, setOnglet] = useState<Onglet>('principal');
   // Les تدريبات sont un sous-écran : la barre de retour renvoie à la porte d'origine.
-  const [origineExercices, setOrigineExercices] = useState<'principal' | 'aujourdhui' | 'ana'>('aujourdhui');
-  const ouvrirExercices = (origine: 'principal' | 'aujourdhui' | 'ana') => {
+  const [origineExercices, setOrigineExercices] = useState<'principal' | 'tadarobati' | 'ana'>('tadarobati');
+  const ouvrirExercices = (origine: 'principal' | 'tadarobati' | 'ana') => {
     setOrigineExercices(origine);
     setOnglet('exercices');
   };
@@ -376,9 +366,10 @@ export default function App() {
     setAfficheDiagnostic(false);
   }
 
-  // التذكير اليومي (P2.4): إعادة جدولة هادئة عند الفتح إن كان مفعّلًا (لا شيء يحدث إن كان معطّلًا أو على المتصفح)
+  // التذكير اليومي (P2.4) ومزامنة وضع توفير 4G مع عامل الخدمة عند الإقلاع
   useEffect(() => {
     if (etat.rappel?.actif) void synchroniserRappel(etat);
+    synchroniserDataSaverSw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -424,7 +415,7 @@ export default function App() {
   function onInvite() {
     setEtat((prev) => ({ ...prev, modeInvite: true }));
     setDemandeCompte(false);
-    setOnglet('aujourdhui');
+    setOnglet('principal');
   }
 
   /** Depuis l'app en mode invité : on ouvre l'écran de compte, sans rien perdre. */
@@ -440,7 +431,7 @@ export default function App() {
   function onDeconnexion() {
     suspendreSync(etatRef.current.compte?.email);
     fermerSession();
-    setOnglet('aujourdhui');
+    setOnglet('principal');
     setMode(null);
     // Se déconnecter, c'est fermer la porte : l'écran de compte s'ouvre en mode connexion.
     setDemandeCompte(true);
@@ -568,9 +559,8 @@ export default function App() {
     // La séance se compte à la **clôture** (voir `cloturerSeance`), pas à l'ouverture :
     // ouvrir puis refermer dix fois la même leçon ne fabriquait dix séances.
     setLeconLue(false);
-    // v0.11 : on ouvre la carte des six micro-nœuds (3–5 min chacun) ; l'élève choisit
-    // d'enchaîner ou de s'arrêter — la séance complète reste accessible depuis cet écran.
-    setMode({ type: 'noeuds', lessonId: item.id });
+    // مسار الدرس السريع (3 خطوات مباشرة · ~8 دقائق) دون شاشة تمهيدية زائدة.
+    setMode({ type: 'protocole', lessonId: item.id });
   }
 
   // ───────────── ouverture depuis la الخريطة الذهنية ─────────────
@@ -592,10 +582,8 @@ export default function App() {
       setMode({ type: 'lecture', lessonId: item.id, retour: { type: 'mindmap' } });
       return;
     }
-    // Même règle qu'ailleurs : la séance se compte à la clôture, et une leçon non finie
-    // passe d'abord par les six micro-nœuds (phase 3).
     setLeconLue(false);
-    setMode({ type: 'noeuds', lessonId: item.id });
+    setMode({ type: 'protocole', lessonId: item.id });
   }
 
   // ───────────── ردود البروتوكول ─────────────
@@ -644,11 +632,6 @@ export default function App() {
       if (dejaVu(prev, cle)) return prev;
       return { ...prev, boussoleEventsSeen: marquerVu(prev, cle) };
     });
-  }
-
-  /** « متابعة رغم ذلك » : on trace le choix de l'élève, on ne le lui reproche jamais. */
-  function onDerogationSujet(sujetId: string): void {
-    setEtat((prev) => tracerDerogation(prev, sujetId, new Date().toISOString()));
   }
 
   // ───────────── الاسترجاع ─────────────
@@ -802,7 +785,7 @@ export default function App() {
     fermerSession();
     setEtat(chargerEtat());
     setMode(null);
-    setOnglet('aujourdhui');
+    setOnglet('principal');
     return true;
   }
 
@@ -879,6 +862,7 @@ export default function App() {
             onCarnetFaute={onCarnetFaute}
             onBoussoleEvent={onBoussoleEvent}
             onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
+            onOuvrirUltimes={() => setMode({ type: 'ultimes' })}
           />
         </Suspense>
       );
@@ -906,54 +890,12 @@ export default function App() {
         />
       );
     }
-    if (mode.type === 'sujets') {
+    if (mode.type === 'ultimes') {
       return (
-        <SujetsOfficiels
-          onFermer={() => setMode(null)}
-          onOuvrirRecherche={(q) => setMode({ type: 'recherche', q })}
-          onOuvrirPasAPas={(sujetId, exercice) => setMode({ type: 'bacPasAPas', sujetId, exercice })}
-          maitriseSujets={etat.maitriseSujets}
-          brouillonsSujets={etat.brouillonsSujets}
+        <ExercicesUltimes
           etat={etat}
-          onPasseOutreSujet={onDerogationSujet}
-          onOuvrirBriques={(sujetId) => setMode({ type: 'briques', sujetId })}
-          onOuvrirGuide={(sujetId) => setMode({ type: 'sujetGuide', sujetId })}
-          travaillees={Object.fromEntries(
-            Object.entries(etat.maitriseSujets ?? {}).map(([id, evaluation]) => [
-              id,
-              Object.values(evaluation).filter((n) => n === 0 || n === 1 || n === 2).length,
-            ]),
-          )}
-          onEvaluerConsigne={(sujetId, cle, niveau) =>
-            setEtat((prev) => ({
-              ...prev,
-              maitriseSujets: {
-                ...prev.maitriseSujets,
-                [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
-              },
-            }))
-          }
-          onBrouillonConsigne={(sujetId, cle, texte) =>
-            setEtat((prev) => ({
-              ...prev,
-              brouillonsSujets: {
-                ...prev.brouillonsSujets,
-                [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
-              },
-            }))
-          }
-          onOuvrirSynthese={(s: SituationSynthese) =>
-            setMode({
-              type: 'synthese',
-              uniteId: s.id.toUpperCase(),
-              sujet: s.sujet,
-              question: s.question,
-              modele: s.modele,
-              pieges: s.pieges,
-              diagnostic: s.diagnostic,
-              retour: { type: 'sujets' },
-            })
-          }
+          onItemReussi={onItemReussi}
+          onFermer={() => setMode(null)}
         />
       );
     }
@@ -994,68 +936,6 @@ export default function App() {
         />
       );
     }
-    if (mode.type === 'bacPasAPas') {
-      const sujet = SUJETS_OFFICIELS.find((x) => x.id === mode.sujetId);
-      const exercice = sujet?.exercices.find((e) => e.numero === mode.exercice);
-      if (!sujet || !exercice) {
-        setMode(null);
-        return null;
-      }
-      return (
-        <BacPasAPas
-          etat={etat}
-          sujet={sujet}
-          exercice={exercice}
-          onEtape={(cle, qualite) =>
-            setEtat((prev) => ({ ...prev, bacEtapes: { ...(prev.bacEtapes ?? {}), [cle]: qualite } }))
-          }
-          onTermine={(cle) =>
-            setEtat((prev) =>
-              prev.bacExercices?.[cle] ? prev : { ...prev, bacExercices: { ...(prev.bacExercices ?? {}), [cle]: true } },
-            )
-          }
-          onCarnetFaute={onCarnetFaute}
-          onFermer={() => setMode(null)}
-        />
-      );
-    }
-    if (mode.type === 'sujetGuide') {
-      const sujetId = mode.sujetId;
-      return (
-        <Suspense fallback={<ChargementEcran />}>
-          <SujetGuide
-            sujetId={sujetId}
-            maitrise={etat.maitriseSujets?.[sujetId]}
-            brouillons={etat.brouillonsSujets?.[sujetId]}
-            etat={etat}
-            onEvaluer={(cle, niveau) =>
-              setEtat((prev) => ({
-                ...prev,
-                maitriseSujets: {
-                  ...prev.maitriseSujets,
-                  [sujetId]: { ...prev.maitriseSujets?.[sujetId], [cle]: niveau },
-                },
-              }))
-            }
-            onBrouillon={(cle, texte) =>
-              setEtat((prev) => ({
-                ...prev,
-                brouillonsSujets: {
-                  ...prev.brouillonsSujets,
-                  [sujetId]: { ...prev.brouillonsSujets?.[sujetId], [cle]: texte },
-                },
-              }))
-            }
-            onOuvrirBriques={
-              SUJETS_AVEC_BRIQUES.includes(sujetId)
-                ? () => setMode({ type: 'briques', sujetId })
-                : undefined
-            }
-            onFermer={() => setMode({ type: 'sujets' })}
-          />
-        </Suspense>
-      );
-    }
     if (mode.type === 'choixSynthese') {
       return (
         <ChoixSynthese
@@ -1092,10 +972,10 @@ export default function App() {
           onFermer={() => setMode(null)}
           onAller={(vers) => {
             setMode(null);
-            if (vers === 'examen') setMode({ type: 'examenBlanc' });
+            if (vers === 'examen') setMode({ type: 'ultimes' });
             else if (vers === 'recherche') setMode({ type: 'recherche' });
             else if (vers === 'methodo') setOnglet('methodo');
-            else if (vers === 'exercices') ouvrirExercices('aujourdhui');
+            else if (vers === 'exercices') ouvrirExercices('tadarobati');
             else setOnglet('principal');
           }}
         />
@@ -1117,24 +997,6 @@ export default function App() {
           requeteInitiale={mode.q}
           onFermer={() => setMode(null)}
           onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId, retour: { type: 'recherche' } })}
-        />
-      );
-    }
-    if (mode.type === 'examenBlanc') {
-      return (
-        <ExamBlanc
-          etat={etat}
-          onFermer={() => setMode(null)}
-          onTermine={(bilan) =>
-            setEtat((prev) => ({
-              ...prev,
-              examensBlancs: [...(prev.examensBlancs ?? []), bilan.date],
-              examens: [...(prev.examens ?? []), bilan].slice(-20),
-            }))
-          }
-          onItemReussi={onItemReussi}
-          onResultatKafaa={onResultatKafaa}
-          onCarnetFaute={onCarnetFaute}
         />
       );
     }
@@ -1320,6 +1182,28 @@ export default function App() {
         />
       );
     }
+    // ── سبرينت ٣ دقائق (Gen Z BAC Sciences — تركيز قصير مع خيار بلا ضغط) ──
+    if (mode.type === 'sprint3min') {
+      return (
+        <Sprint3Min
+          etat={etat}
+          modeZenInitial={Boolean(mode.zen)}
+          onItemReussi={onItemReussi}
+          onFermer={() => setMode(null)}
+          onTermine={() =>
+            setEtat((prev) => {
+              const auj = aujourdhui();
+              const journal = prev.journal.includes(auj) ? prev.journal : [...prev.journal, auj];
+              return {
+                ...prev,
+                journal,
+                sprints3Min: [...(prev.sprints3Min ?? []), new Date().toISOString()].slice(-60),
+              };
+            })
+          }
+        />
+      );
+    }
     if (mode.type === 'revision') {
       const diagnostics: Record<string, string> = {};
       for (const id of mode.lessonIds) {
@@ -1484,58 +1368,66 @@ export default function App() {
         </Suspense>
       )}
 
-      {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) */}
-      <div className="pt-16">
+      {/* مؤشّر هادئ لحالة دون إنترنت */}
+      <IndicateurHorsLigne />
+
+      {/* إزاحة المحتوى أسفل الشريط العلوي الثابت (h-16) وبجانب الشريط الجانبي على الشاشات الكبيرة */}
+      <main className="pt-16 lg:ps-56">
       {pret && onglet === 'principal' && (
         <Principal
           etat={etat}
           onOuvrirItem={ouvrirItem}
           onDemarrerRevision={(lessonIds) => setMode({ type: 'revision', lessonIds })}
           onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
-          onOuvrirExamenBlanc={() => setMode({ type: 'examenBlanc' })}
+          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
+          onBasculerJourPlan30={(cle) =>
+            setEtat((prev) => {
+              const courant = prev.plan30Jours?.fait ?? [];
+              const fait = courant.includes(cle)
+                ? courant.filter((k) => k !== cle)
+                : [...courant, cle];
+              return { ...prev, plan30Jours: { fait } };
+            })
+          }
+          onOuvrirUltimes={() => setMode({ type: 'ultimes' })}
           onDefi60={() => setMode({ type: 'defi60' })}
+          onSprint3Min={(zen) => setMode({ type: 'sprint3min', zen })}
+          onActiverJourRepos={() => setEtat((prev) => activerJourReposEtat(prev))}
           onFakh={() => setMode({ type: 'fakh' })}
           onBriques={() => setMode({ type: 'briques' })}
-          onSujetGuide={() =>
-            setMode({ type: 'sujetGuide', sujetId: SUJETS_OFFICIELS[0]?.id ?? '2024-1' })
-          }
-          nomSujet={SUJETS_OFFICIELS[0]?.id}
           onCreerCompte={demanderCreationCompte}
           onMasquerInvitation={masquerInvitationCompte}
           onAllerExercices={() => ouvrirExercices('principal')}
         />
       )}
-      {pret && onglet === 'aujourdhui' && (
-        <Aujourdhui
-          etat={etat}
-          onResultatKafaa={onResultatKafaa}
-          onOuvrirMethodologie={() => setOnglet('methodo')}
-          onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
-          onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
-          onDefi60={() => setMode({ type: 'defi60' })}
-          onDemarrerRevueCroisee={() => {
-            const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
-            if (lessonIds.length < 2) return;
-            setEtat(suivant);
-            setMode({ type: 'revision', lessonIds, croisee: true });
-          }}
-        />
-      )}
       {pret && onglet === 'masari' && (
-        <Masari
-          etat={etat}
-          onOuvrirItem={ouvrirItem}
-          onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
-          onOuvrirMindmap={() => setMode({ type: 'mindmap' })}
-          onOuvrirRecherche={() => setMode({ type: 'recherche' })}
-        />
-      )}
-      {pret && onglet === 'bac' && (
         <Suspense fallback={<ChargementEcran />}>
-          <Bac
+          <Masari
             etat={etat}
-            onOuvrirSujets={() => setMode({ type: 'sujets' })}
-            onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
+            onOuvrirItem={ouvrirItem}
+            onVoirUnite={(uniteId) => setMode({ type: 'jalon', uniteId })}
+            onOuvrirMindmap={() => setMode({ type: 'mindmap' })}
+            onOuvrirRecherche={() => setMode({ type: 'recherche' })}
+          />
+        </Suspense>
+      )}
+      {pret && onglet === 'tadarobati' && (
+        <Suspense fallback={<ChargementEcran />}>
+          <Tadarobati
+            etat={etat}
+            onResultatKafaa={onResultatKafaa}
+            onChoisirDefi={(type) => setEtat((prev) => choisirDefi(prev, type))}
+            onDemarrerKouest={(lessonId) => setMode({ type: 'kouest', lessonId })}
+            onDefi60={() => setMode({ type: 'defi60' })}
+            onSprint3Min={() => setMode({ type: 'sprint3min' })}
+            onAllerExercices={() => ouvrirExercices('tadarobati')}
+            onDemarrerRevueCroisee={() => {
+              const { etat: suivant, lessonIds } = demarrerRevueCroisee(etat);
+              if (lessonIds.length < 2) return;
+              setEtat(suivant);
+              setMode({ type: 'revision', lessonIds, croisee: true });
+            }}
+            onOuvrirUltimes={() => setMode({ type: 'ultimes' })}
             onOuvrirMethodo={() => setOnglet('methodo')}
             onOuvrirSchemas={() => setMode({ type: 'schemas' })}
             onOuvrirFakh={() => setMode({ type: 'fakh' })}
@@ -1544,37 +1436,39 @@ export default function App() {
       )}
       {pret && onglet === 'exercices' && (
         <>
-        <BarreRetour
-          texte={`رجوع إلى ${ONGLETS.find((o) => o.id === origineExercices)?.label ?? 'كويست'}`}
-          onRetour={() => setOnglet(origineExercices)}
-        />
-        <Exercices
-          etat={etat}
-          onItemReussi={onItemReussi}
-          onOuvrirAtelier={() => setMode({ type: 'atelier', domaineId: 'd1' })}
-          onOuvrirImmunite={() => setMode({ type: 'immunite' })}
-          onOuvrirOrogenese={() => setMode({ type: 'orogenese' })}
-          onOuvrirStructureTerre={() => setMode({ type: 'structureTerre' })}
-          onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
-          onOuvrirExamen={() => setMode({ type: 'examenBlanc' })}
-          onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
-          onOuvrirSchemas={() => setMode({ type: 'schemas' })}
-          onOuvrirSyntheses={() => setMode({ type: 'choixSynthese' })}
-          onOuvrirSujets={() => setMode({ type: 'sujets' })}
-          onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
-        />
+          <BarreRetour
+            texte={`رجوع إلى ${ONGLETS.find((o) => o.id === origineExercices)?.label ?? 'تدريباتي'}`}
+            onRetour={() => setOnglet(origineExercices)}
+          />
+          <Suspense fallback={<ChargementEcran />}>
+            <Exercices
+              etat={etat}
+              onItemReussi={onItemReussi}
+              onOuvrirAtelier={() => setMode({ type: 'atelier', domaineId: 'd1' })}
+              onOuvrirImmunite={() => setMode({ type: 'immunite' })}
+              onOuvrirOrogenese={() => setMode({ type: 'orogenese' })}
+              onOuvrirStructureTerre={() => setMode({ type: 'structureTerre' })}
+              onOuvrirMethodo={() => setMode({ type: 'methodoExos' })}
+              onOuvrirUltimes={() => setMode({ type: 'ultimes' })}
+              onOuvrirFlashcards={() => setMode({ type: 'flashcards' })}
+              onOuvrirSchemas={() => setMode({ type: 'schemas' })}
+              onOuvrirSyntheses={() => setMode({ type: 'choixSynthese' })}
+              onOuvrirLecon={(lessonId) => setMode({ type: 'lecture', lessonId })}
+            />
+          </Suspense>
         </>
       )}
       {pret && onglet === 'methodo' && (
         <Suspense fallback={<ChargementEcran />}>
           <Methodologie
-            onFermer={() => setOnglet('bac')}
+            onFermer={() => setOnglet('tadarobati')}
             onResultatKafaa={onResultatKafaa}
             onCarnetFaute={onCarnetFaute}
             onOuvrirSynthese={(data) => setMode({ type: 'synthese', ...data, retour: { type: 'methodoExos' } })}
             onOuvrirMourchid={() => setMode({ type: 'mourchid' })}
             onBoussoleEvent={onBoussoleEvent}
             onOuvrirBriques={() => setMode({ type: 'briques', uniteId: 'u1' })}
+            onOuvrirUltimes={() => setMode({ type: 'ultimes' })}
           />
         </Suspense>
       )}
@@ -1613,11 +1507,11 @@ export default function App() {
         />
         </Suspense>
       )}
-      </div>
+      </main>
 
-          {/* خمسة أبواب، لا أكثر. الشاشات الفرعية تُضيء أباها. */}
-          {pret && <nav className="fixed inset-x-0 bottom-0 z-40" aria-label="أبواب البوصلة">
-            <div className="mx-auto max-w-5xl">
+          {/* أربعة أبواب موحّدة: شريط سفلي على الهاتف، وشريط جانبي ثابت على الحاسوب (نمط دولينغو ويب). */}
+          {pret && <nav className="nav-portes fixed inset-x-0 bottom-0 z-40" aria-label="أبواب البوصلة">
+            <div className="nav-portes__inner mx-auto max-w-5xl">
               <div className="onglets">
                 {ONGLETS.map((o) => {
                   const Ico = o.icone;

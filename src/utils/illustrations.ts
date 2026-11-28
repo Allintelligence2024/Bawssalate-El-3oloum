@@ -26,13 +26,17 @@ export function urlIllustration(fichier: string): string {
   if (!NOM_FICHIER.test(fichier)) {
     throw new Error(`Nom d'illustration invalide (attendu : <nom>.webp ou <nom>.svg) : ${fichier}`);
   }
+  const local = (import.meta.env.BASE_URL ?? '/').endsWith('/')
+    ? (import.meta.env.BASE_URL ?? '/')
+    : `${import.meta.env.BASE_URL ?? '/'}/`;
   const distant = import.meta.env.VITE_ILLUSTRATIONS_BASE_URL?.trim();
   if (distant) {
-    let parsed: URL;
+    let parsed: URL | null = null;
     try {
       parsed = new URL(distant);
     } catch {
-      throw new Error('VITE_ILLUSTRATIONS_BASE_URL doit être une URL https valide');
+      // Valeur non-URL (ex. jeton/placeholder injecté par l'environnement) : repli sûr vers les actifs locaux.
+      return `${local}lecons/img/${fichier}`;
     }
     if (parsed.protocol !== 'https:') {
       throw new Error('VITE_ILLUSTRATIONS_BASE_URL doit utiliser le protocole https:');
@@ -40,9 +44,6 @@ export function urlIllustration(fichier: string): string {
     const base = distant.endsWith('/') ? distant : `${distant}/`;
     return `${base}${fichier}`;
   }
-  const local = (import.meta.env.BASE_URL ?? '/').endsWith('/')
-    ? (import.meta.env.BASE_URL ?? '/')
-    : `${import.meta.env.BASE_URL ?? '/'}/`;
   return `${local}lecons/img/${fichier}`;
 }
 

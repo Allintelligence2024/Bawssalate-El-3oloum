@@ -99,6 +99,13 @@ const etatSchema = z.object({
   derogationsSujets: dictionnaire(date).optional(),
   trophees: dictionnaire(z.object({ le: date, n: entier })).optional(),
   defis60: liste(date).optional(),
+  plan30Jours: z.object({
+    fait: liste(court),
+  }).optional(),
+  rythmeBienveillant: z.object({
+    joursRepos: liste(date),
+  }).optional(),
+  sprints3Min: liste(date).optional(),
 });
 const compteurs = z.object({ justes: entier, fausses: entier });
 const statsSchema = z.object({
