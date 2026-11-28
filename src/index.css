@@ -45,6 +45,10 @@
   --color-paper: #fffef8;
   --color-sage: #eaf3e5;
   --color-sage-soft: #f3f8ef;
+  /* Feuille — l'accent vif de la mascotte القبطان مفتاح (maquette) : halo,
+     jauges, jalons du parcours, état « aujourd'hui » du rythme. */
+  --color-leaf: #4e9c2e;
+  --color-leaf-soft: #edf6e2;
   /* clay → ROUGE (sémantique faute / erreur / destructif) */
   --color-clay: #dc2626;
   --color-clay-soft: #fde8e8;
@@ -90,6 +94,8 @@
   --color-paper: #131b16;
   --color-sage: #5e8f6f;
   --color-sage-soft: #1a2e22;
+  --color-leaf: #93d964;
+  --color-leaf-soft: #17230f;
   /* clay → ROUGE (sémantique faute / erreur / destructif) */
   --color-clay: #f87171;
   --color-clay-soft: #7f1d1d;
@@ -125,6 +131,327 @@
 [data-theme='dark'] .fond-schema-clair {
   background-color: #fbfaf3;
   color: #183d31;
+}
+
+/* ── Maquette 1:1 · الرئيسية (port fidèle de maquettes/css/maquettes.css, écran 01)
+   sous le périmètre .ecran-maquette. Règles hors @layer : elles priment sur les
+   utilitaires (couleurs du hero, y compris en thème sombre). ── */
+.ecran-maquette .greet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ecran-maquette .greet-row h1 {
+  font-size: 1.32rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+.ecran-maquette .greet-row .date {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-mute);
+}
+.ecran-maquette .streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--color-honey-soft);
+  border: 1px solid var(--color-honey-line);
+  color: var(--color-honey-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.ecran-maquette .streak .ico {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+}
+/* — hero « مهمّة اليوم » : dégradé vert, halo feuille, mascotte, CTA or — */
+.ecran-maquette .hero-quest {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 20px 18px 18px;
+  background: linear-gradient(140deg, #2c6b52 0%, #225342 55%, #1b4636 100%);
+  color: #f2f8ee;
+  box-shadow: 0 18px 38px rgba(22, 53, 42, 0.35);
+}
+[data-theme='dark'] .ecran-maquette .hero-quest {
+  background: linear-gradient(140deg, #1d4433 0%, #143427 55%, #0f2419 100%);
+  color: #eaf5e9;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.5);
+}
+.ecran-maquette .hero-quest .leaf-glow {
+  position: absolute;
+  top: -40px;
+  left: -30px;
+  width: 170px;
+  height: 170px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(126, 194, 74, 0.5), transparent 70%);
+}
+.ecran-maquette .hero-quest .mascot {
+  position: absolute;
+  left: -14px;
+  bottom: -8px;
+  width: 128px;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.35));
+  transform: scaleX(-1);
+}
+.ecran-maquette .hero-quest .kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #cde8b8;
+}
+.ecran-maquette .hero-quest .kicker .ico {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+}
+.ecran-maquette .hero-quest h2 {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 1.38rem;
+  font-weight: 800;
+  color: inherit;
+}
+.ecran-maquette .hero-quest .mission {
+  margin-top: 8px;
+  max-width: 62%;
+  font-size: 0.845rem;
+  line-height: 1.65;
+  font-weight: 600;
+  color: #dcebd6;
+}
+[data-theme='dark'] .ecran-maquette .hero-quest .mission { color: #c2d6b8; }
+.ecran-maquette .hero-quest .foot-note {
+  margin-top: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #b9d3ab;
+}
+/* — CTA or du hero (maquette : « ابدأ المهمة · 3 دقائق ») — */
+.btn-hero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 62%;
+  margin-top: 14px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 15px;
+  background: #f2c15c;
+  color: #2b1e07;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn-hero:hover { filter: brightness(1.05); }
+.btn-hero:active { transform: translateY(1px); }
+.btn-hero-mini {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 10px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.btn-hero-mini:hover { background: rgba(255, 255, 255, 0.2); }
+.hero-statut {
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  max-width: 62%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: inherit;
+}
+/* — carte « إيقاع الأسبوع » : perles des jours — */
+.ecran-maquette .rhythm {
+  padding: 15px 16px;
+}
+.ecran-maquette .head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ecran-maquette .head-row h3 {
+  font-size: 0.905rem;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+.ecran-maquette .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.ecran-maquette .pill-leaf {
+  background: var(--color-leaf-soft);
+  color: var(--color-leaf);
+  border: 1px solid color-mix(in srgb, var(--color-leaf) 35%, transparent);
+}
+.ecran-maquette .pill-honey {
+  background: var(--color-honey-soft);
+  color: var(--color-honey-ink);
+  border: 1px solid var(--color-honey-line);
+}
+.ecran-maquette .week-dots {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.ecran-maquette .day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--color-mute);
+}
+.ecran-maquette .day .bead {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-surface-2, var(--color-paper));
+  border: 1.5px solid var(--color-line);
+  font-size: 11px;
+  font-weight: 800;
+}
+.ecran-maquette .day.done .bead {
+  background: var(--color-forest);
+  border-color: var(--color-forest);
+  color: var(--color-paper);
+}
+.ecran-maquette .day.today {
+  color: var(--color-forest-deep);
+  font-weight: 800;
+}
+.ecran-maquette .day.today .bead {
+  background: var(--color-leaf-soft);
+  border: 2px solid var(--color-leaf);
+  color: var(--color-leaf);
+}
+.ecran-maquette .rhythm .note {
+  margin-top: 12px;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--color-mute);
+}
+/* — quick-row : deux mini-cartes — */
+.ecran-maquette .quick-row {
+  display: flex;
+  gap: 12px;
+}
+.ecran-maquette .quick-row .card {
+  flex: 1;
+  padding: 13px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ecran-maquette .quick-row .num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+.ecran-maquette .quick-row .lbl {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-mute);
+}
+/* — carte « تدريبات سريعة » : chips — */
+.ecran-maquette .drills {
+  padding: 14px 16px;
+}
+.ecran-maquette .drills .sub {
+  margin-top: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-mute);
+}
+.ecran-maquette .chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+.ecran-maquette .chip {
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--color-surface-2, var(--color-paper));
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-soft);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ecran-maquette .chip.leaf {
+  background: var(--color-leaf-soft);
+  color: var(--color-leaf);
+  border-color: color-mix(in srgb, var(--color-leaf) 30%, transparent);
+}
+/* — barre d'onglets façon maquette : pastille d'icône sur l'onglet actif — */
+.onglet-ico {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 22px;
+  border-radius: 9px;
+  transition: background-color 160ms ease;
+}
+.onglet[aria-current='page'] .onglet-ico {
+  background: color-mix(in srgb, var(--color-forest) 12%, transparent);
+}
+.onglet[aria-current='page'] .onglet-ico svg {
+  width: 17px;
+  height: 17px;
 }
 
 html, body, #root { height: 100%; margin: 0; }
@@ -611,7 +938,7 @@ h1, h2 { text-wrap: balance; }
     background: linear-gradient(90deg, #c9a558, var(--color-gold));
   }
 
-  /* — Barre d'onglets (bas de l'écran) : quatre portes, pas plus — */
+  /* — Barre d'onglets (bas de l'écran) : cinq portes, pas plus — */
   .onglets {
     display: flex;
     align-items: stretch;
@@ -628,7 +955,7 @@ h1, h2 { text-wrap: balance; }
     gap: 3px;
     min-height: 54px;
     padding: 4px 2px;
-    border-radius: 10px;
+    border-radius: 12px;
     color: var(--color-mute);
     font-size: 10.5px;
     font-weight: 700;
