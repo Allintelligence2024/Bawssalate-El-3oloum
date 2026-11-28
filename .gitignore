@@ -63,3 +63,6 @@ plans/_audio-r2/
 
 # Exports temporaires d'audit (Blocs E/F) : conservés sur le poste, jamais versionnés.
 audit-v2-*.md
+
+# Dossier d'audit interne (rapports, matrice, prompts) — jamais versionné.
+/audit/
